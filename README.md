@@ -10,6 +10,7 @@ Includes:
 * Huge Word, Huge Integer
 * Random number generators
 * Cipher (e.g. AES, DES, RC2, RC4)
+* JSON parser
 * Socket library (cross platform - Windows and Linux)
 * TCP Client
 * TCP Server
