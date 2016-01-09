@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.14                                                     }
+{   File version:     5.15                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
@@ -47,6 +47,12 @@
 {   2014/04/30  4.12  Revision for FreePascal 2.6.2 Linux.                     }
 {   2014/05/01  4.13  Revision for Delphi XE6 Win32/Win64.                     }
 {   2016/01/09  5.14  Revised for Fundamentals 5.                              }
+{   2016/01/10  5.15  Bug fix in 32-bit assembly routine.                      }
+{                                                                              }
+{ Supported compilers:                                                         }
+{                                                                              }
+{   Delphi XE7 Win32                    5.15  2016/01/10                       }
+{   Delphi XE7 Win64                    5.15  2016/01/10                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -5643,9 +5649,9 @@ asm
     movzx edx, dl
     add [eax], edx
     jnc @Fin
-    adc [eax + 4], edx
-    adc [eax + 8], edx
-    adc [eax + 12], edx
+    adc [eax + 4], 0
+    adc [eax + 8], 0
+    adc [eax + 12], 0
     {$IFOPT Q+}
     jno @Fin
     jmp RaiseOverflowError
@@ -5688,9 +5694,9 @@ asm
     movzx edx, dx
     add [eax], edx
     jnc @Fin
-    adc [eax + 4], edx
-    adc [eax + 8], edx
-    adc [eax + 12], edx
+    adc [eax + 4], 0
+    adc [eax + 8], 0
+    adc [eax + 12], 0
     {$IFOPT Q+}
     jno @Fin
     jmp RaiseOverflowError
@@ -5732,9 +5738,9 @@ procedure Word128AddWord32(var A: Word128; const B: LongWord);
 asm
     add [eax], edx
     jnc @Fin
-    adc [eax + 4], edx
-    adc [eax + 8], edx
-    adc [eax + 12], edx
+    adc [eax + 4], 0
+    adc [eax + 8], 0
+    adc [eax + 12], 0
     {$IFOPT Q+}
     jno @Fin
     jmp RaiseOverflowError
