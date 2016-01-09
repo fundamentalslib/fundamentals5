@@ -30,7 +30,7 @@
 {                     POSSIBILITY OF SUCH DAMAGE.                              }
 {                                                                              }
 {   Github:           https://github.com/fundamentalslib                       }
-{   E-mail:           fundamentalslib at gmail.com                             }
+{   E-mail:           fundamentals.library at gmail.com                        }
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
