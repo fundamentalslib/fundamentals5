@@ -11,7 +11,7 @@ Includes:
 * Huge Word, Huge Integer
 * Decimal (Decimal32, Decimal64, Decimal128, HugeDecimal and signed decimals)
 * Random number generators
-* Cipher (e.g. AES, DES, RC2, RC4)
+* Ciphers (symmetric AES, DES, RC2, RC4 and asymmertric RSA)
 * JSON parser
 * Socket library (cross platform - Windows and Linux)
 * TCP Client
