@@ -13,6 +13,7 @@ Includes:
 * Random number generators
 * Ciphers (symmetric AES, DES, RC2, RC4 and asymmertric RSA)
 * JSON parser
+* Google protocol buffer parser, utilities and Pascal code generator
 * Socket library (cross platform - Windows and Linux)
 * TCP Client
 * TCP Server
