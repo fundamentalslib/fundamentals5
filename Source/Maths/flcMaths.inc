@@ -1,0 +1,7 @@
+{$INCLUDE ..\flcInclude.inc}
+
+{$IFDEF DEBUG}
+{$IFDEF TEST}
+  {$DEFINE MATHS_TEST}
+{$ENDIF}
+{$ENDIF}
