@@ -12,6 +12,7 @@ Includes:
 * Decimal (Decimal32, Decimal64, Decimal128, HugeDecimal and signed decimals)
 * Random number generators
 * Ciphers (symmetric AES, DES, RC2, RC4 and asymmertric RSA)
+* Data structures (array and dictionary classes)
 * JSON parser
 * Google protocol buffer parser, utilities and Pascal code generator
 * Socket library (cross platform - Windows and Linux)
