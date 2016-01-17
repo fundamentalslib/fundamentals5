@@ -217,16 +217,16 @@ const
 { Mathematical types                                                           }
 {                                                                              }
 type
-  {$IFDEF ExtendedIsDouble}
-  MFloat  = Double;
-  {$DEFINE MFloatIsDouble}
+  {$IFDEF MFloatIsDouble}
+  MFloat      = Double;
+  MFloatArray = DoubleArray;
   {$ELSE}
-  MFloat  = Extended;
-  {$DEFINE MFloatIsExtended}
+  {$IFDEF MFloatIsExtended}
+  MFloat      = Extended;
+  MFloatArray = ExtendedArray;
+  {$ENDIF}
   {$ENDIF}
   PMFloat = ^MFloat;
-
-  MFloatArray = array of MFloat;
 
 
 
