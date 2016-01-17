@@ -13,7 +13,7 @@ Includes:
 * Random number generators
 * Ciphers (symmetric AES, DES, RC2, RC4 and asymmertric RSA)
 * Data structures (array and dictionary classes)
-* Mathematics (Rational number, complex number, vector, statistics)
+* Mathematics (Rational number, complex number, vector, matrix, statistics)
 * JSON parser
 * Google protocol buffer parser, utilities and Pascal code generator
 * Socket library (cross platform - Windows and Linux)
