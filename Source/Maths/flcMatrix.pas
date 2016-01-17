@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcMatrix.pas                                            }
-{   File version:     5.11                                                     }
+{   File version:     5.12                                                     }
 {   Description:      Matrix                                                   }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
@@ -46,11 +46,12 @@
 {                     others.                                                  }
 {   2012/10/26  4.10  Revised for Fundamentals 4.                              }
 {   2016/01/17  5.11  Revised for Fundamentals 5.                              }
+{   2016/01/17  5.12  Change CreateIdentity constructor.                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    5.11  2016/01/17                       }
-{   Delphi XE7 Win64                    5.11  2016/01/17                       }
+{   Delphi XE7 Win32                    5.12  2016/01/17                       }
+{   Delphi XE7 Win64                    5.12  2016/01/17                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -136,8 +137,7 @@ type
 
   public
     constructor CreateSize(const RowCount, ColCount: Integer);
-    constructor CreateSquare(const N: Integer);
-    constructor CreateIdentity(const N: Integer);
+    constructor CreateSquare(const N: Integer; const Identity: Boolean);
     constructor CreateDiagonal(const D: TVector);
 
     property  ColCount: Integer read FColCount write SetColCount;
@@ -227,19 +227,14 @@ begin
   SetSize(RowCount, ColCount);
 end;
 
-constructor TMatrix.CreateSquare(const N: Integer);
-begin
-  inherited Create;
-  SetSize(N, N);
-end;
-
-constructor TMatrix.CreateIdentity(const N: Integer);
+constructor TMatrix.CreateSquare(const N: Integer; const Identity: Boolean);
 var I : Integer;
 begin
   inherited Create;
   SetSize(N, N);
-  for I := 0 to N - 1 do
-    FRows[I, I] := 1.0;
+  if Identity then
+    for I := 0 to N - 1 do
+      FRows[I, I] := 1.0;
 end;
 
 constructor TMatrix.CreateDiagonal(const D: TVector);
@@ -940,7 +935,7 @@ begin
   CheckSquare;
   A := Duplicate;
   try
-    B := TMatrix.CreateIdentity(Length(FRows));
+    B := TMatrix.CreateSquare(Length(FRows), True);
     try
       Result := A.SolveMatrix(B);
     finally
@@ -956,7 +951,7 @@ var R : Integer;
 begin
   CheckSquare;
   R := Length(FRows);
-  Result := TMatrix.CreateIdentity(R);
+  Result := TMatrix.CreateSquare(R, True);
   try
     if SolveMatrix(Result) = 0.0 then
       raise EMatrix.Create('Matrix can not invert');
@@ -1011,12 +1006,18 @@ end;
 procedure Test;
 var A, B : TMatrix;
 begin
-  A := TMatrix.CreateIdentity(3);
-  B := TMatrix.CreateSize(3, 3);
+  A := TMatrix.CreateSquare(3, True);
+  B := TMatrix.CreateSquare(3, False);
+
+  Assert(B.IsSquare);
+  Assert(B.IsZero);
+  Assert(not B.IsIdentity);
+  Assert(B.GetAsString = '((0,0,0),(0,0,0),(0,0,0))');
 
   Assert(A.IsSquare);
   Assert(not A.IsZero);
   Assert(A.IsIdentity);
+  Assert(A.GetAsString = '((1,0,0),(0,1,0),(0,0,1))');
 
   Assert(A.ColCount = 3);
   Assert(A.RowCount = 3);
@@ -1029,12 +1030,6 @@ begin
   Assert(A[2, 0] = 0.0);
   Assert(A[2, 1] = 0.0);
   Assert(A[2, 2] = 1.0);
-  Assert(A.GetAsString = '((1,0,0),(0,1,0),(0,0,1))');
-
-  Assert(B.IsSquare);
-  Assert(B.IsZero);
-  Assert(not B.IsIdentity);
-  Assert(B.GetAsString = '((0,0,0),(0,0,0),(0,0,0))');
 
   B[0, 0] := 1.0;
   B[0, 1] := 2.0;
@@ -1050,17 +1045,12 @@ begin
   Assert(not B.IsIdentity);
 
   A.Add(B);
-  Assert(A[0, 0] = 2.0);
-  Assert(A[0, 1] = 2.0);
-  Assert(A[0, 2] = 3.0);
-  Assert(A[1, 0] = 4.0);
-  Assert(A[1, 1] = 6.0);
-  Assert(A[1, 2] = 6.0);
-  Assert(A[2, 0] = 7.0);
-  Assert(A[2, 1] = 8.0);
-  Assert(A[2, 2] = 10.0);
   Assert(A.GetAsString = '((2,2,3),(4,6,6),(7,8,10))');
 
+  A.Subtract(B);
+  Assert(A.GetAsString = '((1,0,0),(0,1,0),(0,0,1))');
+
+  B.Free;
   A.Free;
 end;
 {$ENDIF}
