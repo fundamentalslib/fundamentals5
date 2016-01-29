@@ -288,8 +288,8 @@ procedure StrToHugeWordW(const A: WideString; var R: HugeWord);
 procedure StrToHugeWordU(const A: UnicodeString; var R: HugeWord);
 procedure StrToHugeWord(const A: String; var R: HugeWord);
 
-function  HugeWordToHexA(const A: HugeWord): AnsiString;
-function  HugeWordToHex(const A: HugeWord): String;
+function  HugeWordToHexA(const A: HugeWord; const LowCase: Boolean = False): AnsiString;
+function  HugeWordToHex(const A: HugeWord; const LowCase: Boolean = False): String;
 procedure HexToHugeWordA(const A: AnsiString; var R: HugeWord);
 procedure HexToHugeWord(const A: String; var R: HugeWord);
 
@@ -2803,13 +2803,13 @@ begin
             Word32MultiplyWord32(LongWord(V), P^, TM);
             Inc(R, TM);
             {$ELSE}
-                {$IFDEF CPU_X86_64}
-                  {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
-                  R := R + V * P^;
-                  {$IFDEF QOn}{$Q+}{$ENDIF}
-                {$ELSE}
-                Inc(R, V * P^);
-                {$ENDIF}
+              {$IFDEF CPU_X86_64}
+                {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+                R := R + V * P^;
+                {$IFDEF QOn}{$Q+}{$ENDIF}
+              {$ELSE}
+              Inc(R, V * P^);
+              {$ENDIF}
             {$ENDIF}
           {$ENDIF}
           // ------------------------
@@ -3346,7 +3346,7 @@ const
   HexLookupU_AnsiStr : AnsiString = HexLookupU;
   HexLookupL_AnsiStr : AnsiString = HexLookupL;
 
-function HugeWordToHexA(const A: HugeWord): AnsiString;
+function HugeWordToHexA(const A: HugeWord; const LowCase: Boolean): AnsiString;
 var L, I, J : Integer;
     P : PLongWord;
     F : LongWord;
@@ -3365,19 +3365,22 @@ begin
       F := P^;
       for J := 0 to 7 do
         begin
-          Result[I * 8 + J + 1] := AnsiChar(HexLookupU[(F shr 28) + 1]);
+          if LowCase then
+            Result[I * 8 + J + 1] := AnsiChar(HexLookupL[(F shr 28) + 1])
+          else
+            Result[I * 8 + J + 1] := AnsiChar(HexLookupU[(F shr 28) + 1]);
           F := F shl 4;
         end;
       Dec(P);
     end;
 end;
 
-function HugeWordToHex(const A: HugeWord): String;
+function HugeWordToHex(const A: HugeWord; const LowCase: Boolean): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(HugeWordToHexA(A));
+  Result := String(HugeWordToHexA(A, LowCase));
   {$ELSE}
-  Result := HugeWordToHexA(A);
+  Result := HugeWordToHexA(A, LowCase);
   {$ENDIF}
 end;
 
