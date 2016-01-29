@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.58                                                     }
+{   File version:     5.59                                                     }
 {   Description:      Simple data types: Definitions and utility functions.    }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2016, David J Butler                  }
@@ -106,6 +106,7 @@
 {   2015/05/06  4.56  Add UTF functions from unit cUnicodeCodecs.              }
 {   2015/06/07  4.57  Moved bit functions to unit cBits32.                     }
 {   2016/01/09  5.58  Revised for Fundamentals 5.                              }
+{   2016/01/29  5.59  StringRefCount functions.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -119,8 +120,10 @@
 {   Delphi XE2 Win32                    4.54  2014/01/31                       }
 {   Delphi XE2 Win64                    4.54  2014/01/31                       }
 {   Delphi XE3 Win64                    4.51  2013/01/29                       }
-{   Delphi XE7 Win32                    5.58  2016/01/09                       }
-{   Delphi XE7 Win64                    5.58  2016/01/09                       }
+{   Delphi XE7 Win32                    5.59  2016/01/09                       }
+{   Delphi XE7 Win64                    5.59  2016/01/09                       }
+{   Delphi XE8 Win32                    5.58  2016/01/10                       }
+{   Delphi XE8 Win64                    5.58  2016/01/10                       }
 {   Delphi 10 Win32                     5.58  2016/01/09                       }
 {   Delphi 10 Win64                     5.58  2016/01/09                       }
 {   FreePascal 2.0.4 Linux i386                                                }
@@ -146,6 +149,14 @@
 unit flcUtils;
 
 interface
+
+
+
+{                                                                              }
+{ Version                                                                      }
+{                                                                              }
+const
+  FundamentalsVersion = '5.01';
 
 
 
@@ -360,8 +371,10 @@ type
 
   {$IFDEF ExtendedIsDouble}
   Float  = Double;
+  {$DEFINE FloatIsDouble}
   {$ELSE}
   Float  = Extended;
+  {$DEFINE FloatIsExtended}
   {$ENDIF}
   PFloat = ^Float;
 
@@ -1073,6 +1086,19 @@ function  ToAnsiString(const A: String): AnsiString;       {$IFDEF UseInline}inl
 function  ToRawByteString(const A: String): RawByteString; {$IFDEF UseInline}inline;{$ENDIF}
 function  ToWideString(const A: String): WideString;       {$IFDEF UseInline}inline;{$ENDIF}
 function  ToUnicodeString(const A: String): UnicodeString; {$IFDEF UseInline}inline;{$ENDIF}
+
+
+
+{                                                                              }
+{ String internals functions                                                   }
+{                                                                              }
+{$IFNDEF SupportStringRefCount}
+{$IFDEF DELPHI}
+function StringRefCount(const S: RawByteString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
+function StringRefCount(const S: UnicodeString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$DEFINE ImplementsStringRefCount}
+{$ENDIF}
+{$ENDIF}
 
 
 
@@ -3910,6 +3936,41 @@ function ToUnicodeString(const A: String): UnicodeString;
 begin
   Result := UnicodeString(A);
 end;
+
+
+
+{                                                                              }
+{ String internals functions                                                   }
+{                                                                              }
+{$IFNDEF SupportStringRefCount}
+{$IFDEF DELPHI}
+function StringRefCount(const S: UnicodeString): LongInt;
+var P : PLongInt;
+begin
+  P := Pointer(S);
+  if not Assigned(P) then
+    Result := 0
+  else
+    begin
+      Dec(P, 2);
+      Result := P^;
+    end;
+end;
+
+function StringRefCount(const S: RawByteString): LongInt;
+var P : PLongInt;
+begin
+  P := Pointer(S);
+  if not Assigned(P) then
+    Result := 0
+  else
+    begin
+      Dec(P, 2);
+      Result := P^;
+    end;
+end;
+{$ENDIF}
+{$ENDIF}
 
 
 
@@ -10554,6 +10615,34 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF ImplementsStringRefCount}
+procedure Test_StringRefCount;
+const
+  C1 = 'ABC';
+var
+  B, C : RawByteString;
+  U, V : UnicodeString;
+begin
+  B := C1;
+  Assert(StringRefCount(B) = -1);
+  C := B;
+  Assert(StringRefCount(C) = -1);
+  C[1] := '1';
+  Assert(StringRefCount(C) = 1);
+  B := C;
+  Assert(StringRefCount(B) = 2);
+
+  U := C1;
+  Assert(StringRefCount(U) = -1);
+  V := U;
+  Assert(StringRefCount(V) = -1);
+  V[1] := '1';
+  Assert(StringRefCount(V) = 1);
+  U := V;
+  Assert(StringRefCount(U) = 2);
+end;
+{$ENDIF}
+
 procedure Test;
 begin
   {$IFDEF CPU_INTEL386}
@@ -10569,6 +10658,9 @@ begin
   Test_Hash;
   {$IFNDEF ManagedCode}
   Test_Memory;
+  {$ENDIF}
+  {$IFDEF ImplementsStringRefCount}
+  Test_StringRefCount;
   {$ENDIF}
 end;
 {$ENDIF}
