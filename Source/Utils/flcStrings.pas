@@ -388,8 +388,8 @@ function  StrPasU(const A: PWideChar): UnicodeString;
 function  StringLen(const A: PChar): Integer;
 function  StringPas(const A: PChar): String;
 
-function  ToStringChA(const A: AnsiChar): String;
-function  ToStringChW(const A: WideChar): String;
+function  ToStringChA(const A: AnsiChar): String; {$IFDEF UseInline}inline;{$ENDIF}
+function  ToStringChW(const A: WideChar): String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  ToStringA(const A: AnsiString): String; {$IFDEF UseInline}inline;{$ENDIF}
 function  ToStringB(const A: RawByteString): String; {$IFDEF UseInline}inline;{$ENDIF}
@@ -414,7 +414,7 @@ function  StrPToStr(const P: PChar; const L: Integer): String;
 { Match                                                                        }
 {                                                                              }
 function  WideCharInCharSet(const A: WideChar; const C: CharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  CharInCharSet(const A: Char; const C: CharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  CharInCharSet(const A: Char; const C: CharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
 
 function  CharMatchNoAsciiCaseA(const A, B: AnsiChar): Boolean;
 function  CharMatchNoAsciiCaseW(const A, B: WideChar): Boolean;
