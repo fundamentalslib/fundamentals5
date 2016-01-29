@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.19                                                     }
+{   File version:     5.20                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
@@ -55,6 +55,7 @@
 {   2011/10/14  4.17  Compilable with Delphi XE.                               }
 {   2013/01/27  4.18  Added RipeMD160 sponsored and donated by Stefan Westner. }
 {   2016/01/09  5.19  Revised for Fundamentals 5.                              }
+{   2016/01/29  5.20  Fix in SecureClear for constant string references.       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -140,6 +141,11 @@ uses
 type
   RawByteString = AnsiString;
   PRawByteString = ^RawByteString;
+{$ENDIF}
+{$IFNDEF SupportUnicodeString}
+type
+  UnicodeString = WideString;
+  PUnicodeString = ^UnicodeString;
 {$ENDIF}
 
 
@@ -268,8 +274,9 @@ procedure SecureClear(var Buf; const BufSize: Integer);
 procedure SecureClear512(var Buf: T512BitBuf);
 procedure SecureClear1024(var Buf: T1024BitBuf);
 procedure SecureClearStr(var S: String);
-procedure SecureClearStrA(var S: RawByteString);
+procedure SecureClearStrB(var S: RawByteString);
 procedure SecureClearStrW(var S: WideString);
+procedure SecureClearStrU(var S: UnicodeString);
 
 
 
@@ -988,6 +995,41 @@ end;
 
 
 {                                                                              }
+{ String internals functions                                                   }
+{                                                                              }
+{$IFNDEF SupportStringRefCount}
+{$IFDEF DELPHI}
+function StringRefCount(const S: UnicodeString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
+var P : PLongInt;
+begin
+  P := Pointer(S);
+  if not Assigned(P) then
+    Result := 0
+  else
+    begin
+      Dec(P, 2);
+      Result := P^;
+    end;
+end;
+
+function StringRefCount(const S: RawByteString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
+var P : PLongInt;
+begin
+  P := Pointer(S);
+  if not Assigned(P) then
+    Result := 0
+  else
+    begin
+      Dec(P, 2);
+      Result := P^;
+    end;
+end;
+{$ENDIF}
+{$ENDIF}
+
+
+
+{                                                                              }
 { Secure memory clear                                                          }
 {                                                                              }
 procedure SecureClear(var Buf; const BufSize: Integer);
@@ -1013,17 +1055,19 @@ begin
   L := Length(S);
   if L = 0 then
     exit;
-  SecureClear(S[1], L * SizeOf(Char));
+  if StringRefCount(S) > 0 then
+    SecureClear(PChar(S)^, L * SizeOf(Char));
   S := '';
 end;
 
-procedure SecureClearStrA(var S: RawByteString);
+procedure SecureClearStrB(var S: RawByteString);
 var L : Integer;
 begin
   L := Length(S);
   if L = 0 then
     exit;
-  SecureClear(S[1], L);
+  if StringRefCount(S) > 0 then
+    SecureClear(PAnsiChar(S)^, L);
   S := '';
 end;
 
@@ -1033,7 +1077,22 @@ begin
   L := Length(S);
   if L = 0 then
     exit;
-  SecureClear(S[1], L * SizeOf(WideChar));
+  SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
+  S := '';
+end;
+
+procedure SecureClearStrU(var S: UnicodeString);
+var L : Integer;
+begin
+  L := Length(S);
+  if L = 0 then
+    exit;
+  {$IFDEF SupportUnicodeString}
+  if StringRefCount(S) > 0 then
+    SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
+  {$ELSE}
+  SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
+  {$ENDIF}
   S := '';
 end;
 
@@ -4542,24 +4601,25 @@ const
 var
   MillionA, TenThousandA : RawByteString;
   S, T : RawByteString;
-  U : WideString;
+  U : UnicodeString;
 begin
+  // SecureClear allocated string reference
   SetLength(S, 5);
   FillChar(S[1], 5, #1);
-  SecureClearStrA(S);
+  SecureClearStrB(S);
   Assert(S = '');
-  
+  //
   SetLength(U, 5);
   FillChar(U[1], 10, #1);
-  SecureClearStrW(U);
+  SecureClearStrU(U);
   Assert(U = '');
-
+  // SecureClear constant string reference
   S := 'ABC';
-  SecureClearStrA(S);
-  
+  SecureClearStrB(S);
+  //
   U := 'ABC';
-  SecureClearStrW(U);
-  
+  SecureClearStrU(U);
+
   SetLength(MillionA, 1000000);
   FillChar(MillionA[1], 1000000, Ord('a'));
   SetLength(TenThousandA, 10000);
