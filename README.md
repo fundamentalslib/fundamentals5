@@ -11,7 +11,7 @@ Includes:
 * Huge Word, Huge Integer
 * Decimal (Decimal32, Decimal64, Decimal128, HugeDecimal and signed decimals)
 * Random number generators
-* Ciphers (symmetric AES, DES, RC2, RC4 and asymmertric RSA)
+* Ciphers (symmetric: AES, DES, RC2, RC4; asymmetric: RSA, Diffie-Hellman)
 * Data structures (array and dictionary classes)
 * Mathematics (Rational number, complex number, vector, matrix, statistics)
 * JSON parser
