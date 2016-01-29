@@ -61,7 +61,7 @@ procedure SecureRandomBuf(var Buf; const Size: Integer);
 function  SecureRandomStrA(const Size: Integer): RawByteString;
 
 function  SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = True): String;
-function  SecureRandomHexStrA(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
+function  SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
 function  SecureRandomHexStrU(const Digits: Integer; const UpperCase: Boolean = True): UnicodeString;
 
 function  SecureRandomLongWord: LongWord;
@@ -195,7 +195,7 @@ begin
   Result := S;
 end;
 
-function SecureRandomHexStrA(const Digits: Integer; const UpperCase: Boolean): RawByteString;
+function SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean): RawByteString;
 var B    : TSecureRandomBlock;
     S, T : RawByteString;
     L, N : Integer;
@@ -217,9 +217,9 @@ begin
       N := SecureRandomBlockSize div 4;
       while (L >= 8) and (N > 0) do
         begin
-          T := LongWordToHexA(P^, 8, UpperCase);
+          T := LongWordToHexB(P^, 8, UpperCase);
           Move(PAnsiChar(T)^, Q^, 8);
-          SecureClearStrA(T);
+          SecureClearStrB(T);
           Inc(Q, 8);
           Dec(N);
           Inc(P);
@@ -232,7 +232,7 @@ begin
       P := @B;
       T := LongWordToHexA(P^, L, UpperCase);
       Move(PAnsiChar(T)^, Q^, L);
-      SecureClearStrA(T);
+      SecureClearStrB(T);
     end;
   SecureClear(B, SecureRandomBlockSize);
   Result := S;

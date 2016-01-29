@@ -57,6 +57,7 @@
 {                                                                              }
 { Todo:                                                                        }
 { - Complete CAST, RSA, FUNE cipher stubs                                      }
+{ - Split out tests                                                            }
 {******************************************************************************}
 
 {.DEFINE Cipher_SupportCAST}
@@ -1669,11 +1670,11 @@ end;
 
 procedure TestCipherRandom;
 begin
-  Assert(Length(SecureRandomHexStrA(0)) = 0);
-  Assert(Length(SecureRandomHexStrA(1)) = 1);
-  Assert(Length(SecureRandomHexStrA(511)) = 511);
-  Assert(Length(SecureRandomHexStrA(512)) = 512);
-  Assert(Length(SecureRandomHexStrA(513)) = 513);
+  Assert(Length(SecureRandomHexStrB(0)) = 0);
+  Assert(Length(SecureRandomHexStrB(1)) = 1);
+  Assert(Length(SecureRandomHexStrB(511)) = 511);
+  Assert(Length(SecureRandomHexStrB(512)) = 512);
+  Assert(Length(SecureRandomHexStrB(513)) = 513);
 
   Assert(Length(SecureRandomHexStr(513)) = 513);
   Assert(Length(SecureRandomHexStrU(513)) = 513);
