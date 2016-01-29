@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2016/01/09                                               }
+{   File updated:     2016/01/29                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Home page:        http://fundementals.sourceforge.net                      }
@@ -78,12 +78,22 @@
 {   FREEPASCAL         - Free Pascal compiler.                                 }
 {     FREEPASCAL1      - FreePascal 1.x                                        }
 {     FREEPASCAL2      - FreePascal 2.x                                        }
+{     FREEPASCAL3      - FreePascal 3.x                                        }
 {     FREEPASCAL2_UP   - FreePascal 2.x or later.                              }
+{     FREEPASCAL3_UP   - FreePascal 3.x or later.                              }
 {     FREEPASCAL2_0    - FreePascal 2.0                                        }
 {     FREEPASCAL2_2    - FreePascal 2.2                                        }
 {     FREEPASCAL2_4    - FreePascal 2.4                                        }
 {     FREEPASCAL2_6    - FreePascal 2.6                                        }
 {     FREEPASCAL2_6_UP - FreePascal 2.6 or later.                              }
+{     FREEPASCAL2_7    - FreePascal 2.7                                        }
+{     FREEPASCAL2_7_UP - FreePascal 2.7 or later.                              }
+{     FREEPASCAL3_0    - FreePascal 3.0                                        }
+{     FREEPASCAL3_0_UP - FreePascal 3.0 or later.                              }
+{     FREEPASCAL3_1    - FreePascal 3.1                                        }
+{     FREEPASCAL3_1_UP - FreePascal 3.1 or later.                              }
+{     FREEPASCAL3_2    - FreePascal 3.2                                        }
+{     FREEPASCAL3_2_UP - FreePascal 3.2 or later.                              }
 {                                                                              }
 {   SupportCardinal            - Compiler supports Cardinal type.              }
 {   SupportDynArray            - Compiler supports dynamic arrays.             }
@@ -112,6 +122,7 @@
 {   SupportUnicodeString       - Compiler supports UnicodeString type.         }
 {   SupportRawByteString       - Compiler supports RawByteString type.         }
 {   SupportEnumValue           - Compiler supports enumeration values.         }
+{   SupportStringRefCount      - Compiler supports StringRefCount function.    }
 {                                                                              }
 {   CharIsAnsi          - Default Char type is AnsiChar (1 byte).              }
 {   CharIsWide          - Default Char type is WideChar (2 bytes).             }
@@ -898,6 +909,7 @@
   {$DEFINE SupportNativeInt}
   {$DEFINE SupportNativeUInt}
   {$DEFINE SupportUInt64}
+  {$DEFINE SupportStringRefCount}
 {$ENDIF}
 
 {$IFDEF DELPHI}
@@ -937,14 +949,18 @@
 { Free Pascal                                                                  }
 {                                                                              }
 {$IFDEF FPC}
+
   {$DEFINE FREEPASCAL}
+
   {$IFDEF VER1}
     {$DEFINE FREEPASCAL1}
   {$ELSE}
     {$DEFINE FREEPASCAL2_UP}
+
     {$IFDEF VER2}
       {$DEFINE FREEPASCAL2}
     {$ENDIF}
+
     {$IFDEF VER2_0}
       {$DEFINE FREEPASCAL2_0}
     {$ENDIF}
@@ -958,8 +974,41 @@
       {$DEFINE FREEPASCAL2_6}
       {$DEFINE FREEPASCAL2_6_UP}
     {$ENDIF}
+    {$IFDEF VER2_7}
+      {$DEFINE FREEPASCAL2_7}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+    {$ENDIF}
+
+    {$IFDEF VER3_0}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_0}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+    {$ENDIF}
+    {$IFDEF VER3_1}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_1}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+      {$DEFINE FREEPASCAL3_1_UP}
+    {$ENDIF}
+    {$IFDEF VER3_2}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_2}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+      {$DEFINE FREEPASCAL3_1_UP}
+      {$DEFINE FREEPASCAL3_2_UP}
+    {$ENDIF}
   {$ENDIF}
-  {$MODE DELPHI}
+
 {$ENDIF}
 
 
@@ -994,8 +1043,26 @@
 
 
 {                                                                              }
+{ FreePascal: Mode                                                             }
+{                                                                              }
+{$IFDEF FREEPASCAL2}
+  {$MODE DELPHI}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL3_UP}
+  {$MODE DELPHIUNICODE}
+{$ENDIF}
+
+
+
+{                                                                              }
 { FreePascal: Supported language features                                      }
 {                                                                              }
+{$IFDEF FREEPACAL2}
+  {$DEFINE CharIsAnsi}
+  {$DEFINE StringIsAnsi}
+{$ENDIF}
+
 {$IFDEF FREEPASCAL2_UP}
   {$DEFINE SupportNativeInt}
   {$DEFINE SupportNativeUInt}
@@ -1013,8 +1080,6 @@
   {$DEFINE SupportOverload}
   {$DEFINE SupportUTF8String}
   {$DEFINE SupportUCS4String}
-  {$DEFINE CharIsAnsi}
-  {$DEFINE StringIsAnsi}
   {$IFDEF FREEPASCAL2_6_UP}
     {$DEFINE SetSizeAlignIsByte}
   {$ELSE}
@@ -1025,6 +1090,14 @@
     {$ENDIF}
   {$ENDIF}
   {$DEFINE SupportEnumValue}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL3_UP}
+  {$DEFINE CharIsWide}
+  {$DEFINE StringIsUnicode}
+  {$DEFINE SupportUnicodeString}
+  {$DEFINE SupportRawByteString}
+  {$DEFINE SupportStringRefCount}
 {$ENDIF}
 
 
