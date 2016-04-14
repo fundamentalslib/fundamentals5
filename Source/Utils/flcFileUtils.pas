@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcFileUtils.pas                                         }
-{   File version:     5.14                                                     }
+{   File version:     5.16                                                     }
 {   Description:      File name and file system functions                      }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2016, David J Butler                  }
@@ -48,6 +48,8 @@
 {   2013/11/15  4.12  Unicode update.                                          }
 {   2015/03/13  4.13  RawByteString functions.                                 }
 {   2016/01/09  5.14  Revised for Fundamentals 5.                              }
+{   2016/02/01  5.15  Unicode update.                                          }
+{   2016/04/10  5.16  Change to FileOpenWait.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -57,6 +59,8 @@
 {   Delphi 10 Win32                     5.14  2016/01/09                       }
 {   Delphi 10 Win64                     5.14  2016/01/09                       }
 {                                                                              }
+{ Todo:                                                                        }
+{  - IFDef win certain functions                                               }
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
@@ -217,6 +221,15 @@ procedure DecodeFilePath(const FilePath: String;
           var Path, FileName: String;
           const PathSep: Char = PathSeparator);
 
+function  PathExtractFilePathA(const FilePath: AnsiString;
+          const PathSep: AnsiChar = PathSeparator): AnsiString;
+function  PathExtractFilePathB(const FilePath: RawByteString;
+          const PathSep: AnsiChar = PathSeparator): RawByteString;
+function  PathExtractFilePathU(const FilePath: UnicodeString;
+          const PathSep: WideChar = PathSeparator): UnicodeString;
+function  PathExtractFilePath(const FilePath: String;
+          const PathSep: Char = PathSeparator): String;
+
 function  PathExtractFileNameA(const FilePath: AnsiString;
           const PathSep: AnsiChar = PathSeparator): AnsiString;
 function  PathExtractFileNameB(const FilePath: RawByteString;
@@ -258,8 +271,9 @@ function  DirectoryExpandU(const Path: UnicodeString; const BasePath: UnicodeStr
 function  DirectoryExpand(const Path: String; const BasePath: String = '';
           const PathSep: Char = PathSeparator): String;
 
-function  UnixPathToWinPath(const Path: AnsiString): AnsiString;
-function  WinPathToUnixPath(const Path: AnsiString): AnsiString;
+function  UnixPathToSafeWinPathA(const Path: AnsiString): AnsiString;
+
+function  WinPathToSafeUnixPathA(const Path: AnsiString): AnsiString;
 
 
 
@@ -268,28 +282,29 @@ function  WinPathToUnixPath(const Path: AnsiString): AnsiString;
 {                                                                              }
 type
   TFileError = (
-    feNone             {$IFDEF SupportEnumValue} = $00 {$ENDIF},
-    feInvalidParameter {$IFDEF SupportEnumValue} = $01 {$ENDIF},
+    feNone                  {$IFDEF SupportEnumValue} = $00 {$ENDIF},
+    feInvalidParameter      {$IFDEF SupportEnumValue} = $01 {$ENDIF},
 
-    feFileError        {$IFDEF SupportEnumValue} = $10 {$ENDIF},
-    feFileOpenError    {$IFDEF SupportEnumValue} = $11 {$ENDIF},
-    feFileCreateError  {$IFDEF SupportEnumValue} = $12 {$ENDIF},
-    feFileSharingError {$IFDEF SupportEnumValue} = $13 {$ENDIF},
-    feFileSeekError    {$IFDEF SupportEnumValue} = $14 {$ENDIF},
-    feFileReadError    {$IFDEF SupportEnumValue} = $15 {$ENDIF},
-    feFileWriteError   {$IFDEF SupportEnumValue} = $16 {$ENDIF},
-    feFileSizeError    {$IFDEF SupportEnumValue} = $17 {$ENDIF},
-    feFileExists       {$IFDEF SupportEnumValue} = $18 {$ENDIF},
-    feFileDoesNotExist {$IFDEF SupportEnumValue} = $19 {$ENDIF},
-    feFileMoveError    {$IFDEF SupportEnumValue} = $1A {$ENDIF},
-    feFileDeleteError  {$IFDEF SupportEnumValue} = $1B {$ENDIF},
+    feFileError             {$IFDEF SupportEnumValue} = $10 {$ENDIF},
+    feFileOpenError         {$IFDEF SupportEnumValue} = $11 {$ENDIF},
+    feFileCreateError       {$IFDEF SupportEnumValue} = $12 {$ENDIF},
+    feFileSharingError      {$IFDEF SupportEnumValue} = $13 {$ENDIF},
+    feFileSeekError         {$IFDEF SupportEnumValue} = $14 {$ENDIF},
+    feFileReadError         {$IFDEF SupportEnumValue} = $15 {$ENDIF},
+    feFileWriteError        {$IFDEF SupportEnumValue} = $16 {$ENDIF},
+    feFileSizeError         {$IFDEF SupportEnumValue} = $17 {$ENDIF},
+    feFileExists            {$IFDEF SupportEnumValue} = $18 {$ENDIF},
+    feFileDoesNotExist      {$IFDEF SupportEnumValue} = $19 {$ENDIF},
+    feFileMoveError         {$IFDEF SupportEnumValue} = $1A {$ENDIF},
+    feFileDeleteError       {$IFDEF SupportEnumValue} = $1B {$ENDIF},
+    feDirectoryCreateError  {$IFDEF SupportEnumValue} = $1C {$ENDIF},
 
-    feOutOfSpace       {$IFDEF SupportEnumValue} = $20 {$ENDIF},
-    feOutOfResources   {$IFDEF SupportEnumValue} = $21 {$ENDIF},
-    feInvalidFilePath  {$IFDEF SupportEnumValue} = $22 {$ENDIF},
-    feInvalidFileName  {$IFDEF SupportEnumValue} = $23 {$ENDIF},
-    feAccessDenied     {$IFDEF SupportEnumValue} = $24 {$ENDIF},
-    feDeviceFailure    {$IFDEF SupportEnumValue} = $25 {$ENDIF}
+    feOutOfSpace            {$IFDEF SupportEnumValue} = $20 {$ENDIF},
+    feOutOfResources        {$IFDEF SupportEnumValue} = $21 {$ENDIF},
+    feInvalidFilePath       {$IFDEF SupportEnumValue} = $22 {$ENDIF},
+    feInvalidFileName       {$IFDEF SupportEnumValue} = $23 {$ENDIF},
+    feAccessDenied          {$IFDEF SupportEnumValue} = $24 {$ENDIF},
+    feDeviceFailure         {$IFDEF SupportEnumValue} = $25 {$ENDIF}
   );
 
   EFileError = class(Exception)
@@ -348,15 +363,42 @@ type
   TFileOpenWait = packed record
     Wait           : Boolean;
     UserData       : LongWord;
-    Timeout        : Integer;
-    RetryInterval  : Integer;
-    RetryRandomise : Boolean;
+    Timeout        : Integer;    // Total time to wait (ms) for operation to succeed (including retries)
+    RetryInterval  : Integer;    // Interval to wait (ms) before a retry
+    RetryRandomise : Boolean;    // Randomize RetryInterval
     Callback       : TFileOpenWaitProcedure;
     Aborted        : Boolean;
     {$IFDEF MSWIN}
     Signal         : THandle;
     {$ENDIF}
   end;
+
+var
+  FileOpenWaitNone : TFileOpenWait = (
+    Wait           : False;
+    UserData       : 0;
+    Timeout        : 0;
+    RetryInterval  : 0;
+    RetryRandomise : False;
+    Callback       : nil;
+    Aborted        : False;
+    {$IFDEF MSWIN}
+    Signal         : 0;
+    {$ENDIF}
+    );
+
+  FileOpenWaitFewSec : TFileOpenWait = (
+    Wait           : True;
+    UserData       : 0;
+    Timeout        : 2500;
+    RetryInterval  : 250;
+    RetryRandomise : True;
+    Callback       : nil;
+    Aborted        : False;
+    {$IFDEF MSWIN}
+    Signal         : 0;
+    {$ENDIF}
+    );
 
 function  FileOpenExA(
           const FileName: AnsiString;
@@ -411,9 +453,11 @@ function  FileGetDateTimeA(const FileName: AnsiString): TDateTime;
 function  FileGetDateTime(const FileName: String): TDateTime;
 
 function  FileGetDateTime2(const FileName: String): TDateTime;
+
 function  FileIsReadOnly(const FileName: String): Boolean;
 
 procedure FileDeleteEx(const FileName: String);
+
 procedure FileRenameEx(const OldFileName, NewFileName: String);
 
 function  ReadFileBufA(
@@ -435,17 +479,17 @@ function  ReadFileBuf(
           const FileCreationMode: TFileCreationMode = fcOpenExisting;
           const FileOpenWait: PFileOpenWait = nil): Integer;
 
-function  ReadFileStrA(
+function  ReadFileRawStrA(
           const FileName: AnsiString;
           const FileSharing: TFileSharing = fsDenyNone;
           const FileCreationMode: TFileCreationMode = fcOpenExisting;
           const FileOpenWait: PFileOpenWait = nil): RawByteString;
-function  ReadFileStrU(
+function  ReadFileRawStrU(
           const FileName: UnicodeString;
           const FileSharing: TFileSharing = fsDenyNone;
           const FileCreationMode: TFileCreationMode = fcOpenExisting;
           const FileOpenWait: PFileOpenWait = nil): RawByteString;
-function  ReadFileStr(
+function  ReadFileRawStr(
           const FileName: String;
           const FileSharing: TFileSharing = fsDenyNone;
           const FileCreationMode: TFileCreationMode = fcOpenExisting;
@@ -486,19 +530,19 @@ procedure WriteFileBuf(
           const FileCreationMode: TFileCreationMode = fcCreateAlways;
           const FileOpenWait: PFileOpenWait = nil);
 
-procedure WriteFileStrA(
+procedure WriteFileRawStrA(
           const FileName: AnsiString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyReadWrite;
           const FileCreationMode: TFileCreationMode = fcCreateAlways;
           const FileOpenWait: PFileOpenWait = nil);
-procedure WriteFileStrU(
+procedure WriteFileRawStrU(
           const FileName: UnicodeString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyReadWrite;
           const FileCreationMode: TFileCreationMode = fcCreateAlways;
           const FileOpenWait: PFileOpenWait = nil);
-procedure WriteFileStr(
+procedure WriteFileRawStr(
           const FileName: String;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyReadWrite;
@@ -543,25 +587,30 @@ procedure AppendFile(
           const FileCreationMode: TFileCreationMode = fcOpenAlways;
           const FileOpenWait: PFileOpenWait = nil);
 
-procedure AppendFileStrA(
+procedure AppendFileRawStrA(
           const FileName: AnsiString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyWrite;
           const FileCreationMode: TFileCreationMode = fcOpenAlways;
           const FileOpenWait: PFileOpenWait = nil);
-procedure AppendFileStrU(
+procedure AppendFileRawStrU(
           const FileName: UnicodeString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyWrite;
           const FileCreationMode: TFileCreationMode = fcOpenAlways;
           const FileOpenWait: PFileOpenWait = nil);
-procedure AppendFileStr(
+procedure AppendFileRawStr(
           const FileName: String;
           const Buf: RawByteString;
           const FileSharing: TFileSharing = fsDenyWrite;
           const FileCreationMode: TFileCreationMode = fcOpenAlways;
           const FileOpenWait: PFileOpenWait = nil);
 
+
+
+{                                                                              }
+{ Directory entries                                                            }
+{                                                                              }
 function  DirectoryEntryExistsA(const Name: AnsiString): Boolean;
 function  DirectoryEntryExistsU(const Name: UnicodeString): Boolean;
 function  DirectoryEntryExists(const Name: String): Boolean;
@@ -578,18 +627,32 @@ function  DirectoryGetDateTimeA(const DirectoryName: AnsiString): TDateTime;
 function  DirectoryGetDateTimeU(const DirectoryName: UnicodeString): TDateTime;
 function  DirectoryGetDateTime(const DirectoryName: String): TDateTime;
 
+function  GetFirstFileNameMatchingA(const FileMask: AnsiString): AnsiString;
+function  GetFirstFileNameMatchingU(const FileMask: UnicodeString): UnicodeString;
+function  GetFirstFileNameMatching(const FileMask: String): String;
+
+function  DirEntryGetAttrA(const FileName: AnsiString): Integer;
+function  DirEntryGetAttrU(const FileName: UnicodeString): Integer;
+function  DirEntryGetAttr(const FileName: String): Integer;
+
+function  DirEntryIsDirectoryA(const FileName: AnsiString): Boolean;
+function  DirEntryIsDirectoryU(const FileName: UnicodeString): Boolean;
+function  DirEntryIsDirectory(const FileName: String): Boolean;
+
+function  FileHasAttr(const FileName: String; const Attr: Word): Boolean;
+function  FileHasAttrA(const FileName: AnsiString; const Attr: Word): Boolean;
+function  FileHasAttrU(const FileName: UnicodeString; const Attr: Word): Boolean;
+
+procedure DirectoryCreateA(const DirectoryName: AnsiString);
+procedure DirectoryCreateU(const DirectoryName: UnicodeString);
 procedure DirectoryCreate(const DirectoryName: String);
 
 
+
 {                                                                              }
-{ File / Directory operations                                                  }
+{ File operations                                                              }
 {   MoveFile first attempts a rename, then a copy and delete.                  }
 {                                                                              }
-function  GetFirstFileNameMatching(const FileMask: String): String;
-function  DirEntryGetAttr(const FileName: AnsiString): Integer;
-function  DirEntryIsDirectory(const FileName: AnsiString): Boolean;
-function  FileHasAttr(const FileName: String; const Attr: Word): Boolean;
-
 procedure CopyFile(const FileName, DestName: String);
 procedure MoveFile(const FileName, DestName: String);
 function  DeleteFiles(const FileMask: String): Boolean;
@@ -609,9 +672,12 @@ type
       DriveRamDisk,
       DriveTypeUnknown);
 
-function  DriveIsValid(const Drive: AnsiChar): Boolean;
-function  DriveGetType(const Path: AnsiString): TLogicalDriveType;
-function  DriveFreeSpace(const Path: AnsiString): Int64;
+function  DriveIsValidA(const Drive: AnsiChar): Boolean;
+function  DriveIsValidW(const Drive: WideChar): Boolean;
+
+function  DriveGetTypeA(const Path: AnsiString): TLogicalDriveType;
+
+function  DriveFreeSpaceA(const Path: AnsiString): Int64;
 {$ENDIF}
 
 
@@ -668,6 +734,7 @@ resourcestring
   SFileDeleteError         = 'File delete error: %s';
   SInvalidFileAccess       = 'Invalid file access';
   SInvalidFileSharing      = 'Invalid file sharing';
+  SCannotCreateDirectory   = 'Cannot create directory: %s: %s';
 
 
 
@@ -1743,6 +1810,34 @@ begin
     end;
 end;
 
+function PathExtractFilePathA(const FilePath: AnsiString;
+         const PathSep: AnsiChar): AnsiString;
+var FileName : AnsiString;
+begin
+  DecodeFilePathA(FilePath, Result, FileName, PathSep);
+end;
+
+function PathExtractFilePathB(const FilePath: RawByteString;
+         const PathSep: AnsiChar): RawByteString;
+var FileName : RawByteString;
+begin
+  DecodeFilePathB(FilePath, Result, FileName, PathSep);
+end;
+
+function PathExtractFilePathU(const FilePath: UnicodeString;
+         const PathSep: WideChar): UnicodeString;
+var FileName : UnicodeString;
+begin
+  DecodeFilePathU(FilePath, Result, FileName, PathSep);
+end;
+
+function PathExtractFilePath(const FilePath: String;
+         const PathSep: Char): String;
+var FileName : String;
+begin
+  DecodeFilePath(FilePath, Result, FileName, PathSep);
+end;
+
 function PathExtractFileNameA(const FilePath: AnsiString;
          const PathSep: AnsiChar): AnsiString;
 var Path : AnsiString;
@@ -1963,13 +2058,13 @@ begin
       PathInclSuffix(BasePath, PathSep), PathSep);
 end;
 
-function UnixPathToWinPath(const Path: AnsiString): AnsiString;
+function UnixPathToSafeWinPathA(const Path: AnsiString): AnsiString;
 begin
   Result := StrReplaceCharA('/', '\',
-            StrReplaceCharA(['\', ':', '<', '>', '|'], '_', Path));
+              StrReplaceCharA(['\', ':', '<', '>', '|', '?', '*'], '_', Path));
 end;
 
-function WinPathToUnixPath(const Path: AnsiString): AnsiString;
+function WinPathToSafeUnixPathA(const Path: AnsiString): AnsiString;
 begin
   Result := Path;
   if WinPathHasDriveLetterA(Path) then
@@ -1977,15 +2072,17 @@ begin
       // X: -> \X
       Result[2] := Result[1];
       Result[1] := '\';
-    end else
+    end
+  else
   if StrMatchLeftA(Path, '\\.\') then
     // \\.\ -> \
-    Delete(Result, 1, 3) else
+    Delete(Result, 1, 3)
+  else
   if PathIsUNCPathA(Path) then
     // \\ -> \
     Delete(Result, 1, 1);
   Result := StrReplaceCharA('\', '/',
-            StrReplaceCharA(['/', ':', '<', '>', '|'], '_', Result));
+              StrReplaceCharA(['/', ':', '<', '>', '|', '?', '*'], '_', Result));
 end;
 
 
@@ -2040,7 +2137,7 @@ end;
 {$ELSE}
 function GetLastOSErrorMessage: String;
 var Err: LongWord;
-    Buf: Array[0..1023] of AnsiChar;
+    Buf: array[0..1023] of AnsiChar;
 begin
   Err := BaseUnix.fpgeterrno;
   FillChar(Buf, Sizeof(Buf), #0);
@@ -2328,6 +2425,8 @@ begin
       begin
         WaitOpen := True;
         WaitStart := GetTick;
+        if Assigned(FileOpenWait^.Callback) then
+          FileOpenWait^.Aborted := False;
       end;
   Retry := False;
   repeat
@@ -2422,6 +2521,8 @@ begin
       begin
         WaitOpen := True;
         WaitStart := GetTick;
+        if Assigned(FileOpenWait^.Callback) then
+          FileOpenWait^.Aborted := False;
       end;
   Retry := False;
   repeat
@@ -2516,6 +2617,8 @@ begin
       begin
         WaitOpen := True;
         WaitStart := GetTick;
+        if Assigned(FileOpenWait^.Callback) then
+          FileOpenWait^.Aborted := False;
       end;
   Retry := False;
   repeat
@@ -2963,7 +3066,7 @@ end;
 
 { ReadFileStr }
 
-function ReadFileStrA(
+function ReadFileRawStrA(
          const FileName: AnsiString;
          const FileSharing: TFileSharing;
          const FileCreationMode: TFileCreationMode;
@@ -2991,7 +3094,7 @@ begin
   end;
 end;
 
-function ReadFileStrU(
+function ReadFileRawStrU(
          const FileName: UnicodeString;
          const FileSharing: TFileSharing;
          const FileCreationMode: TFileCreationMode;
@@ -3019,7 +3122,7 @@ begin
   end;
 end;
 
-function ReadFileStr(
+function ReadFileRawStr(
          const FileName: String;
          const FileSharing: TFileSharing;
          const FileCreationMode: TFileCreationMode;
@@ -3197,7 +3300,7 @@ end;
 
 { WriteFileStr }
 
-procedure WriteFileStrA(
+procedure WriteFileRawStrA(
           const FileName: AnsiString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3211,7 +3314,7 @@ begin
   WriteFileBufA(FileName, Buf[1], BufSize, FileSharing, FileCreationMode, FileOpenWait);
 end;
 
-procedure WriteFileStrU(
+procedure WriteFileRawStrU(
           const FileName: UnicodeString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3225,7 +3328,7 @@ begin
   WriteFileBufU(FileName, Buf[1], BufSize, FileSharing, FileCreationMode, FileOpenWait);
 end;
 
-procedure WriteFileStr(
+procedure WriteFileRawStr(
           const FileName: String;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3347,7 +3450,7 @@ end;
 
 { AppendFileStr }
 
-procedure AppendFileStrA(
+procedure AppendFileRawStrA(
           const FileName: AnsiString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3361,7 +3464,7 @@ begin
   AppendFileA(FileName, Buf[1], BufSize, FileSharing, FileCreationMode, FileOpenWait);
 end;
 
-procedure AppendFileStrU(
+procedure AppendFileRawStrU(
           const FileName: UnicodeString;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3375,7 +3478,7 @@ begin
   AppendFileU(FileName, Buf[1], BufSize, FileSharing, FileCreationMode, FileOpenWait);
 end;
 
-procedure AppendFileStr(
+procedure AppendFileRawStr(
           const FileName: String;
           const Buf: RawByteString;
           const FileSharing: TFileSharing;
@@ -3630,19 +3733,47 @@ begin
     end;
 end;
 
-procedure DirectoryCreate(const DirectoryName: String);
-begin
-  if DirectoryName = '' then
-    raise EFileError.Create(feInvalidParameter, SInvalidPath);
-  if not CreateDir(DirectoryName) then
-    raise EFileError.Create(feFileError, SCannotCreateFile);
-end;
-
 
 
 {                                                                              }
 { File operations                                                              }
 {                                                                              }
+function GetFirstFileNameMatchingA(const FileMask: AnsiString): AnsiString;
+var SRec : TSearchRec;
+begin
+  Result := '';
+  if FindFirstA(FileMask, faAnyFile, SRec) = 0 then
+    try
+      repeat
+        if SRec.Attr and faDirectory = 0 then
+          begin
+            Result := PathExtractFilePathA(FileMask) + ToAnsiString(SRec.Name);
+            exit;
+          end;
+      until FindNext(SRec) <> 0;
+    finally
+      FindClose(SRec);
+    end;
+end;
+
+function GetFirstFileNameMatchingU(const FileMask: UnicodeString): UnicodeString;
+var SRec : TSearchRec;
+begin
+  Result := '';
+  if FindFirstU(FileMask, faAnyFile, SRec) = 0 then
+    try
+      repeat
+        if SRec.Attr and faDirectory = 0 then
+          begin
+            Result := PathExtractFilePathU(FileMask) + SRec.Name;
+            exit;
+          end;
+      until FindNext(SRec) <> 0;
+    finally
+      FindClose(SRec);
+    end;
+end;
+
 function GetFirstFileNameMatching(const FileMask: String): String;
 var SRec : TSearchRec;
 begin
@@ -3652,7 +3783,7 @@ begin
       repeat
         if SRec.Attr and faDirectory = 0 then
           begin
-            Result := ExtractFilePath(FileMask) + SRec.Name;
+            Result := PathExtractFilePath(FileMask) + SRec.Name;
             exit;
           end;
       until FindNext(SRec) <> 0;
@@ -3661,14 +3792,16 @@ begin
     end;
 end;
 
-function DirEntryGetAttr(const FileName: AnsiString): Integer;
+function DirEntryGetAttrA(const FileName: AnsiString): Integer;
 var SRec : TSearchRec;
 begin
   if (FileName = '') or WinPathIsDriveLetterA(FileName) then
-    Result := -1 else
+    Result := -1
+  else
   if PathIsRootA(FileName) then
-    Result := $0800 or faDirectory else
-  if FindFirst(ToStringA(PathExclSuffixA(FileName)), faAnyFile, SRec) = 0 then
+    Result := faDirectory
+  else
+  if FindFirstA(PathExclSuffixA(FileName), faAnyFile, SRec) = 0 then
     begin
       Result := SRec.Attr;
       FindClose(SRec);
@@ -3677,14 +3810,88 @@ begin
     Result := -1;
 end;
 
-function DirEntryIsDirectory(const FileName: AnsiString): Boolean;
+function DirEntryGetAttrU(const FileName: UnicodeString): Integer;
+var SRec : TSearchRec;
+begin
+  if (FileName = '') or WinPathIsDriveLetterU(FileName) then
+    Result := -1
+  else
+  if PathIsRootU(FileName) then
+    Result := faDirectory
+  else
+  if FindFirstU(PathExclSuffixU(FileName), faAnyFile, SRec) = 0 then
+    begin
+      Result := SRec.Attr;
+      FindClose(SRec);
+    end
+  else
+    Result := -1;
+end;
+
+function DirEntryGetAttr(const FileName: String): Integer;
+var SRec : TSearchRec;
+begin
+  if (FileName = '') or WinPathIsDriveLetter(FileName) then
+    Result := -1
+  else
+  if PathIsRoot(FileName) then
+    Result := faDirectory
+  else
+  if FindFirst(PathExclSuffix(FileName), faAnyFile, SRec) = 0 then
+    begin
+      Result := SRec.Attr;
+      FindClose(SRec);
+    end
+  else
+    Result := -1;
+end;
+
+function DirEntryIsDirectoryA(const FileName: AnsiString): Boolean;
 var SRec : TSearchRec;
 begin
   if (FileName = '') or WinPathIsDriveLetterA(FileName) then
-    Result := False else
+    Result := False
+  else
   if PathIsRootA(FileName) then
-    Result := True else
-  if FindFirst(ToStringA(PathExclSuffixA(FileName)), faDirectory, SRec) = 0 then
+    Result := True
+  else
+  if FindFirstA(PathExclSuffixA(FileName), faDirectory, SRec) = 0 then
+    begin
+      Result := SRec.Attr and faDirectory <> 0;
+      FindClose(SRec);
+    end
+  else
+    Result := False;
+end;
+
+function DirEntryIsDirectoryU(const FileName: UnicodeString): Boolean;
+var SRec : TSearchRec;
+begin
+  if (FileName = '') or WinPathIsDriveLetterU(FileName) then
+    Result := False
+  else
+  if PathIsRootU(FileName) then
+    Result := True
+  else
+  if FindFirstU(PathExclSuffixU(FileName), faDirectory, SRec) = 0 then
+    begin
+      Result := SRec.Attr and faDirectory <> 0;
+      FindClose(SRec);
+    end
+  else
+    Result := False;
+end;
+
+function DirEntryIsDirectory(const FileName: String): Boolean;
+var SRec : TSearchRec;
+begin
+  if (FileName = '') or WinPathIsDriveLetter(FileName) then
+    Result := False
+  else
+  if PathIsRoot(FileName) then
+    Result := True
+  else
+  if FindFirst(PathExclSuffix(FileName), faDirectory, SRec) = 0 then
     begin
       Result := SRec.Attr and faDirectory <> 0;
       FindClose(SRec);
@@ -3701,13 +3908,59 @@ begin
   Result := (A >= 0) and (A and Attr <> 0);
 end;
 
+function FileHasAttrA(const FileName: AnsiString; const Attr: Word): Boolean;
+var A : Integer;
+begin
+  A := FileGetAttr(ToStringA(FileName));
+  Result := (A >= 0) and (A and Attr <> 0);
+end;
+
+function FileHasAttrU(const FileName: UnicodeString; const Attr: Word): Boolean;
+var A : Integer;
+begin
+  A := FileGetAttr(ToStringU(FileName));
+  Result := (A >= 0) and (A and Attr <> 0);
+end;
+
+procedure DirectoryCreateA(const DirectoryName: AnsiString);
+begin
+  if DirectoryName = '' then
+    raise EFileError.Create(feInvalidParameter, SInvalidPath);
+  if not CreateDir(ToStringA(DirectoryName)) then
+    raise EFileError.CreateFmt(feDirectoryCreateError, SCannotCreateDirectory,
+        [GetLastOSErrorMessage, DirectoryName]);
+end;
+
+procedure DirectoryCreateU(const DirectoryName: UnicodeString);
+begin
+  if DirectoryName = '' then
+    raise EFileError.Create(feInvalidParameter, SInvalidPath);
+  if not CreateDir(ToStringU(DirectoryName)) then
+    raise EFileError.CreateFmt(feDirectoryCreateError, SCannotCreateDirectory,
+        [GetLastOSErrorMessage, DirectoryName]);
+end;
+
+procedure DirectoryCreate(const DirectoryName: String);
+begin
+  if DirectoryName = '' then
+    raise EFileError.Create(feInvalidParameter, SInvalidPath);
+  if not CreateDir(DirectoryName) then
+    raise EFileError.CreateFmt(feDirectoryCreateError, SCannotCreateDirectory,
+        [GetLastOSErrorMessage, DirectoryName]);
+end;
+
+
+
+{                                                                              }
+{ File operations                                                              }
+{                                                                              }
 procedure CopyFile(const FileName, DestName: String);
 const
-  BufferSize = 16384;
+  BufferSize = 65536;
 var DestFileName : String;
     SourceHandle : Integer;
     DestHandle   : Integer;
-    Buffer       : Array[0..BufferSize - 1] of Byte;
+    Buffer       : array[0..BufferSize - 1] of Byte;
     BufferUsed   : Integer;
 begin
   DestFileName := ExpandFileName(DestName);
@@ -3745,8 +3998,8 @@ begin
     begin
       Attr := FileGetAttr(FileName);
       if (Attr < 0) or (Attr and faReadOnly <> 0) then
-        raise EFileError.CreateFmt(feFileMoveError, SCannotMoveFile, [GetLastOSErrorMessage,
-            FileName]);
+        raise EFileError.CreateFmt(feFileMoveError, SCannotMoveFile,
+            [GetLastOSErrorMessage, FileName]);
       CopyFile(FileName, Destination);
       DeleteFile(FileName);
     end;
@@ -3782,7 +4035,7 @@ end;
 {                                                                              }
 { Logical Drive functions                                                      }
 {                                                                              }
-function DriveIsValid(const Drive: AnsiChar): Boolean;
+function DriveIsValidA(const Drive: AnsiChar): Boolean;
 var D : AnsiChar;
 begin
   D := UpCase(Drive);
@@ -3792,9 +4045,18 @@ begin
   Result := IsBitSet32(GetLogicalDrives, Ord(D) - Ord('A'));
 end;
 
-function DriveGetType(const Path: AnsiString): TLogicalDriveType;
+function DriveIsValidW(const Drive: WideChar): Boolean;
 begin
-  Case GetDriveTypeA(PAnsiChar(Path)) of
+  if (Ord(Drive) < Ord('A')) or
+     (Ord(Drive) > Ord('z')) then
+    Result := False
+  else
+    Result := DriveIsValidA(AnsiChar(Drive));
+end;
+
+function DriveGetTypeA(const Path: AnsiString): TLogicalDriveType;
+begin
+  case GetDriveTypeA(PAnsiChar(Path)) of
     DRIVE_REMOVABLE : Result := DriveRemovable;
     DRIVE_FIXED     : Result := DriveFixed;
     DRIVE_REMOTE    : Result := DriveRemote;
@@ -3805,11 +4067,12 @@ begin
   end;
 end;
 
-function DriveFreeSpace(const Path: AnsiString): Int64;
+function DriveFreeSpaceA(const Path: AnsiString): Int64;
 var D: Byte;
 begin
   if WinPathHasDriveLetterA(Path) then
-    D := Ord(UpCase(PAnsiChar(Path)^)) - Ord('A') + 1 else
+    D := Ord(UpCase(PAnsiChar(Path)^)) - Ord('A') + 1
+  else
   if PathIsUNCPathA(Path) then
     begin
       Result := -1;
@@ -4042,8 +4305,8 @@ begin
   Assert(DirectoryExpandA('C:', '\X', '\') = 'C:\', 'DirectoryExpand');
   Assert(DirectoryExpandA('C:\', '\X', '\') = 'C:\', 'DirectoryExpand');
 
-  Assert(UnixPathToWinPath('/c/d.f') = '\c\d.f', 'UnixPathToWinPath');
-  Assert(WinPathToUnixPath('\c\d.f') = '/c/d.f', 'WinPathToUnixPath');
+  Assert(UnixPathToSafeWinPathA('/c/d.f') = '\c\d.f', 'UnixPathToWinPath');
+  Assert(WinPathToSafeUnixPathA('\c\d.f') = '/c/d.f', 'WinPathToUnixPath');
 
   {$IFDEF MSWIN}
   Assert(PathExtractFileNameA('c:\test\abc\file.txt') = 'file.txt');
@@ -4054,14 +4317,14 @@ begin
     DirectoryCreate(TempPath);
   Assert(DirectoryExists(TempPath));
 
-  WriteFileStr(TempFilename, 'FileUtilsTest', fsExclusive, fcCreateAlways, nil);
+  WriteFileRawStr(TempFilename, 'FileUtilsTest', fsExclusive, fcCreateAlways, nil);
   Assert(FileExists(TempFilename));
   Assert(FileGetSize(TempFilename) = 13);
-  Assert(ReadFileStr(TempFilename, fsDenyNone, fcOpenExisting, nil) = 'FileUtilsTest');
+  Assert(ReadFileRawStr(TempFilename, fsDenyNone, fcOpenExisting, nil) = 'FileUtilsTest');
 
-  AppendFileStr(TempFilename, '123', fsExclusive, fcOpenExisting, nil);
+  AppendFileRawStr(TempFilename, '123', fsExclusive, fcOpenExisting, nil);
   Assert(FileGetSize(TempFilename) = 16);
-  Assert(ReadFileStr(TempFilename, fsDenyNone, fcOpenExisting, nil) = 'FileUtilsTest123');
+  Assert(ReadFileRawStr(TempFilename, fsDenyNone, fcOpenExisting, nil) = 'FileUtilsTest123');
 
   FileDeleteEx(TempFilename);
   Assert(not FileExists(TempFilename));

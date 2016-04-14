@@ -12691,7 +12691,7 @@ end;
 procedure Test;
 begin
   SetRoundMode(rmNearest);
-  {.IFNDEF WIN32}
+
   Test_Decimal32;
   Test_Decimal64;
   Test_Decimal128;
@@ -12701,7 +12701,6 @@ begin
   Test_SDecimal64;
   Test_SDecimal128;
   Test_SHugeDecimal;
-  {.ENDIF}
 end;
 {$ENDIF}
 

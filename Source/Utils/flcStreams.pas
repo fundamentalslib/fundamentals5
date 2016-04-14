@@ -708,9 +708,9 @@ procedure AppendWideStrToFile(const FileName: String; const S: WideString);
 type
   TRawByteStringWriter = class(AWriterEx)
   protected
-    FDataStr : RawByteString;
-    FSize    : Integer;
-    FPos     : Integer;
+    FDataStr  : RawByteString;
+    FDataSize : Integer;
+    FPos      : Integer;
 
     function  GetPosition: Int64; override;
     procedure SetPosition(const Position: Int64); override;
@@ -722,7 +722,7 @@ type
 
   public
     property  DataString: RawByteString read FDataStr;
-    property  DataSize: Integer read FSize;
+    property  DataSize: Integer read FDataSize;
     property  AsStringB: RawByteString read GetAsStringB write SetAsStringB;
 
     function  Write(const Buffer; const Size: Integer): Integer; override;
@@ -740,9 +740,9 @@ type
 type
   TUnicodeStringWriter = class(AWriterEx)
   protected
-    FDataStr : WideString;
-    FSize    : Integer;
-    FPos     : Integer;
+    FDataStr  : UnicodeString;
+    FDataSize : Integer;
+    FPos      : Integer;
 
     function  GetPosition: Int64; override;
     procedure SetPosition(const Position: Int64); override;
@@ -753,13 +753,15 @@ type
     procedure SetAsStringU(const S: UnicodeString); override;
 
   public
-    property  DataString: WideString read FDataStr;
-    property  DataSize: Integer read FSize;
+    property  DataString: UnicodeString read FDataStr;
+    property  DataSize: Integer read FDataSize;
     property  AsStringU: UnicodeString read GetAsStringU write SetAsStringU;
 
     function  Write(const Buffer; const Size: Integer): Integer; override;
     procedure WriteStrA(const Buffer: AnsiString); override;
+    procedure WriteStrB(const Buffer: RawByteString); override;
     procedure WriteStrW(const Buffer: WideString); override;
+    procedure WriteStrU(const Buffer: UnicodeString); override;
     procedure WriteByte(const V: Byte); override;
     procedure WriteWord(const V: Word); override;
   end;
@@ -1914,6 +1916,9 @@ begin
       exit;
     end;
   FirstNewLineCharsFromEOLTypes(EOLTypes, NewLineChars);
+  {$IFDEF DELPHI7}
+  Fin := False; // Supress incorrect warning
+  {$ENDIF}
   repeat
     I := Locate(NewLineChars^, False, MaxLineLength);
     if I < 0 then
@@ -3302,13 +3307,13 @@ end;
 
 function TRawByteStringWriter.GetSize: Int64;
 begin
-  Result := FSize;
+  Result := FDataSize;
 end;
 
 procedure TRawByteStringWriter.SetSize(const Size: Integer);
 var L : Integer;
 begin
-  if Size = FSize then
+  if Size = FDataSize then
     exit;
   L := Length(FDataStr);
   if Size > L then
@@ -3322,7 +3327,7 @@ begin
         L := Size + (Size shr 2);
       SetLength(FDataStr, L);
     end;
-  FSize := Size;
+  FDataSize := Size;
 end;
 
 procedure TRawByteStringWriter.SetSize(const Size: Int64);
@@ -3336,17 +3341,17 @@ function TRawByteStringWriter.GetAsStringB: RawByteString;
 var L : Integer;
 begin
   L := Length(FDataStr);
-  if L = FSize then
+  if L = FDataSize then
     Result := FDataStr
   else
-    Result := Copy(FDataStr, 1, FSize);
+    Result := Copy(FDataStr, 1, FDataSize);
 end;
 
 procedure TRawByteStringWriter.SetAsStringB(const S: RawByteString);
 begin
   FDataStr := S;
-  FSize := Length(S);
-  FPos := FSize;
+  FDataSize := Length(S);
+  FPos := FDataSize;
 end;
 
 function TRawByteStringWriter.Write(const Buffer; const Size: Integer): Integer;
@@ -3360,7 +3365,7 @@ begin
     end;
   I := FPos;
   J := I + Size;
-  if J > FSize then
+  if J > FDataSize then
     SetSize(J);
   P := Pointer(FDataStr);
   Inc(P, I);
@@ -3380,7 +3385,7 @@ var I, J : Integer;
 begin
   I := FPos;
   J := I + 1;
-  if J > FSize then
+  if J > FDataSize then
     SetSize(J);
   P := Pointer(FDataStr);
   Inc(P, I);
@@ -3407,13 +3412,13 @@ end;
 
 function TUnicodeStringWriter.GetSize: Int64;
 begin
-  Result := FSize;
+  Result := FDataSize;
 end;
 
 procedure TUnicodeStringWriter.SetSize(const Size: Integer);
 var L : Integer;
 begin
-  if Size = FSize then
+  if Size = FDataSize then
     exit;
   L := Length(FDataStr) * Sizeof(WideChar);
   if Size > L then
@@ -3426,7 +3431,7 @@ begin
         L := Size + (Size shr 2); // if grow to > 16 then pre-allocate 1/4
       SetLength(FDataStr, (L + 1) div Sizeof(WideChar));
     end;
-  FSize := Size;
+  FDataSize := Size;
 end;
 
 procedure TUnicodeStringWriter.SetSize(const Size: Int64);
@@ -3440,17 +3445,17 @@ function TUnicodeStringWriter.GetAsStringU: UnicodeString;
 var L : Integer;
 begin
   L := Length(FDataStr) * Sizeof(WideChar);
-  if L = FSize then
+  if L = FDataSize then
     Result := FDataStr
   else
-    Result := Copy(FDataStr, 1, FSize div Sizeof(WideChar));
+    Result := Copy(FDataStr, 1, FDataSize div Sizeof(WideChar));
 end;
 
 procedure TUnicodeStringWriter.SetAsStringU(const S: UnicodeString);
 begin
   FDataStr := S;
-  FSize := Length(S) * Sizeof(WideChar);
-  FPos := FSize;
+  FDataSize := Length(S) * Sizeof(WideChar);
+  FPos := FDataSize;
 end;
 
 function TUnicodeStringWriter.Write(const Buffer; const Size: Integer): Integer;
@@ -3464,7 +3469,7 @@ begin
     end;
   I := FPos;
   J := I + Size;
-  if J > FSize then
+  if J > FDataSize then
     SetSize(J);
   P := Pointer(FDataStr);
   Inc(P, I);
@@ -3478,7 +3483,17 @@ begin
   Write(Pointer(Buffer)^, Length(Buffer));
 end;
 
+procedure TUnicodeStringWriter.WriteStrB(const Buffer: RawByteString);
+begin
+  Write(Pointer(Buffer)^, Length(Buffer));
+end;
+
 procedure TUnicodeStringWriter.WriteStrW(const Buffer: WideString);
+begin
+  Write(Pointer(Buffer)^, Length(Buffer) * Sizeof(WideChar));
+end;
+
+procedure TUnicodeStringWriter.WriteStrU(const Buffer: UnicodeString);
 begin
   Write(Pointer(Buffer)^, Length(Buffer) * Sizeof(WideChar));
 end;
@@ -3489,7 +3504,7 @@ var I, J : Integer;
 begin
   I := FPos;
   J := I + 1;
-  if J > FSize then
+  if J > FDataSize then
     SetSize(J);
   P := Pointer(FDataStr);
   Inc(P, I);
@@ -3503,7 +3518,7 @@ var I, J : Integer;
 begin
   I := FPos;
   J := I + 2;
-  if J > FSize then
+  if J > FDataSize then
     SetSize(J);
   P := Pointer(FDataStr);
   Inc(P, I);

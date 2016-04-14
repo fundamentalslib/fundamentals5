@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStrings.pas                                           }
-{   File version:     5.62                                                     }
+{   File version:     5.63                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
@@ -105,6 +105,7 @@
 {   2015/03/13  4.60  RawByteString functions.                                 }
 {   2015/04/11  4.61  UnicodeString functions.                                 }
 {   2016/01/09  5.62  Revised for Fundamentals 5.                              }
+{   2016/04/13  5.63  Change pattern match functions to RawByteString.         }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1687,9 +1688,9 @@ type
       moDeterministic,
       moNonGreedy);
 
-function  MatchQuantSeq(var MatchPos: Integer;
+function  MatchQuantSeqB(var MatchPos: Integer;
           const MatchSeq: array of CharSet; const Quant: array of TMatchQuantifier;
-          const S: AnsiString; const MatchOptions: TMatchQuantSeqOptions = [];
+          const S: RawByteString; const MatchOptions: TMatchQuantSeqOptions = [];
           const StartIndex: Integer = 1; const StopIndex: Integer = -1): Boolean;
 {$ENDIF}
 
@@ -1702,7 +1703,7 @@ function  MatchQuantSeq(var MatchPos: Integer;
 {     ? = matches one character (or zero if at end of mask)                    }
 {     * = matches zero or more characters                                      }
 {                                                                              }
-function  MatchFileMaskA(const Mask, Key: AnsiString;
+function  MatchFileMaskB(const Mask, Key: RawByteString;
           const AsciiCaseSensitive: Boolean = False): Boolean;
 
 
@@ -25769,8 +25770,8 @@ end;
 { Abbreviated regular expression matcher                                       }
 {                                                                              }
 {$IFNDEF CLR}
-function MatchQuantSeq(var MatchPos: Integer; const MatchSeq: array of CharSet;
-    const Quant: array of TMatchQuantifier; const S: AnsiString;
+function MatchQuantSeqB(var MatchPos: Integer; const MatchSeq: array of CharSet;
+    const Quant: array of TMatchQuantifier; const S: RawByteString;
     const MatchOptions: TMatchQuantSeqOptions;
     const StartIndex: Integer; const StopIndex: Integer): Boolean;
 
@@ -25809,7 +25810,8 @@ var Stop          : Integer;
         begin
           while (SPos <= L) and MatchAndAdvance do ;
           Result := False;
-        end else
+        end
+      else
       if NonGreedy then
         repeat
           Result := MatchAt(MPos + 1, SPos, MatchPos);
@@ -25852,17 +25854,20 @@ var Stop          : Integer;
             Result := MatchAny;
             if Result then
               exit;
-          end else
+          end
+        else
         if Q = mqOptional then
           if Deterministic then
-            MatchAndAdvance else
+            MatchAndAdvance
+          else
             begin
               if NonGreedy then
                 begin
                   Result := MatchAt(MPos + 1, SPos, MatchPos);
                   if Result or not MatchAndSetResult(Result) then
                     exit;
-                end else
+                end
+              else
                 begin
                   Result := (MatchAndAdvance and MatchAt(MPos + 1, SPos, MatchPos)) or
                             MatchAt(MPos + 1, SPos, MatchPos);
@@ -25901,7 +25906,7 @@ end;
 {                                                                              }
 { MatchFileMask                                                                }
 {                                                                              }
-function MatchFileMaskA(const Mask, Key: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
+function MatchFileMaskB(const Mask, Key: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 var ML, KL : Integer;
 
   function MatchAt(MaskPos, KeyPos: Integer): Boolean;
@@ -25938,7 +25943,8 @@ var ML, KL : Integer;
             begin
               Result := False;
               exit;
-            end else
+            end
+          else
             begin
               Inc(MaskPos);
               Inc(KeyPos);
@@ -26053,7 +26059,7 @@ var I, L : Integer;
           Inc(I);
           Result := '\';
         end else
-        if not MatchQuantSeq(J, [['x'], csHexDigit, csHexDigit],
+        if not MatchQuantSeqB(J, [['x'], csHexDigit, csHexDigit],
             [mqOnce, mqOnce, mqOptional], S, [moDeterministic], I + 1) then
           begin
             case S[I + 1] of
@@ -28761,72 +28767,72 @@ begin
 
   { MatchQuantSeq                                                              }
   {$IFNDEF CLR}
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOnce], 'a', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOnce], 'a', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqAny], 'a', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqAny], 'a', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqLeastOnce], 'a', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqLeastOnce], 'a', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOptional], 'a', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOptional], 'a', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOnce], 'ab', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOnce], 'ab', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqAny], 'ab', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqAny], 'ab', []));
   Assert(I = 2);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqLeastOnce], 'ab', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqLeastOnce], 'ab', []));
   Assert(I = 2);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOptional], 'ab', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOptional], 'ab', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOnce], 'abc', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOnce], 'abc', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqAny], 'abc', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqAny], 'abc', []));
   Assert(I = 3);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqLeastOnce], 'abc', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqLeastOnce], 'abc', []));
   Assert(I = 3);
-  Assert(MatchQuantSeq(I, [csAlpha], [mqOptional], 'abc', []));
+  Assert(MatchQuantSeqB(I, [csAlpha], [mqOptional], 'abc', []));
   Assert(I = 1);
-  Assert(not MatchQuantSeq(I, [csAlpha, csNumeric], [mqOnce, mqOnce], 'ab12', []));
+  Assert(not MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOnce, mqOnce], 'ab12', []));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqAny, mqOnce], 'abc123', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqAny, mqOnce], 'abc123', []));
   Assert(I = 4);
-  Assert(not MatchQuantSeq(I, [csAlpha, csNumeric], [mqLeastOnce, mqAny], '123', []));
+  Assert(not MatchQuantSeqB(I, [csAlpha, csNumeric], [mqLeastOnce, mqAny], '123', []));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqOptional, mqAny], '123abc', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOptional, mqAny], '123abc', []));
   Assert(I = 3);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqOnce, mqAny], 'a123', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOnce, mqAny], 'a123', []));
   Assert(I = 4);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqAny, mqAny], 'abc123', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqAny, mqAny], 'abc123', []));
   Assert(I = 6);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqLeastOnce, mqOnce], 'ab123', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqLeastOnce, mqOnce], 'ab123', []));
   Assert(I = 3);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqOptional, mqOptional], '1', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOptional, mqOptional], '1', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqOptional, mqOptional], 'a', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOptional, mqOptional], 'a', []));
   Assert(I = 1);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric], [mqOnce, mqOptional], 'ab', []));
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOnce, mqOptional], 'ab', []));
   Assert(I = 1);
-  Assert(not MatchQuantSeq(I, [csAlpha, csNumeric], [mqOptional, mqOnce], 'ab', []));
+  Assert(not MatchQuantSeqB(I, [csAlpha, csNumeric], [mqOptional, mqOnce], 'ab', []));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
                           [mqLeastOnce, mqAny, mqOptional, mqOnce], 'a1b2', []));
   Assert(I = 4);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
                           [mqAny, mqOnce, mqOptional, mqOnce], 'a1b2cd3efg4', []));
   Assert(I = 4);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric], [mqAny, mqOptional], 'a1', [moDeterministic]));
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric], [mqAny, mqOptional], 'a1', [moDeterministic]));
   Assert(I = 2);
-  Assert(not MatchQuantSeq(I, [csAlphaNumeric, csNumeric], [mqAny, mqOnce], 'a1', [moDeterministic]));
+  Assert(not MatchQuantSeqB(I, [csAlphaNumeric, csNumeric], [mqAny, mqOnce], 'a1', [moDeterministic]));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlpha, csNumeric, csAlpha, csAlphaNumeric],
+  Assert(MatchQuantSeqB(I, [csAlpha, csNumeric, csAlpha, csAlphaNumeric],
                           [mqAny, mqOnce, mqAny, mqLeastOnce], 'a1b2cd3efg4', [moDeterministic]));
   Assert(I = 11);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric], [mqAny, mqOptional], 'a1', [moNonGreedy]));
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric], [mqAny, mqOptional], 'a1', [moNonGreedy]));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric], [mqAny, mqLeastOnce], 'a1', [moNonGreedy]));
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric], [mqAny, mqLeastOnce], 'a1', [moNonGreedy]));
   Assert(I = 2);
-  Assert(not MatchQuantSeq(I, [csAlphaNumeric, csNumeric], [mqAny, mqOnce], 'abc', [moNonGreedy]));
+  Assert(not MatchQuantSeqB(I, [csAlphaNumeric, csNumeric], [mqAny, mqOnce], 'abc', [moNonGreedy]));
   Assert(I = 0);
-  Assert(MatchQuantSeq(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
+  Assert(MatchQuantSeqB(I, [csAlphaNumeric, csNumeric, csAlpha, csNumeric],
                           [mqAny, mqOnce, mqOnce, mqLeastOnce], 'a1bc2de3g4', [moNonGreedy]));
   Assert(I = 10);
   {$ENDIF}
@@ -29000,15 +29006,15 @@ begin
   {$ENDIF}
 
   { MatchFileMask                                                        }
-  Assert(MatchFileMaskA('*', 'A'), 'MatchFileMask');
-  Assert(MatchFileMaskA('?', 'A'), 'MatchFileMask');
-  Assert(MatchFileMaskA('', 'A'), 'MatchFileMask');
-  Assert(MatchFileMaskA('', ''), 'MatchFileMask');
-  Assert(not MatchFileMaskA('X', ''), 'MatchFileMask');
-  Assert(MatchFileMaskA('A?', 'A'), 'MatchFileMask');
-  Assert(MatchFileMaskA('A?', 'AB'), 'MatchFileMask');
-  Assert(MatchFileMaskA('A*B*C', 'ACBDC'), 'MatchFileMask');
-  Assert(MatchFileMaskA('A*B*?', 'ACBDC'), 'MatchFileMask');
+  Assert(MatchFileMaskB('*', 'A'), 'MatchFileMask');
+  Assert(MatchFileMaskB('?', 'A'), 'MatchFileMask');
+  Assert(MatchFileMaskB('', 'A'), 'MatchFileMask');
+  Assert(MatchFileMaskB('', ''), 'MatchFileMask');
+  Assert(not MatchFileMaskB('X', ''), 'MatchFileMask');
+  Assert(MatchFileMaskB('A?', 'A'), 'MatchFileMask');
+  Assert(MatchFileMaskB('A?', 'AB'), 'MatchFileMask');
+  Assert(MatchFileMaskB('A*B*C', 'ACBDC'), 'MatchFileMask');
+  Assert(MatchFileMaskB('A*B*?', 'ACBDC'), 'MatchFileMask');
 
   { Escaping                                                                   }
   Assert(StrHexEscapeB('ABCDE', ['C', 'D'], '\\', '//', False, True) =

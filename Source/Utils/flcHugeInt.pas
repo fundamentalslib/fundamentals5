@@ -191,6 +191,7 @@ procedure HugeWordSwap(var A, B: HugeWord);
 
 function  HugeWordIsZero(const A: HugeWord): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  HugeWordIsOne(const A: HugeWord): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  HugeWordIsTwo(const A: HugeWord): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  HugeWordIsOdd(const A: HugeWord): Boolean;
 function  HugeWordIsEven(const A: HugeWord): Boolean;
 
@@ -1104,6 +1105,17 @@ begin
     Result := False
   else
     Result := PLongWord(A.Data)^ = 1;
+end;
+
+{ HugeWord IsTwo                                                               }
+{   Pre:   A normalised                                                        }
+{   Post:  Result is True if A is two                                          }
+function HugeWordIsTwo(const A: HugeWord): Boolean;
+begin
+  if A.Used <> 1 then
+    Result := False
+  else
+    Result := PLongWord(A.Data)^ = 2;
 end;
 
 { HugeWord IsOdd                                                               }
@@ -2668,6 +2680,11 @@ begin
     end;
   if B = 1 then
     exit;
+  if B = 2 then
+    begin
+      HugeWordShl1(A);
+      exit;
+    end;
   P := A.Data;
   C := Int64(P^) * B;
   P^ := Int64Rec(C).Lo;
@@ -2676,7 +2693,8 @@ begin
       Inc(P);
       C := C shr 32;
       C := C + (Int64(P^) * B);
-      P^ := Int64Rec(C).Lo;
+      // P^ := Int64Rec(C).Lo;
+      P^ := LongWord(C);
     end;
   C := C shr 32;
   if C > 0 then
@@ -2684,7 +2702,8 @@ begin
       HugeWordSetSize(A, L + 1);
       P := A.Data;
       Inc(P, L);
-      P^ := Int64Rec(C).Lo;
+      // P^ := Int64Rec(C).Lo;
+      P^ := LongWord(C);
     end;
 end;
 
@@ -2711,7 +2730,8 @@ begin
       Inc(P);
       C := C shr 32;
       C := C + (Int64(P^) * B);
-      P^ := Int64Rec(C).Lo;
+      // P^ := Int64Rec(C).Lo;
+      P^ := LongWord(C);
     end;
   C := C shr 32;
   if C > 0 then
@@ -2719,7 +2739,8 @@ begin
       HugeWordSetSize(A, L + 1);
       P := A.Data;
       Inc(P, L);
-      P^ := Int64Rec(C).Lo;
+      // P^ := Int64Rec(C).Lo;
+      P^ := LongWord(C);
     end;
 end;
 
@@ -2775,6 +2796,36 @@ begin
     begin
       HugeWordAssignZero(Res);
       exit;
+    end;
+  // handle one and two
+  if (L = 1) or (M = 1) then
+    begin
+      if L = 1 then
+        if HugeWordIsOne(A) then
+          begin
+            HugeWordAssign(Res, B);
+            exit;
+          end;
+      if M = 1 then
+        if HugeWordIsOne(B) then
+          begin
+            HugeWordAssign(Res, A);
+            exit;
+          end;
+      if L = 1 then
+        if HugeWordIsTwo(A) then
+          begin
+            HugeWordAssign(Res, B);
+            HugeWordShl1(Res);
+            exit;
+          end;
+      if M = 1 then
+        if HugeWordIsTwo(B) then
+          begin
+            HugeWordAssign(Res, A);
+            HugeWordShl1(Res);
+            exit;
+          end;
     end;
   // multiply
   HugeWordAssignZero(Res);
@@ -2873,6 +2924,36 @@ begin
       HugeWordAssignZero(Res);
       exit;
     end;
+  // handle one and two
+  if (L = 1) or (M = 1) then
+    begin
+      if L = 1 then
+        if HugeWordIsOne(A) then
+          begin
+            HugeWordAssign(Res, B);
+            exit;
+          end;
+      if M = 1 then
+        if HugeWordIsOne(B) then
+          begin
+            HugeWordAssign(Res, A);
+            exit;
+          end;
+      if L = 1 then
+        if HugeWordIsTwo(A) then
+          begin
+            HugeWordAssign(Res, B);
+            HugeWordShl1(Res);
+            exit;
+          end;
+      if M = 1 then
+        if HugeWordIsTwo(B) then
+          begin
+            HugeWordAssign(Res, A);
+            HugeWordShl1(Res);
+            exit;
+          end;
+    end;
   // multiply
   HugeWordAssignZero(Res);
   HugeWordInitHugeWord(D, B);
@@ -2907,10 +2988,6 @@ begin
     HugeWordMultiply_ShiftAdd_Safe(Res, A, B)
   else
     HugeWordMultiply_ShiftAdd_Unsafe(Res, A, B);
-end;
-
-procedure HugeWordMultiply_Karatsuba(var Res: HugeWord; const A, B: HugeWord);
-begin
 end;
 
 
@@ -2998,7 +3075,7 @@ begin
     begin
       // Shift high bit of dividend D into low bit of remainder R
       HugeWordShl1(R);
-      if HugeWordIsBitSet(A, F - C) then
+      if HugeWordIsBitSet_IR(A, F - C) then
         HugeWordSetBit0(R);
       // Shift quotient
       HugeWordShl1(Q);
