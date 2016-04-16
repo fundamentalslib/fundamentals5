@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.28                                                     }
+{   File version:     5.29                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2016, David J Butler                  }
@@ -66,6 +66,7 @@
 {   2012/08/26  4.26  UnicodeString functions.                                 }
 {   2015/03/13  4.27  RawByteString functions.                                 }
 {   2016/01/09  5.28  Revised for Fundamentals 5.                              }
+{   2016/04/16  5.29  Changes for FreePascal 3.0.0.                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -74,6 +75,7 @@
 {   Delphi XE7 Win64                    5.28  2016/01/09                       }
 {   Delphi 10 Win32                     5.28  2016/01/09                       }
 {   Delphi 10 Win64                     5.28  2016/01/09                       }
+{   FreePascal 3.0.0 Win32              5.29  2016/04/16                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -8585,7 +8587,6 @@ end;
 {                                                                              }
 { Dynamic array sort                                                           }
 {                                                                              }
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: ByteArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8633,68 +8634,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: ByteArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Byte;
-      P, Q    : PByte;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: WordArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8742,68 +8682,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: WordArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Word;
-      P, Q    : PWord;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: LongWordArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8851,68 +8730,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: LongWordArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : LongWord;
-      P, Q    : PLongWord;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: NativeUIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8960,68 +8778,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: NativeUIntArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : NativeUInt;
-      P, Q    : PNativeUInt;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: ShortIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9069,68 +8826,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: ShortIntArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : ShortInt;
-      P, Q    : PShortInt;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: SmallIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9178,68 +8874,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: SmallIntArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : SmallInt;
-      P, Q    : PSmallInt;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: LongIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9287,68 +8922,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: LongIntArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : LongInt;
-      P, Q    : PLongInt;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: Int64Array);
 
   procedure QuickSort(L, R: Integer);
@@ -9396,68 +8970,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: Int64Array);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Int64;
-      P, Q    : PInt64;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: NativeIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9505,68 +9018,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: NativeIntArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : NativeInt;
-      P, Q    : PNativeInt;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: SingleArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9614,68 +9066,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: SingleArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Single;
-      P, Q    : PSingle;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: DoubleArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9723,68 +9114,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: DoubleArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Double;
-      P, Q    : PDouble;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9832,68 +9162,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: ExtendedArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      P, Q    : PExtended;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySortA(const V: AnsiStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9941,68 +9210,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySortA(const V: AnsiStringArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      P, Q    : PAnsiString;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySortB(const V: RawByteStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10050,68 +9258,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySortB(const V: RawByteStringArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : RawByteString;
-      P, Q    : PRawByteString;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySortW(const V: WideStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10159,68 +9306,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySortW(const V: WideStringArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : WideString;
-      P, Q    : PWideString;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySortU(const V: UnicodeStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10268,68 +9354,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySortU(const V: UnicodeStringArray);
 
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : UnicodeString;
-      P, Q    : PUnicodeString;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
 procedure DynArraySort(const V: StringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10377,66 +9402,6 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ELSE}
-procedure DynArraySort(const V: StringArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : String;
-      P, Q    : PString;
-  begin
-    repeat
-      I := L;
-      P := @V[I];
-      J := R;
-      Q := @V[J];
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while P^ < W do
-          begin
-            Inc(P);
-            Inc(I);
-          end;
-        while Q^ > W do
-          begin
-            Dec(Q);
-            Dec(J);
-          end;
-        if I <= J then
-          begin
-            T := P^;
-            P^ := Q^;
-            Q^ := T;
-            if M = I then
-              begin
-                M := J;
-                W := Q^;
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := P^;
-                end;
-            Inc(P);
-            Inc(I);
-            Dec(Q);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ENDIF}
 
 
 
