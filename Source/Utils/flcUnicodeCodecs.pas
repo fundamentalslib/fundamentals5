@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeCodecs.pas                                     }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2016                                  }
@@ -87,6 +87,7 @@
 {   2015/03/14  4.20  Use RawByteString to avoid auto string conversions.      }
 {   2015/05/06  4.21  Move UTF functions to unit cUtils.                       }
 {   2016/01/09  5.22  Revised for Fundamentals 5.                              }
+{   2016/04/16  5.23  Use virtual GetAlias instead of GetAliasList.            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -216,8 +217,7 @@ type
                 const AWriteLFOption: TCodecWriteLFOption = lwCRLF);
 
     class function GetAliasCount: Integer; virtual;
-    class function GetAliasList: PString; virtual;
-    class function GetAlias(const Idx: Integer): String;
+    class function GetAlias(const Idx: Integer): String; virtual;
 
     class function IsAlias(const Alias: String): Boolean;
     class function IsAliasA(const Alias: AnsiString): Boolean;
@@ -324,7 +324,7 @@ type
 
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
@@ -350,7 +350,7 @@ type
 
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
@@ -376,7 +376,7 @@ type
 
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
@@ -549,7 +549,7 @@ type
   TISO8859_1Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
@@ -561,7 +561,7 @@ type
   TISO8859_2Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -570,7 +570,7 @@ type
   TISO8859_3Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -579,7 +579,7 @@ type
   TISO8859_4Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -588,7 +588,7 @@ type
   TISO8859_5Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -597,7 +597,7 @@ type
   TISO8859_6Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -606,7 +606,7 @@ type
   TISO8859_7Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -615,7 +615,7 @@ type
   TISO8859_8Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -624,7 +624,7 @@ type
   TISO8859_9Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -633,7 +633,7 @@ type
   TISO8859_10Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -642,7 +642,7 @@ type
   TISO8859_13Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -651,7 +651,7 @@ type
   TISO8859_14Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -660,7 +660,7 @@ type
   TISO8859_15Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -873,7 +873,7 @@ type
   TWindows1250Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -882,7 +882,7 @@ type
   TWindows1251Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -891,7 +891,7 @@ type
   TWindows1252Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1044,7 +1044,7 @@ type
   TIBM437Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1216,7 +1216,7 @@ type
   TMacLatin2Codec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1225,7 +1225,7 @@ type
   TMacRomanCodec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1234,7 +1234,7 @@ type
   TMacCyrillicCodec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1268,7 +1268,7 @@ type
   TUSASCIICodec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1277,7 +1277,7 @@ type
   TEBCDIC_USCodec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1286,7 +1286,7 @@ type
   TKOI8_RCodec = class(TCustomSingleByteCodec)
   public
     class function GetAliasCount: Integer; override;
-    class function GetAliasList: PString; override;
+    class function GetAlias(const Idx: Integer): String; override;
 
     function  DecodeChar(const P: AnsiChar): WideChar; override;
     function  EncodeChar(const Ch: WideChar): AnsiChar; override;
@@ -1440,6 +1440,7 @@ end;
 procedure RegisterDefaultCodecs;
 begin
   RegisterCodecs([
+      TUSASCIICodec,
       TUTF8Codec, TUTF16BECodec, TUTF16LECodec,
       TISO8859_1Codec, TISO8859_2Codec, TISO8859_3Codec, TISO8859_4Codec,
       TISO8859_5Codec, TISO8859_6Codec, TISO8859_7Codec, TISO8859_8Codec,
@@ -1447,7 +1448,7 @@ begin
       TISO8859_15Codec,
       TWindows1250Codec, TWindows1251Codec, TWindows1252Codec,
       TMacLatin2Codec, TMacRomanCodec, TMacCyrillicCodec,
-      TUSASCIICodec, TEBCDIC_USCodec, TKOI8_RCodec]);
+      TEBCDIC_USCodec, TKOI8_RCodec]);
 end;
 
 
@@ -1697,36 +1698,20 @@ begin
   Result := 0;
 end;
 
-class function TCustomUnicodeCodec.GetAliasList: PString;
-begin
-  Result := nil;
-end;
-
 class function TCustomUnicodeCodec.GetAlias(const Idx: Integer): String;
-var P : PString;
 begin
-  if Idx < 0 then
-    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
-  if Idx >= GetAliasCount then
-    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
-  P := GetAliasList;
-  Inc(P, Idx);
-  Result := P^;
+  Result := ClassName;
 end;
 
 class function TCustomUnicodeCodec.IsAlias(const Alias: String): Boolean;
-var P : PString;
-    I : Integer;
+var I : Integer;
 begin
-  P := GetAliasList;
   for I := 0 to GetAliasCount - 1 do
-    if SameText(Alias, P^) then
+    if SameText(Alias, GetAlias(I)) then
       begin
         Result := True;
         exit;
-      end
-    else
-      Inc(P);
+      end;
   Result := False;
 end;
 
@@ -2057,9 +2042,13 @@ begin
   Result := UTF8Aliases;
 end;
 
-class function TUTF8Codec.GetAliasList: PString;
+class function TUTF8Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @UTF8Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := UTF8Alias[Idx];
 end;
 
 procedure TUTF8Codec.Decode(const Buf: Pointer; const BufSize: Integer;
@@ -2266,9 +2255,13 @@ begin
   Result := UTF16BEAliases;
 end;
 
-class function TUTF16BECodec.GetAliasList: PString;
+class function TUTF16BECodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @UTF16BEAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := UTF16BEAlias[Idx];
 end;
 
 procedure TUTF16BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
@@ -2400,9 +2393,13 @@ begin
   Result := UTF16LEAliases;
 end;
 
-class function TUTF16LECodec.GetAliasList: PString;
+class function TUTF16LECodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @UTF16LEAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := UTF16LEAlias[Idx];
 end;
 
 procedure TUTF16LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
@@ -3573,9 +3570,13 @@ begin
   Result := ISO8859_1Aliases;
 end;
 
-class function TISO8859_1Codec.GetAliasList: PString;
+class function TISO8859_1Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_1Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_1Alias[Idx];
 end;
 
 function TISO8859_1Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -3624,9 +3625,13 @@ begin
   Result := ISO8859_2Aliases;
 end;
 
-class function TISO8859_2Codec.GetAliasList: PString;
+class function TISO8859_2Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_2Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_2Alias[Idx];
 end;
 
 const
@@ -3674,9 +3679,13 @@ begin
   Result := ISO8859_3Aliases;
 end;
 
-class function TISO8859_3Codec.GetAliasList: PString;
+class function TISO8859_3Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_3Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_3Alias[Idx];
 end;
 
 const
@@ -3725,9 +3734,13 @@ begin
   Result := ISO8859_4Aliases;
 end;
 
-class function TISO8859_4Codec.GetAliasList: PString;
+class function TISO8859_4Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_4Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_4Alias[Idx];
 end;
 
 const
@@ -3775,9 +3788,13 @@ begin
   Result := ISO8859_5Aliases;
 end;
 
-class function TISO8859_5Codec.GetAliasList: PString;
+class function TISO8859_5Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_5Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_5Alias[Idx];
 end;
 
 function TISO8859_5Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -3829,9 +3846,13 @@ begin
   Result := ISO8859_6Aliases;
 end;
 
-class function TISO8859_6Codec.GetAliasList: PString;
+class function TISO8859_6Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_6Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_6Alias[Idx];
 end;
 
 function TISO8859_6Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -3876,9 +3897,13 @@ begin
   Result := ISO8859_7Aliases;
 end;
 
-class function TISO8859_7Codec.GetAliasList: PString;
+class function TISO8859_7Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_7Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_7Alias[Idx];
 end;
 
 function TISO8859_7Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -3929,9 +3954,13 @@ begin
   Result := ISO8859_8Aliases;
 end;
 
-class function TISO8859_8Codec.GetAliasList: PString;
+class function TISO8859_8Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_8Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_8Alias[Idx];
 end;
 
 function TISO8859_8Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -3985,9 +4014,13 @@ begin
   Result := ISO8859_9Aliases;
 end;
 
-class function TISO8859_9Codec.GetAliasList: PString;
+class function TISO8859_9Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_9Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_9Alias[Idx];
 end;
 
 function TISO8859_9Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -4040,9 +4073,13 @@ begin
   Result := ISO8859_10Aliases;
 end;
 
-class function TISO8859_10Codec.GetAliasList: PString;
+class function TISO8859_10Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_10Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_10Alias[Idx];
 end;
 
 const
@@ -4088,9 +4125,13 @@ begin
   Result := ISO8859_13Aliases;
 end;
 
-class function TISO8859_13Codec.GetAliasList: PString;
+class function TISO8859_13Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_13Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_13Alias[Idx];
 end;
 
 const
@@ -4137,9 +4178,13 @@ begin
   Result := ISO8859_14Aliases;
 end;
 
-class function TISO8859_14Codec.GetAliasList: PString;
+class function TISO8859_14Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_14Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_14Alias[Idx];
 end;
 
 const
@@ -4186,9 +4231,13 @@ begin
   Result := ISO8859_15Aliases;
 end;
 
-class function TISO8859_15Codec.GetAliasList: PString;
+class function TISO8859_15Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @ISO8859_15Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := ISO8859_15Alias[Idx];
 end;
 
 function TISO8859_15Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -5142,9 +5191,13 @@ begin
   Result := CP437Aliases;
 end;
 
-class function TIBM437Codec.GetAliasList: PString;
+class function TIBM437Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @CP437Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := CP437Alias[Idx];
 end;
 
 function TIBM437Codec.DecodeChar(const P: AnsiChar): WideChar;
@@ -7440,9 +7493,13 @@ begin
   Result := Win1250Aliases;
 end;
 
-class function TWindows1250Codec.GetAliasList: PString;
+class function TWindows1250Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @Win1250Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := Win1250Alias[Idx];
 end;
 
 const
@@ -7492,9 +7549,13 @@ begin
   Result := Win1251Aliases;
 end;
 
-class function TWindows1251Codec.GetAliasList: PString;
+class function TWindows1251Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @Win1251Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := Win1251Alias[Idx];
 end;
 
 const
@@ -7544,9 +7605,13 @@ begin
   Result := Win1252Aliases;
 end;
 
-class function TWindows1252Codec.GetAliasList: PString;
+class function TWindows1252Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @Win1252Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := Win1252Alias[Idx];
 end;
 
 const
@@ -7819,9 +7884,13 @@ begin
   Result := MacLatin2Aliases;
 end;
 
-class function TMacLatin2Codec.GetAliasList: PString;
+class function TMacLatin2Codec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @MacLatin2Alias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := MacLatin2Alias[Idx];
 end;
 
 const
@@ -7871,9 +7940,13 @@ begin
   Result := MacRomanAliases;
 end;
 
-class function TMacRomanCodec.GetAliasList: PString;
+class function TMacRomanCodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @MacRomanAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := MacRomanAlias[Idx];
 end;
 
 const
@@ -7923,9 +7996,13 @@ begin
   Result := MacCyrillicAliases;
 end;
 
-class function TMacCyrillicCodec.GetAliasList: PString;
+class function TMacCyrillicCodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @MacCyrillicAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := MacCyrillicAlias[Idx];
 end;
 
 const
@@ -8090,9 +8167,13 @@ begin
   Result := USASCIIAliases;
 end;
 
-class function TUSASCIICodec.GetAliasList: PString;
+class function TUSASCIICodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @USASCIIAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := USASCIIAlias[Idx];
 end;
 
 function TUSASCIICodec.DecodeChar(const P: AnsiChar): WideChar;
@@ -8126,9 +8207,13 @@ begin
   Result := EBCDIC_USAliases;
 end;
 
-class function TEBCDIC_USCodec.GetAliasList: PString;
+class function TEBCDIC_USCodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @EBCDIC_USAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := EBCDIC_USAlias[Idx];
 end;
 
 function TEBCDIC_USCodec.DecodeChar(const P: AnsiChar): WideChar;
@@ -8242,9 +8327,13 @@ begin
   Result := KOI8_RAliases;
 end;
 
-class function TKOI8_RCodec.GetAliasList: PString;
+class function TKOI8_RCodec.GetAlias(const Idx: Integer): String;
 begin
-  Result := @KOI8_RAlias;
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := KOI8_RAlias[Idx];
 end;
 
 const

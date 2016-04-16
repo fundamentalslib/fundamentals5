@@ -445,6 +445,11 @@ type
   RawByteString = AnsiString;
   PRawByteString = ^RawByteString;
   {$ENDIF}
+  {$IFDEF SupportRawByteString}
+  {$IFDEF FREEPASCAL}
+  PRawByteString = ^RawByteString;
+  {$ENDIF}
+  {$ENDIF}
   RawByteCharSet = set of RawByteChar;
 
 const

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStrings.pas                                           }
-{   File version:     5.63                                                     }
+{   File version:     5.64                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
@@ -106,6 +106,7 @@
 {   2015/04/11  4.61  UnicodeString functions.                                 }
 {   2016/01/09  5.62  Revised for Fundamentals 5.                              }
 {   2016/04/13  5.63  Change pattern match functions to RawByteString.         }
+{   2016/04/16  5.64  Changes to compile with FreePascal 3.0.0.                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -125,6 +126,7 @@
 {   FreePascal 2.0.4 Linux i386         4.45  2009/06/06                       }
 {   FreePascal 2.4.0 OSX x86-64         4.47  2010/06/27                       }
 {   FreePascal 2.6.0 Win32              4.57  2012/08/30                       }
+{   FreePascal 3.0.0 Win32              5.64  2016/04/16                       }
 {                                                                              }
 { Notes:                                                                       }
 {   Unicode functions in this unit work from data in source code form.         }
@@ -20899,7 +20901,7 @@ begin
     MoveMem(Q^, P^, StopIndex - F + 1);
 end;
 
-function StrReplaceBlockB( // used by StrReplaceA
+function StrReplaceBlockB( // used by StrReplaceB
     const FindLen: Integer; const Replace, S: RawByteString;
     const StartIndex, StopIndex: Integer;
     const MatchCount: Integer;
@@ -20918,9 +20920,9 @@ begin
       Result := '';
       exit;
     end;
-  SetString(Result, nil, NewLen);
-  P := Pointer(Result);
-  Q := Pointer(S);
+  SetLength(Result, NewLen); // FPC 3.0 has issue with SetString(Result, nil, NewLen) here
+  P := PAnsiChar(Result);
+  Q := PAnsiChar(S);
   F := StartIndex;
   Inc(Q, F - 1);
   for I := 0 to MatchCount - 1 do
@@ -20938,7 +20940,7 @@ begin
       Inc(F, FindLen);
       if ReplaceLen > 0 then
         begin
-          MoveMem(Pointer(Replace)^, P^, ReplaceLen);
+          MoveMem(PAnsiChar(Replace)^, P^, ReplaceLen);
           Inc(P, ReplaceLen);
         end;
     end;
