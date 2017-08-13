@@ -1808,7 +1808,7 @@ end;
 function IsIP6Address(const Address: String; out NetAddress: TIP6Addr): Boolean;
 begin
   {$IFDEF StringIsUnicode}
-  Result := IsIP6AddressA(Address, NetAddress);
+  Result := IsIP6AddressU(Address, NetAddress);
   {$ELSE}
   Result := IsIP6AddressA(Address, NetAddress);
   {$ENDIF}
