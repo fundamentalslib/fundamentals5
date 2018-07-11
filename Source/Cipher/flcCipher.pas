@@ -1641,6 +1641,8 @@ var I : Integer;
     L : Integer;
     C : RawByteString;
     M : RawByteString;
+
+    X : Integer;
 begin
   for I := 0 to CipherTestCaseCount - 1 do
     with CipherTestCases[I] do
@@ -1652,12 +1654,16 @@ begin
             Move(PAnsiChar(PlainText)^, B[0], L);
             L := Encrypt(Cipher, Mode, cpNone, KeyBits, Pointer(Key), Length(Key),
                 @B[0], L, @B[0], Sizeof(B), Pointer(InitVector), Length(InitVector));
+            C := '';
             SetLength(C, L);
-            Move(B[0], Pointer(C)^, L);
+            Move(B[0], PAnsiChar(C)^, L);
+            if C <> CipherText then
+              for X := 1 to L do
+                if C[X] <> CipherText[X] then Writeln(X, '!', Ord(C[X]), '<>', Ord(CipherText[X]));
             Assert(C = CipherText, M);
             L := Decrypt(Cipher, Mode, cpNone, KeyBits, Pointer(Key), Length(Key),
                 @B[0], L, Pointer(InitVector), Length(InitVector));
-            Move(B[0], Pointer(C)^, L);
+            Move(B[0], PAnsiChar(C)^, L);
             Assert(C = PlainText, M);
             Assert(Encrypt(Cipher, Mode, cpNone, KeyBits, Key, PlainText, InitVector) = CipherText, M);
             Assert(Decrypt(Cipher, Mode, cpNone, KeyBits, Key, CipherText, InitVector) = PlainText, M);

@@ -1317,11 +1317,13 @@ procedure Test;
 
 implementation
 
-{$IFDEF MSWIN}
 uses
   { System }
-  Windows;
-{$ENDIF}
+  {$IFDEF MSWIN}
+  Windows,
+  {$ENDIF}
+  { Fundamentals }
+  flcUTF;
 
 
 
@@ -1347,14 +1349,14 @@ type
   AnsiCharMap = array[AnsiChar] of WideChar;
 
 function CharFromMap(const Ch: WideChar; const Map: AnsiCharMap;
-    const Encoding: AnsiString): AnsiChar;
+    const Encoding: String): AnsiChar;
 var I : AnsiChar;
     P : PWideChar;
 begin
   if Ch = #$FFFF then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), Encoding]);
   P := @Map;
-  for I := #$00 to #$FF do
+  for I := AnsiChar($00) to AnsiChar($FF) do
     if P^ <> Ch then
       Inc(P)
     else
@@ -1366,10 +1368,10 @@ begin
 end;
 
 type
-  AnsiCharHighMap = array[#$80..#$FF] of WideChar;
+  AnsiCharHighMap = array[$80..$FF] of WideChar;
 
 function CharFromHighMap(const Ch: WideChar; const Map: AnsiCharHighMap;
-    const Encoding: AnsiString): AnsiChar;
+    const Encoding: String): AnsiChar;
 var I : AnsiChar;
     P : PWideChar;
 begin
@@ -1381,7 +1383,7 @@ begin
   if Ch = #$FFFF then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), Encoding]);
   P := @Map;
-  for I := #$80 to #$FF do
+  for I := AnsiChar($80) to AnsiChar($FF) do
     if P^ <> Ch then
       Inc(P)
     else
@@ -1393,10 +1395,10 @@ begin
 end;
 
 type
-  AnsiCharISOMap = array[#$A0..#$FF] of WideChar;
+  AnsiCharISOMap = array[$A0..$FF] of WideChar;
 
 function CharFromISOMap(const Ch: WideChar; const Map: AnsiCharISOMap;
-    const Encoding: AnsiString): AnsiChar;
+    const Encoding: String): AnsiChar;
 var I : AnsiChar;
     P : PWideChar;
 begin
@@ -1408,7 +1410,7 @@ begin
   if Ch = #$FFFF then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), Encoding]);
   P := @Map;
-  for I := #$A0 to #$FF do
+  for I := AnsiChar($A0) to AnsiChar($FF) do
     if P^ <> Ch then
       Inc(P)
     else
@@ -1627,7 +1629,7 @@ var C : TCustomUnicodeCodec;
 begin
   if not Assigned(CodecClass) then
     begin
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   C := CodecClass.Create;
@@ -1905,7 +1907,7 @@ begin
       on E : Exception do
         case FErrorAction of
           eaException :
-            RaiseUnicodeCodecException(E.Message, P - Buf);
+            RaiseUnicodeCodecException(E.Message, NativeUInt(P) - NativeUInt(Buf));
           eaStop :
             break;
           eaSkip :
@@ -1927,7 +1929,7 @@ begin
         end;
     end;
   DestLength := L;
-  ProcessedBytes := P - Buf;
+  ProcessedBytes := NativeUInt(P) - NativeUInt(Buf);
 end;
 
 function TCustomSingleByteCodec.DecodeUCS4Char(const P: AnsiChar): UCS4Char;
@@ -1945,7 +1947,7 @@ begin
   if not Assigned(Q) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length);
@@ -2145,7 +2147,7 @@ begin
   if not Assigned(P) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   L := Length * 3;
@@ -2296,7 +2298,7 @@ begin
   if Length <= 0 then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   L := Length * 2;
@@ -2438,7 +2440,7 @@ begin
   if Length <= 0 then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   L := Length * 2;
@@ -2536,6 +2538,7 @@ procedure TUCS4BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
   out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
     N, P, Q : PAnsiChar;
+    T, U, V : PByte;
     L, C    : Integer;
 begin
   P := Buf;
@@ -2548,20 +2551,24 @@ begin
       exit;
     end;
   L := 0;
-  N := P + BufSize - 4;
-  while P <= N do
+  N := Pointer(NativeUInt(P) + BufSize - 4);
+  while NativeUInt(P) <= NativeUInt(N) do
     begin
-      Ch4 := Ord(P^) * $1000000 +
-             Ord((P + 1)^) * $10000 +
-             Ord((P + 2)^) * $100 +
-             Ord((P + 3)^);
+      T := Pointer(P);
+      Ch4 := T^ * $1000000;
+      Inc(T);
+      Inc(Ch4, T^ * $10000);
+      Inc(T);
+      Inc(Ch4, T^ * $100);
+      Inc(T);
+      Inc(Ch4, T^);
     if ((Ch4 >= $D800) and (Ch4 < $E000)) or (Ch4 > $10FFFF) then
       case FErrorAction of
         eaException :
           if Ch4 > $10FFFF then
-            RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], P - Buf)
+            RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], NativeUInt(P) - NativeUInt(Buf))
           else
-            RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], P - Buf);
+            RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], NativeUInt(P) - NativeUInt(Buf));
         eaStop :
           break;
         eaSkip :
@@ -2570,10 +2577,20 @@ begin
           begin
             if L + 1 >= C then
               break;
-            Q^ := (P + 1)^;     // Nevertheless change Big Endian to Little Endian ...
-            (Q + 1)^ := P^;
-            (Q + 2)^ := (P + 3)^;
-            (Q + 3)^ := (P + 2)^;
+            T := Pointer(Q);
+            U := Pointer(P);
+            Inc(U);
+            T^ := U^;     // Nevertheless change Big Endian to Little Endian ...
+            Inc(T);
+            T^ := Byte(P^);
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 3);
+            T^ := U^;
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 2);
+            T^ := U^;
             Inc(Q, 4);
             Inc(P, 4);
             Inc(L, 2);
@@ -2582,8 +2599,10 @@ begin
           begin
             if L >= C then
               break;
-            Q^ := AnsiChar(Lo(Ord(FDecodeReplaceChar)));
-            (Q + 1)^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
+            T := Pointer(Q);
+            T^ := Lo(Ord(FDecodeReplaceChar));
+            Inc(T);
+            T^ := Hi(Ord(FDecodeReplaceChar));
             Inc(Q, 2);
             Inc(P, 4);
             Inc(L);
@@ -2595,10 +2614,24 @@ begin
           begin
             if L + 1 >= C then
               break;
-            Q^ := AnsiChar((Ord((P + 1)^) shl 6) + (Ord((P + 2)^) shr 2));
-            (Q + 1)^ := AnsiChar($D8 + (Ord((P + 1)^) shr 2));
-            (Q + 2)^ := (P + 3)^;
-            (Q + 3)^ := AnsiChar($DC + (3 and Ord((P + 2)^)));
+            T := Pointer(Q);
+            U := Pointer(P);
+            Inc(U);
+            V := Pointer(P);
+            Inc(V, 2);
+            T^ := (U^ shl 6) + (V^ shr 2);
+            Inc(T);
+            U := Pointer(P);
+            Inc(U);
+            T^ := $D8 + (U^ shr 2);
+            Inc(T);
+            V := Pointer(P);
+            Inc(V, 3);
+            T^ := V^;
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 2);
+            T^ := $DC + (3 and U^);
             Inc(Q, 4);
             Inc(P, 4);
             Inc(L, 2);
@@ -2607,8 +2640,14 @@ begin
           begin
             if L >= C then
               break;
-            Q^ := (P + 3)^;
-            (Q + 1)^ := (P + 2)^;
+            T := Pointer(Q);
+            U := Pointer(P);
+            Inc(U, 3);
+            T^ := U^;
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 2);
+            T^ := U^;
             Inc(Q, 2);
             Inc(P, 4);
             Inc(L);
@@ -2616,7 +2655,7 @@ begin
       end;
   end;
   DestLength := L;
-  ProcessedBytes := P - Buf;
+  ProcessedBytes := NativeUInt(P) - NativeUInt(Buf);
 end;
 
 function TUCS4BECodec.Encode(const S: PWideChar; const Length: Integer;
@@ -2631,7 +2670,7 @@ begin
   if not Assigned(P) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length * 4);
@@ -2652,11 +2691,14 @@ begin
             $DC00..$DF00:
               begin
                 Q^ := AnsiChar(0);
-                (Q+1)^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
-                (Q+2)^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
-                (Q+3)^ := AnsiChar(Lo(LowSurrogate));
+                Inc(Q);
+                Q^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
+                Inc(Q);
+                Q^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
+                Inc(Q);
+                Q^ := AnsiChar(Lo(LowSurrogate));
+                Inc(Q);
                 Inc(P);
-                Inc(Q, 4);
                 Inc(M, 4);
               end;
           else
@@ -2667,11 +2709,14 @@ begin
         raise EConvertError.Create(SHighSurrogateNotFound);
     else
       Q^ := AnsiChar(0);
-      (Q+1)^ := AnsiChar(0);
-      (Q+2)^ := AnsiChar(Hi(Ord(P^)));
-      (Q+3)^ := AnsiChar(Lo(Ord(P^)));
+      Inc(Q);
+      Q^ := AnsiChar(0);
+      Inc(Q);
+      Q^ := AnsiChar(Hi(Ord(P^)));
+      Inc(Q);
+      Q^ := AnsiChar(Lo(Ord(P^)));
+      Inc(Q);
       Inc(P);
-      Inc(Q, 4);
       Inc(M, 4);
     end;
   SetLength(Result, M);
@@ -2748,6 +2793,7 @@ procedure TUCS4LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
     N, P, Q : PAnsiChar;
+    T, U, V : PByte;
     L, C    : Integer;
 begin
   P := Buf;
@@ -2760,20 +2806,25 @@ begin
       exit;
     end;
   L := 0;
-  N := P + BufSize - 4;
-  while P <= N do
+  N := Pointer(NativeUInt(P) + BufSize - 4);
+  while NativeUInt(P) <= NativeUInt(N) do
     begin
-      Ch4 := Ord((P + 3)^) * $1000000 +
-             Ord((P + 2)^) * $10000 +
-             Ord((P + 1)^) * $100 +
-             Ord(P^);
+      T := Pointer(P);
+      Inc(T, 3);
+      Ch4 := T^ * $1000000;
+      Dec(T);
+      Inc(Ch4, T^ * $10000);
+      Dec(T);
+      Inc(Ch4, T^ * $100);
+      Dec(T);
+      Inc(Ch4, T^);
       if ((Ch4 >= $D800) and (Ch4 < $E000)) or (Ch4 > $10FFFF) then
         case FErrorAction of
           eaException :
             if Ch4 > $10FFFF then
-              RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], P - Buf)
+              RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], NativeUInt(P) - NativeUInt(Buf))
             else
-              RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], P - Buf);
+              RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], NativeUInt(P) - NativeUInt(Buf));
           eaStop :
             break;
           eaSkip :
@@ -2782,10 +2833,18 @@ begin
             begin
               if L + 1 >= C then
                 break;
-              Q^ := P^;
-              (Q + 1)^ := (P + 1)^;
-              (Q + 2)^ := (P + 2)^;
-              (Q + 3)^ := (P + 3)^;
+              T := Pointer(Q);
+              U := Pointer(P);
+              T^ := U^;
+              Inc(T);
+              Inc(U);
+              T^ := U^;
+              Inc(T);
+              Inc(U);
+              T^ := U^;
+              Inc(T);
+              Inc(U);
+              T^ := U^;
               Inc(Q, 4);
               Inc(P, 4);
               Inc(L, 2);
@@ -2794,8 +2853,10 @@ begin
             begin
               if L >= C then
                 break;
-              Q^ := AnsiChar(Lo(Ord(FDecodeReplaceChar)));
-              (Q + 1)^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
+              T := Pointer(Q);
+              T^ := Lo(Ord(FDecodeReplaceChar));
+              Inc(T);
+              T^ := Hi(Ord(FDecodeReplaceChar));
               Inc(Q, 2);
               Inc(P, 4);
               Inc(L);
@@ -2806,10 +2867,22 @@ begin
           begin
             if L + 1 >= C then
               break;
-            Q^ := AnsiChar((Ord((P + 2)^) shl 6) + (Ord((P + 1)^) shr 2));
-            (Q + 1)^ := AnsiChar($D8 + (Ord((P + 2)^) shr 2));
-            (Q + 2)^ := P^;
-            (Q + 3)^ := AnsiChar($DC + (3 and Ord((P + 1)^)));
+            T := Pointer(Q);
+            U := Pointer(P);
+            Inc(U, 2);
+            V := Pointer(P);
+            Inc(V, 1);
+            T^ := (U^ shl 6) + (V^ shr 2);
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 2);
+            T^ := $D8 + (U^ shr 2);
+            Inc(T);
+            T^ := Byte(P^);
+            Inc(T);
+            U := Pointer(P);
+            Inc(U, 1);
+            T^ := $DC + (3 and U^);
             Inc(Q, 4);
             Inc(P, 4);
             Inc(L, 2);
@@ -2818,15 +2891,19 @@ begin
           begin
             if L >= C then
               break;
-            Q^ := P^;
-            (Q + 1)^ := (P + 1)^;
+            T := Pointer(Q);
+            Q := Pointer(P);
+            T^ := Byte(Q^);
+            Inc(T);
+            Inc(Q);
+            T^ := Byte(Q^);
             Inc(Q, 2);
             Inc(P, 4);
             Inc(L);
           end;
     end;
   DestLength := L;
-  ProcessedBytes := P - Buf;
+  ProcessedBytes := NativeUInt(P) - NativeUInt(Buf);
 end;
 
 function TUCS4LECodec.Encode(const S: PWideChar; const Length: Integer;
@@ -2841,7 +2918,7 @@ begin
   if not Assigned(P) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length * 4);
@@ -2862,11 +2939,14 @@ begin
             $DC00..$DF00:
               begin
                 Q^ := AnsiChar(Lo(LowSurrogate));
-                (Q + 1)^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
-                (Q + 2)^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
-                (Q + 3)^ := AnsiChar(0);
+                Inc(Q);
+                Q^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
+                Inc(Q);
+                Q^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
+                Inc(Q);
+                Q^ := AnsiChar(0);
+                Inc(Q);
                 Inc(P);
-                Inc(Q, 4);
                 Inc(M, 4);
               end;
           else
@@ -2877,9 +2957,13 @@ begin
         raise EConvertError.Create(SHighSurrogateNotFound);
     else
       Q^ := AnsiChar(0);
-      (Q + 1)^ := AnsiChar(0);
-      (Q + 2)^ := AnsiChar(Hi(Ord(P^)));
-      (Q + 3)^ := AnsiChar(Lo(Ord(P^)));
+      Inc(Q);
+      Q^ := AnsiChar(0);
+      Inc(Q);
+      Q^ := AnsiChar(Hi(Ord(P^)));
+      Inc(Q);
+      Q^ := AnsiChar(Lo(Ord(P^)));
+      Inc(Q);
       Inc(P);
       Inc(Q, 4);
       Inc(M, 4);
@@ -2958,6 +3042,7 @@ procedure TUCS4_2143Codec.Decode(const Buf: Pointer; const BufSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
     N, P, Q : PAnsiChar;
+    T       : PByte;
     L, C    : Integer;
 begin
   P := Buf;
@@ -2970,19 +3055,26 @@ begin
       exit;
     end;
   L := 0;
-  N := P + BufSize - 4;
-  while P <= N do
+  N := Pointer(NativeUInt(P) + BufSize - 4);
+  while NativeUInt(P) <= NativeUInt(N) do
     begin
-      Ch4 := Ord((P + 1)^) * $1000000 +
-             Ord(P^) * $10000 +
-             Ord((P + 3)^) * $100 +
-             Ord((P + 2)^);
+      T := Pointer(P);
+      Inc(T);
+      Ch4 := T^ * $1000000;
+      T := Pointer(P);
+      Inc(Ch4, T^ * $10000);
+      T := Pointer(P);
+      Inc(T, 3);
+      Inc(Ch4, T^ * $100);
+      T := Pointer(P);
+      Inc(T, 2);
+      Inc(Ch4, T^);
       if ((Ch4 >= $D800) and (Ch4 < $E000)) or (Ch4 > $10FFFF) then
         case FErrorAction of
           eaException :
             if Ch4 > $10FFFF
-              then RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], P - Buf)
-              else RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], P - Buf);
+              then RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], NativeUInt(P) - NativeUInt(Buf))
+              else RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], NativeUInt(P) - NativeUInt(Buf));
           eaStop :
             break;
           eaSkip :
@@ -2992,11 +3084,17 @@ begin
               if L + 1 >= C then
                 break;
               Q^ := P^;
-              (Q + 1)^ := (P + 1)^;
-              (Q + 2)^ := (P + 2)^;
-              (Q + 3)^ := (P + 3)^;
-              Inc(Q, 4);
-              Inc(P, 4);
+              Inc(Q);
+              Inc(P);
+              Q^ := P^;
+              Inc(Q);
+              Inc(P);
+              Q^ := P^;
+              Inc(Q);
+              Inc(P);
+              Q^ := P^;
+              Inc(Q);
+              Inc(P);
               Inc(L, 2);
             end;
           eaReplace :
@@ -3004,8 +3102,9 @@ begin
               if L >= C then
                 break;
               Q^ := AnsiChar(Lo(Ord(FDecodeReplaceChar)));
-              (Q + 1)^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
-              Inc(Q, 2);
+              Inc(Q);
+              Q^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
+              Inc(Q);
               Inc(P, 4);
               Inc(L);
             end;
@@ -3015,11 +3114,20 @@ begin
           begin
             if L + 1 >= C then
               break;
-            Q^ := AnsiChar((Ord(P^) shl 6) + (Ord((P + 3)^) shr 2));
-            (Q + 1)^ := AnsiChar($D8 + (Ord(P^) shr 2));
-            (Q + 2)^ := (P + 2)^;
-            (Q + 3)^ := AnsiChar($DC +  (3 and Ord((P + 3)^)));
-            Inc(Q, 4);
+            T := Pointer(P);
+            Inc(T, 3);
+            Q^ := AnsiChar((Ord(P^) shl 6) + (T^ shr 2));
+            Inc(Q);
+            Q^ := AnsiChar($D8 + (Ord(P^) shr 2));
+            Inc(Q);
+            T := Pointer(P);
+            Inc(T, 2);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
+            T := Pointer(P);
+            Inc(T, 3);
+            Q^ := AnsiChar($DC +  (3 and T^));
+            Inc(Q);
             Inc(P, 4);
             Inc(L, 2);
           end
@@ -3027,15 +3135,20 @@ begin
           begin
             if L >= C then
               break;
-            Q^ := (P + 2)^;
-            (Q + 1)^ := (P + 3)^;
-            Inc(Q, 2);
+            T := Pointer(P);
+            Inc(T, 2);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
+            T := Pointer(P);
+            Inc(T, 3);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
             Inc(P, 4);
             Inc(L);
           end;
     end;
   DestLength := L;
-  ProcessedBytes := P - Buf;
+  ProcessedBytes := NativeUInt(P) - NativeUInt(Buf);
 end;
 
 function TUCS4_2143Codec.Encode(const S: PWideChar; const Length: Integer;
@@ -3050,7 +3163,7 @@ begin
   if not Assigned(P) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length * 4);
@@ -3072,11 +3185,14 @@ begin
               $DC00..$DF00:
                 begin
                   Q^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
-                  (Q + 1)^ := AnsiChar(0);
-                  (Q + 2)^ := AnsiChar(Lo(LowSurrogate));
-                  (Q + 3)^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
+                  Inc(Q);
+                  Q^ := AnsiChar(0);
+                  Inc(Q);
+                  Q^ := AnsiChar(Lo(LowSurrogate));
+                  Inc(Q);
+                  Q^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
+                  Inc(Q);
                   Inc(P);
-                  Inc(Q, 4);
                   Inc(M, 4);
                 end;
             else
@@ -3087,11 +3203,14 @@ begin
           raise EConvertError.Create(SHighSurrogateNotFound);
       else
         Q^ := AnsiChar(0);
-        (Q + 1)^ := AnsiChar(0);
-        (Q + 2)^ := AnsiChar(Lo(Ord(P^)));
-        (Q + 3)^ := AnsiChar(Hi(Ord(P^)));
+        Inc(Q);
+        Q^ := AnsiChar(0);
+        Inc(Q);
+        Q^ := AnsiChar(Lo(Ord(P^)));
+        Inc(Q);
+        Q^ := AnsiChar(Hi(Ord(P^)));
+        Inc(Q);
         Inc(P);
-        Inc(Q, 4);
         Inc(M, 4);
       end;
     end;
@@ -3166,6 +3285,7 @@ procedure TUCS4_3412Codec.Decode(const Buf: Pointer; const BufSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
     N, P, Q : PAnsiChar;
+    T, U    : PByte;
     L, C    : Integer;
 begin
   P := Buf;
@@ -3178,20 +3298,27 @@ begin
       exit;
     end;
   L := 0;
-  N := P + BufSize - 4;
-  while P <= N do
+  N := Pointer(NativeUInt(P) + BufSize - 4);
+  while NativeUInt(P) <= NativeUInt(N) do
     begin
-      Ch4 := Ord((P + 2)^) * $1000000 +
-             Ord((P + 3)^) * $10000 +
-             Ord(P^) * $100 +
-             Ord((P + 1)^);
+      T := Pointer(P);
+      Inc(T, 2);
+      Ch4 := T^ * $1000000;
+      T := Pointer(P);
+      Inc(T, 3);
+      Inc(Ch4, T^ * $10000);
+      T := Pointer(P);
+      Inc(Ch4, T^ * $100);
+      T := Pointer(P);
+      Inc(T);
+      Inc(Ch4, T^);
       if ((Ch4 >= $D800) and (Ch4 < $E000)) or (Ch4 > $10FFFF) then
         case FErrorAction of
           eaException :
             if Ch4 > $10FFFF then
-              RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], P - Buf)
+              RaiseUnicodeCodecException(SCannotConvertUCS4, [Ch4, 'UTF-16'], NativeUInt(P) - NativeUInt(Buf))
             else
-              RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], P - Buf);
+              RaiseUnicodeCodecException(SSurrogateNotAllowed, [Ch4, 'UCS-4'], NativeUInt(P) - NativeUInt(Buf));
           eaStop :
             break;
           eaSkip :
@@ -3200,11 +3327,21 @@ begin
             begin
               if L + 1 >= C then
                 break;
-              Q^ := (P + 1)^;     // Nevertheless change Big Endian to Little Endian ...
-              (Q + 1)^ := P^;
-              (Q + 2)^ := (P + 3)^;
-              (Q + 3)^ := (P + 2)^;
-              Inc(Q, 4);
+              T := Pointer(P);
+              Inc(T);
+              Q^ := AnsiChar(T^);     // Nevertheless change Big Endian to Little Endian ...
+              Inc(Q);
+              T := Pointer(P);
+              Q^ := AnsiChar(T^);
+              Inc(Q);
+              T := Pointer(P);
+              Inc(T, 3);
+              Q^ := AnsiChar(T^);
+              Inc(Q);
+              T := Pointer(P);
+              Inc(T, 2);
+              Q^ := AnsiChar(T^);
+              Inc(Q);
               Inc(P, 4);
               Inc(L, 2);
             end;
@@ -3213,8 +3350,9 @@ begin
               if L >= C then
                 break;
               Q^ := AnsiChar(Lo(Ord(FDecodeReplaceChar)));
-              (Q + 1)^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
-              Inc(Q, 2);
+              Inc(Q);
+              Q^ := AnsiChar(Hi(Ord(FDecodeReplaceChar)));
+              Inc(Q);
               Inc(P, 4);
               Inc(L);
             end;
@@ -3224,11 +3362,22 @@ begin
           begin
             if L + 1 >= C then
               break;
-            Q^ := AnsiChar((Ord((P + 3)^) shl 6) + (Ord(P^) shr 2));
-            (Q + 1)^ := AnsiChar($D8 + (Ord((P + 3)^) shr 2));
-            (Q + 2)^ := (P + 1)^;
-            (Q + 3)^ := AnsiChar($DC +  (3 and Ord(P^)));
-            Inc(Q, 4);
+            T := Pointer(P);
+            Inc(T, 3);
+            U := Pointer(P);
+            Q^ := AnsiChar((T^ shl 6) + (U^ shr 2));
+            Inc(Q);
+            T := Pointer(P);
+            Inc(T, 3);
+            Q^ := AnsiChar($D8 + (T^ shr 2));
+            Inc(Q);
+            T := Pointer(P);
+            Inc(T);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
+            U := Pointer(P);
+            Q^ := AnsiChar($DC + (3 and U^));
+            Inc(Q);
             Inc(P, 4);
             Inc(L, 2);
           end
@@ -3236,15 +3385,19 @@ begin
           begin
             if L >= C then
               break;
-            Q^ := (P + 1)^;
-            (Q + 1)^ := P^;
-            Inc(Q, 2);
+            T := Pointer(P);
+            Inc(T);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
+            T := Pointer(P);
+            Q^ := AnsiChar(T^);
+            Inc(Q);
             Inc(P, 4);
             Inc(L);
           end;
     end;
   DestLength := L;
-  ProcessedBytes := P - Buf;
+  ProcessedBytes := NativeUInt(P) - NativeUInt(Buf);
 end;
 
 function TUCS4_3412Codec.Encode(const S: PWideChar; const Length: Integer;
@@ -3259,7 +3412,7 @@ begin
   if not Assigned(P) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length * 4);
@@ -3280,11 +3433,14 @@ begin
             $DC00..$DF00:
               begin
                 Q^ := AnsiChar(((HighSurrogate and $3F) shl 2) + ((LowSurrogate - $DC00) shr 8));
-                (Q + 1)^ := AnsiChar(Lo(LowSurrogate));
-                (Q + 2)^ := AnsiChar(0);
-                (Q + 3)^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
+                Inc(Q);
+                Q^ := AnsiChar(Lo(LowSurrogate));
+                Inc(Q);
+                Q^ := AnsiChar(0);
+                Inc(Q);
+                Q^ := AnsiChar((HighSurrogate - $D7C0) shr 6);
+                Inc(Q);
                 Inc(P);
-                Inc(Q, 4);
                 Inc(M, 4);
               end;
           else
@@ -3295,11 +3451,14 @@ begin
         raise EConvertError.Create(SHighSurrogateNotFound);
     else
       Q^ := AnsiChar(Hi(Ord(P^)));
-      (Q + 1)^ := AnsiChar(Lo(Ord(P^)));
-      (Q + 2)^ := AnsiChar(0);
-      (Q + 3)^ := AnsiChar(0);
+      Inc(Q);
+      Q^ := AnsiChar(Lo(Ord(P^)));
+      Inc(Q);
+      Q^ := AnsiChar(0);
+      Inc(Q);
+      Q^ := AnsiChar(0);
+      Inc(Q);
       Inc(P);
-      Inc(Q, 4);
       Inc(M, 4);
     end;
   SetLength(Result, M);
@@ -3435,7 +3594,7 @@ begin
   if not Assigned(Q) or (Length <= 0) then
     begin
       ProcessedChars := 0;
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   SetLength(Result, Length*2);
@@ -3654,7 +3813,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_2Map[P];
+    Result := ISO8859_2Map[Ord(P)];
 end;
 
 function TISO8859_2Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -3708,7 +3867,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_3Map[P];
+    Result := ISO8859_3Map[Ord(P)];
 end;
 
 function TISO8859_3Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -3763,7 +3922,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_4Map[P];
+    Result := ISO8859_4Map[Ord(P)];
 end;
 
 function TISO8859_4Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -3814,9 +3973,9 @@ begin
     Result := AnsiChar(Ch)
   else
     case Ch of
-      #$2116 : Result := #$F0;
-      #$00A7 : Result := #$FD;
-      #$00AD : Result := #$AD;
+      #$2116 : Result := AnsiChar($F0);
+      #$00A7 : Result := AnsiChar($FD);
+      #$00AD : Result := AnsiChar($AD);
       #$0401..#$045F :
         case Ch of
           #$0450, #$045D, #$040D :
@@ -3871,8 +4030,8 @@ begin
     Result := AnsiChar(Ch)
   else
     case Ch of
-      #$00A4 : Result := #$A4;
-      #$00AD : Result := #$AD;
+      #$00A4 : Result := AnsiChar($A4);
+      #$00AD : Result := AnsiChar($AD);
       #$062C, #$063B, #$063F, #$0641..#$065A, #$0660..#$0672 :
         Result := AnsiChar(Ord(Ch) - $0580);
     else
@@ -3929,9 +4088,9 @@ begin
       #$00A6..#$00A9, #$00AB..#$00AD, #$00B0..#$00B3, #$00B7, #$00BB, #$00BD :
         Result := AnsiChar(Ch);
       #$0373..#$03CE : Result := AnsiChar(Ord(Ch) - $02D0);
-      #$2018         : Result := #$A1;
-      #$2019         : Result := #$A2;
-      #$2015         : Result := #$AF;
+      #$2018         : Result := AnsiChar($A1);
+      #$2019         : Result := AnsiChar($A2);
+      #$2015         : Result := AnsiChar($AF);
     else
       raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'ISO-8859-7']);
     end;
@@ -3986,10 +4145,10 @@ begin
     case Ch of
       #$00A2..#$00A9, #$00AB..#$00AE, #$00B0..#$00B9, #$00BB..#$00BE :
         Result := AnsiChar(Ord(Ch));
-      #$00D7 : Result := #$AA;
-      #$203E : Result := #$AF;
-      #$00F7 : Result := #$BA;
-      #$2017 : Result := #$DF;
+      #$00D7 : Result := AnsiChar($AA);
+      #$203E : Result := AnsiChar($AF);
+      #$00F7 : Result := AnsiChar($BA);
+      #$2017 : Result := AnsiChar($DF);
       #$05C0..#$05DA : Result := AnsiChar(Ord(Ch) - $04E0);
     else
       raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'ISO-8859-8']);
@@ -4040,12 +4199,12 @@ end;
 function TISO8859_9Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ch of
-    #$011E : Result := #$D0;
-    #$0130 : Result := #$DD;
-    #$015E : Result := #$DE;
-    #$011F : Result := #$F0;
-    #$0131 : Result := #$FD;
-    #$015F : Result := #$FE;
+    #$011E : Result := AnsiChar($D0);
+    #$0130 : Result := AnsiChar($DD);
+    #$015E : Result := AnsiChar($DE);
+    #$011F : Result := AnsiChar($F0);
+    #$0131 : Result := AnsiChar($FD);
+    #$015F : Result := AnsiChar($FE);
   else
     if Ord(Ch) <= $00FF then
       Result := AnsiChar(Ch)
@@ -4102,7 +4261,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_10Map[P];
+    Result := ISO8859_10Map[Ord(P)];
 end;
 
 function TISO8859_10Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -4154,7 +4313,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_13Map[P];
+    Result := ISO8859_13Map[Ord(P)];
 end;
 
 function TISO8859_13Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -4207,7 +4366,7 @@ begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
   else
-    Result := ISO8859_14Map[P];
+    Result := ISO8859_14Map[Ord(P)];
 end;
 
 function TISO8859_14Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -4259,14 +4418,14 @@ end;
 function TISO8859_15Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ch of
-    #$20AC : Result := #$A4;
-    #$00A6 : Result := #$A6;
-    #$0161 : Result := #$A8;
-    #$017D : Result := #$B4;
-    #$017E : Result := #$B8;
-    #$0152 : Result := #$BC;
-    #$0153 : Result := #$BD;
-    #$0178 : Result := #$BE;
+    #$20AC : Result := AnsiChar($A4);
+    #$00A6 : Result := AnsiChar($A6);
+    #$0161 : Result := AnsiChar($A8);
+    #$017D : Result := AnsiChar($B4);
+    #$017E : Result := AnsiChar($B8);
+    #$0152 : Result := AnsiChar($BC);
+    #$0153 : Result := AnsiChar($BD);
+    #$0178 : Result := AnsiChar($BE);
   else
     if Ord(Ch) <= $00FF then
       Result := AnsiChar(Ch)
@@ -4770,13 +4929,13 @@ end;
 function TIBM281Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $00A3 : Result := #$4A;
-    $007C : Result := #$4F;
-    $0021 : Result := #$5A;
-    $00A5 : Result := #$5B;
-    $00AC : Result := #$5F;
-    $203E : Result := #$A1;
-    $0024 : Result := #$E0;
+    $00A3 : Result := AnsiChar($4A);
+    $007C : Result := AnsiChar($4F);
+    $0021 : Result := AnsiChar($5A);
+    $00A5 : Result := AnsiChar($5B);
+    $00AC : Result := AnsiChar($5F);
+    $203E : Result := AnsiChar($A1);
+    $0024 : Result := AnsiChar($E0);
   else
     Result := CharFromMap(Ch, IBM038Map, 'IBM281');
   end;
@@ -5173,7 +5332,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP437Map[P];
+    Result := CP437Map[Ord(P)];
 end;
 
 function TWindows437Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5205,7 +5364,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP437Map[P];
+    Result := CP437Map[Ord(P)];
 end;
 
 function TIBM437Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5313,7 +5472,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows708Map[P];
+    Result := Windows708Map[Ord(P)];
 end;
 
 function TWindows708Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5350,7 +5509,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows737Map[P];
+    Result := Windows737Map[Ord(P)];
 end;
 
 function TWindows737Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5387,7 +5546,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows775Map[P];
+    Result := Windows775Map[Ord(P)];
 end;
 
 function TWindows775Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5430,7 +5589,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP850Map[P];
+    Result := CP850Map[Ord(P)];
 end;
 
 function TWindows850Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5448,7 +5607,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP850Map[P];
+    Result := CP850Map[Ord(P)];
 end;
 
 function TIBM850Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5485,7 +5644,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := IBM851Map[P];
+    Result := IBM851Map[Ord(P)];
 end;
 
 function TIBM851Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5528,7 +5687,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP852Map[P];
+    Result := CP852Map[Ord(P)];
 end;
 
 function TWindows852Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5546,7 +5705,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP852Map[P];
+    Result := CP852Map[Ord(P)];
 end;
 
 function TIBM852Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5589,7 +5748,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP855Map[P];
+    Result := CP855Map[Ord(P)];
 end;
 
 function TWindows855Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5607,7 +5766,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP855Map[P];
+    Result := CP855Map[Ord(P)];
 end;
 
 function TIBM855Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5650,7 +5809,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP857Map[P];
+    Result := CP857Map[Ord(P)];
 end;
 
 function TWindows857Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5669,14 +5828,14 @@ begin
     $00..$7F      : Result := WideChar(P);
     $D5, $E7, $F2 : Result := #$FFFF;
   else
-    Result := CP857Map[P];
+    Result := CP857Map[Ord(P)];
   end;
 end;
 
 function TIBM857Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   Result := CharFromHighMap(Ch, CP857Map, 'IBM857');
-  if Result in [#$D5, #$E7, #$F2] then
+  if Result in [AnsiChar($D5), AnsiChar($E7), AnsiChar($F2)] then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'IBM857']);
 end;
 
@@ -5692,14 +5851,14 @@ begin
     $00..$7F : Result := WideChar(P);
     $D5      : Result := #$20AC;
   else
-    Result := CP850Map[P];
+    Result := CP850Map[Ord(P)];
   end;
 end;
 
 function TWindows858Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $20AC : Result := #$D5;
+    $20AC : Result := AnsiChar($D5);
   else
     Result := CharFromHighMap(Ch, CP850Map, 'Windows-858');
   end;
@@ -5734,7 +5893,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := IBM860Map[P];
+    Result := IBM860Map[Ord(P)];
 end;
 
 function TIBM860Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5777,7 +5936,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP861Map[P];
+    Result := CP861Map[Ord(P)];
 end;
 
 function TWindows861Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5795,7 +5954,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP861Map[P]
+    Result := CP861Map[Ord(P)]
 end;
 
 function TIBM861Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5838,7 +5997,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP862Map[P];
+    Result := CP862Map[Ord(P)];
 end;
 
 function TWindows862Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5856,7 +6015,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP862Map[P];
+    Result := CP862Map[Ord(P)];
 end;
 
 function TIBM862Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5899,7 +6058,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP863Map[P];
+    Result := CP863Map[Ord(P)];
 end;
 
 function TWindows863Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5917,7 +6076,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP863Map[P];
+    Result := CP863Map[Ord(P)];
 end;
 
 function TIBM863Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5954,7 +6113,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows864Map[P];
+    Result := Windows864Map[Ord(P)];
 end;
 
 function TWindows864Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -5968,7 +6127,7 @@ end;
 { IBM864                                                                       }
 {                                                                              }
 const
-  IBM864Map : array[#$25..#$FF] of WideChar = (
+  IBM864Map : array[$25..$FF] of WideChar = (
       #$FFFF, #$0026, #$0027, #$0028, #$0029, #$002A, #$002B, #$002C,
       #$002D, #$002E, #$002F, #$0030, #$0031, #$0032, #$0033, #$0034,
       #$0035, #$0036, #$0037, #$0038, #$0039, #$003A, #$003B, #$003C,
@@ -6001,13 +6160,13 @@ const
 function TIBM864Codec.DecodeChar(const P: AnsiChar): WideChar;
 begin
   if Ord(P) >= $25 then
-    Result := IBM864Map[P]
+    Result := IBM864Map[Ord(P)]
   else
     Result := WideChar(P);
 end;
 
 function TIBM864Codec.EncodeChar(const Ch: WideChar): AnsiChar;
-var I : AnsiChar;
+var I : Byte;
 begin
   if Ch = #$FFFF then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'IBM864']);
@@ -6016,10 +6175,10 @@ begin
       Result := AnsiChar(Ord(Ch));
       exit;
     end;
-  for I := #$25 to #$FF do
+  for I := $25 to $FF do
     if IBM864Map[I] = Ch then
       begin
-        Result := I;
+        Result := AnsiChar(I);
         exit;
       end;
   raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'IBM864']);
@@ -6058,7 +6217,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP865Map[P];
+    Result := CP865Map[Ord(P)];
 end;
 
 function TWindows865Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6076,7 +6235,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP865Map[P];
+    Result := CP865Map[Ord(P)];
 end;
 
 function TIBM865Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6119,7 +6278,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP866Map[P];
+    Result := CP866Map[Ord(P)];
 end;
 
 function TWindows866Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6137,7 +6296,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP866Map[P];
+    Result := CP866Map[Ord(P)];
 end;
 
 function TIBM866Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6174,7 +6333,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := IBM868Map[P];
+    Result := IBM868Map[Ord(P)];
 end;
 
 function TIBM868Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6220,16 +6379,16 @@ begin
     $93      : Result := #$0093;
     $94      : Result := #$0094;
   else
-    Result := CP869Map[P];
+    Result := CP869Map[Ord(P)];
   end;
 end;
 
 function TWindows869Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $0087 : Result := #$87;
-    $0093 : Result := #$93;
-    $0094 : Result := #$94;
+    $0087 : Result := AnsiChar($87);
+    $0093 : Result := AnsiChar($93);
+    $0094 : Result := AnsiChar($94);
   else
     Result := CharFromHighMap(Ch, CP869Map, 'Windows-869');
   end;
@@ -6245,7 +6404,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := CP869Map[P];
+    Result := CP869Map[Ord(P)];
 end;
 
 function TIBM869Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6432,7 +6591,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows874Map[P];
+    Result := Windows874Map[Ord(P)];
 end;
 
 function TWindows874Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6469,7 +6628,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := IBM874Map[P];
+    Result := IBM874Map[Ord(P)];
 end;
 
 function TIBM874Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -6648,9 +6807,9 @@ function TIBM904Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
     $00..$7F : Result := AnsiChar(Ch);
-    $00A2    : Result := #$80;
-    $00AC    : Result := #$FD;
-    $00A6    : Result := #$FE;
+    $00A2    : Result := AnsiChar($80);
+    $00AC    : Result := AnsiChar($FD);
+    $00A6    : Result := AnsiChar($FE);
   else
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'IBM904']);
   end;
@@ -6867,8 +7026,8 @@ end;
 function TWindows1026Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $00B8 : Result := #$9D;
-    $00AF : Result := #$BC;
+    $00B8 : Result := AnsiChar($9D);
+    $00AF : Result := AnsiChar($BC);
   else
     Result := CharFromMap(Ch, CP1026Map, 'Windows-1026');
   end;
@@ -6892,8 +7051,8 @@ end;
 function TIBM1026Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $02DB : Result := #$9D;
-    $2014 : Result := #$BC;
+    $02DB : Result := AnsiChar($9D);
+    $2014 : Result := AnsiChar($BC);
   else
     Result := CharFromMap(Ch, CP1026Map, 'IBM1026');
   end;
@@ -6959,8 +7118,8 @@ end;
 function TWindows1047Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $000A : Result := #$15;
-    $0085 : Result := #$25;
+    $000A : Result := AnsiChar($15);
+    $0085 : Result := AnsiChar($25);
   else
     Result := CharFromMap(Ch, CP1047Map, 'Windows-1047');
   end;
@@ -6984,8 +7143,8 @@ end;
 function TIBM1047Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $000A : Result := #$25;
-    $0085 : Result := #$15;
+    $000A : Result := AnsiChar($25);
+    $0085 : Result := AnsiChar($15);
   else
     Result := CharFromMap(Ch, CP1047Map, 'IBM1047');
   end;
@@ -7009,11 +7168,11 @@ end;
 function TWindows1140Codec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $20AC : Result := #$9F;
+    $20AC : Result := AnsiChar($9F);
   else
     begin
       Result := CharFromMap(Ch, CP37Map, 'Windows-1140');
-      if Result = #$9F then
+      if Result = AnsiChar($9F) then
         raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'Windows-1140']);
     end;
   end;
@@ -7526,7 +7685,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1250Map[P];
+    Result := Windows1250Map[Ord(P)];
 end;
 
 function TWindows1250Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7582,7 +7741,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1251Map[P];
+    Result := Windows1251Map[Ord(P)];
 end;
 
 function TWindows1251Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7615,7 +7774,7 @@ begin
 end;
 
 const
-  Windows1252Map : array[#$80..#$9F] of WideChar = (
+  Windows1252Map : array[$80..$9F] of WideChar = (
       #$20AC, #$0081, #$201A, #$0192, #$201E, #$2026, #$2020, #$2021,
       #$02C6, #$2030, #$0160, #$2039, #$0152, #$008D, #$017D, #$008F,
       #$0090, #$2018, #$2019, #$201C, #$201D, #$2022, #$2013, #$2014,
@@ -7624,13 +7783,13 @@ const
 function TWindows1252Codec.DecodeChar(const P: AnsiChar): WideChar;
 begin
   if Ord(P) in [$80..$9F] then
-    Result := Windows1252Map[P]
+    Result := Windows1252Map[Ord(P)]
   else
     Result := WideChar(P);
 end;
 
 function TWindows1252Codec.EncodeChar(const Ch: WideChar): AnsiChar;
-var I : AnsiChar;
+var I : Byte;
 begin
   if (Ord(Ch) < $80) or
      ((Ord(Ch) < $100) and (Ord(Ch) > $9F)) then
@@ -7638,10 +7797,10 @@ begin
       Result := AnsiChar(Ch);
       exit;
     end;
-  for I := #$80 to #$9F do
+  for I := $80 to $9F do
     if Windows1252Map[I] = Ch then
       begin
-        Result := I;
+        Result := AnsiChar(I);
         exit;
       end;
   raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'Windows-1252']);
@@ -7676,7 +7835,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1253Map[P];
+    Result := Windows1253Map[Ord(P)];
 end;
 
 function TWindows1253Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7713,7 +7872,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1254Map[P];
+    Result := Windows1254Map[Ord(P)];
 end;
 
 function TWindows1254Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7750,7 +7909,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1255Map[P];
+    Result := Windows1255Map[Ord(P)];
 end;
 
 function TWindows1255Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7787,7 +7946,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1256Map[P];
+    Result := Windows1256Map[Ord(P)];
 end;
 
 function TWindows1256Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7824,7 +7983,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1257Map[P];
+    Result := Windows1257Map[Ord(P)];
 end;
 
 function TWindows1257Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7861,7 +8020,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := Windows1258Map[P];
+    Result := Windows1258Map[Ord(P)];
 end;
 
 function TWindows1258Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7917,7 +8076,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacLatin2Map[P];
+    Result := MacLatin2Map[Ord(P)];
 end;
 
 function TMacLatin2Codec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -7973,7 +8132,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacRomanMap[P];
+    Result := MacRomanMap[Ord(P)];
 end;
 
 function TMacRomanCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8029,7 +8188,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacCyrillicMap[P];
+    Result := MacCyrillicMap[Ord(P)];
 end;
 
 function TMacCyrillicCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8066,7 +8225,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacGreekMap[P];
+    Result := MacGreekMap[Ord(P)];
 end;
 
 function TMacGreekCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8103,7 +8262,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacIcelandicMap[P];
+    Result := MacIcelandicMap[Ord(P)];
 end;
 
 function TMacIcelandicCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8140,7 +8299,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := MacTurkishMap[P];
+    Result := MacTurkishMap[Ord(P)];
 end;
 
 function TMacTurkishCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8267,46 +8426,46 @@ end;
 function TEBCDIC_USCodec.EncodeChar(const Ch: WideChar): AnsiChar;
 begin
   case Ord(Ch) of
-    $0020        : Result := #$40;                            // SPACE
-    $0021        : Result := #$5A;                            // EXCLAMATION MARK
-    $0022        : Result := #$7F;                            // QUOTATION MARK
-    $0023        : Result := #$7B;                            // NUMBER SIGN
-    $0024        : Result := #$5B;                            // DOLLAR SIGN
-    $0025        : Result := #$6C;                            // PERCENT SIGN
-    $0026        : Result := #$50;                            // AMPERSAND
-    $0027        : Result := #$7D;                            // APOSTROPHE
-    $0028        : Result := #$4D;                            // LEFT PARENTHESIS
-    $0029        : Result := #$5D;                            // RIGHT PARENTHESIS
-    $002A        : Result := #$5C;                            // ASTERISK
-    $002B        : Result := #$4E;                            // PLUS SIGN
-    $002C        : Result := #$6B;                            // COMMA
-    $002D        : Result := #$60;                            // HYPHEN-MINUS
-    $002E        : Result := #$4B;                            // FULL STOP
-    $002F        : Result := #$61;                            // SOLIDUS
+    $0020        : Result := AnsiChar($40);                            // SPACE
+    $0021        : Result := AnsiChar($5A);                            // EXCLAMATION MARK
+    $0022        : Result := AnsiChar($7F);                            // QUOTATION MARK
+    $0023        : Result := AnsiChar($7B);                            // NUMBER SIGN
+    $0024        : Result := AnsiChar($5B);                            // DOLLAR SIGN
+    $0025        : Result := AnsiChar($6C);                            // PERCENT SIGN
+    $0026        : Result := AnsiChar($50);                            // AMPERSAND
+    $0027        : Result := AnsiChar($7D);                            // APOSTROPHE
+    $0028        : Result := AnsiChar($4D);                            // LEFT PARENTHESIS
+    $0029        : Result := AnsiChar($5D);                            // RIGHT PARENTHESIS
+    $002A        : Result := AnsiChar($5C);                            // ASTERISK
+    $002B        : Result := AnsiChar($4E);                            // PLUS SIGN
+    $002C        : Result := AnsiChar($6B);                            // COMMA
+    $002D        : Result := AnsiChar($60);                            // HYPHEN-MINUS
+    $002E        : Result := AnsiChar($4B);                            // FULL STOP
+    $002F        : Result := AnsiChar($61);                            // SOLIDUS
     $0030..$0039 : Result := AnsiChar(Ord(Ch) - $0030 + $F0); // DIGIT ZERO-NINE
-    $003A        : Result := #$7A;                            // COLON
-    $003B        : Result := #$5E;                            // SEMICOLON
-    $003C        : Result := #$4C;                            // LESS-THAN SIGN
-    $003D        : Result := #$7E;                            // EQUALS SIGN
-    $003E        : Result := #$6E;                            // GREATER-THAN SIGN
-    $003F        : Result := #$6F;                            // QUESTION MARK
-    $0040        : Result := #$7C;                            // COMMERCIAL AT
+    $003A        : Result := AnsiChar($7A);                            // COLON
+    $003B        : Result := AnsiChar($5E);                            // SEMICOLON
+    $003C        : Result := AnsiChar($4C);                            // LESS-THAN SIGN
+    $003D        : Result := AnsiChar($7E);                            // EQUALS SIGN
+    $003E        : Result := AnsiChar($6E);                            // GREATER-THAN SIGN
+    $003F        : Result := AnsiChar($6F);                            // QUESTION MARK
+    $0040        : Result := AnsiChar($7C);                            // COMMERCIAL AT
     $0041..$0049 : Result := AnsiChar(Ord(Ch) - $0041 + $C1); // LATIN CAPITAL LETTER A..I
     $004A..$0052 : Result := AnsiChar(Ord(Ch) - $004A + $D1); // LATIN CAPITAL LETTER J..R
     $0053..$005A : Result := AnsiChar(Ord(Ch) - $0053 + $E2); // LATIN CAPITAL LETTER S..Z
-    $005C        : Result := #$E0;                            // REVERSE SOLIDUS
-    $005F        : Result := #$6D;                            // LOW LINE
-    $0060        : Result := #$79;                            // GRAVE ACCENT
+    $005C        : Result := AnsiChar($E0);                            // REVERSE SOLIDUS
+    $005F        : Result := AnsiChar($6D);                            // LOW LINE
+    $0060        : Result := AnsiChar($79);                            // GRAVE ACCENT
     $0061..$0069 : Result := AnsiChar(Ord(Ch) - $0061 + $81); // LATIN SMALL LETTER A..I
     $006A..$0072 : Result := AnsiChar(Ord(Ch) - $006A + $91); // LATIN SMALL LETTER J..R
     $0073..$007A : Result := AnsiChar(Ord(Ch) - $0073 + $A2); // LATIN SMALL LETTER S..Z
-    $007B        : Result := #$C0;                            // LEFT CURLY BRACKET
-    $007C        : Result := #$4F;                            // VERTICAL LINE
-    $007D        : Result := #$D0;                            // RIGHT CURLY BRACKET
-    $007E        : Result := #$A1;                            // TILDE
-    $00A2        : Result := #$4A;                            // CENT SIGN
-    $00A6        : Result := #$6A;                            // BROKEN BAR
-    $00AC        : Result := #$5F;                            // NOT SIGN
+    $007B        : Result := AnsiChar($C0);                            // LEFT CURLY BRACKET
+    $007C        : Result := AnsiChar($4F);                            // VERTICAL LINE
+    $007D        : Result := AnsiChar($D0);                            // RIGHT CURLY BRACKET
+    $007E        : Result := AnsiChar($A1);                            // TILDE
+    $00A2        : Result := AnsiChar($4A);                            // CENT SIGN
+    $00A6        : Result := AnsiChar($6A);                            // BROKEN BAR
+    $00AC        : Result := AnsiChar($5F);                            // NOT SIGN
   else
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'EBCDIC-US']);
   end;
@@ -8360,7 +8519,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := KOI8_RMap[P];
+    Result := KOI8_RMap[Ord(P)];
 end;
 
 function TKOI8_RCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8391,8 +8550,8 @@ begin
   case Ord(Ch) of
     $0020..$005B,
     $005D..$007D  : Result := AnsiChar(Ch);
-    $00A5         : Result := #$5C;  //  YEN SIGN
-    $203E         : Result := #$7E;  //  OVERLINE
+    $00A5         : Result := AnsiChar($5C);  //  YEN SIGN
+    $203E         : Result := AnsiChar($7E);  //  OVERLINE
     $FF61..$FF9F  : Result := AnsiChar(Ord(Ch) - $FEC0);
   else
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'JIS_X0201']);
@@ -8541,7 +8700,7 @@ begin
   if Ord(P) < $80 then
     Result := WideChar(P)
   else
-    Result := NextStepMap[P];
+    Result := NextStepMap[Ord(P)];
 end;
 
 function TNextStepCodec.EncodeChar(const Ch: WideChar): AnsiChar;
@@ -8555,125 +8714,125 @@ begin
     $00B6,
     $00BB,
     $00BF : Result := AnsiChar(Ch);
-    $00A0 : Result := #$80;  //  NO-BREAK SPACE
-    $00A4 : Result := #$A8;  //  CURRENCY SIGN
-    $00A6 : Result := #$B5;  //  BROKEN BAR
-    $00A8 : Result := #$C8;  //  DIAERESIS
-    $00A9 : Result := #$A0;  //  COPYRIGHT SIGN
-    $00AA : Result := #$E3;  //  FEMININE ORDINAL INDICATOR
-    $00AC : Result := #$BE;  //  NOT SIGN
-    $00AE : Result := #$B0;  //  REGISTERED SIGN
-    $00AF : Result := #$C5;  //  MACRON
-    $00B1 : Result := #$D1;  //  PLUS-MINUS SIGN
-    $00B2 : Result := #$C9;  //  SUPERSCRIPT TWO
-    $00B3 : Result := #$CC;  //  SUPERSCRIPT THREE
-    $00B4 : Result := #$C2;  //  ACUTE ACCENT
-    $00B5 : Result := #$9D;  //  MICRO SIGN
-    $00B7 : Result := #$B4;  //  MIDDLE DOT
-    $00B8 : Result := #$CB;  //  CEDILLA
-    $00B9 : Result := #$C0;  //  SUPERSCRIPT ONE
-    $00BA : Result := #$EB;  //  MASCULINE ORDINAL INDICATOR
-    $00BC : Result := #$D2;  //  VULGAR FRACTION ONE QUARTER
-    $00BD : Result := #$D3;  //  VULGAR FRACTION ONE HALF
-    $00BE : Result := #$D4;  //  VULGAR FRACTION THREE QUARTERS
-    $00C0 : Result := #$81;  //  LATIN CAPITAL LETTER A WITH GRAVE
-    $00C1 : Result := #$82;  //  LATIN CAPITAL LETTER A WITH ACUTE
-    $00C2 : Result := #$83;  //  LATIN CAPITAL LETTER A WITH CIRCUMFLEX
-    $00C3 : Result := #$84;  //  LATIN CAPITAL LETTER A WITH TILDE
-    $00C4 : Result := #$85;  //  LATIN CAPITAL LETTER A WITH DIAERESIS
-    $00C5 : Result := #$86;  //  LATIN CAPITAL LETTER A WITH RING
-    $00C6 : Result := #$E1;  //  LATIN CAPITAL LETTER AE
-    $00C7 : Result := #$87;  //  LATIN CAPITAL LETTER C WITH CEDILLA
-    $00C8 : Result := #$88;  //  LATIN CAPITAL LETTER E WITH GRAVE
-    $00C9 : Result := #$89;  //  LATIN CAPITAL LETTER E WITH ACUTE
-    $00CA : Result := #$8A;  //  LATIN CAPITAL LETTER E WITH CIRCUMFLEX
-    $00CB : Result := #$8B;  //  LATIN CAPITAL LETTER E WITH DIAERESIS
-    $00CC : Result := #$8C;  //  LATIN CAPITAL LETTER I WITH GRAVE
-    $00CD : Result := #$8D;  //  LATIN CAPITAL LETTER I WITH ACUTE
-    $00CE : Result := #$8E;  //  LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-    $00CF : Result := #$8F;  //  LATIN CAPITAL LETTER I WITH DIAERESIS
-    $00D0 : Result := #$90;  //  LATIN CAPITAL LETTER ETH
-    $00D1 : Result := #$91;  //  LATIN CAPITAL LETTER N WITH TILDE
-    $00D2 : Result := #$92;  //  LATIN CAPITAL LETTER O WITH GRAVE
-    $00D3 : Result := #$93;  //  LATIN CAPITAL LETTER O WITH ACUTE
-    $00D4 : Result := #$94;  //  LATIN CAPITAL LETTER O WITH CIRCUMFLEX
-    $00D5 : Result := #$95;  //  LATIN CAPITAL LETTER O WITH TILDE
-    $00D6 : Result := #$96;  //  LATIN CAPITAL LETTER O WITH DIAERESIS
-    $00D7 : Result := #$9E;  //  MULTIPLICATION SIGN
-    $00D8 : Result := #$E9;  //  LATIN CAPITAL LETTER O WITH STROKE
-    $00D9 : Result := #$97;  //  LATIN CAPITAL LETTER U WITH GRAVE
-    $00DA : Result := #$98;  //  LATIN CAPITAL LETTER U WITH ACUTE
-    $00DB : Result := #$99;  //  LATIN CAPITAL LETTER U WITH CIRCUMFLEX
-    $00DC : Result := #$9A;  //  LATIN CAPITAL LETTER U WITH DIAERESIS
-    $00DD : Result := #$9B;  //  LATIN CAPITAL LETTER Y WITH ACUTE
-    $00DE : Result := #$9C;  //  LATIN CAPITAL LETTER THORN
-    $00DF : Result := #$FB;  //  LATIN SMALL LETTER SHARP S
-    $00E0 : Result := #$D5;  //  LATIN SMALL LETTER A WITH GRAVE
-    $00E1 : Result := #$D6;  //  LATIN SMALL LETTER A WITH ACUTE
-    $00E2 : Result := #$D7;  //  LATIN SMALL LETTER A WITH CIRCUMFLEX
-    $00E3 : Result := #$D8;  //  LATIN SMALL LETTER A WITH TILDE
-    $00E4 : Result := #$D9;  //  LATIN SMALL LETTER A WITH DIAERESIS
-    $00E5 : Result := #$DA;  //  LATIN SMALL LETTER A WITH RING ABOVE
-    $00E6 : Result := #$F1;  //  LATIN SMALL LETTER AE
-    $00E7 : Result := #$DB;  //  LATIN SMALL LETTER C WITH CEDILLA
-    $00E8 : Result := #$DC;  //  LATIN SMALL LETTER E WITH GRAVE
-    $00E9 : Result := #$DD;  //  LATIN SMALL LETTER E WITH ACUTE
-    $00EA : Result := #$DE;  //  LATIN SMALL LETTER E WITH CIRCUMFLEX
-    $00EB : Result := #$DF;  //  LATIN SMALL LETTER E WITH DIAERESIS
-    $00EC : Result := #$E0;  //  LATIN SMALL LETTER I WITH GRAVE
-    $00ED : Result := #$E2;  //  LATIN SMALL LETTER I WITH ACUTE
-    $00EE : Result := #$E4;  //  LATIN SMALL LETTER I WITH CIRCUMFLEX
-    $00EF : Result := #$E5;  //  LATIN SMALL LETTER I WITH DIAERESIS
-    $00F0 : Result := #$E6;  //  LATIN SMALL LETTER ETH
-    $00F1 : Result := #$E7;  //  LATIN SMALL LETTER N WITH TILDE
-    $00F2 : Result := #$EC;  //  LATIN SMALL LETTER O WITH GRAVE
-    $00F3 : Result := #$ED;  //  LATIN SMALL LETTER O WITH ACUTE
-    $00F4 : Result := #$EE;  //  LATIN SMALL LETTER O WITH CIRCUMFLEX
-    $00F5 : Result := #$EF;  //  LATIN SMALL LETTER O WITH TILDE
-    $00F6 : Result := #$F0;  //  LATIN SMALL LETTER O WITH DIAERESIS
-    $00F7 : Result := #$9F;  //  DIVISION SIGN
-    $00F8 : Result := #$F9;  //  LATIN SMALL LETTER O WITH STROKE
-    $00F9 : Result := #$F2;  //  LATIN SMALL LETTER U WITH GRAVE
-    $00FA : Result := #$F3;  //  LATIN SMALL LETTER U WITH ACUTE
-    $00FB : Result := #$F4;  //  LATIN SMALL LETTER U WITH CIRCUMFLEX
-    $00FC : Result := #$F6;  //  LATIN SMALL LETTER U WITH DIAERESIS
-    $00FD : Result := #$F7;  //  LATIN SMALL LETTER Y WITH ACUTE
-    $00FE : Result := #$FC;  //  LATIN SMALL LETTER THORN
-    $00FF : Result := #$FD;  //  LATIN SMALL LETTER Y WITH DIAERESIS
-    $0131 : Result := #$F5;  //  LATIN SMALL LETTER DOTLESS I
-    $0141 : Result := #$E8;  //  LATIN CAPITAL LETTER L WITH STROKE
-    $0142 : Result := #$F8;  //  LATIN SMALL LETTER L WITH STROKE
-    $0152 : Result := #$EA;  //  LATIN CAPITAL LIGATURE OE
-    $0153 : Result := #$FA;  //  LATIN SMALL LIGATURE OE
-    $0192 : Result := #$A6;  //  LATIN SMALL LETTER F WITH HOOK
-    $02C6 : Result := #$C3;  //  MODIFIER LETTER CIRCUMFLEX ACCENT
-    $02C7 : Result := #$CF;  //  CARON
-    $02CB : Result := #$C1;  //  MODIFIER LETTER GRAVE ACCENT
-    $02D8 : Result := #$C6;  //  BREVE
-    $02D9 : Result := #$C7;  //  DOT ABOVE
-    $02DA : Result := #$CA;  //  RING ABOVE
-    $02DB : Result := #$CE;  //  OGONEK
-    $02DC : Result := #$C4;  //  SMALL TILDE
-    $02DD : Result := #$CD;  //  DOUBLE ACUTE ACCENT
-    $2013 : Result := #$B1;  //  EN DASH
-    $2014 : Result := #$D0;  //  EM DASH
-    $2019 : Result := #$A9;  //  RIGHT SINGLE QUOTATION MARK
-    $201A : Result := #$B8;  //  SINGLE LOW-9 QUOTATION MARK
-    $201C : Result := #$AA;  //  LEFT DOUBLE QUOTATION MARK
-    $201D : Result := #$BA;  //  RIGHT DOUBLE QUOTATION MARK
-    $201E : Result := #$B9;  //  DOUBLE LOW-9 QUOTATION MARK
-    $2020 : Result := #$B2;  //  DAGGER
-    $2021 : Result := #$B3;  //  DOUBLE DAGGER
-    $2022 : Result := #$B7;  //  BULLET
-    $2026 : Result := #$BC;  //  HORIZONTAL ELLIPSIS
-    $2030 : Result := #$BD;  //  PER MILLE SIGN
-    $2039 : Result := #$AC;  //  LATIN SMALL LETTER
-    $203A : Result := #$AD;  //  LATIN SMALL LETTER
-    $2044 : Result := #$A4;  //  FRACTION SLASH
-    $FB01 : Result := #$AE;  //  LATIN SMALL LIGATURE FI
-    $FB02 : Result := #$AF;  //  LATIN SMALL LIGATURE FL
-    $FFFD : Result := #$FE;  //  Not Defined
-    $FFFF : Result := #$FE;  //  Not Defined
+    $00A0 : Result := AnsiChar($80);  //  NO-BREAK SPACE
+    $00A4 : Result := AnsiChar($A8);  //  CURRENCY SIGN
+    $00A6 : Result := AnsiChar($B5);  //  BROKEN BAR
+    $00A8 : Result := AnsiChar($C8);  //  DIAERESIS
+    $00A9 : Result := AnsiChar($A0);  //  COPYRIGHT SIGN
+    $00AA : Result := AnsiChar($E3);  //  FEMININE ORDINAL INDICATOR
+    $00AC : Result := AnsiChar($BE);  //  NOT SIGN
+    $00AE : Result := AnsiChar($B0);  //  REGISTERED SIGN
+    $00AF : Result := AnsiChar($C5);  //  MACRON
+    $00B1 : Result := AnsiChar($D1);  //  PLUS-MINUS SIGN
+    $00B2 : Result := AnsiChar($C9);  //  SUPERSCRIPT TWO
+    $00B3 : Result := AnsiChar($CC);  //  SUPERSCRIPT THREE
+    $00B4 : Result := AnsiChar($C2);  //  ACUTE ACCENT
+    $00B5 : Result := AnsiChar($9D);  //  MICRO SIGN
+    $00B7 : Result := AnsiChar($B4);  //  MIDDLE DOT
+    $00B8 : Result := AnsiChar($CB);  //  CEDILLA
+    $00B9 : Result := AnsiChar($C0);  //  SUPERSCRIPT ONE
+    $00BA : Result := AnsiChar($EB);  //  MASCULINE ORDINAL INDICATOR
+    $00BC : Result := AnsiChar($D2);  //  VULGAR FRACTION ONE QUARTER
+    $00BD : Result := AnsiChar($D3);  //  VULGAR FRACTION ONE HALF
+    $00BE : Result := AnsiChar($D4);  //  VULGAR FRACTION THREE QUARTERS
+    $00C0 : Result := AnsiChar($81);  //  LATIN CAPITAL LETTER A WITH GRAVE
+    $00C1 : Result := AnsiChar($82);  //  LATIN CAPITAL LETTER A WITH ACUTE
+    $00C2 : Result := AnsiChar($83);  //  LATIN CAPITAL LETTER A WITH CIRCUMFLEX
+    $00C3 : Result := AnsiChar($84);  //  LATIN CAPITAL LETTER A WITH TILDE
+    $00C4 : Result := AnsiChar($85);  //  LATIN CAPITAL LETTER A WITH DIAERESIS
+    $00C5 : Result := AnsiChar($86);  //  LATIN CAPITAL LETTER A WITH RING
+    $00C6 : Result := AnsiChar($E1);  //  LATIN CAPITAL LETTER AE
+    $00C7 : Result := AnsiChar($87);  //  LATIN CAPITAL LETTER C WITH CEDILLA
+    $00C8 : Result := AnsiChar($88);  //  LATIN CAPITAL LETTER E WITH GRAVE
+    $00C9 : Result := AnsiChar($89);  //  LATIN CAPITAL LETTER E WITH ACUTE
+    $00CA : Result := AnsiChar($8A);  //  LATIN CAPITAL LETTER E WITH CIRCUMFLEX
+    $00CB : Result := AnsiChar($8B);  //  LATIN CAPITAL LETTER E WITH DIAERESIS
+    $00CC : Result := AnsiChar($8C);  //  LATIN CAPITAL LETTER I WITH GRAVE
+    $00CD : Result := AnsiChar($8D);  //  LATIN CAPITAL LETTER I WITH ACUTE
+    $00CE : Result := AnsiChar($8E);  //  LATIN CAPITAL LETTER I WITH CIRCUMFLEX
+    $00CF : Result := AnsiChar($8F);  //  LATIN CAPITAL LETTER I WITH DIAERESIS
+    $00D0 : Result := AnsiChar($90);  //  LATIN CAPITAL LETTER ETH
+    $00D1 : Result := AnsiChar($91);  //  LATIN CAPITAL LETTER N WITH TILDE
+    $00D2 : Result := AnsiChar($92);  //  LATIN CAPITAL LETTER O WITH GRAVE
+    $00D3 : Result := AnsiChar($93);  //  LATIN CAPITAL LETTER O WITH ACUTE
+    $00D4 : Result := AnsiChar($94);  //  LATIN CAPITAL LETTER O WITH CIRCUMFLEX
+    $00D5 : Result := AnsiChar($95);  //  LATIN CAPITAL LETTER O WITH TILDE
+    $00D6 : Result := AnsiChar($96);  //  LATIN CAPITAL LETTER O WITH DIAERESIS
+    $00D7 : Result := AnsiChar($9E);  //  MULTIPLICATION SIGN
+    $00D8 : Result := AnsiChar($E9);  //  LATIN CAPITAL LETTER O WITH STROKE
+    $00D9 : Result := AnsiChar($97);  //  LATIN CAPITAL LETTER U WITH GRAVE
+    $00DA : Result := AnsiChar($98);  //  LATIN CAPITAL LETTER U WITH ACUTE
+    $00DB : Result := AnsiChar($99);  //  LATIN CAPITAL LETTER U WITH CIRCUMFLEX
+    $00DC : Result := AnsiChar($9A);  //  LATIN CAPITAL LETTER U WITH DIAERESIS
+    $00DD : Result := AnsiChar($9B);  //  LATIN CAPITAL LETTER Y WITH ACUTE
+    $00DE : Result := AnsiChar($9C);  //  LATIN CAPITAL LETTER THORN
+    $00DF : Result := AnsiChar($FB);  //  LATIN SMALL LETTER SHARP S
+    $00E0 : Result := AnsiChar($D5);  //  LATIN SMALL LETTER A WITH GRAVE
+    $00E1 : Result := AnsiChar($D6);  //  LATIN SMALL LETTER A WITH ACUTE
+    $00E2 : Result := AnsiChar($D7);  //  LATIN SMALL LETTER A WITH CIRCUMFLEX
+    $00E3 : Result := AnsiChar($D8);  //  LATIN SMALL LETTER A WITH TILDE
+    $00E4 : Result := AnsiChar($D9);  //  LATIN SMALL LETTER A WITH DIAERESIS
+    $00E5 : Result := AnsiChar($DA);  //  LATIN SMALL LETTER A WITH RING ABOVE
+    $00E6 : Result := AnsiChar($F1);  //  LATIN SMALL LETTER AE
+    $00E7 : Result := AnsiChar($DB);  //  LATIN SMALL LETTER C WITH CEDILLA
+    $00E8 : Result := AnsiChar($DC);  //  LATIN SMALL LETTER E WITH GRAVE
+    $00E9 : Result := AnsiChar($DD);  //  LATIN SMALL LETTER E WITH ACUTE
+    $00EA : Result := AnsiChar($DE);  //  LATIN SMALL LETTER E WITH CIRCUMFLEX
+    $00EB : Result := AnsiChar($DF);  //  LATIN SMALL LETTER E WITH DIAERESIS
+    $00EC : Result := AnsiChar($E0);  //  LATIN SMALL LETTER I WITH GRAVE
+    $00ED : Result := AnsiChar($E2);  //  LATIN SMALL LETTER I WITH ACUTE
+    $00EE : Result := AnsiChar($E4);  //  LATIN SMALL LETTER I WITH CIRCUMFLEX
+    $00EF : Result := AnsiChar($E5);  //  LATIN SMALL LETTER I WITH DIAERESIS
+    $00F0 : Result := AnsiChar($E6);  //  LATIN SMALL LETTER ETH
+    $00F1 : Result := AnsiChar($E7);  //  LATIN SMALL LETTER N WITH TILDE
+    $00F2 : Result := AnsiChar($EC);  //  LATIN SMALL LETTER O WITH GRAVE
+    $00F3 : Result := AnsiChar($ED);  //  LATIN SMALL LETTER O WITH ACUTE
+    $00F4 : Result := AnsiChar($EE);  //  LATIN SMALL LETTER O WITH CIRCUMFLEX
+    $00F5 : Result := AnsiChar($EF);  //  LATIN SMALL LETTER O WITH TILDE
+    $00F6 : Result := AnsiChar($F0);  //  LATIN SMALL LETTER O WITH DIAERESIS
+    $00F7 : Result := AnsiChar($9F);  //  DIVISION SIGN
+    $00F8 : Result := AnsiChar($F9);  //  LATIN SMALL LETTER O WITH STROKE
+    $00F9 : Result := AnsiChar($F2);  //  LATIN SMALL LETTER U WITH GRAVE
+    $00FA : Result := AnsiChar($F3);  //  LATIN SMALL LETTER U WITH ACUTE
+    $00FB : Result := AnsiChar($F4);  //  LATIN SMALL LETTER U WITH CIRCUMFLEX
+    $00FC : Result := AnsiChar($F6);  //  LATIN SMALL LETTER U WITH DIAERESIS
+    $00FD : Result := AnsiChar($F7);  //  LATIN SMALL LETTER Y WITH ACUTE
+    $00FE : Result := AnsiChar($FC);  //  LATIN SMALL LETTER THORN
+    $00FF : Result := AnsiChar($FD);  //  LATIN SMALL LETTER Y WITH DIAERESIS
+    $0131 : Result := AnsiChar($F5);  //  LATIN SMALL LETTER DOTLESS I
+    $0141 : Result := AnsiChar($E8);  //  LATIN CAPITAL LETTER L WITH STROKE
+    $0142 : Result := AnsiChar($F8);  //  LATIN SMALL LETTER L WITH STROKE
+    $0152 : Result := AnsiChar($EA);  //  LATIN CAPITAL LIGATURE OE
+    $0153 : Result := AnsiChar($FA);  //  LATIN SMALL LIGATURE OE
+    $0192 : Result := AnsiChar($A6);  //  LATIN SMALL LETTER F WITH HOOK
+    $02C6 : Result := AnsiChar($C3);  //  MODIFIER LETTER CIRCUMFLEX ACCENT
+    $02C7 : Result := AnsiChar($CF);  //  CARON
+    $02CB : Result := AnsiChar($C1);  //  MODIFIER LETTER GRAVE ACCENT
+    $02D8 : Result := AnsiChar($C6);  //  BREVE
+    $02D9 : Result := AnsiChar($C7);  //  DOT ABOVE
+    $02DA : Result := AnsiChar($CA);  //  RING ABOVE
+    $02DB : Result := AnsiChar($CE);  //  OGONEK
+    $02DC : Result := AnsiChar($C4);  //  SMALL TILDE
+    $02DD : Result := AnsiChar($CD);  //  DOUBLE ACUTE ACCENT
+    $2013 : Result := AnsiChar($B1);  //  EN DASH
+    $2014 : Result := AnsiChar($D0);  //  EM DASH
+    $2019 : Result := AnsiChar($A9);  //  RIGHT SINGLE QUOTATION MARK
+    $201A : Result := AnsiChar($B8);  //  SINGLE LOW-9 QUOTATION MARK
+    $201C : Result := AnsiChar($AA);  //  LEFT DOUBLE QUOTATION MARK
+    $201D : Result := AnsiChar($BA);  //  RIGHT DOUBLE QUOTATION MARK
+    $201E : Result := AnsiChar($B9);  //  DOUBLE LOW-9 QUOTATION MARK
+    $2020 : Result := AnsiChar($B2);  //  DAGGER
+    $2021 : Result := AnsiChar($B3);  //  DOUBLE DAGGER
+    $2022 : Result := AnsiChar($B7);  //  BULLET
+    $2026 : Result := AnsiChar($BC);  //  HORIZONTAL ELLIPSIS
+    $2030 : Result := AnsiChar($BD);  //  PER MILLE SIGN
+    $2039 : Result := AnsiChar($AC);  //  LATIN SMALL LETTER
+    $203A : Result := AnsiChar($AD);  //  LATIN SMALL LETTER
+    $2044 : Result := AnsiChar($A4);  //  FRACTION SLASH
+    $FB01 : Result := AnsiChar($AE);  //  LATIN SMALL LIGATURE FI
+    $FB02 : Result := AnsiChar($AF);  //  LATIN SMALL LIGATURE FL
+    $FFFD : Result := AnsiChar($FE);  //  Not Defined
+    $FFFF : Result := AnsiChar($FE);  //  Not Defined
   else
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'NextStep']);
   end;

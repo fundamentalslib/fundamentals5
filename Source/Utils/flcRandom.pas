@@ -5,7 +5,7 @@
 {   File version:     5.17                                                     }
 {   Description:      Random number functions                                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2017, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -112,16 +112,22 @@ function  RandomInt64: Int64; overload;
 function  RandomInt64(const N: Int64): Int64; overload;
 
 function  RandomHex(const Digits: Integer; const UpperCase: Boolean = True): String;
+{$IFDEF SupportRawByteString}
 function  RandomHexA(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  RandomHexW(const Digits: Integer; const UpperCase: Boolean = True): WideString;
+{$ENDIF}
 function  RandomHexU(const Digits: Integer; const UpperCase: Boolean = True): UnicodeString;
 
 function  RandomFloat: Extended;
 
+{$IFDEF SupportRawByteString}
 function  RandomUpperAlphaStrA(const Length: Integer): RawByteString;
 function  RandomPseudoWordA(const Length: Integer): RawByteString;
 function  RandomPasswordA(const MinLength, MaxLength: Integer;
           const CaseSensitive, UseSymbols, UseNumbers: Boolean): RawByteString;
+{$ENDIF}
 
 
 
@@ -260,8 +266,10 @@ var
 begin
   Result := 0;
   { Counters }
+  {$IFNDEF ANDROID}
   Result := Result xor GetHighPrecisionCounter;
   Result := Result xor (Int64(GetTick) shl 32);
+  {$ENDIF}
   { System Time }
   DecodeTime(Time, H, Mi, S, S1);
   Result := Result xor Int64(H) xor (Int64(Mi) shl 8) xor (Int64(S1) shl 16) xor (Int64(S) shl 24);
@@ -946,10 +954,14 @@ end;
 
 const
   HexDigitsHi  : String        = '0123456789ABCDEF';
+  {$IFDEF SupportRawByteString}
   HexDigitsHiA : RawByteString = '0123456789ABCDEF';
+  {$ENDIF}
   HexDigitsHiU : UnicodeString = '0123456789ABCDEF';
   HexDigitsLo  : String        = '0123456789abcdef';
+  {$IFDEF SupportRawByteString}
   HexDigitsLoA : RawByteString = '0123456789abcdef';
+  {$ENDIF}
   HexDigitsLoU : UnicodeString = '0123456789abcdef';
 
 function RandomHex(const Digits: Integer; const UpperCase: Boolean): String;
@@ -975,6 +987,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportRawByteString}
 function RandomHexA(const Digits: Integer; const UpperCase: Boolean): RawByteString;
 var
   I : Integer;
@@ -997,7 +1010,9 @@ begin
       Result[I] := C;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function RandomHexW(const Digits: Integer; const UpperCase: Boolean): WideString;
 var
   I : Integer;
@@ -1020,6 +1035,7 @@ begin
       Result[I] := C;
     end;
 end;
+{$ENDIF}
 
 function RandomHexU(const Digits: Integer; const UpperCase: Boolean): UnicodeString;
 var
@@ -1044,6 +1060,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportRawByteString}
 function RandomUpperAlphaStrA(const Length: Integer): RawByteString;
 var
   I : Integer;
@@ -1057,6 +1074,7 @@ begin
   for I := 1 to Length do
     Result[I] := AnsiChar(Ord('A') + RandomUniform(26));
 end;
+{$ENDIF}
 
 const
   Vowels         = 'AEIOUY';
@@ -1064,6 +1082,7 @@ const
   Consonants     = 'BCDFGHJKLMNPQRSTVWXZ';
   ConsonantCount = Length(Consonants);
 
+{$IFDEF SupportRawByteString}
 function RandomPseudoWordA(const Length: Integer): RawByteString;
 var
   I, A, P, T : Integer;
@@ -1090,6 +1109,7 @@ begin
       P := T;
     end;
 end;
+{$ENDIF}
 
 const
   PasswordSymbolChars = '!?@%$&-*#';
@@ -1097,6 +1117,7 @@ const
   PasswordNumberChars = '0123456789';
   PasswordNumberCharCount = Length(PasswordNumberChars);
 
+{$IFDEF SupportRawByteString}
 function RandomPasswordA(const MinLength, MaxLength: Integer;
          const CaseSensitive, UseSymbols, UseNumbers: Boolean): RawByteString;
 var
@@ -1145,6 +1166,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 
 
@@ -1198,6 +1220,7 @@ var I, L : Integer;
     V, W : Int64;
     T1, T2 : Int64;
 begin
+  {$IFDEF SupportRawByteString}
   Assert(Length(RandomPasswordA(0, 0, True, True, True)) = 0);
   Assert(Length(RandomPasswordA(1, 1, True, True, True)) = 1);
   for I := 1 to 100 do
@@ -1206,6 +1229,7 @@ begin
       Assert((L >= 5) and (L <= 16));
     end;
   Assert(Length(RandomHexA(32)) = 32);
+  {$ENDIF}
   // Note: These are simple sanity tests that may fail occasionally
   // RandomSeed/RandomUniform
   // - Check for unique numbers

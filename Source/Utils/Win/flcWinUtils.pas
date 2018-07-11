@@ -292,13 +292,13 @@ type
       WinNT_31, WinNT_35, WinNT_351,
       // Windows NT 4
       WinNT_40,
-      // Windows NT 5 2000/XP/2003
+      // Windows NT 5 - 2000/XP/2003
       Win_2000, Win_XP, Win_2003, WinNT5_Future,
-      // Windows NT 6 Vista/7/8/8.1
+      // Windows NT 6 - Vista/7/8/8.1
       Win_Vista, Win_7, Win_8, Win_81, WinNT6_Future,
-      // Windows NT 7
+      // Windows NT 10 - 10
       Win_10, WinNT10_Future,
-      // Windows NT 9+
+      // Windows NT 11+
       WinNT_Future,
       // Windows Post-NT
       Win_Future);
@@ -590,6 +590,7 @@ uses
   { Fundamentals }
   flcDynArrays,
   flcStrings,
+  flcZeroTermStrings,
   flcFileUtils;
 
 
@@ -621,7 +622,7 @@ begin
   if Len = 0 then
     Result := 'WindowsError#' + IntToStringA(ErrorCode)
   else
-    Result := StrPasA(PAnsiChar(@Buf));
+    Result := StrZPasA(PAnsiChar(@Buf));
 end;
 
 function WinErrorMessageW(const ErrorCode: LongWord): WideString;
@@ -634,7 +635,7 @@ begin
   if Len = 0 then
     Result := 'WindowsError#' + IntToStringW(ErrorCode)
   else
-    Result := StrPasW(PWideChar(@Buf));
+    Result := StrZPasW(PWideChar(@Buf));
 end;
 
 function WinErrorMessageU(const ErrorCode: LongWord): UnicodeString;
@@ -647,7 +648,7 @@ begin
   if Len = 0 then
     Result := 'WindowsError#' + IntToStringU(ErrorCode)
   else
-    Result := StrPasU(PWideChar(@Buf));
+    Result := StrZPasU(PWideChar(@Buf));
 end;
 
 function WinErrorMessage(const ErrorCode: LongWord): String;
@@ -711,7 +712,7 @@ var Buf: array[0..MAX_ENVIRONMENTVARIABLE_LEN] of AnsiChar;
 begin
   FillChar(Buf, Sizeof(Buf), 0);
   Windows.GetEnvironmentVariableA(PAnsiChar(Name), @Buf[0], MAX_ENVIRONMENTVARIABLE_LEN);
-  Result := StrPasA(@Buf[0]);
+  Result := StrZPasA(@Buf[0]);
 end;
 
 function GetEnvironmentVariableW(const Name: WideString): WideString;
@@ -719,7 +720,7 @@ var Buf: array[0..MAX_ENVIRONMENTVARIABLE_LEN] of WideChar;
 begin
   FillChar(Buf, Sizeof(Buf), 0);
   Windows.GetEnvironmentVariableW(PWideChar(Name), @Buf[0], MAX_ENVIRONMENTVARIABLE_LEN);
-  Result := StrPasW(@Buf[0]);
+  Result := StrZPasW(@Buf[0]);
 end;
 
 function GetEnvironmentVariableU(const Name: UnicodeString): UnicodeString;
@@ -727,7 +728,7 @@ var Buf: array[0..MAX_ENVIRONMENTVARIABLE_LEN] of WideChar;
 begin
   FillChar(Buf, Sizeof(Buf), 0);
   Windows.GetEnvironmentVariableW(PWideChar(Name), @Buf[0], MAX_ENVIRONMENTVARIABLE_LEN);
-  Result := StrPasU(@Buf[0]);
+  Result := StrZPasU(@Buf[0]);
 end;
 
 function GetEnvironmentVariable(const Name: String): String;
@@ -2265,7 +2266,7 @@ begin
   L := MAX_USERNAME_LENGTH;
   SetLength(Result, L + 1);
   if Windows.GetUserNameA(PAnsiChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenA(PAnsiChar(Result)))
+    SetLength(Result, StrZLenA(PAnsiChar(Result)))
   else
     Result := GetEnvironmentVariableA('USERNAME');
 end;
@@ -2276,7 +2277,7 @@ begin
   L := MAX_USERNAME_LENGTH;
   SetLength(Result, L + 1);
   if Windows.GetUserNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenW(PWideChar(Result)))
+    SetLength(Result, StrZLenW(PWideChar(Result)))
   else
     Result := GetEnvironmentVariableW('USERNAME');
 end;
@@ -2287,7 +2288,7 @@ begin
   L := MAX_USERNAME_LENGTH;
   SetLength(Result, L + 1);
   if Windows.GetUserNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenW(PWideChar(Result)))
+    SetLength(Result, StrZLenW(PWideChar(Result)))
   else
     Result := GetEnvironmentVariableU('USERNAME');
 end;
@@ -2307,7 +2308,7 @@ begin
   L := MAX_COMPUTERNAME_LENGTH + 2;
   SetLength(Result, L);
   if Windows.GetComputerNameA(PAnsiChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenA(PAnsiChar(Result)))
+    SetLength(Result, StrZLenA(PAnsiChar(Result)))
   else
     Result := GetEnvironmentVariableA('COMPUTERNAME');
 end;
@@ -2318,7 +2319,7 @@ begin
   L := MAX_COMPUTERNAME_LENGTH + 2;
   SetLength(Result, L);
   if Windows.GetComputerNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenW(PWideChar(Result)))
+    SetLength(Result, StrZLenW(PWideChar(Result)))
   else
     Result := GetEnvironmentVariableW('COMPUTERNAME');
 end;
@@ -2329,7 +2330,7 @@ begin
   L := MAX_COMPUTERNAME_LENGTH + 2;
   SetLength(Result, L);
   if Windows.GetComputerNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrLenW(PWideChar(Result)))
+    SetLength(Result, StrZLenW(PWideChar(Result)))
   else
     Result := GetEnvironmentVariableU('COMPUTERNAME');
 end;
@@ -2525,7 +2526,7 @@ begin
     begin
       FillChar(CmdBuf, Sizeof(CmdBuf), 0);
       if ExpandEnvironmentStringsA(PAnsiChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
-        Cmd := StrPasA(PAnsiChar(@CmdBuf));
+        Cmd := StrZPasA(PAnsiChar(@CmdBuf));
     end;
   FillChar(StartUpInfo, SizeOf(StartUpInfo), 0);
   StartUpInfo.cb := SizeOf(StartUpInfo);
@@ -2582,7 +2583,7 @@ begin
     begin
       FillChar(CmdBuf, Sizeof(CmdBuf), 0);
       if ExpandEnvironmentStringsW(PWideChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
-        Cmd := StrPasW(PWideChar(@CmdBuf));
+        Cmd := StrZPasW(PWideChar(@CmdBuf));
     end;
   FillChar(StartUpInfo, SizeOf(StartUpInfo), 0);
   StartUpInfo.cb := SizeOf(StartUpInfo);
@@ -2639,7 +2640,7 @@ begin
     begin
       FillChar(CmdBuf, Sizeof(CmdBuf), 0);
       if ExpandEnvironmentStringsW(PWideChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
-        Cmd := StrPasU(PWideChar(@CmdBuf));
+        Cmd := StrZPasU(PWideChar(@CmdBuf));
     end;
   FillChar(StartUpInfo, SizeOf(StartUpInfo), 0);
   StartUpInfo.cb := SizeOf(StartUpInfo);
@@ -2869,7 +2870,7 @@ var Buf : array[0..LOCALE_MAXSIZE] of AnsiChar;
 begin
   FillChar(Buf[0], SizeOf(Buf), 0);
   if GetLocaleInfoA(LOCALE_USER_DEFAULT, LocaleType, @Buf[0], LOCALE_MAXSIZE) <> 0 then
-    Result := StrPasA(PAnsiChar(@Buf[0]))
+    Result := StrZPasA(PAnsiChar(@Buf[0]))
   else
     Result := '';
 end;
@@ -2879,7 +2880,7 @@ var Buf : array[0..LOCALE_MAXSIZE] of WideChar;
 begin
   FillChar(Buf[0], SizeOf(Buf), 0);
   if GetLocaleInfoW(LOCALE_USER_DEFAULT, LocaleType, @Buf[0], LOCALE_MAXSIZE) <> 0 then
-    Result := StrPasW(PWideChar(@Buf[0]))
+    Result := StrZPasW(PWideChar(@Buf[0]))
   else
     Result := '';
 end;
@@ -2889,7 +2890,7 @@ var Buf : array[0..LOCALE_MAXSIZE] of WideChar;
 begin
   FillChar(Buf[0], SizeOf(Buf), 0);
   if GetLocaleInfoW(LOCALE_USER_DEFAULT, LocaleType, @Buf[0], LOCALE_MAXSIZE) <> 0 then
-    Result := StrPasU(PWideChar(@Buf[0]))
+    Result := StrZPasU(PWideChar(@Buf[0]))
   else
     Result := '';
 end;

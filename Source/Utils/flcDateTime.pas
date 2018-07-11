@@ -268,7 +268,7 @@ function  NowAsGMTTime: TDateTime;
 {   ISO-8601 Integer date is an integer in the format YYYYMMDD.                }
 {   TwoDigitYearToYear returns the full year number given a two digit year.    }
 {                                                                              }
-function  DateTimeToISO8601String(const D: TDateTime): AnsiString;
+function  DateTimeToISO8601StringA(const D: TDateTime): AnsiString;
 function  ISO8601StringToTime(const D: AnsiString): TDateTime;
 function  ISO8601StringAsDateTime(const D: AnsiString): TDateTime;
 
@@ -276,12 +276,12 @@ function  DateTimeToANSI(const D: TDateTime): Integer;
 function  ANSIToDateTime(const Julian: Integer): TDateTime;
 
 function  DateTimeToISOInteger(const D: TDateTime): Integer;
-function  DateTimeToISOString(const D: TDateTime): AnsiString;
+function  DateTimeToISOStringA(const D: TDateTime): AnsiString;
 function  ISOIntegerToDateTime(const ISOInteger: Integer): TDateTime;
 
 function  TwoDigitRadix2000YearToYear(const Y: Integer): Integer;
 
-function  DateTimeAsElapsedTime(const D: TDateTime;
+function  DateTimeAsElapsedTimeA(const D: TDateTime;
           const IncludeMilliseconds: Boolean = False): AnsiString;
 
 function  UnixTimeToDateTime(const UnixTime: LongWord): TDateTime;
@@ -536,7 +536,7 @@ uses
 
   { Fundamentals }
   {$IFDEF DEBUG}{$IFDEF SELFTEST}
-  cTimers,
+  flcTimers,
   {$ENDIF}{$ENDIF}
   flcStrings;
 
@@ -1270,7 +1270,7 @@ end;
 {                                                                              }
 { Conversions                                                                  }
 {                                                                              }
-function DateTimeToISO8601String(const D: TDateTime): AnsiString;
+function DateTimeToISO8601StringA(const D: TDateTime): AnsiString;
 begin
   Result :=
       StrPadLeftA(IntToStringA(Year(D)),   '0', 2, False) +
@@ -1361,7 +1361,7 @@ begin
   Result := Ye * 10000 + Mo * 100 + Da;
 end;
 
-function DateTimeToISOString(const D: TDateTime): AnsiString;
+function DateTimeToISOStringA(const D: TDateTime): AnsiString;
 var Ye, Mo, Da : Word;
 begin
   DecodeDate(D, Ye, Mo, Da);
@@ -1391,7 +1391,7 @@ begin
     Result := 1900 + Y;
 end;
 
-function DateTimeAsElapsedTime(const D: TDateTime;
+function DateTimeAsElapsedTimeA(const D: TDateTime;
     const IncludeMilliseconds: Boolean): AnsiString;
 var I : Integer;
 begin

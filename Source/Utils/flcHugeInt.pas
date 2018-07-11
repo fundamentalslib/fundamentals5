@@ -92,6 +92,8 @@
 {$ENDIF}
 {$ENDIF}
 
+{$Q-,R-}
+
 unit flcHugeInt;
 
 interface
@@ -184,8 +186,10 @@ procedure HugeWordAssign(var A: HugeWord; const B: HugeWord);
 procedure HugeWordAssignHugeIntAbs(var A: HugeWord; const B: HugeInt);
 procedure HugeWordAssignBuf(var A: HugeWord; const Buf; const BufSize: Integer;
           const ReverseByteOrder: Boolean);
+{$IFDEF SupportAnsiString}
 procedure HugeWordAssignBufStr(var A: HugeWord; const Buf: AnsiString;
           const ReverseByteOrder: Boolean);
+{$ENDIF}
 
 procedure HugeWordSwap(var A, B: HugeWord);
 
@@ -280,18 +284,30 @@ procedure HugeWordGCD(const A, B: HugeWord; var R: HugeWord);
 procedure HugeWordPower(var A: HugeWord; const B: LongWord);
 procedure HugeWordPowerAndMod(var Res: HugeWord; const A, E, M: HugeWord);
 
+{$IFDEF SupportAnsiString}
 function  HugeWordToStrA(const A: HugeWord): AnsiString;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  HugeWordToStrW(const A: HugeWord): WideString;
+{$ENDIF}
 function  HugeWordToStrU(const A: HugeWord): UnicodeString;
 function  HugeWordToStr(const A: HugeWord): String;
+{$IFDEF SupportAnsiString}
 procedure StrToHugeWordA(const A: AnsiString; var R: HugeWord);
+{$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrToHugeWordW(const A: WideString; var R: HugeWord);
+{$ENDIF}
 procedure StrToHugeWordU(const A: UnicodeString; var R: HugeWord);
 procedure StrToHugeWord(const A: String; var R: HugeWord);
 
+{$IFDEF SupportAnsiString}
 function  HugeWordToHexA(const A: HugeWord; const LowCase: Boolean = False): AnsiString;
+{$ENDIF}
 function  HugeWordToHex(const A: HugeWord; const LowCase: Boolean = False): String;
+{$IFDEF SupportAnsiString}
 procedure HexToHugeWordA(const A: AnsiString; var R: HugeWord);
+{$ENDIF}
 procedure HexToHugeWord(const A: String; var R: HugeWord);
 
 procedure HugeWordISqrt(var A: HugeWord);
@@ -423,14 +439,24 @@ procedure HugeIntMod(const A, B: HugeInt; var R: HugeInt);
 
 procedure HugeIntPower(var A: HugeInt; const B: LongWord);
 
+{$IFDEF SupportAnsiString}
 function  HugeIntToStrA(const A: HugeInt): AnsiString;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  HugeIntToStrW(const A: HugeInt): WideString;
+{$ENDIF}
 function  HugeIntToStrU(const A: HugeInt): UnicodeString;
+{$IFDEF SupportAnsiString}
 procedure StrToHugeIntA(const A: AnsiString; var R: HugeInt);
+{$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrToHugeIntW(const A: WideString; var R: HugeInt);
+{$ENDIF}
 procedure StrToHugeIntU(const A: UnicodeString; var R: HugeInt);
+{$IFDEF SupportAnsiString}
 function  HugeIntToHexA(const A: HugeInt): AnsiString;
 procedure HexToHugeIntA(const A: AnsiString; var R: HugeInt);
+{$ENDIF}
 
 procedure HugeIntISqrt(var A: HugeInt);
 
@@ -501,11 +527,13 @@ type
 
     procedure Power(const B: LongWord);
 
+    {$IFDEF SupportAnsiString}
     function  ToStr: AnsiString;
     function  ToHex: AnsiString;
-    
+
     procedure AssignStr(const A: AnsiString);
     procedure AssignHex(const A: AnsiString);
+    {$ENDIF}
 
     procedure ISqrt;
 
@@ -1065,6 +1093,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 procedure HugeWordAssignBufStr(var A: HugeWord; const Buf: AnsiString;
           const ReverseByteOrder: Boolean);
 var L : Integer;
@@ -1075,6 +1104,7 @@ begin
   else
     HugeWordAssignBuf(A, Buf[1], L, ReverseByteOrder);
 end;
+{$ENDIF}
 
 procedure HugeWordSwap(var A, B: HugeWord);
 var C : HugeWord;
@@ -1406,6 +1436,51 @@ end;
 
 { HugeWord equals                                                              }
 {   Pre:   A and B normalised                                                  }
+{$IFDEF Pas64}
+function HugeWordEquals(const A, B: HugeWord): Boolean;
+var L, M, I : Integer;
+    P, Q    : PLongWord;
+    T, U    : PUInt64;
+begin
+  L := A.Used;
+  M := B.Used;
+  if L <> M then
+    begin
+      Result := False;
+      exit;
+    end;
+  P := A.Data;
+  Q := B.Data;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
+  T := Pointer(P);
+  U := Pointer(Q);
+  for I := 0 to (L div 2) - 1 do
+    begin
+      if T^ <> U^ then
+        begin
+          Result := False;
+          exit;
+        end;
+      Inc(T);
+      Inc(U);
+    end;
+  if L and 1 <> 0 then
+    begin
+      P := Pointer(T);
+      Q := Pointer(U);
+      if P^ <> Q^ then
+        begin
+          Result := False;
+          exit;
+        end;
+    end;
+  Result := True;
+end;
+{$ELSE}
 function HugeWordEquals(const A, B: HugeWord): Boolean;
 var L, M, I : Integer;
     P, Q : PLongWord;
@@ -1437,6 +1512,7 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 
 { HugeWord Compare Word                                                        }
 {   Pre:   A normalised                                                        }
@@ -2308,10 +2384,8 @@ begin
     begin
       Inc(R, P^);
       Inc(R, Q^);
-      // P^ := Int64Rec(R).Lo;
-      // R := Int64Rec(R).Hi;
-      P^ := LongWord(R);
-      R := LongWord(R shr 32);
+      P^ := LongWord(R); // Int64Rec(R).Lo
+      R := R shr 32;     // Int64Rec(R).Hi
       Inc(P);
       Inc(Q);
     end;
@@ -2320,10 +2394,8 @@ begin
   for I := M to L - 1 do
     begin
       Inc(R, P^);
-      // P^ := Int64Rec(R).Lo;
-      // C := Int64Rec(R).Hi;
-      P^ := LongWord(R);
-      R := LongWord(R shr 32);
+      P^ := LongWord(R); // Int64Rec(R).Lo;
+      R := R shr 32;     // Int64Rec(R).Hi;
       if R = 0 then
         exit;
       Inc(P);
@@ -2417,7 +2489,7 @@ end;
 {          A normalised                                                        }
 {          Result is sign of A (-1 or +1) or 0 if A is zero                    }
 {$IFDEF ASM386_DELPHI}
-function HugeWordSubtract_Asm1(const A, B, R: PLongWord; const L: LongWord): Boolean; assembler;
+function HugeWordSubtract_Asm1(const A, B, R: PLongWord; const L: LongWord): Boolean; assembler; // not used
 asm
   push esi
   push edi
@@ -2467,7 +2539,7 @@ asm
   pop esi
 end;
 
-function HugeWordSubtract_Asm(var A: HugeWord; const B: HugeWord): Integer;
+function HugeWordSubtract_Asm(var A: HugeWord; const B: HugeWord): Integer; // not used
 var C       : Integer;
     D, E    : PHugeWord;
     L, M    : Integer;
@@ -2559,6 +2631,98 @@ begin
 end;
 {$ENDIF}
 
+function HugeWordSubtract_alt1(var A: HugeWord; const B: HugeWord): Integer; // not used
+var C       : Integer;
+    D, E    : PHugeWord;
+    L, M    : Integer;
+    R       : LongWord;
+    I       : Integer;
+    F, N    : Boolean;
+    P, Q, Z : PLongWord;
+    U, V    : LongWord;
+begin
+  // Handle A = 0 or B = 0
+  if HugeWordIsZero(A) then
+    begin
+      if HugeWordIsZero(B) then
+        begin
+          Result := 0;
+          exit;
+        end;
+      HugeWordAssign(A, B);
+      Result := -1;
+      exit;
+    end;
+  if HugeWordIsZero(B) then
+    begin
+      Result := 1;
+      exit;
+    end;
+  // Handle A = B
+  C := HugeWordCompare(A, B);
+  if C = 0 then
+    begin
+      HugeWordAssignZero(A);
+      Result := 0;
+      exit;
+    end;
+  // Swap around if A < B
+  if C > 0 then
+    begin
+      D := @A;
+      E := @B;
+    end
+  else
+    begin
+      HugeWordSetSize(A, B.Used);
+      D := @B;
+      E := @A;
+    end;
+  // Subtract
+  P := D^.Data;
+  Q := E^.Data;
+  Z := A.Data;
+  L := D^.Used;
+  M := E^.Used;
+  F := False;
+  for I := 0 to M - 1 do
+    begin
+      U := P^;
+      V := Q^;
+      R := LongWord(U - V);
+      N := U < V;
+      if F then
+        begin
+          R := LongWord(R - 1);
+          if R = $FFFFFFFF then
+            N := True;
+        end;
+      Z^ := R;
+      F := N;
+      Inc(P);
+      Inc(Q);
+      Inc(Z);
+    end;
+  if F then // borrowed
+    for I := M to L - 1 do
+      begin
+        R := P^;
+        R := LongWord(R - 1);
+        Z^ := R;
+        if R <> $FFFFFFFF then
+          break;  // not borrowed
+        Inc(P);
+        Inc(Z);
+      end;
+  // Normalise (leading zeros)
+  HugeWordNormalise(A);
+  // Return sign
+  if C > 0 then
+    Result := 1
+  else
+    Result := -1;
+end;
+
 function HugeWordSubtract(var A: HugeWord; const B: HugeWord): Integer;
 var C       : Integer;
     D, E    : PHugeWord;
@@ -2614,38 +2778,31 @@ begin
   F := False;
   for I := 0 to M - 1 do
     begin
-      if F then
-        R := $FFFFFFFF
-      else
-        R := $100000000;
+      R := $FFFFFFFF;
+      if not F then  // not borrowed
+        Inc(R);  // $100000000
       Inc(R, P^);
       Dec(R, Q^);
-      // Z^ := Int64Rec(R).Lo;
-      Z^ := LongWord(R);
-      // F := Int64Rec(R).Hi = 0;
-      F := R shr 32 = 0;
+      Z^ := LongWord(R);  // Int64Rec(R).Lo
+      F := R shr 32 = 0;  // Int64Rec(R).Hi = 0
       Inc(P);
       Inc(Q);
       Inc(Z);
     end;
-  if F then
+  if F then // borrowed
     for I := M to L - 1 do
       begin
         R := $FFFFFFFF;
         Inc(R, P^);
-        // Z^ := Int64Rec(R).Lo;
-        Z^ := LongWord(R);
-        // if Int64Rec(R).Hi > 0 then
-        if R shr 32 > 0 then
-          break;
+        Z^ := LongWord(R);  // Int64Rec(R).Lo
+        if R shr 32 > 0 then  // Int64Rec(R).Hi > 0
+          break;  // not borrowed
         Inc(P);
         Inc(Z);
       end;
-  // Normalise
+  // Normalise (leading zeros)
   HugeWordNormalise(A);
   // Return sign
-  if HugeWordIsZero(A) then
-    Result := 0 else
   if C > 0 then
     Result := 1
   else
@@ -2839,7 +2996,7 @@ begin
       C := 0;
       P := ADat;
       F := RDat;
-      Inc(F, LongWord(I));
+      Inc(F, I);
       for J := 0 to L - 1 do
         begin
           R := C;
@@ -3250,6 +3407,7 @@ begin
 end;
 
 { HugeWord String conversion                                                   }
+{$IFDEF SupportAnsiString}
 function HugeWordToStrA(const A: HugeWord): AnsiString;
 var B, C : HugeWord;
     D    : LongWord;
@@ -3279,7 +3437,9 @@ begin
   for I := 1 to L do
     Result[I] := S[L - I + 1];
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function HugeWordToStrW(const A: HugeWord): WideString;
 var B, C : HugeWord;
     D    : LongWord;
@@ -3309,6 +3469,7 @@ begin
   for I := 1 to L do
     Result[I] := S[L - I + 1];
 end;
+{$ENDIF}
 
 function HugeWordToStrU(const A: HugeWord): UnicodeString;
 var B, C : HugeWord;
@@ -3350,6 +3511,7 @@ begin
 end;
 
 { HugeWord String conversion                                                   }
+{$IFDEF SupportAnsiString}
 procedure StrToHugeWordA(const A: AnsiString; var R: HugeWord);
 var I : Integer;
     B : AnsiChar;
@@ -3368,7 +3530,9 @@ begin
       HugeWordAddWord32(R, C);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure StrToHugeWordW(const A: WideString; var R: HugeWord);
 var I : Integer;
     B : WideChar;
@@ -3387,6 +3551,7 @@ begin
       HugeWordAddWord32(R, C);
     end;
 end;
+{$ENDIF}
 
 procedure StrToHugeWordU(const A: UnicodeString; var R: HugeWord);
 var I : Integer;
@@ -3420,9 +3585,14 @@ end;
 const
   HexLookupU = '0123456789ABCDEF';
   HexLookupL = '0123456789abcdef';
+  {$IFDEF SupportAnsiString}
   HexLookupU_AnsiStr : AnsiString = HexLookupU;
   HexLookupL_AnsiStr : AnsiString = HexLookupL;
+  {$ENDIF}
+  HexLookupU_Str : String = HexLookupU;
+  HexLookupL_Str : String = HexLookupL;
 
+{$IFDEF SupportAnsiString}
 function HugeWordToHexA(const A: HugeWord; const LowCase: Boolean): AnsiString;
 var L, I, J : Integer;
     P : PLongWord;
@@ -3451,16 +3621,38 @@ begin
       Dec(P);
     end;
 end;
+{$ENDIF}
 
 function HugeWordToHex(const A: HugeWord; const LowCase: Boolean): String;
+var L, I, J : Integer;
+    P : PLongWord;
+    F : LongWord;
 begin
-  {$IFDEF StringIsUnicode}
-  Result := String(HugeWordToHexA(A, LowCase));
-  {$ELSE}
-  Result := HugeWordToHexA(A, LowCase);
-  {$ENDIF}
+  if HugeWordIsZero(A) then
+    begin
+      Result := '00000000';
+      exit;
+    end;
+  L := A.Used;
+  SetLength(Result, L * 8);
+  P := A.Data;
+  Inc(P, L - 1);
+  for I := 0 to L - 1 do
+    begin
+      F := P^;
+      for J := 0 to 7 do
+        begin
+          if LowCase then
+            Result[I * 8 + J + 1] := Char(HexLookupL[(F shr 28) + 1])
+          else
+            Result[I * 8 + J + 1] := Char(HexLookupU[(F shr 28) + 1]);
+          F := F shl 4;
+        end;
+      Dec(P);
+    end;
 end;
 
+{$IFDEF SupportAnsiString}
 procedure HexToHugeWordA(const A: AnsiString; var R: HugeWord);
 var L, N, C, I, J, K : Integer;
     B : AnsiChar;
@@ -3501,14 +3693,47 @@ begin
       HugeWordSetElement(R, I, F);
     end;
 end;
+{$ENDIF}
 
 procedure HexToHugeWord(const A: String; var R: HugeWord);
+var L, N, C, I, J, K : Integer;
+    B : Char;
+    D, E : Byte;
+    F : LongWord;
 begin
-  {$IFDEF StringIsUnicode}
-  HexToHugeWordA(AnsiString(A), R);
-  {$ELSE}
-  HexToHugeWordA(A, R);
-  {$ENDIF}
+  L := Length(A);
+  if L = 0 then
+    RaiseConvertError;
+  // L = number of characters in strings
+  N := (L div 2) + (L mod 2);
+  // N = number of bytes
+  C := (N + 3) div 4;
+  // C = number of LongWords
+  HugeWordSetSize(R, C);
+  for I := 0 to C - 1 do
+    begin
+      F := 0;
+      for J := 0 to 7 do
+        begin
+          K := L - I * 8 - J;
+          if K < 1 then
+            B := '0'
+          else
+            B := A[L - I * 8 - J];
+          E := 16;
+          for D := 1 to 16 do
+            if (B = HexLookupU_Str[D]) or
+               (B = HexLookupL_Str[D]) then
+              begin
+                E := D - 1;
+                break;
+              end;
+          if E = 16 then
+            RaiseConvertError;
+          F := F or (E shl (J * 4));
+        end;
+      HugeWordSetElement(R, I, F);
+    end;
 end;
 
 { HugeWord ISqrt                                                               }
@@ -5013,6 +5238,7 @@ begin
     A.Sign := 1;
 end;
 
+{$IFDEF SupportAnsiString}
 function HugeIntToStrA(const A: HugeInt): AnsiString;
 var S : AnsiString;
 begin
@@ -5027,7 +5253,9 @@ begin
         Result := S;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function HugeIntToStrW(const A: HugeInt): WideString;
 var S : WideString;
 begin
@@ -5042,6 +5270,7 @@ begin
         Result := S;
     end;
 end;
+{$ENDIF}
 
 function HugeIntToStrU(const A: HugeInt): UnicodeString;
 var S : UnicodeString;
@@ -5058,6 +5287,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 procedure StrToHugeIntA(const A: AnsiString; var R: HugeInt);
 var B : AnsiString;
 begin
@@ -5077,7 +5307,9 @@ begin
   if HugeWordIsZero(R.Value) then
     R.Sign := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure StrToHugeIntW(const A: WideString; var R: HugeInt);
 var B : WideString;
 begin
@@ -5097,6 +5329,7 @@ begin
   if HugeWordIsZero(R.Value) then
     R.Sign := 0;
 end;
+{$ENDIF}
 
 procedure StrToHugeIntU(const A: UnicodeString; var R: HugeInt);
 var B : UnicodeString;
@@ -5118,6 +5351,7 @@ begin
     R.Sign := 0;
 end;
 
+{$IFDEF SupportAnsiString}
 function HugeIntToHexA(const A: HugeInt): AnsiString;
 var S : AnsiString;
 begin
@@ -5152,6 +5386,7 @@ begin
   if HugeWordIsZero(R.Value) then
     R.Sign := 0;
 end;
+{$ENDIF}
 
 procedure HugeIntISqrt(var A: HugeInt);
 begin
@@ -5395,6 +5630,7 @@ begin
   HugeIntPower(FValue, B);
 end;
 
+{$IFDEF SupportAnsiString}
 function THugeInt.ToStr: AnsiString;
 begin
   Result := HugeIntToStrA(FValue);
@@ -5414,6 +5650,7 @@ procedure THugeInt.AssignHex(const A: AnsiString);
 begin
   HexToHugeIntA(A, FValue);
 end;
+{$ENDIF}
 
 procedure THugeInt.ISqrt;
 begin
@@ -5436,7 +5673,9 @@ procedure Test_HugeWord;
 var A, B, C, D : HugeWord;
     X, Y : HugeInt;
     I : Integer;
+    {$IFDEF SupportAnsiString}
     S : AnsiString;
+    {$ENDIF}
     F : LongWord;
 begin
   HugeWordInit(A);
@@ -5462,8 +5701,10 @@ begin
   Assert(HugeWordIsInt64Range(A));
   Assert(HugeWordIsEven(A));
   Assert(not HugeWordIsOdd(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(A) = '0');
   Assert(HugeWordToHexA(A) = '00000000');
+  {$ENDIF}
   Assert(HugeWordSetBitScanForward(A) = -1);
   Assert(HugeWordSetBitScanReverse(A) = -1);
   Assert(HugeWordClearBitScanForward(A) = 0);
@@ -5478,7 +5719,9 @@ begin
   Assert(HugeWordIsOne(A));
   Assert(HugeWordToInt32(A) = 1);
   Assert(HugeWordCompareWord32(A, 0) = 1);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToHexA(A) = '00000001');
+  {$ENDIF}
   Assert(HugeWordSetBitScanForward(A) = 0);
   Assert(HugeWordSetBitScanReverse(A) = 0);
   Assert(HugeWordClearBitScanForward(A) = 1);
@@ -5515,7 +5758,9 @@ begin
   Assert(HugeWordToWord32(A) = 0);
   Assert(HugeWordSubtractWord32(A, $FFFFFFFF) = -1);
   Assert(HugeWordToWord32(A) = $FFFFFFFF);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToHexA(A) = 'FFFFFFFF');
+  {$ENDIF}
   Assert(HugeWordSetBitScanForward(A) = 0);
   Assert(HugeWordSetBitScanReverse(A) = 31);
   Assert(HugeWordClearBitScanForward(A) = 32);
@@ -5540,7 +5785,9 @@ begin
   Assert(HugeWordToInt64(A) = $100000000);
   Assert(not HugeWordIsWord32Range(A));
   Assert(HugeWordEqualsInt64(A, $100000000));
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToHexA(A) = '0000000100000000');
+  {$ENDIF}
   Assert(HugeWordSetBitScanForward(A) = 32);
   Assert(HugeWordSetBitScanReverse(A) = 32);
   Assert(HugeWordClearBitScanForward(A) = 0);
@@ -5553,7 +5800,9 @@ begin
   Assert(not HugeWordIsWord32Range(A));
   Assert(not HugeWordIsZero(A));
   Assert(HugeWordIsInt64Range(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToHexA(A) = '1234567890ABCDEF');
+  {$ENDIF}
   Assert(Abs(HugeWordToDouble(A) - 1311768467294899695.0) <= 1E12);
 
   // $7654321800000000
@@ -5563,9 +5812,13 @@ begin
   Assert(not HugeWordIsWord32Range(A));
   Assert(not HugeWordIsInt32Range(A));
   Assert(HugeWordIsInt64Range(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(A) = '8526495073179795456');
+  {$ENDIF}
   Assert(HugeWordToDouble(A) = 8526495073179795456.0);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToHexA(A) = '7654321800000000');
+  {$ENDIF}
 
   // Swap
   HugeWordAssignInt32(A, 0);
@@ -5712,6 +5965,7 @@ begin
   Assert(HugeWordToWord32(A) = $FFFFFFFE);
 
   // Add/Subtract
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('111111111111111111111111111111111111111111111111111111111', A);
   StrToHugeWordA('222222222222222222222222222222222222222222222222222222222', B);
   HugeWordAdd(A, B);
@@ -5720,6 +5974,7 @@ begin
   Assert(HugeWordToStrA(A) = '111111111111111111111111111111111111111111111111111111111');
   HugeWordSubtract(A, A);
   Assert(HugeWordIsZero(A));
+  {$ENDIF}
 
   // Multiply/Divide
   HugeWordAssignWord32(A, $10000000);
@@ -5731,6 +5986,7 @@ begin
   Assert(HugeWordIsZero(C));
 
   // Multiply/Divide
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('111111111111111111111111111111111111', A);
   StrToHugeWordA('100000000000000000000000000000000000', B);
   HugeWordMultiply(C, A, B);
@@ -5748,12 +6004,15 @@ begin
   HugeWordDivideWord32(D, 1000000, D, F);
   Assert(HugeWordToStrA(D) = '111111111111111111111111111111111111');
   Assert(F = 0);
+  {$ENDIF}
 
   // Multiply_ShiftAdd
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('111111111111111111111111111111111111', A);
   StrToHugeWordA('100000000000000000000000000000000000', B);
   HugeWordMultiply_ShiftAdd(C, A, B);
   Assert(HugeWordToStrA(C) = '11111111111111111111111111111111111100000000000000000000000000000000000');
+  {$ENDIF}
 
   // ISqrt/Sqr
   HugeWordAssignWord32(A, $FFFF);
@@ -5771,6 +6030,7 @@ begin
   HugeWordAssignInt64(A, $10000FFFF);
   HugeWordISqrt(A);
   Assert(HugeWordToInt64(A) = $10000);
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('10000000000000000000000000000000000000000', A);
   HugeWordISqrt(A);
   Assert(HugeWordToStrA(A) = '100000000000000000000');
@@ -5781,65 +6041,84 @@ begin
   Assert(HugeWordToInt64(A) = $100000000000000);
   HugeWordISqrt(A);
   Assert(HugeWordToInt64(A) = $10000000);
+  {$ENDIF}
 
   // GCD
   HugeWordAssignWord32(A, 111);
   HugeWordAssignWord32(B, 159);
   HugeWordGCD(A, B, C);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(C) = '3');
+  {$ENDIF}
 
   // GCD
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('359334085968622831041960188598043661065388726959079837', A);   // Bell number prime
   StrToHugeWordA('1298074214633706835075030044377087', B);                       // Carol prime
   HugeWordGCD(A, B, C);
   Assert(HugeWordToStrA(C) = '1');
+  {$ENDIF}
 
   // PowerAndMod
   HugeWordAssignWord32(A, 3);
   HugeWordAssignWord32(B, 500);
   HugeWordAssignWord32(C, 5);
   HugeWordPowerAndMod(D, A, B, C);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(D) = '1');
+  {$ENDIF}
 
   // PowerAndMod
   HugeWordAssignWord32(A, 3);
   HugeWordAssignWord32(B, 123456);
   HugeWordAssignWord32(C, 7);
   HugeWordPowerAndMod(D, A, B, C);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(D) = '1');
+  {$ENDIF}
 
   // PowerAndMod
   HugeWordAssignWord32(A, 2905);
   HugeWordAssignWord32(B, 323);
   HugeWordAssignWord32(C, 245363);
   HugeWordPowerAndMod(D, A, B, C);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(D) = '13388');
+  {$ENDIF}
 
   // PowerAndMod
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('9999999999', A);
   HugeWordAssignWord32(B, 10);
   HugeWordPower(B, 100);
   HugeWordAssignWord32(C, 700);
   HugeWordPowerAndMod(D, A, B, C);
   Assert(HugeWordToStrA(D) = '501');
+  {$ENDIF}
 
   // Power/Mod
   HugeWordAssignWord32(A, 3);
   HugeWordAssignWord32(C, 5);
   HugeWordPower(A, 500);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(A) =
       '36360291795869936842385267079543319118023385026001623040346035832580600191583895' +
       '48419850826297938878330817970253440385575285593151701306614299243091656202578002' +
       '1771247847643450125342836565813209972590371590152578728008385990139795377610001');
+  {$ENDIF}
   HugeWordMod(A, C, D);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(D) = '1');
+  {$ENDIF}
 
   // Power/Mod
   HugeWordAssignWord32(A, 3);
   HugeWordAssignWord32(C, 7);
   HugeWordPower(A, 123456);
   HugeWordMod(A, C, D);
+  {$IFDEF SupportAnsiString}
   Assert(HugeWordToStrA(D) = '1');
+  {$ENDIF}
 
   // Power
   HugeWordAssignZero(A);
@@ -5866,6 +6145,7 @@ begin
   Assert(HugeWordToInt64(A) = $100000000);
 
   // HexTo/ToHex
+  {$IFDEF SupportAnsiString}
   HexToHugeWordA('0', A);
   Assert(HugeWordToHexA(A) = '00000000');
   StrToHugeWordA('123456789', A);
@@ -5875,13 +6155,17 @@ begin
   Assert(HugeWordToStrA(A) = '81985529216486895');
   HexToHugeWordA('0123456789ABCDEF00112233F', A);
   Assert(HugeWordToHexA(A) = '00000000123456789ABCDEF00112233F');
+  {$ENDIF}
 
   // StrTo/ToStr
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('12345', A);
   Assert(HugeWordToWord32(A) = 12345);
   Assert(HugeWordToStrA(A) = '12345');
+  {$ENDIF}
 
   // StrTo/ToStr
+  {$IFDEF SupportAnsiString}
   S := '123456789012345678901234567890123456789012345678901234567890';
   StrToHugeWordA(S, A);
   for I := 1 to 100 do
@@ -5892,6 +6176,7 @@ begin
       StrToHugeWordA(S, B);
       Assert(HugeWordEquals(A, B));
     end;
+  {$ENDIF}
 
   // Prime
   HugeWordAssignWord32(A, 1);
@@ -5906,6 +6191,7 @@ begin
   Assert(HugeWordIsPrime(A) = pNotPrime);
   HugeWordAssignWord32(A, 3464946769);
   Assert(HugeWordIsPrime(A) <> pNotPrime);
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('359334085968622831041960188598043661065388726959079837', A);     // Bell number prime
   Assert(HugeWordIsPrime(A) <> pNotPrime);
   StrToHugeWordA('1298074214633706835075030044377087', A);                         // Carol prime
@@ -5921,16 +6207,19 @@ begin
   StrToHugeWordA('1363005552434666078217421284621279933627102780881053358473', A); // Padovan prime
   HugeWordNextPotentialPrime(A);
   Assert(HugeWordToStrA(A) = '1363005552434666078217421284621279933627102780881053358551');
+  {$ENDIF}
   HugeWordAssignWord32(A, 340561);                                                 // Carmichael number 340561 = 13 * 17 * 23 * 67
   Assert(HugeWordIsPrime(A) = pNotPrime);
   HugeWordAssignWord32(A, 82929001);                                               // Carmichael number 82929001 = 281 * 421 * 701
   Assert(HugeWordIsPrime(A) = pNotPrime);
+  {$IFDEF SupportAnsiString}
   StrToHugeWordA('975177403201', A);                                               // Carmichael number 975177403201 = 2341 * 2861 * 145601
   Assert(HugeWordIsPrime(A) = pNotPrime);
   StrToHugeWordA('989051977369', A);                                               // Carmichael number 989051977369 = 173 * 36809 * 155317
   Assert(HugeWordIsPrime(A) = pNotPrime);
   StrToHugeWordA('999629786233', A);                                               // Carmichael number 999629786233 = 13 * 43 * 127 * 1693 * 8317
   Assert(HugeWordIsPrime(A) = pNotPrime);
+  {$ENDIF}
 
   // ExtendedEuclid
   HugeWordAssignWord32(A, 120);
@@ -5966,10 +6255,12 @@ begin
   Assert(HugeWordToWord32(C) = 2293479);
 
   // ModInv
+  {$IFDEF SupportAnsiString}
   HugeWordAssignWord32(A, 999961543);
   StrToHugeWordA('3464946713311', B);
   Assert(HugeWordModInv(A, B, C));
   Assert(HugeWordToStrA(C) = '2733464305244');
+  {$ENDIF}
 
   HugeIntFinalise(Y);
   HugeIntFinalise(X);
@@ -6000,12 +6291,16 @@ begin
   Assert(not HugeIntIsNegative(A));
   Assert(HugeIntIsInt32Range(A));
   Assert(HugeIntIsWord32Range(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '0');
   Assert(HugeIntToHexA(A) = '00000000');
+  {$ENDIF}
   Assert(HugeIntToWord32(A) = 0);
   Assert(HugeIntToInt32(A) = 0);
   Assert(HugeIntToDouble(A) = 0.0);
+  {$IFDEF SupportAnsiString}
   StrToHugeIntA('0', A);
+  {$ENDIF}
   Assert(HugeIntIsZero(A));
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   Assert(HugeIntCompareInt64(A, $7FFFFFFFFFFFFFFF) = -1);
@@ -6040,14 +6335,18 @@ begin
   Assert(not HugeIntIsNegativeOrZero(A));
   Assert(HugeIntIsOne(A));
   Assert(not HugeIntIsMinusOne(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '1');
   Assert(HugeIntToHexA(A) = '00000001');
+  {$ENDIF}
   Assert(HugeIntIsPositive(A));
   Assert(not HugeIntIsNegative(A));
   Assert(HugeIntIsInt32Range(A));
   Assert(HugeIntIsWord32Range(A));
   Assert(HugeIntToDouble(A) = 1.0);
+  {$IFDEF SupportAnsiString}
   StrToHugeIntA('1', A);
+  {$ENDIF}
   Assert(HugeIntIsOne(A));
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   Assert(HugeIntCompareInt64(A, $7FFFFFFFFFFFFFFF) = -1);
@@ -6076,15 +6375,19 @@ begin
   Assert(HugeIntIsNegativeOrZero(A));
   Assert(not HugeIntIsOne(A));
   Assert(HugeIntIsMinusOne(A));
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '-1');
   Assert(HugeIntToHexA(A) = '-00000001');
+  {$ENDIF}
   Assert(not HugeIntIsPositive(A));
   Assert(HugeIntIsNegative(A));
   Assert(HugeIntIsInt32Range(A));
   Assert(HugeIntIsInt64Range(A));
   Assert(not HugeIntIsWord32Range(A));
   Assert(HugeIntToDouble(A) = -1.0);
+  {$IFDEF SupportAnsiString}
   StrToHugeIntA('-1', A);
+  {$ENDIF}
   Assert(HugeIntIsMinusOne(A));
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   Assert(HugeIntCompareInt64(A, $7FFFFFFFFFFFFFFF) = -1);
@@ -6105,8 +6408,10 @@ begin
   // MinInt64 (-$8000000000000000)
   HugeIntAssignInt64(A, MinInt64 { -$8000000000000000 });
   Assert(HugeIntToInt64(A) = MinInt64 { -$8000000000000000 });
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '-9223372036854775808');
   Assert(HugeIntToHexA(A) = '-8000000000000000');
+  {$ENDIF}
   Assert(HugeIntToDouble(A) = -9223372036854775808.0);
   Assert(HugeIntEqualsInt64(A, MinInt64 { -$8000000000000000 }));
   Assert(not HugeIntEqualsInt64(A, MinInt32 { -$80000000 }));
@@ -6114,11 +6419,13 @@ begin
   Assert(HugeIntCompareInt64(A, -$7FFFFFFFFFFFFFFF) = -1);
   Assert(not HugeIntIsInt32Range(A));
   Assert(HugeIntIsInt64Range(A));
+  {$IFDEF SupportAnsiString}
   StrToHugeIntA('-9223372036854775808', A);
   Assert(HugeIntToStrA(A) = '-9223372036854775808');
   HugeIntAbsInPlace(A);
   Assert(HugeIntToStrA(A) = '9223372036854775808');
   Assert(HugeIntToHexA(A) = '8000000000000000');
+  {$ENDIF}
   Assert(not HugeIntEqualsInt64(A, MinInt64 { -$8000000000000000 }));
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   Assert(not HugeIntIsInt64Range(A));
@@ -6128,8 +6435,10 @@ begin
   // MinInt64 + 1 (-$7FFFFFFFFFFFFFFF)
   HugeIntAssignInt64(A, -$7FFFFFFFFFFFFFFF);
   Assert(HugeIntToInt64(A) = -$7FFFFFFFFFFFFFFF);
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '-9223372036854775807');
   Assert(HugeIntToHexA(A) = '-7FFFFFFFFFFFFFFF');
+  {$ENDIF}
   {$IFNDEF FREEPASCAL}
   {$IFNDEF CPU_32}
   Assert(HugeIntToDouble(A) = -9223372036854775807.0);
@@ -6142,8 +6451,10 @@ begin
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   Assert(HugeIntIsInt64Range(A));
   HugeIntAbsInPlace(A);
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '9223372036854775807');
   Assert(HugeIntToHexA(A) = '7FFFFFFFFFFFFFFF');
+  {$ENDIF}
   Assert(HugeIntToInt64(A) = $7FFFFFFFFFFFFFFF);
   Assert(HugeIntEqualsInt64(A, $7FFFFFFFFFFFFFFF));
   Assert(not HugeIntEqualsInt64(A, MinInt64 { -$8000000000000000 }));
@@ -6155,8 +6466,10 @@ begin
   // MinInt64 - 1 (-$8000000000000001)
   HugeIntAssignInt64(A, MinInt64 { -$8000000000000000 });
   HugeIntSubtractInt32(A, 1);
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '-9223372036854775809');
   Assert(HugeIntToHexA(A) = '-8000000000000001');
+  {$ENDIF}
   {$IFNDEF FREEPASCAL}
   {$IFNDEF CPU_32}
   Assert(HugeIntToDouble(A) = -9223372036854775809.0);
@@ -6166,11 +6479,15 @@ begin
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = -1);
   Assert(not HugeIntIsInt64Range(A));
   HugeIntAbsInPlace(A);
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '9223372036854775809');
+  {$ENDIF}
   Assert(not HugeIntEqualsInt64(A, MinInt64 { -$8000000000000000 }));
   Assert(HugeIntCompareInt64(A, MinInt64 { -$8000000000000000 }) = 1);
   HugeIntNegate(A);
+  {$IFDEF SupportAnsiString}
   Assert(HugeIntToStrA(A) = '-9223372036854775809');
+  {$ENDIF}
 
   // Equals/Compare
   HugeIntAssignInt32(A, -1);
@@ -6529,18 +6846,22 @@ begin
   Assert(HugeIntToDouble(A) = -1.0);
 
   // ToStr/StrTo
+  {$IFDEF SupportAnsiString}
   StrToHugeIntA('-1234567890', A);
   Assert(HugeIntToInt32(A) = -1234567890);
   Assert(HugeIntToStrA(A) = '-1234567890');
   Assert(HugeIntToHexA(A) = '-499602D2');
   StrToHugeIntA('123456789012345678901234567890123456789012345678901234567890', A);
   Assert(HugeIntToStrA(A) = '123456789012345678901234567890123456789012345678901234567890');
+  {$ENDIF}
 
   // ToHex/HexTo
+  {$IFDEF SupportAnsiString}
   HexToHugeIntA('-0123456789ABCDEF', A);
   Assert(HugeIntToHexA(A) = '-0123456789ABCDEF');
   HexToHugeIntA('-F1230', A);
   Assert(HugeIntToHexA(A) = '-000F1230');
+  {$ENDIF}
 
   HugeWordFinalise(F);
   HugeIntFinalise(D);
@@ -6575,39 +6896,15 @@ begin
 
   for J := 0 to Digit_Test_Count - 1 do
     begin
-      Di := Digits_Multiply[J];
-      HugeWordRandom(A, Di);
-      HugeWordRandom(B, Di);
-
-      T := GetTickCount;
-      for I := 1 to 3000 do
-        HugeWordMultiply_ShiftAdd_Unsafe(C, A, B);
-      T := GetTickCount - T;
-      Writeln('Mul_ShiftAdd:':25, Di*32:10, ' ', 1000 / (T / 3000):0:1, '/s');
-    end;
-
-  for J := 0 to Digit_Test_Count - 1 do
-    begin
       Di := Digits_Default[J];
       HugeWordRandom(A, Di);
-      HugeWordSetElement(A, Di - 1, 0);
-      T := GetTickCount;
-      for I := 1 to 10000000 do
-        HugeWordSetBitScanReverse(A);
-      T := GetTickCount - T;
-      Writeln('SetBitScanReverse:':25, Di*32:10, ' ', 1000 / (T / 10000000):0:1, '/s');
-    end;
+      HugeWordAssign(B, A);
 
-  for J := 0 to Digit_Test_Count - 1 do
-    begin
-      Di := Digits_Default[J];
-      HugeWordAssignZero(A);
-      HugeWordRandom(B, Di);
       T := GetTickCount;
-      for I := 1 to 50000 do
-        HugeWordAdd(A, B);
+      for I := 1 to 250000 do
+        HugeWordEquals(A, B);
       T := GetTickCount - T;
-      Writeln('Add:':25, Di*32:10, ' ', 1000 / (T / 50000):0:1, '/s');
+      Writeln('Equals (worst case):':25, Di*32:10, ' ', 1000 / (T / 250000):0:1, '/s');
     end;
 
   for J := 0 to Digit_Test_Count - 1 do
@@ -6629,13 +6926,75 @@ begin
     begin
       Di := Digits_Default[J];
       HugeWordRandom(A, Di);
+      HugeWordRandom(B, Di - 2);
+      T := GetTickCount;
+      for I := 1 to 250000 do
+        HugeWordAdd(A, B);
+      T := GetTickCount - T;
+      Writeln('Add:':25, Di*32:10, ' ', 1000 / (T / 250000):0:1, '/s');
+    end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Default[J];
+      HugeWordRandom(A, Di);
+      HugeWordRandom(B, Di - 2);
+      T := GetTickCount;
+      for I := 1 to 100000 do
+        HugeWordSubtract(A, B);
+      T := GetTickCount - T;
+      Writeln('Sub:':25, Di*32:10, ' ', 1000 / (T / 100000):0:1, '/s');
+    end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Default[J];
+      HugeWordRandom(A, Di);
       HugeWordAssign(B, A);
 
       T := GetTickCount;
-      for I := 1 to 50000 do
+      for I := 1 to 150000 do
         HugeWordCompare(A, B);
       T := GetTickCount - T;
-      Writeln('Compare (worst case):':25, Di*32:10, ' ', 1000 / (T / 50000):0:1, '/s');
+      Writeln('Compare (worst case):':25, Di*32:10, ' ', 1000 / (T / 150000):0:1, '/s');
+    end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Multiply[J];
+      HugeWordRandom(A, Di);
+      HugeWordRandom(B, Di);
+
+      T := GetTickCount;
+      for I := 1 to 300000 do
+        HugeWordMultiply_Long(C, A, B);
+      T := GetTickCount - T;
+      Writeln('Mul_Long:':25, Di*32:10, ' ', 1000 / (T / 300000):0:1, '/s');
+    end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Multiply[J];
+      HugeWordRandom(A, Di);
+      HugeWordRandom(B, Di);
+
+      T := GetTickCount;
+      for I := 1 to 3000 do
+        HugeWordMultiply_ShiftAdd_Unsafe(C, A, B);
+      T := GetTickCount - T;
+      Writeln('Mul_ShiftAdd:':25, Di*32:10, ' ', 1000 / (T / 3000):0:1, '/s');
+    end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Default[J];
+      HugeWordRandom(A, Di);
+      HugeWordSetElement(A, Di - 1, 0);
+      T := GetTickCount;
+      for I := 1 to 10000000 do
+        HugeWordSetBitScanReverse(A);
+      T := GetTickCount - T;
+      Writeln('SetBitScanReverse:':25, Di*32:10, ' ', 1000 / (T / 10000000):0:1, '/s');
     end;
 
   for J := 0 to Digit_Test_Count - 1 do
@@ -6672,18 +7031,6 @@ begin
       T := GetTickCount - T;
       Writeln('Shr1:':25, Di*32:10, ' ', 1000 / (T / 100000):0:1, '/s');
   end;
-
-  for J := 0 to Digit_Test_Count - 1 do
-    begin
-      Di := Digits_Default[J];
-      HugeWordRandom(A, Di);
-      HugeWordRandom(B, Di - 2);
-      T := GetTickCount;
-      for I := 1 to 10000 do
-        HugeWordSubtract(A, B);
-      T := GetTickCount - T;
-      Writeln('Sub:':25, Di*32:10, ' ', 1000 / (T / 10000):0:1, '/s');
-    end;
 
   for J := 0 to Digit_Test_Count - 1 do
     begin

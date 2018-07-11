@@ -246,6 +246,7 @@ type
     procedure Bind(const Address: TIP4Addr; const Port: Word); overload;
     procedure Bind(const Address: TIP6Addr; const Port: Word); overload;
     procedure Bind(const Host, Port: AnsiString); overload;
+    procedure Bind(const Host: AnsiString; const Port: Word); overload;
 
     function  GetLocalAddress: TSocketAddr;
     function  GetLocalAddressIP: TIP4Addr;
@@ -828,6 +829,14 @@ procedure TSysSocket.Bind(const Host, Port: AnsiString);
 var SockAddr : TSocketAddr;
 begin
   Resolve(Host, Port, SockAddr);
+  Bind(SockAddr);
+end;
+
+procedure TSysSocket.Bind(const Host: AnsiString; const Port: Word);
+var SockAddr : TSocketAddr;
+begin
+  Resolve(Host, '0', SockAddr);
+  SetSocketAddrPort(SockAddr, Port);
   Bind(SockAddr);
 end;
 

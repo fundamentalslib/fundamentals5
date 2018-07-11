@@ -611,6 +611,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AAnsiStringArray                                                             }
 {   Base class for an array of AnsiStrings.                                    }
@@ -653,6 +654,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ARawByteStringArray                                                          }
 {   Base class for an array of RawByteStrings.                                 }
@@ -698,6 +701,7 @@ type
 type
   AUTF8StringArray = ARawByteStringArray;
   EUTF8StringArray = ERawByteStringArray;
+{$ENDIF}
 
 
 
@@ -1307,6 +1311,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TAnsiStringArray                                                             }
 {   AAnsiStringArray implemented using a dynamic array.                        }
@@ -1353,6 +1358,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TRawByteStringArray                                                          }
 {   ARawByteStringArray implemented using a dynamic array.                     }
@@ -1404,6 +1411,7 @@ type
 {                                                                              }
 type
   TUTF8StringArray = TRawByteStringArray;
+{$ENDIF}
 
 
 
@@ -1715,6 +1723,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { THashedAnsiStringArray                                                       }
 {   AAnsiStringArray that maintains a hash lookup table of array values.       }
@@ -1746,9 +1755,11 @@ type
 
     function  PosNext(const Find: AnsiString; const PrevPos: Integer = -1): Integer;
   end;
+{$ENDIF}
 
 
 
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {   ARawByteStringArray that maintains a hash lookup table of array values.    }
@@ -1780,6 +1791,7 @@ type
 
     function  PosNext(const Find: RawByteString; const PrevPos: Integer = -1): Integer;
   end;
+{$ENDIF}
 
 
 
@@ -1857,6 +1869,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ADictionaryA                                                                 }
 {   Base class for a dictionary with AnsiString keys.                          }
@@ -1884,6 +1897,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ADictionaryB                                                                 }
 {   Base class for a dictionary with RawByteString keys.                       }
@@ -1911,6 +1926,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ADictionaryW                                                                 }
 {   Base class for a dictionary with WideString keys.                          }
@@ -1992,6 +2008,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ALongIntDictionaryA                                                          }
 {   A Dictionary with LongInt values and AnsiString keys.                      }
@@ -2023,6 +2040,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ALongIntDictionaryB                                                          }
 {   A Dictionary with LongInt values and RawByteString keys.                   }
@@ -2054,6 +2073,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ALongIntDictionaryW                                                          }
 {   A Dictionary with LongInt values and WideString keys.                      }
@@ -2151,14 +2171,19 @@ type
 { AIntegerDictionary                                                           }
 {                                                                              }
 type
+  {$IFDEF SupportAnsiString}
   AIntegerDictionaryA = ALongIntDictionaryA;
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
   AIntegerDictionaryB = ALongIntDictionaryB;
+  {$ENDIF}
   AIntegerDictionaryW = ALongIntDictionaryW;
   AIntegerDictionaryU = ALongIntDictionaryU;
   AIntegerDictionary  = ALongIntDictionary;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ALongWordDictionaryA                                                         }
 {   A Dictionary with LongWord values and AnsiString keys.                     }
@@ -2190,6 +2215,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ALongWordDictionaryB                                                         }
 {   A Dictionary with LongWord values and RawByteString keys.                  }
@@ -2221,6 +2248,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ALongWordDictionaryW                                                         }
 {   A Dictionary with LongWord values and WideString keys.                     }
@@ -2318,14 +2346,19 @@ type
 { ACardinalDictionary                                                          }
 {                                                                              }
 type
+  {$IFDEF SupportAnsiString}
   ACardinalDictionaryA = ALongWordDictionaryA;
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
   ACardinalDictionaryB = ALongWordDictionaryB;
+  {$ENDIF}
   ACardinalDictionaryW = ALongWordDictionaryW;
   ACardinalDictionaryU = ALongWordDictionaryU;
   ACardinalDictionary  = ALongWordDictionary;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AInt64DictionaryA                                                            }
 {   A Dictionary with Int64 values and AnsiString keys.                        }
@@ -2357,6 +2390,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AInt64DictionaryB                                                            }
 {   A Dictionary with Int64 values and RawByteString keys.                     }
@@ -2388,6 +2423,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AInt64DictionaryW                                                            }
 {   A Dictionary with Int64 values and WideString keys.                        }
@@ -2481,6 +2517,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ASingleDictionaryA                                                           }
 {   A Dictionary with Single values and AnsiString keys.                       }
@@ -2512,6 +2549,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ASingleDictionaryB                                                           }
 {   A Dictionary with Single values and RawByteString keys.                    }
@@ -2543,6 +2582,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ASingleDictionaryW                                                           }
 {   A Dictionary with Single values and WideString keys.                       }
@@ -2636,6 +2676,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ADoubleDictionaryA                                                           }
 {   A Dictionary with Double values and AnsiString keys.                       }
@@ -2667,6 +2708,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ADoubleDictionaryB                                                           }
 {   A Dictionary with Double values and RawByteString keys.                    }
@@ -2698,6 +2741,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ADoubleDictionaryW                                                           }
 {   A Dictionary with Double values and WideString keys.                       }
@@ -2791,6 +2835,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AExtendedDictionaryA                                                         }
 {   A Dictionary with Extended values and AnsiString keys.                     }
@@ -2822,6 +2867,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AExtendedDictionaryB                                                         }
 {   A Dictionary with Extended values and RawByteString keys.                  }
@@ -2853,6 +2900,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AExtendedDictionaryW                                                         }
 {   A Dictionary with Extended values and WideString keys.                     }
@@ -2946,6 +2994,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AAnsiStringDictionaryA                                                       }
 {   A Dictionary with AnsiString values and AnsiString keys.                   }
@@ -3082,6 +3131,9 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ARawByteStringDictionaryA                                                    }
 {   A Dictionary with RawByteString values and AnsiString keys.                }
@@ -3116,6 +3168,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { ARawByteStringDictionaryB                                                    }
 {   A Dictionary with RawByteString values and RawByteString keys.             }
@@ -3252,6 +3305,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AWideStringDictionaryA                                                       }
 {   A Dictionary with WideString values and AnsiString keys.                   }
@@ -3286,6 +3341,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AWideStringDictionaryW                                                       }
 {   A Dictionary with WideString values and WideString keys.                   }
@@ -3388,6 +3444,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AUnicodeStringDictionaryA                                                    }
 {   A Dictionary with UnicodeString values and AnsiString keys.                }
@@ -3422,6 +3479,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AUnicodeStringDictionaryW                                                    }
 {   A Dictionary with UnicodeString values and WideString keys.                }
@@ -3524,6 +3582,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AStringDictionaryA                                                           }
 {   A Dictionary with String values and AnsiString keys.                       }
@@ -3556,6 +3615,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AStringDictionaryW                                                           }
 {   A Dictionary with String values and WideString keys.                       }
@@ -3652,6 +3712,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { APointerDictionaryA                                                          }
 {   A Dictionary with Pointer values and AnsiString keys.                      }
@@ -3683,6 +3744,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { APointerDictionaryB                                                          }
 {   A Dictionary with Pointer values and RawByteString keys.                   }
@@ -3714,6 +3777,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { APointerDictionaryW                                                          }
 {   A Dictionary with Pointer values and WideString keys.                      }
@@ -3807,6 +3871,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AInterfaceDictionaryA                                                        }
 {   A Dictionary with Interface values and AnsiString keys.                    }
@@ -3836,6 +3901,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AInterfaceDictionaryW                                                        }
 {   A Dictionary with Interface values and WideString keys.                    }
@@ -3923,6 +3989,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AObjectDictionaryA                                                           }
 {   A Dictionary with Object values and AnsiString keys.                       }
@@ -3963,6 +4030,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AObjectDictionaryB                                                           }
 {   A Dictionary with Object values and RawByteString keys.                    }
@@ -4003,6 +4072,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { AObjectDictionaryW                                                           }
 {   A Dictionary with Object values and WideString keys.                       }
@@ -4132,6 +4202,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TLongIntDictionary                                                           }
 {   Implements ALongIntDictionary using arrays.                                }
@@ -4217,6 +4288,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TLongIntDictionary                                                           }
 {   Implements ALongIntDictionary using arrays.                                }
@@ -4302,6 +4375,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TLongIntDictionary                                                           }
 {   Implements ALongIntDictionary using arrays.                                }
@@ -4561,15 +4635,20 @@ type
 { TIntegerDictionary                                                           }
 {                                                                              }
 type
+  {$IFDEF SupportAnsiString}
   TGeneralIntegerDictionaryA = TGeneralLongIntDictionaryA;
+  {$ENDIF}
   TGeneralIntegerDictionaryW = TGeneralLongIntDictionaryW;
   TGeneralIntegerDictionary  = TGeneralLongIntDictionary;
+  {$IFDEF SupportAnsiString}
   TIntegerDictionaryA = TLongIntDictionaryA;
+  {$ENDIF}
   TIntegerDictionaryW = TLongIntDictionaryW;
   TIntegerDictionary  = TLongIntDictionary;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TLongWordDictionary                                                          }
 {   Implements ALongWordDictionary using arrays.                               }
@@ -4655,6 +4734,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TLongWordDictionary                                                          }
 {   Implements ALongWordDictionary using arrays.                               }
@@ -4740,6 +4821,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TLongWordDictionary                                                          }
 {   Implements ALongWordDictionary using arrays.                               }
@@ -4999,17 +5081,22 @@ type
 { TCardinalDictionary                                                          }
 {                                                                              }
 type
+  {$IFDEF SupportAnsiString}
   TGeneralCardinalDictionaryA = TGeneralLongWordDictionaryA;
+  {$ENDIF}
   TGeneralCardinalDictionaryW = TGeneralLongWordDictionaryW;
   TGeneralCardinalDictionaryU = TGeneralLongWordDictionaryU;
   TGeneralCardinalDictionary  = TGeneralLongWordDictionary;
+  {$IFDEF SupportAnsiString}
   TCardinalDictionaryA = TLongWordDictionaryA;
+  {$ENDIF}
   TCardinalDictionaryW = TLongWordDictionaryW;
   TCardinalDictionaryU = TLongWordDictionaryU;
   TCardinalDictionary  = TLongWordDictionary;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TInt64Dictionary                                                             }
 {   Implements AInt64Dictionary using arrays.                                  }
@@ -5095,6 +5182,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TInt64Dictionary                                                             }
 {   Implements AInt64Dictionary using arrays.                                  }
@@ -5180,6 +5269,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TInt64Dictionary                                                             }
 {   Implements AInt64Dictionary using arrays.                                  }
@@ -5435,6 +5525,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TSingleDictionary                                                            }
 {   Implements ASingleDictionary using arrays.                                 }
@@ -5520,6 +5611,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TSingleDictionary                                                            }
 {   Implements ASingleDictionary using arrays.                                 }
@@ -5605,6 +5698,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TSingleDictionary                                                            }
 {   Implements ASingleDictionary using arrays.                                 }
@@ -5860,6 +5954,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TDoubleDictionary                                                            }
 {   Implements ADoubleDictionary using arrays.                                 }
@@ -5945,6 +6040,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TDoubleDictionary                                                            }
 {   Implements ADoubleDictionary using arrays.                                 }
@@ -6030,6 +6127,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TDoubleDictionary                                                            }
 {   Implements ADoubleDictionary using arrays.                                 }
@@ -6285,6 +6383,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TExtendedDictionary                                                          }
 {   Implements AExtendedDictionary using arrays.                               }
@@ -6370,6 +6469,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TExtendedDictionary                                                          }
 {   Implements AExtendedDictionary using arrays.                               }
@@ -6455,6 +6556,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TExtendedDictionary                                                          }
 {   Implements AExtendedDictionary using arrays.                               }
@@ -6710,6 +6812,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TAnsiStringDictionary                                                        }
 {   Implements AAnsiStringDictionary using arrays.                             }
@@ -7050,6 +7153,9 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TRawByteStringDictionary                                                     }
 {   Implements ARawByteStringDictionary using arrays.                          }
@@ -7135,6 +7241,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TRawByteStringDictionary                                                     }
 {   Implements ARawByteStringDictionary using arrays.                          }
@@ -7475,6 +7582,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TWideStringDictionary                                                        }
 {   Implements AWideStringDictionary using arrays.                             }
@@ -7560,6 +7669,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TWideStringDictionary                                                        }
 {   Implements AWideStringDictionary using arrays.                             }
@@ -7815,6 +7925,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TUnicodeStringDictionary                                                     }
 {   Implements AUnicodeStringDictionary using arrays.                          }
@@ -7900,6 +8011,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TUnicodeStringDictionary                                                     }
 {   Implements AUnicodeStringDictionary using arrays.                          }
@@ -8155,6 +8267,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TStringDictionary                                                            }
 {   Implements AStringDictionary using arrays.                                 }
@@ -8240,6 +8353,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TStringDictionary                                                            }
 {   Implements AStringDictionary using arrays.                                 }
@@ -8495,6 +8609,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TPointerDictionary                                                           }
 {   Implements APointerDictionary using arrays.                                }
@@ -8580,6 +8695,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TPointerDictionary                                                           }
 {   Implements APointerDictionary using arrays.                                }
@@ -8665,6 +8782,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TPointerDictionary                                                           }
 {   Implements APointerDictionary using arrays.                                }
@@ -8920,6 +9038,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TInterfaceDictionary                                                         }
 {   Implements AInterfaceDictionary using arrays.                              }
@@ -9005,6 +9124,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TInterfaceDictionary                                                         }
 {   Implements AInterfaceDictionary using arrays.                              }
@@ -9260,6 +9380,7 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TObjectDictionary                                                            }
 {   Implements AObjectDictionary using arrays.                                 }
@@ -9354,6 +9475,8 @@ type
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TObjectDictionary                                                            }
 {   Implements AObjectDictionary using arrays.                                 }
@@ -9448,6 +9571,7 @@ type
 
 
 
+{$ENDIF}
 {                                                                              }
 { TObjectDictionary                                                            }
 {   Implements AObjectDictionary using arrays.                                 }
@@ -9772,28 +9896,29 @@ type
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
-{ TSparseStringArray                                                           }
+{ TSparseAnsiStringArray                                                       }
 {   Sparse array that holds String values.                                     }
 {                                                                              }
 type
-  TSparseStringRecord = record
+  TSparseAnsiStringRecord = record
     Idx   : Integer;
     Value : AnsiString;
   end;
-  PSparseStringRecord = ^TSparseStringRecord;
-  TSparseStringRecordArray = Array of TSparseStringRecord;
-  TSparseStringArrayHashList = Array of TSparseStringRecordArray;
+  PSparseAnsiStringRecord = ^TSparseAnsiStringRecord;
+  TSparseAnsiStringRecordArray = Array of TSparseAnsiStringRecord;
+  TSparseAnsiStringArrayHashList = Array of TSparseAnsiStringRecordArray;
 
-  TSparseStringArray = class(ASparseArray)
+  TSparseAnsiStringArray = class(ASparseArray)
   private
-    FHashList : TSparseStringArrayHashList;
+    FHashList : TSparseAnsiStringArrayHashList;
     FHashSize : Integer;
     FCount    : Integer;
 
   protected
     function  LocateItemRecord(const Idx: Integer;
-              var LookupIdx, ChainIdx: Integer): PSparseStringRecord;
+              var LookupIdx, ChainIdx: Integer): PSparseAnsiStringRecord;
     procedure Rehash;
 
     function  GetCount: Integer; override;
@@ -9817,7 +9942,8 @@ type
     function  FindFirst(var Idx: Integer; var Value: AnsiString): Boolean;
     function  FindNext(var Idx: Integer; var Value: AnsiString): Boolean;
   end;
-  ESparseStringArray = class(ESparseArray);
+  ESparseAnsiStringArray = class(ESparseArray);
+{$ENDIF}
 
 
 
@@ -10084,6 +10210,7 @@ type
     function  FindPrev(const Find: Extended): TDoublyLinkedExtended;
   end;
 
+{$IFDEF SupportAnsiString}
   TDoublyLinkedString = class(TDoublyLinkedItem)
   public
     Value : AnsiString;
@@ -10098,6 +10225,7 @@ type
     function  FindPrev(const Find: AnsiString): TDoublyLinkedString;
   end;
 
+{$ENDIF}
   TDoublyLinkedObject = class(TDoublyLinkedItem)
   public
     Value : TObject;
@@ -10115,7 +10243,9 @@ type
 
 function  AsDoublyLinkedIntegerList(const V: Array of Integer): TDoublyLinkedInteger;
 function  AsDoublyLinkedExtendedList(const V: Array of Extended): TDoublyLinkedExtended;
+{$IFDEF SupportAnsiString}
 function  AsDoublyLinkedStringList(const V: Array of AnsiString): TDoublyLinkedString;
+{$ENDIF}
 
 
 
@@ -10169,6 +10299,7 @@ uses
   { Fundamentals }
   flcBits32,
   flcDynArrays,
+  flcUTF,
   flcStrings;
 
 
@@ -10274,7 +10405,7 @@ end;
 function AType.GetAsUTF8String: RawByteString;
 begin
   {$IFDEF StringIsUnicode}
-  Result := UTF8Encode(GetAsString);
+  Result := StringToUTF8String(GetAsString);
   {$ELSE}
   Result := GetAsString;
   {$ENDIF}
@@ -11852,6 +11983,7 @@ begin
     SetItem(I + Count, GetItem(I));
 end;
 
+{$IFDEF SupportAnsiString}
 
 {                                                                              }
 { AAnsiStringArray                                                             }
@@ -12058,6 +12190,8 @@ begin
     SetItem(I + Count, GetItem(I));
 end;
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 
 {                                                                              }
 { ARawByteStringArray                                                          }
@@ -12264,6 +12398,7 @@ begin
     SetItem(I + Count, GetItem(I));
 end;
 
+{$ENDIF}
 
 {                                                                              }
 { AWideStringArray                                                             }
@@ -14873,6 +15008,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TAnsiStringArray                                                             }
 {                                                                              }
@@ -15042,6 +15178,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TRawByteStringArray                                                          }
 {                                                                              }
@@ -15211,6 +15349,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TWideStringArray                                                             }
 {                                                                              }
@@ -16420,6 +16559,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { THashedAnsiStringArray                                                       }
 {                                                                              }
@@ -16601,9 +16741,11 @@ begin
   // not found
   Result := 1;
 end;
+{$ENDIF}
 
 
 
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {                                                                              }
@@ -16785,6 +16927,7 @@ begin
   // not found
   Result := 1;
 end;
+{$ENDIF}
 
 
 
@@ -17000,6 +17143,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ADictionaryA                                                                 }
 {                                                                              }
@@ -17017,9 +17161,11 @@ function ADictionaryA.GetKeyStrByIndex(const Idx: Integer): String;
 begin
   Result := ToStringA(GetKeyByIndex(Idx));
 end;
+{$ENDIF}
 
 
 
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ADictionaryB                                                                 }
 {                                                                              }
@@ -17037,6 +17183,7 @@ function ADictionaryB.GetKeyStrByIndex(const Idx: Integer): String;
 begin
   Result := ToStringB(GetKeyByIndex(Idx));
 end;
+{$ENDIF}
 
 
 
@@ -17100,6 +17247,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ALongIntDictionaryA                                                          }
 {                                                                              }
@@ -17141,6 +17289,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ALongIntDictionaryB                                                          }
 {                                                                              }
@@ -17182,6 +17332,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { ALongIntDictionaryW                                                          }
 {                                                                              }
@@ -17305,6 +17456,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ALongWordDictionaryA                                                         }
 {                                                                              }
@@ -17346,6 +17498,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ALongWordDictionaryB                                                         }
 {                                                                              }
@@ -17387,6 +17541,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { ALongWordDictionaryW                                                         }
 {                                                                              }
@@ -17510,6 +17665,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AInt64DictionaryA                                                            }
 {                                                                              }
@@ -17551,6 +17707,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AInt64DictionaryB                                                            }
 {                                                                              }
@@ -17592,6 +17750,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AInt64DictionaryW                                                            }
 {                                                                              }
@@ -17715,6 +17874,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ASingleDictionaryA                                                           }
 {                                                                              }
@@ -17756,6 +17916,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ASingleDictionaryB                                                           }
 {                                                                              }
@@ -17797,6 +17959,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { ASingleDictionaryW                                                           }
 {                                                                              }
@@ -17920,6 +18083,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ADoubleDictionaryA                                                           }
 {                                                                              }
@@ -17961,6 +18125,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { ADoubleDictionaryB                                                           }
 {                                                                              }
@@ -18002,6 +18168,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { ADoubleDictionaryW                                                           }
 {                                                                              }
@@ -18125,6 +18292,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AExtendedDictionaryA                                                         }
 {                                                                              }
@@ -18166,6 +18334,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AExtendedDictionaryB                                                         }
 {                                                                              }
@@ -18207,6 +18377,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AExtendedDictionaryW                                                         }
 {                                                                              }
@@ -18330,6 +18501,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AAnsiStringDictionaryA                                                       }
 {                                                                              }
@@ -18546,6 +18718,9 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { ARawByteStringDictionaryA                                                    }
 {                                                                              }
@@ -18600,6 +18775,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { ARawByteStringDictionaryB                                                    }
 {                                                                              }
@@ -18816,6 +18992,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AWideStringDictionaryA                                                       }
 {                                                                              }
@@ -18870,6 +19048,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AWideStringDictionaryW                                                       }
 {                                                                              }
@@ -19032,6 +19211,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AUnicodeStringDictionaryA                                                    }
 {                                                                              }
@@ -19086,6 +19266,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AUnicodeStringDictionaryW                                                    }
 {                                                                              }
@@ -19248,6 +19429,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AStringDictionaryA                                                           }
 {                                                                              }
@@ -19297,6 +19479,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AStringDictionaryW                                                           }
 {                                                                              }
@@ -19444,6 +19627,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { APointerDictionaryA                                                          }
 {                                                                              }
@@ -19485,6 +19669,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { APointerDictionaryB                                                          }
 {                                                                              }
@@ -19526,6 +19712,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { APointerDictionaryW                                                          }
 {                                                                              }
@@ -19649,6 +19836,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AInterfaceDictionaryA                                                        }
 {                                                                              }
@@ -19685,6 +19873,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AInterfaceDictionaryW                                                        }
 {                                                                              }
@@ -19793,6 +19982,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { AObjectDictionaryA                                                           }
 {                                                                              }
@@ -19841,6 +20031,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { AObjectDictionaryB                                                           }
 {                                                                              }
@@ -19889,6 +20081,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { AObjectDictionaryW                                                           }
 {                                                                              }
@@ -20059,6 +20252,7 @@ begin
     Result := $10000000;
 end;
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralLongIntDictionaryA                                                   }
 {                                                                              }
@@ -20411,6 +20605,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralLongIntDictionaryB                                                   }
 {                                                                              }
@@ -20763,6 +20959,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralLongIntDictionaryW                                                   }
 {                                                                              }
@@ -21819,6 +22016,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralLongWordDictionaryA                                                  }
 {                                                                              }
@@ -22171,6 +22369,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralLongWordDictionaryB                                                  }
 {                                                                              }
@@ -22523,6 +22723,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralLongWordDictionaryW                                                  }
 {                                                                              }
@@ -23579,6 +23780,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralInt64DictionaryA                                                     }
 {                                                                              }
@@ -23931,6 +24133,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralInt64DictionaryB                                                     }
 {                                                                              }
@@ -24283,6 +24487,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralInt64DictionaryW                                                     }
 {                                                                              }
@@ -25339,6 +25544,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralSingleDictionaryA                                                    }
 {                                                                              }
@@ -25691,6 +25897,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralSingleDictionaryB                                                    }
 {                                                                              }
@@ -26043,6 +26251,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralSingleDictionaryW                                                    }
 {                                                                              }
@@ -27099,6 +27308,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralDoubleDictionaryA                                                    }
 {                                                                              }
@@ -27451,6 +27661,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralDoubleDictionaryB                                                    }
 {                                                                              }
@@ -27803,6 +28015,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralDoubleDictionaryW                                                    }
 {                                                                              }
@@ -28859,6 +29072,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralExtendedDictionaryA                                                  }
 {                                                                              }
@@ -29211,6 +29425,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralExtendedDictionaryB                                                  }
 {                                                                              }
@@ -29563,6 +29779,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralExtendedDictionaryW                                                  }
 {                                                                              }
@@ -30619,6 +30836,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralAnsiStringDictionaryA                                                }
 {                                                                              }
@@ -32027,6 +32245,9 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralRawByteStringDictionaryA                                             }
 {                                                                              }
@@ -32379,6 +32600,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralRawByteStringDictionaryB                                             }
 {                                                                              }
@@ -33787,6 +34009,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralWideStringDictionaryA                                                }
 {                                                                              }
@@ -34139,6 +34363,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralWideStringDictionaryW                                                }
 {                                                                              }
@@ -35195,6 +35420,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralUnicodeStringDictionaryA                                             }
 {                                                                              }
@@ -35547,6 +35773,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralUnicodeStringDictionaryW                                             }
 {                                                                              }
@@ -36603,6 +36830,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralStringDictionaryA                                                    }
 {                                                                              }
@@ -36955,6 +37183,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralStringDictionaryW                                                    }
 {                                                                              }
@@ -38011,6 +38240,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralPointerDictionaryA                                                   }
 {                                                                              }
@@ -38363,6 +38593,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralPointerDictionaryB                                                   }
 {                                                                              }
@@ -38715,6 +38947,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralPointerDictionaryW                                                   }
 {                                                                              }
@@ -39771,6 +40004,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralInterfaceDictionaryA                                                 }
 {                                                                              }
@@ -40123,6 +40357,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralInterfaceDictionaryW                                                 }
 {                                                                              }
@@ -41179,6 +41414,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TGeneralObjectDictionaryA                                                    }
 {                                                                              }
@@ -41565,6 +41801,8 @@ end;
 
 
 
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TGeneralObjectDictionaryB                                                    }
 {                                                                              }
@@ -41951,6 +42189,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TGeneralObjectDictionaryW                                                    }
 {                                                                              }
@@ -43152,41 +43391,42 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
-{ TSparseStringArray                                                           }
+{ TSparseAnsiStringArray                                                       }
 {                                                                              }
-procedure TSparseStringArray.Assign(const Source: TObject);
+procedure TSparseAnsiStringArray.Assign(const Source: TObject);
 var I, L : Integer;
 begin
-  if Source is TSparseStringArray then
+  if Source is TSparseAnsiStringArray then
     begin
       Clear;
-      L := Length(TSparseStringArray(Source).FHashList);
+      L := Length(TSparseAnsiStringArray(Source).FHashList);
       SetLength(FHashList, L);
       for I := 0 to L - 1 do
-        FHashList[I] := Copy(TSparseStringArray(Source).FHashList[I]);
-      FHashSize := TSparseStringArray(Source).FHashSize;
-      FCount := TSparseStringArray(Source).FCount;
+        FHashList[I] := Copy(TSparseAnsiStringArray(Source).FHashList[I]);
+      FHashSize := TSparseAnsiStringArray(Source).FHashSize;
+      FCount := TSparseAnsiStringArray(Source).FCount;
     end
   else
     inherited Assign(Source);
 end;
 
-procedure TSparseStringArray.Clear;
+procedure TSparseAnsiStringArray.Clear;
 begin
   FHashList := nil;
   FHashSize := 0;
   FCount := 0;
 end;
 
-function TSparseStringArray.IsEqual(const V: TObject): Boolean;
+function TSparseAnsiStringArray.IsEqual(const V: TObject): Boolean;
 var I, J : Integer;
     F, G : Integer;
-    P, Q : PSparseStringRecord;
+    P, Q : PSparseAnsiStringRecord;
 begin
-  if V is TSparseStringArray then
+  if V is TSparseAnsiStringArray then
     begin
-      if FCount <> TSparseStringArray(V).FCount then
+      if FCount <> TSparseAnsiStringArray(V).FCount then
         begin
           Result := False;
           exit;
@@ -43195,7 +43435,7 @@ begin
         for J := 0 to Length(FHashList[I]) - 1 do
           begin
             Q := @FHashList[I][J];
-            P := TSparseStringArray(V).LocateItemRecord(Q^.Idx, F, G);
+            P := TSparseAnsiStringArray(V).LocateItemRecord(Q^.Idx, F, G);
             if not Assigned(P) or (P^.Value <> Q^.Value) then
               begin
                 Result := False;
@@ -43208,10 +43448,10 @@ begin
     Result := inherited IsEqual(V);
 end;
 
-function TSparseStringArray.LocateItemRecord(const Idx: Integer;
-    var LookupIdx, ChainIdx: Integer): PSparseStringRecord;
+function TSparseAnsiStringArray.LocateItemRecord(const Idx: Integer;
+    var LookupIdx, ChainIdx: Integer): PSparseAnsiStringRecord;
 var H, I, J, L : Integer;
-    P : TSparseStringRecordArray;
+    P : TSparseAnsiStringRecordArray;
 begin
   I := FHashSize;
   if (I = 0) or (FCount = 0) then
@@ -43242,10 +43482,10 @@ begin
   ChainIdx := -1;
 end;
 
-procedure TSparseStringArray.Rehash;
+procedure TSparseAnsiStringArray.Rehash;
 var I, J, R, F, H : Integer;
-    N    : TSparseStringArrayHashList;
-    P, Q : PSparseStringRecord;
+    N    : TSparseAnsiStringArrayHashList;
+    P, Q : PSparseAnsiStringRecord;
 begin
   R := SparseArrayRehashSize(FCount);
   SetLength(N, R);
@@ -43264,13 +43504,13 @@ begin
   FHashSize := R;
 end;
 
-function TSparseStringArray.GetCount: Integer;
+function TSparseAnsiStringArray.GetCount: Integer;
 begin
   Result := FCount;
 end;
 
-function TSparseStringArray.GetItem(const Idx: Integer): AnsiString;
-var P    : PSparseStringRecord;
+function TSparseAnsiStringArray.GetItem(const Idx: Integer): AnsiString;
+var P    : PSparseAnsiStringRecord;
     I, J : Integer;
 begin
   P := LocateItemRecord(Idx, I, J);
@@ -43279,8 +43519,8 @@ begin
   Result := P^.Value;
 end;
 
-function TSparseStringArray.LocateItem(const Idx: Integer; var Value: AnsiString): Boolean;
-var P    : PSparseStringRecord;
+function TSparseAnsiStringArray.LocateItem(const Idx: Integer; var Value: AnsiString): Boolean;
+var P    : PSparseAnsiStringRecord;
     I, J : Integer;
 begin
   P := LocateItemRecord(Idx, I, J);
@@ -43296,8 +43536,8 @@ begin
     end;
 end;
 
-procedure TSparseStringArray.SetItem(const Idx: Integer; const Value: AnsiString);
-var P    : PSparseStringRecord;
+procedure TSparseAnsiStringArray.SetItem(const Idx: Integer; const Value: AnsiString);
+var P    : PSparseAnsiStringRecord;
     I, J : Integer;
     L    : Integer;
 begin
@@ -43325,20 +43565,20 @@ begin
     end;
 end;
 
-function TSparseStringArray.HasItem(const Idx: Integer): Boolean;
+function TSparseAnsiStringArray.HasItem(const Idx: Integer): Boolean;
 var I, J : Integer;
 begin
   Result := Assigned(LocateItemRecord(Idx, I, J));
 end;
 
-function TSparseStringArray.IsEmpty: Boolean;
+function TSparseAnsiStringArray.IsEmpty: Boolean;
 begin
   Result := FCount = 0;
 end;
 
-function TSparseStringArray.FindFirst(var Idx: Integer; var Value: AnsiString): Boolean;
+function TSparseAnsiStringArray.FindFirst(var Idx: Integer; var Value: AnsiString): Boolean;
 var I : Integer;
-    P : PSparseStringRecord;
+    P : PSparseAnsiStringRecord;
 begin
   for I := 0 to Length(FHashList) - 1 do
     if Length(FHashList[I]) > 0 then
@@ -43354,8 +43594,8 @@ begin
   Result := False;
 end;
 
-function TSparseStringArray.FindNext(var Idx: Integer; var Value: AnsiString): Boolean;
-var P : PSparseStringRecord;
+function TSparseAnsiStringArray.FindNext(var Idx: Integer; var Value: AnsiString): Boolean;
+var P : PSparseAnsiStringRecord;
     I, J, L : Integer;
 begin
   P := LocateItemRecord(Idx, I, J);
@@ -43386,8 +43626,8 @@ begin
   Result := True;
 end;
 
-procedure TSparseStringArray.Delete(const Idx: Integer);
-var P    : PSparseStringRecord;
+procedure TSparseAnsiStringArray.Delete(const Idx: Integer);
+var P    : PSparseAnsiStringRecord;
     I, J : Integer;
     L    : Integer;
 begin
@@ -43398,12 +43638,13 @@ begin
   L := Length(FHashList[I]);
   if J < L - 1 then
     begin
-      Move(FHashList[I][J + 1], FHashList[I][J], (L - J - 1) * Sizeof(TSparseStringRecord));
-      ZeroMem(FHashList[I][L - 1], Sizeof(TSparseStringRecord));
+      Move(FHashList[I][J + 1], FHashList[I][J], (L - J - 1) * Sizeof(TSparseAnsiStringRecord));
+      ZeroMem(FHashList[I][L - 1], Sizeof(TSparseAnsiStringRecord));
     end;
   SetLength(FHashList[I], L - 1);
   Dec(FCount);
 end;
+{$ENDIF}
 
 
 
@@ -44679,6 +44920,7 @@ end;
 
 
 
+{$IFDEF SupportAnsiString}
 {                                                                              }
 { TDoublyLinkedString                                                          }
 {                                                                              }
@@ -44730,6 +44972,7 @@ end;
 
 
 
+{$ENDIF}
 {                                                                              }
 { TDoublyLinkedObject                                                          }
 {                                                                              }
@@ -44826,6 +45069,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function AsDoublyLinkedStringList(const V: Array of AnsiString): TDoublyLinkedString;
 var I, L : TDoublyLinkedString;
     F   : Integer;
@@ -44846,6 +45090,8 @@ begin
         end;
     end;
 end;
+
+{$ENDIF}
 
 
 
@@ -45073,10 +45319,13 @@ begin
 end;
 
 procedure Test_Dictionary;
+{$IFDEF SupportAnsiString}
 var F : TIntegerDictionaryA;
     G : TStringDictionaryA;
     I : Integer;
+{$ENDIF}
 begin
+  {$IFDEF SupportAnsiString}
   F := TIntegerDictionaryA.Create;
   for I := 0 to 16384 do
     F.Add(IntToStringA(I), I);
@@ -45134,6 +45383,7 @@ begin
   Assert(not G.HasKey('1'), 'Dictionary.DeleteItemByIndex');
   Assert(G.Count = 16382, 'Dictionary.DeleteItemByIndex');
   G.Free;
+  {$ENDIF}
 end;
 
 procedure Test_SparseArray;
@@ -45141,7 +45391,9 @@ var A, D : TSparseObjectArray;
     B : Array[0..2] of TObject;
     I, J : Integer;
     V : TObject;
-    S, T : TSparseStringArray;
+    {$IFDEF SupportAnsiString}
+    S, T : TSparseAnsiStringArray;
+    {$ENDIF}
 begin
   B[0] := TObject.Create;
   B[1] := TObject.Create;
@@ -45222,8 +45474,9 @@ begin
     B[0].Free;
   end;
 
-  S := TSparseStringArray.Create;
-  T := TSparseStringArray.Create;
+  {$IFDEF SupportAnsiString}
+  S := TSparseAnsiStringArray.Create;
+  T := TSparseAnsiStringArray.Create;
   try
     Assert(S.IsEmpty);
     Assert(S.Count = 0);
@@ -45264,12 +45517,16 @@ begin
     FreeAndNil(T);
     FreeAndNil(S);
   end;
+  {$ENDIF}
 end;
 
 procedure Test_HashedStringArray;
+{$IFDEF SupportAnsiString}
 var A : THashedAnsiStringArray;
     B : THashedRawByteStringArray;
+{$ENDIF}
 begin
+  {$IFDEF SupportAnsiString}
   A := THashedAnsiStringArray.Create(True);
   try
     A.AppendItem('abc');
@@ -45325,6 +45582,7 @@ begin
   finally
     B.Free;
   end;
+  {$ENDIF}
 end;
 
 procedure Test;

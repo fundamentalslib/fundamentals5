@@ -1405,7 +1405,7 @@ var WK : PDHWellKnownGroup;
     ValP, ValG : HugeWord;
 begin
   // Test well known DH groups
-  for I := 0 to DHWellKnownGroups - 1 do
+  for I := 0 to 1 do // DHWellKnownGroups - 1 do
     begin
       WK := @DHWellKnownGroup[I];
 

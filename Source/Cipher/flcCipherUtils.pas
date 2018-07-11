@@ -66,6 +66,24 @@ type
 
 
 {                                                                              }
+{ AnsiString                                                                   }
+{                                                                              }
+{$IFNDEF SupportAnsiChar}
+type
+  AnsiChar = Byte;
+  PAnsiChar = ^AnsiChar;
+{$DEFINE AnsiCharIsOrd}
+{$ENDIF}
+
+{$IFNDEF SupportAnsiString}
+type
+  AnsiString = array of AnsiChar;
+{$DEFINE AnsiStringIsArray}
+{$ENDIF}
+
+
+
+{                                                                              }
 { RawByteString                                                                }
 {                                                                              }
 {$IFNDEF SupportRawByteString}
@@ -141,7 +159,7 @@ begin
   if L = 0 then
     exit;
   SecureClear(S[1], L);
-  S := '';
+  SetLength(S, 0);
 end;
 
 

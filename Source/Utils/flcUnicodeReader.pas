@@ -173,6 +173,7 @@ type
 
 
 
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TUnicodeLongStringReader                                                     }
 {                                                                              }
@@ -183,6 +184,7 @@ type
                 const Codec: TCustomUnicodeCodec = nil;
                 const CodecOwner: Boolean = True);
   end;
+{$ENDIF}
 
 
 
@@ -211,6 +213,11 @@ procedure Test;
 
 
 implementation
+
+uses
+  { Fundamentals }
+  flcUTF,
+  flcZeroTermStrings;
 
 
 
@@ -294,7 +301,8 @@ begin
           // move pointer to front
           FBufPos := 0;
           FBufLen := 0;
-        end else
+        end
+      else
       if (Result <= ReaderBlockSize div 16) or // buffer is nearly empty; or
          (FBufPos >= 4 * ReaderBlockSize) then // buffer has too much unused space at front
         begin
@@ -450,7 +458,7 @@ var L: Integer;
 begin
   if Len <= 0 then
     begin
-      Result := '';
+      SetLength(Result, 0);
       exit;
     end;
   // buffer
@@ -493,9 +501,10 @@ begin
     // skip
     P := Pointer(FBuffer);
     Inc(P, FBufPos);
-    For I := 1 to N do
+    for I := 1 to N do
       if not CharMatchFunc(P^) then
-        exit else
+        exit
+      else
         begin
           Inc(Result);
           Inc(FBufPos);
@@ -615,9 +624,10 @@ begin
     // match
     P := Pointer(FBuffer);
     Inc(P, FBufPos + Result);
-    For I := Result + 1 to N do
+    for I := Result + 1 to N do
       if not CharMatchFunc(P^) then
-        exit else
+        exit
+      else
         begin
           Inc(Result);
           Inc(P);
@@ -642,7 +652,7 @@ begin
     // match
     P := Pointer(FBuffer);
     Inc(P, FBufPos + Result);
-    For I := Result + 1 to N do
+    for I := Result + 1 to N do
       if (Ord(P^) > $FF) or not (AnsiChar(Byte(P^)) in C) then
         exit
       else
@@ -671,14 +681,15 @@ begin
       begin
         // eof
         if Optional then
-          Result := N else
+          Result := N
+        else
           Result := -1;
         exit;
       end;
     // locate
     P := Pointer(FBuffer);
     Inc(P, FBufPos + Result);
-    For I := Result + 1 to N do
+    for I := Result + 1 to N do
       begin
         V := Ord(P^);
         if (V <= $FF) and (AnsiChar(Byte(V)) in C) then
@@ -711,16 +722,18 @@ begin
       begin
         // eof
         if Optional then
-          Result := N else
+          Result := N
+        else
           Result := -1;
         exit;
       end;
     P := Pointer(FBuffer);
     Inc(P, FBufPos + Result);
-    For I := Result + 1 to N - M + 1 do
+    for I := Result + 1 to N - M + 1 do
       if StrZMatchStrAsciiBW(P, S, CaseSensitive) then
         // found
-        exit else
+        exit
+      else
         begin
           Inc(Result);
           Inc(P);
@@ -752,7 +765,8 @@ begin
   // call to the reader.
   Result := BufferChars(Len);
   if Result = 0 then
-    Buffer := nil else
+    Buffer := nil
+  else
     begin
       P := Pointer(FBuffer);
       Inc(P, FBufPos);
@@ -832,7 +846,7 @@ begin
   // calculate length
   L := MatchRawByteChars(C);
   if L = 0 then
-    Result := ''
+    SetLength(Result, 0)
   else
     begin
       // read
@@ -851,11 +865,13 @@ begin
   // locate
   L := LocateRawByteChar(C, False);
   if L = 0 then
-    Result := 0 else
+    Result := 0
+  else
     begin
       // skip characters
       if L < 0 then
-        Result := FBufLen - FBufPos else
+        Result := FBufLen - FBufPos
+      else
         Result := L;
       Inc(FBufPos, Result);
     end;
@@ -871,7 +887,8 @@ begin
   // locate
   L := LocateRawByteChar(C, False);
   if L = 0 then
-    Result := '' else
+    Result := ''
+  else
     begin
       // read
       if L < 0 then
@@ -892,11 +909,13 @@ begin
   // locate
   L := LocateRawByteChar(C, False);
   if L = 0 then
-    Result := '' else
+    SetLength(Result, 0)
+  else
     begin
       // read
       if L < 0 then
-        M := FBufLen - FBufPos else
+        M := FBufLen - FBufPos
+      else
         M := L;
       Result := ReadUTF8Str(M);
     end;
@@ -912,11 +931,13 @@ begin
   // locate
   L := LocateRawByteStr(S, CaseSensitive, False);
   if L = 0 then
-    Result := '' else
+    Result := ''
+  else
     begin
       // read
       if L < 0 then
-        M := FBufLen - FBufPos else
+        M := FBufLen - FBufPos
+      else
         M := L;
       Result := ReadUnicodeStr(M);
     end;
@@ -932,11 +953,13 @@ begin
   // locate
   L := LocateRawByteStr(S, CaseSensitive, False);
   if L = 0 then
-    Result := '' else
+    SetLength(Result, 0)
+  else
     begin
       // read
       if L < 0 then
-        M := FBufLen - FBufPos else
+        M := FBufLen - FBufPos
+      else
         M := L;
       Result := ReadUTF8Str(M);
     end;
@@ -958,6 +981,7 @@ end;
 
 
 
+{$IFDEF SupportRawByteString}
 {                                                                              }
 { TUnicodeLongStringReader                                                     }
 {                                                                              }
@@ -966,6 +990,7 @@ constructor TUnicodeLongStringReader.Create(const DataStr: RawByteString;
 begin
   inherited Create(TRawByteStringReader.Create(DataStr), True, Codec, CodecOwner);
 end;
+{$ENDIF}
 
 
 
@@ -987,8 +1012,11 @@ end;
 {$IFDEF TEST}
 {$ASSERTIONS ON}
 procedure Test;
+{$IFDEF SupportRawByteString}
 var A : TUnicodeReader;
+{$ENDIF}
 begin
+  {$IFDEF SupportRawByteString}
   A := TUnicodeReader.Create(
       TRawByteStringReader.Create(RawByteString(#$41#$E2#$89#$A2#$CE#$91#$2E)),
       True,
@@ -1002,6 +1030,7 @@ begin
   Assert(A.ReadChar = #$002E, 'UnicodeReader.ReadChar');
   Assert(A.EOF, 'UnicodeReader.EOF');
   A.Free;
+  {$ENDIF}
 end;
 {$ENDIF}{$ENDIF}
 

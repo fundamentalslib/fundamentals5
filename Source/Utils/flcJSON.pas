@@ -77,7 +77,8 @@ uses
 
   { Fundamentals }
   flcUtils,
-  flcStrings;
+  flcStrings,
+  flcStringBuilder;
 
 
 
@@ -548,7 +549,8 @@ uses
   Variants,
 
   { Fundamentals }
-  flcUnicodeCodecs;
+  flcUnicodeCodecs,
+  flcUTF;
 
 
 

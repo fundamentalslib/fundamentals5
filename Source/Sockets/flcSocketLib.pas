@@ -747,7 +747,8 @@ uses
   {$ENDIF}
   SyncObjs,
   { Fundamentals }
-  flcStrings;
+  flcStrings,
+  flcZeroTermStrings;
 
 
 
@@ -1289,7 +1290,7 @@ begin
       @Serv, NI_MAXSERV, NI_NUMERICSERV);
   if Error <> 0 then
     raise ESocketLib.Create('Reverse lookup failed', SocketGetLastError);
-  Result := StrPasA(PAnsiChar(@Host));
+  Result := StrZPasA(PAnsiChar(@Host));
 end;
 
 function SocketGetPeerName(const S: TSocketHandle; out Name: TSocketAddr): Integer;
@@ -1341,7 +1342,7 @@ function Socketinet_ntoa(const InAddr: TIP4Addr): RawByteString;
 var A : TInAddr;
 begin
   A.S_addr := InAddr.Addr32;
-  Result := StrPasB(inet_ntoa(A));
+  Result := StrZPasB(inet_ntoa(A));
 end;
 
 function Socketinet_addr(const P: PAnsiChar): TIP4Addr;
@@ -2020,7 +2021,7 @@ end;
 
 function HostEntName(const HostEnt: PHostEnt): AnsiString;
 begin
-  Result := StrPasA(HostEnt.h_name);
+  Result := StrZPasA(HostEnt.h_name);
 end;
 
 
@@ -2051,7 +2052,7 @@ begin
       {$ENDIF}
       PEnt := GetProtoByNumber(ProtoNum);
       if Assigned(PEnt) then
-        Result := StrPasB(PEnt^.p_name)
+        Result := StrZPasB(PEnt^.p_name)
       else
         Result := ProtocolStr[Protocol];
     end
@@ -2118,7 +2119,7 @@ begin
   Err := SocketGetHostName(@Buf, Sizeof(Buf) - 1);
   if Err <> 0 then
     raise ESocketLib.Create('Local host name not available', Err);
-  Result := StrPasA(PAnsiChar(@Buf));
+  Result := StrZPasA(PAnsiChar(@Buf));
 end;
 
 function LocalHostName: String;

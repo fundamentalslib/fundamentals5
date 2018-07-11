@@ -58,6 +58,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
+  flcHash,
   flcUtils,
   flcHugeInt;
 
@@ -112,9 +113,11 @@ procedure RSAPublicKeyAssignBufStr(var Key: TRSAPublicKey;
 procedure RSAPrivateKeyInit(var Key: TRSAPrivateKey);
 procedure RSAPrivateKeyFinalise(var Key: TRSAPrivateKey);
 procedure RSAPrivateKeyAssign(var KeyD: TRSAPrivateKey; const KeyS: TRSAPrivateKey);
+{$IFDEF SupportRawByteString}
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const HexMod, HexExp: RawByteString);
+{$ENDIF}
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const ModBuf; const ModBufSize: Integer;
@@ -217,8 +220,7 @@ uses
   {$ENDIF}
   {$ENDIF}
   { Fundamentals }
-  flcRandom,
-  flcHash;
+  flcRandom;
 
 
 
@@ -348,6 +350,7 @@ begin
   HugeWordAssign(KeyD.Coefficient, KeyS.Coefficient);
 end;
 
+{$IFDEF SupportRawByteString}
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const HexMod, HexExp: RawByteString);
@@ -362,6 +365,7 @@ begin
      (HugeWordGetBitCount(Key.Exponent) > KeySize) then
     raise ERSA.Create(SRSAInvalidKeySize);
 end;
+{$ENDIF}
 
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
           const KeySize: Integer;
@@ -1312,7 +1316,7 @@ begin
       SecureHugeWordFinalise(CipherMsg);
       SecureHugeWordFinalise(EncodedMsg);
     end;
-    Result := CompareMem(HashBuf^, MessageHashBuf, MinInt(C, MessageHashBufSize));
+    Result := EqualMem(HashBuf^, MessageHashBuf, MinInt(C, MessageHashBufSize));
   finally
     FreeMem(HashBuf);
   end;
@@ -1518,7 +1522,7 @@ end;
 {$IFDEF OS_WIN}
 {$IFDEF CIPHER_PROFILE}
 procedure Profile;
-const KeySize = 1024 + 128;
+const KeySize = 1024 + 64;
 var T : LongWord;
     Pri : TRSAPrivateKey;
     Pub : TRSAPublicKey;
