@@ -110,6 +110,7 @@
 {   2017/10/07  5.60  Moved functions to units flcBase64, flcUTF, flcCharSet.  }
 {   2017/11/01  5.61  Added TBytes functions.                                  }
 {   2018/07/11  5.62  Moved functions to units flcFloats, flcASCII.            }
+{   2018/07/11  5.62  Moved standard types to unit flcStdTypes.                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -155,7 +156,9 @@ interface
 
 uses
   { System }
-  SysUtils;
+  SysUtils,
+  { Fundamentals }
+  flcStdTypes;
 
 
 
@@ -164,423 +167,6 @@ uses
 {                                                                              }
 const
   FundamentalsVersion = '5.01';
-
-
-
-{                                                                              }
-{ Integer types                                                                }
-{                                                                              }
-{   Unsigned integers                     Signed integers                      }
-{   --------------------------------      --------------------------------     }
-{   Byte        unsigned 8 bits           ShortInt   signed 8 bits             }
-{   Word        unsigned 16 bits          SmallInt   signed 16 bits            }
-{   LongWord    unsigned 32 bits          LongInt    signed 32 bits            }
-{   UInt64      unsigned 64 bits          Int64      signed 64 bits            }
-{   Cardinal    unsigned 32 bits          Integer    signed 32 bits            }
-{   NativeUInt  unsigned system word      NativeInt  signed system word        }
-{                                                                              }
-type
-  Int8      = ShortInt;
-  Int16     = SmallInt;
-  Int32     = LongInt;
-
-  UInt8     = Byte;
-  UInt16    = Word;
-  {$IFDEF SupportFixedUInt}
-  UInt32    = FixedUInt;
-  {$ELSE}
-  UInt32    = LongWord;
-  {$ENDIF}
-  {$IFNDEF SupportUInt64}
-  UInt64    = type Int64;
-  {$ENDIF}
-
-  Word8     = UInt8;
-  Word16    = UInt16;
-  Word32    = UInt32;
-  Word64    = UInt64;
-
-  {$IFNDEF SupportNativeInt}
-  {$IFDEF CPU_X86_64}
-  NativeInt   = type Int64;
-  {$ELSE}
-  NativeInt   = type Integer;
-  {$ENDIF}
-  PNativeInt  = ^NativeInt;
-  {$ENDIF}
-  {$IFDEF FREEPASCAL}
-  PNativeInt  = ^NativeInt;
-  {$ENDIF}
-  {$IFDEF DELPHI2010}
-  PNativeInt  = ^NativeInt;
-  {$ENDIF}
-
-  {$IFNDEF SupportNativeUInt}
-  {$IFDEF CPU_X86_64}
-  NativeUInt  = type Word64;
-  {$ELSE}
-  NativeUInt  = type Cardinal;
-  {$ENDIF}
-  PNativeUInt = ^NativeUInt;
-  {$ENDIF}
-  {$IFDEF FREEPASCAL}
-  PNativeUInt = ^NativeUInt;
-  {$ENDIF}
-  {$IFDEF DELPHI2010}
-  PNativeUInt = ^NativeUInt;
-  {$ENDIF}
-
-  {$IFDEF DELPHI5_DOWN}
-  PByte       = ^Byte;
-  PWord       = ^Word;
-  PLongWord   = ^LongWord;
-  PShortInt   = ^ShortInt;
-  PSmallInt   = ^SmallInt;
-  PLongInt    = ^LongInt;
-  PInteger    = ^Integer;
-  PInt64      = ^Int64;
-  {$ENDIF}
-
-  PInt8     = ^Int8;
-  PInt16    = ^Int16;
-  PInt32    = ^Int32;
-
-  PWord8    = ^Word8;
-  PWord16   = ^Word16;
-  PWord32   = ^Word32;
-
-  PUInt8    = ^UInt8;
-  PUInt16   = ^UInt16;
-  PUInt32   = ^UInt32;
-  PUInt64   = ^UInt64;
-
-  {$IFNDEF ManagedCode}
-  SmallIntRec = packed record
-    case Integer of
-      0 : (Lo, Hi : Byte);
-      1 : (Bytes  : array[0..1] of Byte);
-  end;
-
-  LongIntRec = packed record
-    case Integer of
-      0 : (Lo, Hi : Word);
-      1 : (Words  : array[0..1] of Word);
-      2 : (Bytes  : array[0..3] of Byte);
-  end;
-  PLongIntRec = ^LongIntRec;
-  {$ENDIF}
-
-const
-  MinByte       = Low(Byte);
-  MaxByte       = High(Byte);
-  MinWord       = Low(Word);
-  MaxWord       = High(Word);
-  MinShortInt   = Low(ShortInt);
-  MaxShortInt   = High(ShortInt);
-  MinSmallInt   = Low(SmallInt);
-  MaxSmallInt   = High(SmallInt);
-  MinLongWord   = LongWord(Low(LongWord));
-  MaxLongWord   = LongWord(High(LongWord));
-  MinLongInt    = LongInt(Low(LongInt));
-  MaxLongInt    = LongInt(High(LongInt));
-  MinInt64      = Int64(Low(Int64));
-  MaxInt64      = Int64(High(Int64));
-  MinInteger    = Integer(Low(Integer));
-  MaxInteger    = Integer(High(Integer));
-  MinCardinal   = Cardinal(Low(Cardinal));
-  MaxCardinal   = Cardinal(High(Cardinal));
-  MinNativeUInt = NativeUInt(Low(NativeUInt));
-  MaxNativeUInt = NativeUInt(High(NativeUInt));
-  MinNativeInt  = NativeInt(Low(NativeInt));
-  MaxNativeInt  = NativeInt(High(NativeInt));
-
-const
-  BitsPerByte       = 8;
-  BitsPerLongWord   = SizeOf(LongWord) * 8;
-  NativeWordSize    = SizeOf(NativeInt);
-  BitsPerNativeWord = NativeWordSize * 8;
-
-
-
-{                                                                              }
-{ Boolean types                                                                }
-{                                                                              }
-{   Boolean    -        -                                                      }
-{   ByteBool   Bool8    8 bits                                                 }
-{   WordBool   Bool16   16 bits                                                }
-{   LongBool   Bool32   32 bits                                                }
-{                                                                              }
-type
-  Bool8     = ByteBool;
-  Bool16    = WordBool;
-  Bool32    = LongBool;
-
-  {$IFDEF DELPHI5_DOWN}
-  PBoolean  = ^Boolean;
-  PByteBool = ^ByteBool;
-  PWordBool = ^WordBool;
-  {$ENDIF}
-  {$IFNDEF FREEPASCAL}
-  PLongBool = ^LongBool;
-  {$ENDIF}
-
-  PBool8    = ^Bool8;
-  PBool16   = ^Bool16;
-  PBool32   = ^Bool32;
-
-
-
-{                                                                              }
-{ Real types                                                                   }
-{                                                                              }
-{   Floating point                                                             }
-{     Single    32 bits  7-8 significant digits                                }
-{     Double    64 bits  15-16 significant digits                              }
-{     Extended  80 bits  19-20 significant digits (mapped to Double in .NET)   }
-{                                                                              }
-{   Fixed point                                                                }
-{     Currency  64 bits  19-20 significant digits, 4 after the decimal point.  }
-{                                                                              }
-const
-  MinSingle   : Single   = 1.5E-45;
-  MaxSingle   : Single   = 3.4E+38;
-  MinDouble   : Double   = 5.0E-324;
-  MaxDouble   : Double   = 1.7E+308;
-  {$IFDEF ExtendedIsDouble}
-  MinExtended : Extended = 5.0E-324;
-  MaxExtended : Extended = 1.7E+308;
-  {$ELSE}
-  MinExtended : Extended = 3.4E-4932;
-  MaxExtended : Extended = 1.1E+4932;
-  {$ENDIF}
-  {$IFNDEF CLR}
-  MinCurrency : Currency = -922337203685477.5807;
-  MaxCurrency : Currency = 922337203685477.5807;
-  {$ENDIF}
-
-type
-  {$IFDEF DELPHI5_DOWN}
-  PSingle   = ^Single;
-  PDouble   = ^Double;
-  PExtended = ^Extended;
-  PCurrency = ^Currency;
-  {$ENDIF}
-
-  {$IFNDEF ManagedCode}
-  {$IFNDEF ExtendedIsDouble}
-  ExtendedRec = packed record
-    case Boolean of
-      True: (
-        Mantissa : packed array[0..1] of LongWord; { MSB of [1] is the normalized 1 bit }
-        Exponent : Word;                           { MSB is the sign bit                }
-      );
-      False: (Value: Extended);
-  end;
-  {$ENDIF}
-  {$ENDIF}
-
-  {$IFDEF ExtendedIsDouble}
-  Float  = Double;
-  {$DEFINE FloatIsDouble}
-  {$ELSE}
-  Float  = Extended;
-  {$DEFINE FloatIsExtended}
-  {$ENDIF}
-  PFloat = ^Float;
-
-{$IFNDEF ManagedCode}
-{$IFNDEF ExtendedIsDouble}
-const
-  ExtendedNan      : ExtendedRec = (Mantissa:($FFFFFFFF, $FFFFFFFF); Exponent:$7FFF);
-  ExtendedInfinity : ExtendedRec = (Mantissa:($00000000, $80000000); Exponent:$7FFF);
-{$ENDIF}
-{$ENDIF}
-
-
-
-{                                                                              }
-{ String types                                                                 }
-{                                                                              }
-{   AnsiString                                                                 }
-{   RawByteString                                                              }
-{   UTF8String                                                                 }
-{   AsciiString                                                                }
-{   WideString                                                                 }
-{   UnicodeString                                                              }
-{   UCS4String                                                                 }
-{                                                                              }
-
-
-
-{                                                                              }
-{ AnsiString                                                                   }
-{   AnsiChar is a byte character.                                              }
-{   AnsiString is a reference counted, code page aware, byte string.           }
-{                                                                              }
-{$IFNDEF SupportAnsiChar}
-type
-  AnsiChar = Byte;
-  PAnsiChar = ^AnsiChar;
-{$DEFINE AnsiCharIsOrd}
-{$ENDIF}
-
-{$IFNDEF SupportAnsiString}
-type
-  AnsiString = array of AnsiChar;
-{$DEFINE AnsiStringIsArray}
-{$ENDIF}
-
-{$IFNDEF SupportAnsiString}
-const
-  StrEmptyA = nil;
-  StrBaseA = 0;
-{$ELSE}
-const
-  StrEmptyA = '';
-  StrBaseA = 1;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ RawByteString                                                                }
-{   RawByteString is an alias for AnsiString where all bytes are raw bytes     }
-{   that do not undergo any character set translation.                         }
-{   Under Delphi 2009 RawByteString is defined as "type AnsiString($FFFF)".    }
-{                                                                              }
-type
-  RawByteChar = AnsiChar;
-  PRawByteChar = ^RawByteChar;
-  {$IFNDEF SupportRawByteString}
-  RawByteString = AnsiString;
-  PRawByteString = ^RawByteString;
-  {$ENDIF}
-  {$IFDEF SupportRawByteString}
-  {$IFDEF FREEPASCAL}
-  PRawByteString = ^RawByteString;
-  {$ENDIF}
-  {$ENDIF}
-  RawByteCharSet = set of RawByteChar;
-
-{$IFNDEF SupportRawByteString}
-const
-  StrEmptyB = nil;
-  StrBaseB = 0;
-{$ELSE}
-const
-  StrEmptyB = '';
-  StrBaseB = 1;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ UTF8String                                                                   }
-{   UTF8String is a variable character length encoding for Unicode strings.    }
-{   For Ascii values, a UTF8String is the same as a AsciiString.               }
-{   Under Delphi 2009 UTF8String is defined as "type AnsiString($FDE9)"        }
-{                                                                              }
-type
-  {$IFNDEF SupportUTF8String}
-  UTF8Char = AnsiChar;
-  PUTF8Char = ^UTF8Char;
-  UTF8String = AnsiString;
-  PUTF8String = ^UTF8String;
-  {$ENDIF}
-  UTF8StringArray = array of UTF8String;
-
-
-
-{                                                                              }
-{ WideString                                                                   }
-{   WideChar is a 16-bit character.                                            }
-{   WideString is not reference counted.                                       }
-{                                                                              }
-{$IFNDEF SupportWideChar}
-type
-  WideChar = Word;
-  PWideChar = ^WideChar;
-{$DEFINE WideCharIsOrd}
-{$ENDIF}
-
-{$IFNDEF SupportWideString}
-{$IFDEF StringIsUnicode}
-type
-  WideString = String;
-{$DEFINE WideStringIsString}
-{$ELSE}
-type
-  WideString = array of WideChar;
-{$DEFINE WideStringIsArray}
-{$ENDIF}
-{$ENDIF}
-
-type
-  TWideCharMatchFunction = function (const Ch: WideChar): Boolean;
-
-{$IFNDEF SupportWideString}
-{$IFDEF WideStringIsArray}
-const
-  StrEmptyW = nil;
-  StrBaseW = 0;
-{$ENDIF}
-{$IFDEF WideStringIsString}
-const
-  StrEmptyW = '';
-  StrBaseW = 1;
-{$ENDIF}
-{$ELSE}
-const
-  StrEmptyW = '';
-  StrBaseW = 1;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ UnicodeString                                                                }
-{   UnicodeString in Delphi 2009 is reference counted, code page aware,        }
-{   variable character length unicode string. Defaults to UTF-16 encoding.     }
-{   WideString is not reference counted.                                       }
-{                                                                              }
-type
-  UnicodeChar = WideChar;
-  PUnicodeChar = ^UnicodeChar;
-  {$IFNDEF SupportUnicodeString}
-  UnicodeString = WideString;
-  PUnicodeString = ^UnicodeString;
-  {$ENDIF}
-
-
-
-{                                                                              }
-{ UCS4String                                                                   }
-{   UCS4Char is a 32-bit character from the Unicode character set.             }
-{   UCS4String is a reference counted string of UCS4Char characters.           }
-{                                                                              }
-type
-  {$IFNDEF SupportUCS4String}
-  UCS4Char = LongWord;
-  PUCS4Char = ^UCS4Char;
-  UCS4String = array of UCS4Char;
-  {$ENDIF}
-  UCS4StringArray = array of UCS4String;
-
-const
-  UCS4_STRING_TERMINATOR = $9C;
-  UCS4_LF                = $0A;
-  UCS4_CR                = $0D;
-
-
-
-{                                                                              }
-{ TBytes                                                                       }
-{   TBytes is a dynamic array of bytes.                                        }
-{                                                                              }
-{$IFNDEF TBytesDeclared}
-type
-  TBytes = array of Byte;
-{$ENDIF}
 
 
 
@@ -762,11 +348,11 @@ function  iif(const Expr: Boolean; const TrueValue: Int64;
 function  iif(const Expr: Boolean; const TrueValue: Extended;
           const FalseValue: Extended = 0.0): Extended; overload;          {$IFDEF UseInline}inline;{$ENDIF}
 function  iifA(const Expr: Boolean; const TrueValue: AnsiString;
-          const FalseValue: AnsiString = StrEmptyA): AnsiString; overload;{$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: AnsiString = ''): AnsiString; overload;{$IFDEF UseInline}inline;{$ENDIF}
 function  iifB(const Expr: Boolean; const TrueValue: RawByteString;
-          const FalseValue: RawByteString = StrEmptyB): RawByteString; overload; {$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: RawByteString = ''): RawByteString; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  iifW(const Expr: Boolean; const TrueValue: WideString;
-          const FalseValue: WideString = StrEmptyW): WideString; overload;       {$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: WideString = ''): WideString; overload;       {$IFDEF UseInline}inline;{$ENDIF}
 function  iifU(const Expr: Boolean; const TrueValue: UnicodeString;
           const FalseValue: UnicodeString = ''): UnicodeString; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: String;
@@ -1064,11 +650,6 @@ function  HashLongWord(const I: LongWord; const Slots: LongWord = 0): LongWord;
 {                                                                              }
 { Memory operations                                                            }
 {                                                                              }
-{$IFDEF DELPHI5_DOWN}
-type
-  PPointer = ^Pointer;
-{$ENDIF}
-
 const
   Bytes1KB  = 1024;
   Bytes1MB  = 1024 * Bytes1KB;
@@ -1116,52 +697,8 @@ type
 
 
 {                                                                              }
-{ Sets                                                                         }
-{                                                                              }
-type
-  CharSet = set of AnsiChar;
-  AnsiCharSet = CharSet;
-  ByteSet = set of Byte;
-  PCharSet = ^CharSet;
-  PByteSet = ^ByteSet;
-
-
-
-{                                                                              }
 { Dynamic arrays                                                               }
 {                                                                              }
-type
-  ByteArray = array of Byte;
-  WordArray = array of Word;
-  LongWordArray = array of LongWord;
-  CardinalArray = LongWordArray;
-  NativeUIntArray = array of NativeUInt;
-  ShortIntArray = array of ShortInt;
-  SmallIntArray = array of SmallInt;
-  LongIntArray = array of LongInt;
-  IntegerArray = LongIntArray;
-  NativeIntArray = array of NativeInt;
-  Int64Array = array of Int64;
-  SingleArray = array of Single;
-  DoubleArray = array of Double;
-  ExtendedArray = array of Extended;
-  CurrencyArray = array of Currency;
-  BooleanArray = array of Boolean;
-  AnsiStringArray = array of AnsiString;
-  RawByteStringArray = array of RawByteString;
-  WideStringArray = array of WideString;
-  UnicodeStringArray = array of UnicodeString;
-  StringArray = array of String;
-  {$IFNDEF ManagedCode}
-  PointerArray = array of Pointer;
-  {$ENDIF}
-  ObjectArray = array of TObject;
-  InterfaceArray = array of IInterface;
-  CharSetArray = array of CharSet;
-  ByteSetArray = array of ByteSet;
-
-
-
 {$IFDEF ManagedCode}
 procedure FreeObjectArray(var V: ObjectArray); overload;
 procedure FreeObjectArray(var V: ObjectArray; const LoIdx, HiIdx: Integer); overload;
@@ -1170,114 +707,6 @@ procedure FreeObjectArray(var V); overload;
 procedure FreeObjectArray(var V; const LoIdx, HiIdx: Integer); overload;
 {$ENDIF}
 procedure FreeAndNilObjectArray(var V: ObjectArray);
-
-
-
-{                                                                              }
-{ Array pointers                                                               }
-{                                                                              }
-
-{ Maximum array elements                                                       }
-const
-  MaxArraySize = $7FFFFFFF; // 2 Gigabytes
-  MaxByteArrayElements = MaxArraySize div Sizeof(Byte);
-  MaxWordArrayElements = MaxArraySize div Sizeof(Word);
-  MaxLongWordArrayElements = MaxArraySize div Sizeof(LongWord);
-  MaxCardinalArrayElements = MaxArraySize div Sizeof(Cardinal);
-  MaxNativeUIntArrayElements = MaxArraySize div Sizeof(NativeUInt);
-  MaxShortIntArrayElements = MaxArraySize div Sizeof(ShortInt);
-  MaxSmallIntArrayElements = MaxArraySize div Sizeof(SmallInt);
-  MaxLongIntArrayElements = MaxArraySize div Sizeof(LongInt);
-  MaxIntegerArrayElements = MaxArraySize div Sizeof(Integer);
-  MaxInt64ArrayElements = MaxArraySize div Sizeof(Int64);
-  MaxNativeIntArrayElements = MaxArraySize div Sizeof(NativeInt);
-  MaxSingleArrayElements = MaxArraySize div Sizeof(Single);
-  MaxDoubleArrayElements = MaxArraySize div Sizeof(Double);
-  MaxExtendedArrayElements = MaxArraySize div Sizeof(Extended);
-  MaxBooleanArrayElements = MaxArraySize div Sizeof(Boolean);
-  {$IFNDEF CLR}
-  MaxCurrencyArrayElements = MaxArraySize div Sizeof(Currency);
-  MaxAnsiStringArrayElements = MaxArraySize div Sizeof(AnsiString);
-  MaxRawByteStringArrayElements = MaxArraySize div Sizeof(RawByteString);
-  MaxWideStringArrayElements = MaxArraySize div Sizeof(WideString);
-  MaxUnicodeStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
-  {$IFDEF StringIsUnicode}
-  MaxStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
-  {$ELSE}
-  MaxStringArrayElements = MaxArraySize div Sizeof(AnsiString);
-  {$ENDIF}
-  MaxPointerArrayElements = MaxArraySize div Sizeof(Pointer);
-  MaxObjectArrayElements = MaxArraySize div Sizeof(TObject);
-  MaxInterfaceArrayElements = MaxArraySize div Sizeof(IInterface);
-  MaxCharSetArrayElements = MaxArraySize div Sizeof(CharSet);
-  MaxByteSetArrayElements = MaxArraySize div Sizeof(ByteSet);
-  {$ENDIF}
-
-{ Static array types                                                           }
-type
-  TStaticByteArray = array[0..MaxByteArrayElements - 1] of Byte;
-  TStaticWordArray = array[0..MaxWordArrayElements - 1] of Word;
-  TStaticLongWordArray = array[0..MaxLongWordArrayElements - 1] of LongWord;
-  TStaticNativeUIntArray = array[0..MaxNativeUIntArrayElements - 1] of NativeUInt;
-  TStaticShortIntArray = array[0..MaxShortIntArrayElements - 1] of ShortInt;
-  TStaticSmallIntArray = array[0..MaxSmallIntArrayElements - 1] of SmallInt;
-  TStaticLongIntArray = array[0..MaxLongIntArrayElements - 1] of LongInt;
-  TStaticInt64Array = array[0..MaxInt64ArrayElements - 1] of Int64;
-  TStaticNativeIntArray = array[0..MaxNativeIntArrayElements - 1] of NativeInt;
-  TStaticSingleArray = array[0..MaxSingleArrayElements - 1] of Single;
-  TStaticDoubleArray = array[0..MaxDoubleArrayElements - 1] of Double;
-  TStaticExtendedArray = array[0..MaxExtendedArrayElements - 1] of Extended;
-  TStaticBooleanArray = array[0..MaxBooleanArrayElements - 1] of Boolean;
-  {$IFNDEF CLR}
-  TStaticCurrencyArray = array[0..MaxCurrencyArrayElements - 1] of Currency;
-  TStaticAnsiStringArray = array[0..MaxAnsiStringArrayElements - 1] of AnsiString;
-  TStaticRawByteStringArray = array[0..MaxRawByteStringArrayElements - 1] of RawByteString;
-  TStaticWideStringArray = array[0..MaxWideStringArrayElements - 1] of WideString;
-  TStaticUnicodeStringArray = array[0..MaxUnicodeStringArrayElements - 1] of UnicodeString;
-  {$IFDEF StringIsUnicode}
-  TStaticStringArray = TStaticUnicodeStringArray;
-  {$ELSE}
-  TStaticStringArray = TStaticAnsiStringArray;
-  {$ENDIF}
-  TStaticPointerArray = array[0..MaxPointerArrayElements - 1] of Pointer;
-  TStaticObjectArray = array[0..MaxObjectArrayElements - 1] of TObject;
-  TStaticInterfaceArray = array[0..MaxInterfaceArrayElements - 1] of IInterface;
-  TStaticCharSetArray = array[0..MaxCharSetArrayElements - 1] of CharSet;
-  TStaticByteSetArray = array[0..MaxByteSetArrayElements - 1] of ByteSet;
-  {$ENDIF}
-  TStaticCardinalArray = TStaticLongWordArray;
-  TStaticIntegerArray = TStaticLongIntArray;
-
-{ Static array pointers                                                        }
-type
-  PStaticByteArray = ^TStaticByteArray;
-  PStaticWordArray = ^TStaticWordArray;
-  PStaticLongWordArray = ^TStaticLongWordArray;
-  PStaticCardinalArray = ^TStaticCardinalArray;
-  PStaticNativeUIntArray = ^TStaticNativeUIntArray;
-  PStaticShortIntArray = ^TStaticShortIntArray;
-  PStaticSmallIntArray = ^TStaticSmallIntArray;
-  PStaticLongIntArray = ^TStaticLongIntArray;
-  PStaticIntegerArray = ^TStaticIntegerArray;
-  PStaticInt64Array = ^TStaticInt64Array;
-  PStaticNativeIntArray = ^TStaticNativeIntArray;
-  PStaticSingleArray = ^TStaticSingleArray;
-  PStaticDoubleArray = ^TStaticDoubleArray;
-  PStaticExtendedArray = ^TStaticExtendedArray;
-  PStaticBooleanArray = ^TStaticBooleanArray;
-  {$IFNDEF CLR}
-  PStaticCurrencyArray = ^TStaticCurrencyArray;
-  PStaticAnsiStringArray = ^TStaticAnsiStringArray;
-  PStaticRawByteStringArray = ^TStaticRawByteStringArray;
-  PStaticWideStringArray = ^TStaticWideStringArray;
-  PStaticUnicodeStringArray = ^TStaticUnicodeStringArray;
-  PStaticStringArray = ^TStaticStringArray;
-  PStaticPointerArray = ^TStaticPointerArray;
-  PStaticObjectArray = ^TStaticObjectArray;
-  PStaticInterfaceArray = ^TStaticInterfaceArray;
-  PStaticCharSetArray = ^TStaticCharSetArray;
-  PStaticByteSetArray = ^TStaticByteSetArray;
-  {$ENDIF}
 
 
 
@@ -1598,7 +1027,7 @@ end;
 function RawByteStrPtrToWideString(const S: PAnsiChar; const Len: Integer): WideString;
 begin
   if Len <= 0 then
-    Result := StrEmptyW
+    Result := ''
   else
     begin
       SetLength(Result, Len);
@@ -1677,7 +1106,7 @@ var I : Integer;
 begin
   if Len <= 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   SetLength(Result, Len);
@@ -2856,12 +2285,12 @@ begin
   T := A;
   if T < 0 then
     begin
-      Result[StrBaseA] := AnsiChar(Ord('-'));
+      Result[1] := AnsiChar(Ord('-'));
       T := -T;
     end;
   while T > 0 do
     begin
-      Result[StrBaseA + L - I - 1] := IntToAnsiChar(T mod 10);
+      Result[L - I] := IntToAnsiChar(T mod 10);
       T := T div 10;
       Inc(I);
     end;
@@ -2899,12 +2328,12 @@ begin
   T := A;
   if T < 0 then
     begin
-      Result[StrBaseB] := AnsiChar('-');
+      Result[1] := AnsiChar('-');
       T := -T;
     end;
   while T > 0 do
     begin
-      Result[StrBaseB + L - I - 1] := IntToAnsiChar(T mod 10);
+      Result[L - I] := IntToAnsiChar(T mod 10);
       T := T div 10;
       Inc(I);
     end;
@@ -2942,12 +2371,12 @@ begin
   T := A;
   if T < 0 then
     begin
-      Result[StrBaseW] := '-';
+      Result[1] := '-';
       T := -T;
     end;
   while T > 0 do
     begin
-      Result[StrBaseW + L - I - 1] := IntToWideChar(T mod 10);
+      Result[L - I] := IntToWideChar(T mod 10);
       T := T div 10;
       Inc(I);
     end;
@@ -3056,7 +2485,7 @@ begin
         L := Digits;
       SetLength(Result, L);
       for V := 0 to L - 1 do
-        Result[StrBaseA + V] := AnsiChar(Ord('0'));
+        Result[1 + V] := AnsiChar(Ord('0'));
       exit;
     end;
   // determine number of digits in result
@@ -3076,9 +2505,9 @@ begin
     begin
       V := D mod Base + 1;
       if UpperCase then
-        Result[StrBaseA + L - 1] := AnsiChar(StrHexDigitsUpper[V])
+        Result[L] := AnsiChar(StrHexDigitsUpper[V])
       else
-        Result[StrBaseA + L - 1] := AnsiChar(StrHexDigitsLower[V]);
+        Result[L] := AnsiChar(StrHexDigitsLower[V]);
       Dec(L);
       D := D div Base;
     end;
@@ -3107,7 +2536,7 @@ begin
         L := Digits;
       SetLength(Result, L);
       for V := 0 to L - 1 do
-        Result[StrBaseB + V] := AnsiChar(Ord('0'));
+        Result[1 + V] := AnsiChar(Ord('0'));
       exit;
     end;
   // determine number of digits in result
@@ -3127,15 +2556,15 @@ begin
     begin
       V := D mod Base + 1;
       if UpperCase then
-        Result[StrBaseB + L - 1] := AnsiChar(StrHexDigitsUpper[V])
+        Result[L] := AnsiChar(StrHexDigitsUpper[V])
       else
-        Result[StrBaseB + L - 1] := AnsiChar(StrHexDigitsLower[V]);
+        Result[L] := AnsiChar(StrHexDigitsLower[V]);
       Dec(L);
       D := D div Base;
     end;
   while L > 0 do
     begin
-      Result[StrBaseB + L - 1] := AnsiChar(Ord('0'));
+      Result[L] := AnsiChar(Ord('0'));
       Dec(L);
     end;
 end;
@@ -4551,7 +3980,7 @@ begin
   L := Length(P);
   if L = 0 then
     begin
-      Result := StrEmptyA;
+      Result := '';
       exit;
     end;
   SetLength(Result, L * 2);
@@ -4588,7 +4017,7 @@ begin
   L := Count;
   if (L <= 0) or not Assigned(Q) then
     begin
-      Result := StrEmptyA;
+      Result := '';
       exit;
     end;
   SetLength(Result, Count * 2);

@@ -101,6 +101,16 @@ const
 
 
 {                                                                              }
+{ UCS4 constants                                                               }
+{                                                                              }
+const
+  UCS4_STRING_TERMINATOR = $9C;
+  UCS4_LF                = $0A;
+  UCS4_CR                = $0D;
+
+
+
+{                                                                              }
 { Unicode functions                                                            }
 {                                                                              }
 function  UnicodeIsAsciiChar(const Ch: WideChar): Boolean;

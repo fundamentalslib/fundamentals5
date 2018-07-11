@@ -155,7 +155,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -441,6 +441,7 @@ uses
   Math,
 
   { Fundamentals }
+  flcUtils,
   flcBits32,
   flcDynArrays,
   flcFloats;

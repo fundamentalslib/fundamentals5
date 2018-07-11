@@ -76,7 +76,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcStrings,
   flcStringBuilder;
 
@@ -549,6 +549,7 @@ uses
   Variants,
 
   { Fundamentals }
+  flcUtils,
   flcASCII,
   flcUnicodeCodecs,
   flcUTF;

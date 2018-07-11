@@ -62,7 +62,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcProtoBufProtoNodes;
 
 
@@ -236,6 +236,7 @@ uses
   Classes,
 
   { Fundamentals }
+  flcUtils,
   flcStrings,
   flcFloats;
 

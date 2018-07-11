@@ -156,7 +156,7 @@ uses
   Borland.Vcl.StrUtils,
   {$ENDIF}
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcASCII;
 
 
@@ -1545,6 +1545,7 @@ procedure Test;
 implementation
 
 uses
+  flcUtils,
   flcCharSet,
   flcUnicodeChar;
 
@@ -7645,7 +7646,7 @@ end;
 function BufToStrA(const Buf; const BufSize: Integer): AnsiString;
 begin
   if BufSize <= 0 then
-    Result := StrEmptyA
+    Result := ''
   else
     begin
       SetLength(Result, BufSize);
@@ -7656,7 +7657,7 @@ end;
 function BufToStrB(const Buf; const BufSize: Integer): RawByteString;
 begin
   if BufSize <= 0 then
-    Result := StrEmptyB
+    Result := ''
   else
     begin
       SetLength(Result, BufSize);
@@ -7712,7 +7713,7 @@ var P : PAnsiChar;
     I : Integer;
 begin
   if (Count <= 0) or (BufSize <= 0) then
-    Result := StrEmptyA
+    Result := ''
   else
     begin
       SetLength(Result, Count * BufSize);
@@ -7730,7 +7731,7 @@ var P : PAnsiChar;
     I : Integer;
 begin
   if (Count <= 0) or (BufSize <= 0) then
-    Result := StrEmptyB
+    Result := ''
   else
     begin
       SetLength(Result, Count * BufSize);
@@ -7829,7 +7830,7 @@ var L : Integer;
 begin
   L := Length(S);
   if L = 0 then
-    Result := StrEmptyA
+    Result := ''
   else
     Result := DupBufA(Pointer(S)^, L, Count);
 end;
@@ -7839,7 +7840,7 @@ var L : Integer;
 begin
   L := Length(S);
   if L = 0 then
-    Result := StrEmptyB
+    Result := ''
   else
     Result := DupBufB(Pointer(S)^, L, Count);
 end;
@@ -7893,7 +7894,7 @@ function DupCharA(const Ch: AnsiChar; const Count: Integer): AnsiString;
 begin
   if Count <= 0 then
     begin
-      Result := StrEmptyA;
+      Result := '';
       exit;
     end;
   SetLength(Result, Count);
@@ -7905,7 +7906,7 @@ function DupCharB(const Ch: AnsiChar; const Count: Integer): RawByteString;
 begin
   if Count <= 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   SetLength(Result, Count);
@@ -8023,7 +8024,7 @@ begin
   if Len = 0 then
     begin
       if Cut then
-        Result := StrEmptyA
+        Result := ''
       else
         Result := S;
       exit;
@@ -8066,7 +8067,7 @@ begin
   if Len = 0 then
     begin
       if Cut then
-        Result := StrEmptyB
+        Result := ''
       else
         Result := S;
       exit;
@@ -8274,7 +8275,7 @@ begin
   if Len = 0 then
     begin
       if Cut then
-        Result := StrEmptyA
+        Result := ''
       else
         Result := S;
       exit;
@@ -8316,7 +8317,7 @@ begin
   if Len = 0 then
     begin
       if Cut then
-        Result := StrEmptyB
+        Result := ''
       else
         Result := S;
       exit;

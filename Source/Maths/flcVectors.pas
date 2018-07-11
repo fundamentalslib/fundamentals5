@@ -66,7 +66,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcFloats,
   flcMaths,
   flcDataStructs;
@@ -271,7 +271,9 @@ implementation
 
 uses
   { System }
-  Math;
+  Math,
+  { Fundamentals }
+  flcUtils;
 
 
 

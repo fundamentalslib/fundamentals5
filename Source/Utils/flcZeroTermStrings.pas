@@ -62,7 +62,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -258,6 +258,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcUtils,
   flcASCII,
   flcCharSet,
   flcUnicodeChar;

@@ -189,6 +189,7 @@ uses
   SysUtils,
 
   { Fundamentals }
+  flcStdTypes,
   flcUtils;
 
 

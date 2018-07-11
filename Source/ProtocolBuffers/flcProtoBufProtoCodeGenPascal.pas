@@ -53,6 +53,7 @@ interface
 
 uses
   { Fundamentals }
+  flcStdTypes,
   flcUtils,
   flcDynArrays,
   flcStrings,

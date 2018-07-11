@@ -61,7 +61,7 @@ unit flcASCII;
 interface
 
 uses
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -335,6 +335,10 @@ procedure Test;
 
 
 implementation
+
+uses
+  { Fundamentals }
+  flcUtils;
 
 
 
@@ -890,7 +894,7 @@ end;
 procedure AsciiConvertUpperA(var S: AnsiString);
 var F : Integer;
 begin
-  for F := StrBaseA to Length(S) - (1 - StrBaseA) do
+  for F := 1 to Length(S) do
     if S[F] in [AsciiLowerA..AsciiLowerZ] then
       S[F] := AnsiChar(Ord(S[F]) - AsciiCaseDiff);
 end;
@@ -900,7 +904,7 @@ procedure AsciiConvertUpperB(var S: RawByteString);
 var F : Integer;
     B : Byte;
 begin
-  for F := StrBaseB to Length(S) - (1 - StrBaseB) do
+  for F := 1 to Length(S) do
     begin
       B := Ord(S[F]);
       if (B >= Ord(AsciiLowerA)) and (B <= Ord(AsciiLowerZ)) then
@@ -912,7 +916,7 @@ procedure AsciiConvertUpperW(var S: WideString);
 var F : Integer;
     C : WideChar;
 begin
-  for F := StrBaseW to Length(S) - (1 - StrBaseW) do
+  for F := 1 to Length(S) do
     begin
       C := S[F];
       if Ord(C) <= $FF then
@@ -950,7 +954,7 @@ begin
 end;
 
 {$IFDEF ASM386_DELPHI}
-procedure AsciiConvertLowerA(var S: AsciiString);
+procedure AsciiConvertLowerA(var S: AnsiString);
 asm
       OR      EAX, EAX
       JZ      @Exit
@@ -997,7 +1001,7 @@ end;
 procedure AsciiConvertLowerA(var S: AnsiString);
 var F : Integer;
 begin
-  for F := StrBaseA to Length(S) - (1 - StrBaseA) do
+  for F := 1 to Length(S) do
     if S[F] in [AsciiUpperA..AsciiUpperZ] then
       S[F] := AnsiChar(Ord(S[F]) + AsciiCaseDiff);
 end;
@@ -1006,7 +1010,7 @@ end;
 procedure AsciiConvertLowerB(var S: RawByteString);
 var F : Integer;
 begin
-  for F := StrBaseB to Length(S) - (1 - StrBaseB) do
+  for F := 1 to Length(S) do
     if S[F] in [AsciiUpperA..AsciiUpperZ] then
       S[F] := AnsiChar(Ord(S[F]) + AsciiCaseDiff);
 end;
@@ -1015,7 +1019,7 @@ procedure AsciiConvertLowerW(var S: WideString);
 var F : Integer;
     C : WideChar;
 begin
-  for F := StrBaseW to Length(S) - (1 - StrBaseW) do
+  for F := 1 to Length(S) do
     begin
       C := S[F];
       if Ord(C) <= $FF then
@@ -1115,33 +1119,33 @@ end;
 procedure AsciiConvertFirstUpA(var S: AnsiString);
 var C : AnsiChar;
 begin
-  if S <> StrEmptyA then
+  if S <> '' then
     begin
-      C := S[StrBaseA];
+      C := S[1];
       if C in [AsciiLowerA..AsciiLowerZ] then
-        S[StrBaseA] := AsciiUpCaseA(C);
+        S[1] := AsciiUpCaseA(C);
     end;
 end;
 
 procedure AsciiConvertFirstUpB(var S: RawByteString);
 var C : AnsiChar;
 begin
-  if S <> StrEmptyA then
+  if S <> '' then
     begin
-      C := S[StrBaseB];
+      C := S[1];
       if C in [AsciiLowerA..AsciiLowerZ] then
-        S[StrBaseB] := AsciiUpCaseA(C);
+        S[1] := AsciiUpCaseA(C);
     end;
 end;
 
 procedure AsciiConvertFirstUpW(var S: WideString);
 var C : WideChar;
 begin
-  if S <> StrEmptyW then
+  if S <> '' then
     begin
-      C := S[StrBaseW];
+      C := S[1];
       if (Ord(C) >= Ord(AsciiLowerA)) and (Ord(C) <= Ord(AsciiLowerZ)) then
-        S[StrBaseW] := AsciiUpCaseW(C);
+        S[1] := AsciiUpCaseW(C);
     end;
 end;
 
@@ -1210,7 +1214,7 @@ begin
   Assert(not IsAsciiStringW(W), 'IsUSASCIIWideString');
   W := WideChar($2262);
   Assert(not IsAsciiStringW(W), 'IsUSASCIIWideString');
-  Assert(IsAsciiStringW(StrEmptyW), 'IsUSASCIIWideString');
+  Assert(IsAsciiStringW(''), 'IsUSASCIIWideString');
 
   Assert(IsAsciiCharA(AnsiChar(32)));
   Assert(IsAsciiCharW(#32));

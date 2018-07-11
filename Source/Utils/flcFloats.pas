@@ -35,7 +35,7 @@
 { Revision history:                                                            }
 {                                                                              }
 {   2003/03/14  3.01  Added FloatZero, FloatsEqual and FloatsCompare.          }
-{   2017/10/07  5.02  Move to flcFloats unit from flcUtils.                    }
+{   2018/07/11  5.02  Move to flcFloats unit from flcUtils.                    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -61,6 +61,7 @@ unit flcFloats;
 interface
 
 uses
+  flcStdTypes,
   flcUtils;
 
 

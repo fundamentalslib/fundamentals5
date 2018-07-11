@@ -62,7 +62,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -642,7 +642,7 @@ end;
 
 {$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
-function StrToCharSet(const S: AnsiString): CharSet; // Andrew N. Driazgov
+function StrToCharSetA(const S: AnsiString): CharSet; // Andrew N. Driazgov
 asm
       XOR     ECX, ECX
       MOV     [EDX], ECX

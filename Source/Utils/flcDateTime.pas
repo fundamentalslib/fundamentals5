@@ -535,6 +535,7 @@ uses
   {$ENDIF}
 
   { Fundamentals }
+  flcStdTypes,
   {$IFDEF DEBUG}{$IFDEF SELFTEST}
   flcTimers,
   {$ENDIF}{$ENDIF}

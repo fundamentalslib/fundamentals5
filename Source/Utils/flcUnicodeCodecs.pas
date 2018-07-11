@@ -1323,7 +1323,8 @@ uses
   Windows,
   {$ENDIF}
   { Fundamentals }
-  flcUTF;
+  flcUTF,
+  flcUnicodeChar;
 
 
 

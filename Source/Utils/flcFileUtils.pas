@@ -697,6 +697,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcStdTypes,
   flcBits32,
   flcDynArrays,
   flcStrings

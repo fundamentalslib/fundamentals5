@@ -631,7 +631,7 @@ begin
   L := Length(S);
   if L = 0 then
     begin
-      Result := StrEmptyW;
+      Result := '';
       exit;
     end;
   if IsAsciiStringA(S) then // optimize for US-ASCII strings
@@ -705,7 +705,7 @@ begin
   L := Length(S);
   if L = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   if IsAsciiStringA(S) then // optimize for US-ASCII strings
@@ -750,7 +750,7 @@ var P     : PWideChar;
 begin
   if Len = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   N := WideBufToUTF8Size(Buf, Len);
@@ -784,7 +784,7 @@ begin
   L := Length(S);
   if L = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   N := RawByteBufToUTF8Size(P, L);
@@ -865,7 +865,7 @@ begin
   L := Length(S);
   if L = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   // Calculate size

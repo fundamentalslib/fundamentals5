@@ -64,7 +64,7 @@ unit flcBase64;
 interface
 
 uses
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -102,6 +102,8 @@ function  XXDecode(const S: RawByteString): RawByteString;
 
 implementation
 
+uses
+  flcUtils;
 
 
 
@@ -193,14 +195,14 @@ begin
   {$IFOPT R+}
   if Length(Alphabet) <> 64 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   {$ENDIF}
   L := Length(S);
   if L = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   M := L mod 3;
@@ -269,7 +271,7 @@ begin
   {$IFOPT R+}
   if Length(Alphabet) <> 64 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   {$ENDIF}
@@ -281,7 +283,7 @@ begin
   M := L - P;
   if M = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   SetLength(Result, (M * 3) div 4);
@@ -332,7 +334,7 @@ begin
   {$IFOPT R+}
   if Length(Alphabet) <> 64 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   {$ENDIF}
@@ -344,7 +346,7 @@ begin
   M := L - P;
   if M = 0 then
     begin
-      Result := StrEmptyB;
+      Result := '';
       exit;
     end;
   SetLength(Result, (M * 3) div 4);

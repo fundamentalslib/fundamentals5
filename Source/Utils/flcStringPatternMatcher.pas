@@ -65,7 +65,7 @@ unit flcStringPatternMatcher;
 interface
 
 uses
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -180,6 +180,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcUtils,
   flcASCII,
   flcStrings;
 

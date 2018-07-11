@@ -65,7 +65,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcStrings,
   flcStreams,
   flcUnicodeCodecs;
@@ -216,6 +216,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcUtils,
   flcUTF,
   flcZeroTermStrings;
 
