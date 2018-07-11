@@ -186,7 +186,11 @@ type
 
   UInt8     = Byte;
   UInt16    = Word;
+  {$IFDEF SupportFixedUInt}
+  UInt32    = FixedUInt;
+  {$ELSE}
   UInt32    = LongWord;
+  {$ENDIF}
   {$IFNDEF SupportUInt64}
   UInt64    = type Int64;
   {$ENDIF}

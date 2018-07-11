@@ -1,12 +1,11 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2016/01/29                                               }
+{   File updated:     2018/07/11                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   Home page:        http://fundementals.sourceforge.net                      }
-{   Copyright:        Copyright (c) 1998-2016, David J Butler                  }
-{                     All rights reserved.                                     }
+{   Github:           https://github.com/fundamentalslib                       }
+{   E-mail:           fundamentals.library at gmail.com                        }
 {                                                                              }
 { Conditionals defined elsewhere:                                              }
 {                                                                              }
@@ -43,6 +42,8 @@
 {     DELPHIXE7       - Delphi XE7.                                            }
 {     DELPHIXE8       - Delphi XE8.                                            }
 {     DELPHI10        - Delphi 10.                                             }
+{     DELPHI10_1      - Delphi 10.1.                                           }
+{     DELPHI10_2      - Delphi 10.2.                                           }
 {                                                                              }
 {     DELPHI2_UP      - Delphi 2 or later.                                     }
 {     DELPHI3_UP      - Delphi 3 or later.                                     }
@@ -65,6 +66,8 @@
 {     DELPHIXE7_UP    - Delphi XE7 or later.                                   }
 {     DELPHIXE8_UP    - Delphi XE8 or later.                                   }
 {     DELPHI10_UP     - Delphi 10 or later.                                    }
+{     DELPHI10_1_UP   - Delphi 10.1 or later.                                  }
+{     DELPHI10_2_UP   - Delphi 10.2 or later.                                  }
 {                                                                              }
 {     DELPHI3_DOWN    - Delphi 3 or earlier.                                   }
 {     DELPHI4_DOWN    - Delphi 4 or earlier.                                   }
@@ -101,6 +104,8 @@
 {   SupportUInt64              - Compiler supports UInt64 type.                }
 {   SupportNativeInt           - Compiler supports NativeInt type.             }
 {   SupportNativeUInt          - Compiler supports NativeUInt type.            }
+{   SupportFixedInt            - Compiler supports FixedInt type.              }
+{   SupportFixedUInt           - Compiler supports FixedUInt type.             }
 {   SupportAnsiChar            - Compiler supports AnsiChar type.              }
 {   SupportAnsiString          - Compiler supports AnsiString type.            }
 {   SupportWideChar            - Compiler supports WideChar type.              }
@@ -141,8 +146,9 @@
 {     OS_LINUX        - Linux operating system.                                }
 {     OS_MACOSX       - MacOSX operating system.                               }
 {     OS_SOLARIS      - Sun Solaris operating system.                          }
-{   OS_IOS            - Apple iOS                                              }
-{   OS_ANDROID        - Android operating system.                              }
+{   OS_MOBILE         - Mobile operating system.                               }
+{     OS_IOS          - Apple iOS operating system.                            }
+{     OS_ANDROID      - Android operating system.                              }
 {   OS_MSWIN          - MS Windows type operating system.                      }
 {     OS_WIN16        - Win16 operating system.                                }
 {     OS_WIN32        - Win32 operating system.                                }
@@ -672,7 +678,7 @@
 
 
 {                                                                              }
-{ Delphi 10                                                                    }
+{ Delphi 10 Seattle                                                            }
 {                                                                              }
 {$IFDEF VER300}
   {$DEFINE DELPHI}
@@ -703,18 +709,83 @@
 
 
 {                                                                              }
-{ Future Delphi versions                                                       }
+{ Delphi 10.1 Berlin                                                           }
 {                                                                              }
 {$IFDEF VER310}
-  {$DEFINE DELPHI_Future}
+  {$DEFINE DELPHI}
+  {$DEFINE DELPHI10}
+  {$DEFINE DELPHI2_UP}
+  {$DEFINE DELPHI3_UP}
+  {$DEFINE DELPHI4_UP}
+  {$DEFINE DELPHI5_UP}
+  {$DEFINE DELPHI6_UP}
+  {$DEFINE DELPHI7_UP}
+  {$DEFINE DELPHI8_UP}
+  {$DEFINE DELPHI2005_UP}
+  {$DEFINE DELPHI2006_UP}
+  {$DEFINE DELPHI2007_UP}
+  {$DEFINE DELPHI2009_UP}
+  {$DEFINE DELPHI2010_UP}
+  {$DEFINE DELPHIXE_UP}
+  {$DEFINE DELPHIXE2_UP}
+  {$DEFINE DELPHIXE3_UP}
+  {$DEFINE DELPHIXE4_UP}
+  {$DEFINE DELPHIXE5_UP}
+  {$DEFINE DELPHIXE6_UP}
+  {$DEFINE DELPHIXE7_UP}
+  {$DEFINE DELPHIXE8_UP}
+  {$DEFINE DELPHI10_UP}
+  {$DEFINE DELPHI10_1_UP}
 {$ENDIF}
+
+
+
+{                                                                              }
+{ Delphi 10.2 Tokyo                                                            }
+{                                                                              }
 {$IFDEF VER320}
-  {$DEFINE DELPHI_Future}
+  {$DEFINE DELPHI}
+  {$DEFINE DELPHI10}
+  {$DEFINE DELPHI2_UP}
+  {$DEFINE DELPHI3_UP}
+  {$DEFINE DELPHI4_UP}
+  {$DEFINE DELPHI5_UP}
+  {$DEFINE DELPHI6_UP}
+  {$DEFINE DELPHI7_UP}
+  {$DEFINE DELPHI8_UP}
+  {$DEFINE DELPHI2005_UP}
+  {$DEFINE DELPHI2006_UP}
+  {$DEFINE DELPHI2007_UP}
+  {$DEFINE DELPHI2009_UP}
+  {$DEFINE DELPHI2010_UP}
+  {$DEFINE DELPHIXE_UP}
+  {$DEFINE DELPHIXE2_UP}
+  {$DEFINE DELPHIXE3_UP}
+  {$DEFINE DELPHIXE4_UP}
+  {$DEFINE DELPHIXE5_UP}
+  {$DEFINE DELPHIXE6_UP}
+  {$DEFINE DELPHIXE7_UP}
+  {$DEFINE DELPHIXE8_UP}
+  {$DEFINE DELPHI10_UP}
+  {$DEFINE DELPHI10_1_UP}
+  {$DEFINE DELPHI10_2_UP}
 {$ENDIF}
+
+
+
+{                                                                              }
+{ Future Delphi versions                                                       }
+{                                                                              }
 {$IFDEF VER330}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
 {$IFDEF VER340}
+  {$DEFINE DELPHI_Future}
+{$ENDIF}
+{$IFDEF VER350}
+  {$DEFINE DELPHI_Future}
+{$ENDIF}
+{$IFDEF VER360}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
 
@@ -741,6 +812,8 @@
   {$DEFINE DELPHIXE7_UP}
   {$DEFINE DELPHIXE8_UP}
   {$DEFINE DELPHI10_UP}
+  {$DEFINE DELPHI10_1_UP}
+  {$DEFINE DELPHI10_2_UP}
 {$ENDIF}
 
 
@@ -821,6 +894,7 @@
     {$IFDEF DELPHIXE4_UP}
       {$IFDEF IOS}
         {$DEFINE OS_IOS}
+        {$DEFINE OS_MOBILE}
       {$ENDIF}
       {$IFDEF CPUARM}
         {$DEFINE CPU_ARM}
@@ -830,6 +904,7 @@
     {$IFDEF DELPHIXE5_UP}
       {$IFDEF ANDROID}
         {$DEFINE OS_ANDROID}
+        {$DEFINE OS_MOBILE}
       {$ENDIF}
     {$ENDIF}
   {$ENDIF}
@@ -842,6 +917,7 @@
 {                                                                              }
 {$IFDEF DELPHI}
   {$DEFINE SupportShortString}
+  {$DEFINE SetSizeAlignIsByte}
 {$ENDIF}
 
 {$IFDEF DELPHI2_UP}
@@ -912,15 +988,12 @@
   {$DEFINE SupportStringRefCount}
 {$ENDIF}
 
-{$IFDEF DELPHI}
-  {$IFDEF DELPHI2009_UP}
-    {$DEFINE CharIsWide}
-    {$DEFINE StringIsUnicode}
-  {$ELSE}
-    {$DEFINE CharIsAnsi}
-    {$DEFINE StringIsAnsi}
-  {$ENDIF}
-  {$DEFINE SetSizeAlignIsByte}
+{$IFDEF DELPHI2009_UP}
+  {$DEFINE CharIsWide}
+  {$DEFINE StringIsUnicode}
+{$ELSE}
+  {$DEFINE CharIsAnsi}
+  {$DEFINE StringIsAnsi}
 {$ENDIF}
 
 {$IFDEF DELPHIXE2_UP}
@@ -931,7 +1004,12 @@
 
 {$IFDEF DELPHIXE4_UP}
   {$IFDEF IOS}
-    {$ZEROBASEDSTRINGS OFF}
+    {$UNDEF SupportAnsiChar}
+    {$UNDEF SupportAnsiString}
+    {$UNDEF SupportRawByteString}
+    {$UNDEF SupportUTF8String}
+    {$UNDEF SupportWideString}
+    {$UNDEF SupportShortString}
   {$ENDIF}
   {$IFDEF ANDROID}
     {$UNDEF SupportAnsiChar}
@@ -940,6 +1018,33 @@
     {$UNDEF SupportUTF8String}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE8_UP}
+  {$DEFINE SupportFixedInt}
+  {$DEFINE SupportFixedUInt}
+  {$IFDEF LINUX}
+    {$UNDEF SupportAnsiChar}
+    {$UNDEF SupportAnsiString}
+    {$UNDEF SupportRawByteString}
+    {$UNDEF SupportUTF8String}
+    {$UNDEF SupportWideString}
+    {$UNDEF SupportShortString}
+  {$ENDIF}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Delphi: Switches                                                             }
+{                                                                              }
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF IOS}
+    {$ZEROBASEDSTRINGS OFF}
+  {$ENDIF}
+  {$IFDEF ANDROID}
+    {$ZEROBASEDSTRINGS OFF}
   {$ENDIF}
 {$ENDIF}
 
