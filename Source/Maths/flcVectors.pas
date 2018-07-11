@@ -67,6 +67,7 @@ uses
 
   { Fundamentals }
   flcUtils,
+  flcFloats,
   flcMaths,
   flcDataStructs;
 

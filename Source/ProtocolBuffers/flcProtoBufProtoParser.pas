@@ -236,7 +236,8 @@ uses
   Classes,
 
   { Fundamentals }
-  flcStrings;
+  flcStrings,
+  flcFloats;
 
 
 

@@ -86,11 +86,15 @@ type
     procedure SetDenominator(const Denominator: Int64);
 
     function  GetAsString: String;
+    {$IFDEF SupportRawByteString}
     function  GetAsStringB: RawByteString;
+    {$ENDIF}
     function  GetAsStringU: UnicodeString;
 
     procedure SetAsString(const S: String);
+    {$IFDEF SupportRawByteString}
     procedure SetAsStringB(const S: RawByteString);
+    {$ENDIF}
     procedure SetAsStringU(const S: UnicodeString);
 
     function  GetAsFloat: MFloat;
@@ -106,7 +110,9 @@ type
     property  Denominator: Int64 read FN write SetDenominator;
 
     property  AsString: String read GetAsString write SetAsString;
+    {$IFDEF SupportRawByteString}
     property  AsStringB: RawByteString read GetAsStringB write SetAsStringB;
+    {$ENDIF}
     property  AsStringU: UnicodeString read GetAsStringU write SetAsStringU;
 
     property  AsFloat: MFloat read GetAsFloat write SetAsFloat;
@@ -179,7 +185,8 @@ uses
   Math,
 
   { Fundamentals }
-  flcStrings;
+  flcStrings,
+  flcFloats;
 
 
 
@@ -376,10 +383,12 @@ begin
   Result := IntToString(FT) + '/' + IntToString(FN);
 end;
 
+{$IFDEF SupportRawByteString}
 function TRational.GetAsStringB: RawByteString;
 begin
   Result := IntToStringB(FT) + '/' + IntToStringB(FN);
 end;
+{$ENDIF}
 
 function TRational.GetAsStringU: UnicodeString;
 begin
@@ -396,6 +405,7 @@ begin
     Assign(StringToInt(Copy(S, 1, F - 1)), StringToInt(CopyFrom(S, F + 1)));
 end;
 
+{$IFDEF SupportRawByteString}
 procedure TRational.SetAsStringB(const S: RawByteString);
 var F : Integer;
 begin
@@ -405,6 +415,7 @@ begin
   else
     Assign(StringToIntB(Copy(S, 1, F - 1)), StringToIntB(CopyFromB(S, F + 1)));
 end;
+{$ENDIF}
 
 procedure TRational.SetAsStringU(const S: UnicodeString);
 var F : Integer;

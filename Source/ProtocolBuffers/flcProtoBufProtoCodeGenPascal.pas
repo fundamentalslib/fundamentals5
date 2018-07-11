@@ -56,6 +56,7 @@ uses
   flcUtils,
   flcDynArrays,
   flcStrings,
+  flcStringBuilder,
   flcProtoBufProtoNodes;
 
 
@@ -362,7 +363,10 @@ implementation
 uses
   { System }
   SysUtils,
-  Classes;
+  Classes,
+
+  { Fundamentals }
+  flcFloats;
 
 
 

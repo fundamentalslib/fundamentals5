@@ -442,7 +442,8 @@ uses
 
   { Fundamentals }
   flcBits32,
-  flcDynArrays;
+  flcDynArrays,
+  flcFloats;
 
 
 

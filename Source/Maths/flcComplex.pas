@@ -77,11 +77,15 @@ type
     FImag : MFloat;
 
     function  GetAsString: String;
+    {$IFDEF SupportRawByteString}
     function  GetAsStringB: RawByteString;
+    {$ENDIF}
     function  GetAsStringU: UnicodeString;
 
     procedure SetAsString(const S: String);
+    {$IFDEF SupportRawByteString}
     procedure SetAsStringB(const S: RawByteString);
+    {$ENDIF}
     procedure SetAsStringU(const S: UnicodeString);
 
   public
@@ -93,7 +97,9 @@ type
     property  ImaginaryPart: MFloat read FImag write FImag;
 
     property  AsString: String read GetAsString write SetAsString;
+    {$IFDEF SupportRawByteString}
     property  AsStringB: RawByteString read GetAsStringB write SetAsStringB;
+    {$ENDIF}
     property  AsStringU: UnicodeString read GetAsStringU write SetAsStringU;
 
     procedure Assign(const C: TComplex); overload;
@@ -154,7 +160,8 @@ uses
   Math,
 
   { Fundamentals }
-  flcStrings;
+  flcStrings,
+  flcFloats;
 
 
 
@@ -245,6 +252,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportRawByteString}
 function TComplex.GetAsStringB: RawByteString;
 var RZ, IZ : Boolean;
 begin
@@ -259,6 +267,7 @@ begin
         Result := Result + iifB(flcMaths.Sign(FReal) >= 0, '+', '-') + FloatToStringB(Abs(FReal));
     end;
 end;
+{$ENDIF}
 
 function TComplex.GetAsStringU: UnicodeString;
 var RZ, IZ : Boolean;
@@ -287,6 +296,7 @@ begin
   FImag := StringToFloat(CopyRange(S, G + 1, H - 1));
 end;
 
+{$IFDEF SupportRawByteString}
 procedure TComplex.SetAsStringB(const S: RawByteString);
 var F, G, H : Integer;
 begin
@@ -298,6 +308,7 @@ begin
   FReal := StringToFloatB(CopyRangeB(S, F + 1, G - 1));
   FImag := StringToFloatB(CopyRangeB(S, G + 1, H - 1));
 end;
+{$ENDIF}
 
 procedure TComplex.SetAsStringU(const S: UnicodeString);
 var F, G, H : Integer;

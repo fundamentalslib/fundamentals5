@@ -281,7 +281,10 @@ implementation
 
 uses
   { System }
-  Math;
+  Math,
+
+  { Fundamentals }
+  flcFloats;
 
 
 

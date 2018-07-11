@@ -129,7 +129,9 @@ type
     procedure SetItem(const Row, Col: Integer; const Value: MFloat);
 
     function  GetAsString: String; virtual;
+    {$IFDEF SupportRawByteString}
     function  GetAsStringB: RawByteString; virtual;
+    {$ENDIF}
     function  GetAsStringU: UnicodeString; virtual;
 
     procedure AddRows(const I, J: Integer; const Factor: MFloat);
@@ -167,7 +169,9 @@ type
     function  IsIdentity: Boolean;
 
     property  AsString: String read GetAsString;
+    {$IFDEF SupportRawByteString}
     property  AsStringB: RawByteString read GetAsStringB;
+    {$ENDIF}
     property  AsStringU: UnicodeString read GetAsStringU;
     function  Trace: MFloat;
 
@@ -214,7 +218,8 @@ implementation
 
 uses
   { Fundamentals }
-  flcDynArrays;
+  flcDynArrays,
+  flcFloats;
 
 
 
@@ -555,6 +560,7 @@ begin
   Result := Result + ')';
 end;
 
+{$IFDEF SupportRawByteString}
 function TMatrix.GetAsStringB: RawByteString;
 var I, J, R : Integer;
 begin
@@ -575,6 +581,7 @@ begin
     end;
   Result := Result + ')';
 end;
+{$ENDIF}
 
 function TMatrix.GetAsStringU: UnicodeString;
 var I, J, R : Integer;

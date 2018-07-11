@@ -376,7 +376,8 @@ implementation
 
 uses
   { Fundamentals }
-  flcStrings;
+  flcStrings,
+  flcFloats;
 
 
 
