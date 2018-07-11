@@ -492,19 +492,6 @@ type
 
 
 {                                                                              }
-{ AsciiString                                                                  }
-{   AsciiString is an alias for AnsiString where all bytes are from Ascii.     }
-{                                                                              }
-type
-  AsciiChar = AnsiChar;
-  PAsciiChar = ^AsciiChar;
-  AsciiString = AnsiString;
-  AsciiCharSet = set of AsciiChar;
-  AsciiStringArray = array of AsciiString;
-
-
-
-{                                                                              }
 { WideString                                                                   }
 {   WideChar is a 16-bit character.                                            }
 {   WideString is not reference counted.                                       }
