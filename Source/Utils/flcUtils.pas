@@ -633,36 +633,6 @@ function  Int64BoundedLongWord(const Value: Int64): LongWord;                   
 
 
 {                                                                              }
-{ WideChar constants                                                           }
-{                                                                              }
-const
-  WideSingleQuote = WideChar('''');
-  WideDoubleQuote = WideChar('"');
-
-  WideNoBreakSpace       = WideChar(#$00A0);
-  WideLineSeparator      = WideChar(#$2028);
-  WideParagraphSeparator = WideChar(#$2029);
-
-  WideBOM_MSB_First      = WideChar(#$FFFE);
-  WideBOM_LSB_First      = WideChar(#$FEFF);
-
-  WideObjectReplacement  = WideChar(#$FFFC);
-  WideCharReplacement    = WideChar(#$FFFD);
-  WideInvalid            = WideChar(#$FFFF);
-
-  WideCopyrightSign      = WideChar(#$00A9);
-  WideRegisteredSign     = WideChar(#$00AE);
-
-  WideHighSurrogateFirst        = WideChar(#$D800);
-  WideHighSurrogateLast         = WideChar(#$DB7F);
-  WideLowSurrogateFirst         = WideChar(#$DC00);
-  WideLowSurrogateLast          = WideChar(#$DFFF);
-  WidePrivateHighSurrogateFirst = WideChar(#$DB80);
-  WidePrivateHighSurrogateLast  = WideChar(#$DBFF);
-
-
-
-{                                                                              }
 { String construction from buffer                                              }
 {                                                                              }
 {$IFNDEF ManagedCode}
