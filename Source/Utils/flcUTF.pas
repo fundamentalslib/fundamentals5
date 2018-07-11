@@ -166,7 +166,9 @@ implementation
 
 uses
   { System }
-  SysUtils;
+  SysUtils,
+  { Fundamentals }
+  flcASCII;
 
 
 

@@ -747,6 +747,7 @@ uses
   {$ENDIF}
   SyncObjs,
   { Fundamentals }
+  flcASCII,
   flcStrings,
   flcZeroTermStrings;
 

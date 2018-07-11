@@ -549,6 +549,7 @@ uses
   Variants,
 
   { Fundamentals }
+  flcASCII,
   flcUnicodeCodecs,
   flcUTF;
 

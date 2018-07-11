@@ -180,6 +180,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcASCII,
   flcStrings;
 
 

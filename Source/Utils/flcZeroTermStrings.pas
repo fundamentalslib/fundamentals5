@@ -258,6 +258,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcASCII,
   flcCharSet,
   flcUnicodeChar;
 

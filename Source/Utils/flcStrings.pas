@@ -156,7 +156,8 @@ uses
   Borland.Vcl.StrUtils,
   {$ENDIF}
   { Fundamentals }
-  flcUtils;
+  flcUtils,
+  flcASCII;
 
 
 
@@ -14501,15 +14502,6 @@ begin
   Assert(UnicodeUpCase('A') = 'A', 'UnicodeUpCase');
   Assert(UnicodeLowCase('a') = 'a', 'UnicodeUpCase');
   Assert(UnicodeLowCase('A') = 'a', 'UnicodeUpCase');
-
-  { IsAsciiChar                                                                }
-  Assert(IsAsciiCharA(AnsiChar(32)));
-  Assert(IsAsciiCharW(#32));
-  Assert(IsAsciiChar(#32));
-  
-  Assert(not IsAsciiCharA(AnsiChar(128)));
-  Assert(not IsAsciiCharW(#128));
-  Assert(not IsAsciiChar(#128));
 
   { CharMatch                                                                  }
   Assert(CharMatchA(AnsiChar('A'), AnsiChar('a'), False));

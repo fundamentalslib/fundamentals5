@@ -250,6 +250,7 @@ procedure Test;
 implementation
 
 uses
+  flcASCII,
   flcUtils,
   flcStrings;
 

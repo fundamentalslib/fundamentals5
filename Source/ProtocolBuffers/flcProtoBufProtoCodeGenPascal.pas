@@ -366,7 +366,8 @@ uses
   Classes,
 
   { Fundamentals }
-  flcFloats;
+  flcFloats,
+  flcASCII;
 
 
 
