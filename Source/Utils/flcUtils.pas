@@ -296,7 +296,7 @@ const
 
 const
   BitsPerByte       = 8;
-  BitsPerLongWord   = 32;
+  BitsPerLongWord   = SizeOf(LongWord) * 8;
   NativeWordSize    = SizeOf(NativeInt);
   BitsPerNativeWord = NativeWordSize * 8;
 
