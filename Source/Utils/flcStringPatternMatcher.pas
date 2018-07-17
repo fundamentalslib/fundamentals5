@@ -102,7 +102,9 @@ function  StrZMatchPatternW(M, S: PWideChar; const G: TMatchPatternGreed = mpgLa
 function  StrEqualPatternA(const M, S: AnsiString; const G: TMatchPatternGreed = mpgLazy): Boolean;
 {$ENDIF}
 function  StrEqualPatternW(const M, S: WideString; const G: TMatchPatternGreed = mpgLazy): Boolean;
+{$IFDEF SupportUnicodeString}
 function  StrEqualPatternU(const M, S: UnicodeString; const G: TMatchPatternGreed = mpgLazy): Boolean;
+{$ENDIF}
 function  StrEqualPattern(const M, S: String; const G: TMatchPatternGreed = mpgLazy): Boolean;
 
 {$IFDEF SupportAnsiString}
@@ -111,8 +113,10 @@ function  StrPosPatternA(const F, S: AnsiString; var Len: Integer;
 {$ENDIF}
 function  StrPosPatternW(const F, S: WideString; var Len: Integer;
           const StartIndex: Integer = 1; const G: TMatchPatternGreed = mpgLazy): Integer;
+{$IFDEF SupportUnicodeString}
 function  StrPosPatternU(const F, S: UnicodeString; var Len: Integer;
           const StartIndex: Integer = 1; const G: TMatchPatternGreed = mpgLazy): Integer;
+{$ENDIF}
 
 
 
@@ -160,7 +164,7 @@ type
 
 {$IFDEF SupportAnsiString}
 function  MatchQuantSeqB(var MatchPos: Integer;
-          const MatchSeq: array of CharSet; const Quant: array of TMatchQuantifier;
+          const MatchSeq: array of ByteCharSet; const Quant: array of TMatchQuantifier;
           const S: RawByteString; const MatchOptions: TMatchQuantSeqOptions = [];
           const StartIndex: Integer = 1; const StopIndex: Integer = -1): Boolean;
 {$ENDIF}
@@ -823,10 +827,12 @@ begin
   Result := StrZMatchPatternW(PWideChar(M), PWideChar(S), G) = Length(S);
 end;
 
+{$IFDEF SupportUnicodeString}
 function StrEqualPatternU(const M, S: UnicodeString; const G: TMatchPatternGreed): Boolean;
 begin
   Result := StrZMatchPatternW(PWideChar(M), PWideChar(S), G) = Length(S);
 end;
+{$ENDIF}
 
 function StrEqualPattern(const M, S: String; const G: TMatchPatternGreed): Boolean;
 begin
@@ -883,6 +889,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportUnicodeString}
 function StrPosPatternU(const F, S: UnicodeString; var Len: Integer; const StartIndex: Integer; const G: TMatchPatternGreed): Integer;
 var P : PWideChar;
     M : PWideChar;
@@ -904,6 +911,7 @@ begin
   Len := 0;
   Result := 0;
 end;
+{$ENDIF}
 
 
 
@@ -983,7 +991,7 @@ end;
 { Abbreviated regular expression matcher                                       }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function MatchQuantSeqB(var MatchPos: Integer; const MatchSeq: array of CharSet;
+function MatchQuantSeqB(var MatchPos: Integer; const MatchSeq: array of ByteCharSet;
     const Quant: array of TMatchQuantifier; const S: RawByteString;
     const MatchOptions: TMatchQuantSeqOptions;
     const StartIndex: Integer; const StopIndex: Integer): Boolean;
@@ -1302,12 +1310,14 @@ begin
   Assert(StrPosPatternW('a*b', 'xaccbd', I, 1, mpgGreedy) = 2);   Assert(I = 4);
   Assert(StrPosPatternW('a*b', 'xa', I, 1, mpgGreedy) = 0);       Assert(I = 0);
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrPosPatternU('', '', I, 1, mpgGreedy) = 0);            Assert(I = 0);
   Assert(StrPosPatternU('', 'a', I, 1, mpgGreedy) = 1);           Assert(I = 0);
   Assert(StrPosPatternU('a', '', I, 1, mpgGreedy) = 0);           Assert(I = 0);
   Assert(StrPosPatternU('a*b', 'xacb', I, 1, mpgGreedy) = 2);     Assert(I = 3);
   Assert(StrPosPatternU('a*b', 'xaccbd', I, 1, mpgGreedy) = 2);   Assert(I = 4);
   Assert(StrPosPatternU('a*b', 'xa', I, 1, mpgGreedy) = 0);       Assert(I = 0);
+  {$ENDIF}
 end;
 
 procedure Test_MatchQuantSeq;

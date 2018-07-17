@@ -39,7 +39,8 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.02  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.02  2018/07/11                       }
+{   Delphi 10.2 Win64                   5.02  2018/07/11                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -68,7 +69,11 @@ interface
 type
   Int8      = ShortInt;
   Int16     = SmallInt;
+  {$IFDEF SupportFixedInt}
+  Int32     = FixedInt;
+  {$ELSE}
   Int32     = LongInt;
+  {$ENDIF}
 
   UInt8     = Byte;
   UInt16    = Word;
@@ -90,7 +95,7 @@ type
   {$IFDEF CPU_X86_64}
   NativeInt   = type Int64;
   {$ELSE}
-  NativeInt   = type Integer;
+  NativeInt   = type Int32;
   {$ENDIF}
   PNativeInt  = ^NativeInt;
   {$ENDIF}
@@ -105,7 +110,7 @@ type
   {$IFDEF CPU_X86_64}
   NativeUInt  = type Word64;
   {$ELSE}
-  NativeUInt  = type Cardinal;
+  NativeUInt  = type Word32;
   {$ENDIF}
   PNativeUInt = ^NativeUInt;
   {$ENDIF}
@@ -141,19 +146,19 @@ type
   PUInt64   = ^UInt64;
 
   {$IFNDEF ManagedCode}
-  SmallIntRec = packed record
+  Int16Rec = packed record
     case Integer of
       0 : (Lo, Hi : Byte);
       1 : (Bytes  : array[0..1] of Byte);
   end;
 
-  LongIntRec = packed record
+  Int32Rec = packed record
     case Integer of
       0 : (Lo, Hi : Word);
       1 : (Words  : array[0..1] of Word);
       2 : (Bytes  : array[0..3] of Byte);
   end;
-  PLongIntRec = ^LongIntRec;
+  PInt32Rec = ^Int32Rec;
   {$ENDIF}
 
 const
@@ -161,6 +166,10 @@ const
   MaxByte       = High(Byte);
   MinWord       = Low(Word);
   MaxWord       = High(Word);
+  MinWord16     = Low(Word16);
+  MaxWord16     = High(Word16);
+  MinWord32     = Low(Word32);
+  MaxWord32     = High(Word32);
   MinShortInt   = Low(ShortInt);
   MaxShortInt   = High(ShortInt);
   MinSmallInt   = Low(SmallInt);
@@ -169,6 +178,10 @@ const
   MaxLongWord   = LongWord(High(LongWord));
   MinLongInt    = LongInt(Low(LongInt));
   MaxLongInt    = LongInt(High(LongInt));
+  MinInt16      = Low(Int16);
+  MaxInt16      = High(Int16);
+  MinInt32      = Low(Int32);
+  MaxInt32      = High(Int32);
   MinInt64      = Int64(Low(Int64));
   MaxInt64      = Int64(High(Int64));
   MinInteger    = Integer(Low(Integer));
@@ -282,11 +295,9 @@ type
   PCurrency = ^Currency;
 {$ENDIF}
 
-{$IFNDEF CLR}
 const
   MinCurrency : Currency = -922337203685477.5807;
   MaxCurrency : Currency = 922337203685477.5807;
-{$ENDIF}
 {$ENDIF}
 
 
@@ -302,22 +313,38 @@ type
 
 
 {                                                                              }
-{ String types                                                                 }
+{ ByteChar                                                                     }
+{   ByteChar is an one byte character.                                         }
 {                                                                              }
+{$IFDEF SupportAnsiChar}
+type
+  ByteChar = AnsiChar;
+{$ELSE}
+{$IFDEF SupportUTF8Char}
+type
+  ByteChar = UTF8Char;
+{$ELSE}
+type
+  ByteChar = Byte;
+  {$DEFINE ByteCharIsOrd}
+{$ENDIF}
+{$ENDIF}
+type
+  PByteChar = ^ByteChar;
 
 
 
 {                                                                              }
-{ AnsiString                                                                   }
-{   AnsiChar is a byte size character.                                         }
-{   AnsiString is a reference counted, code page aware, byte string.           }
+{ AnsiChar                                                                     }
 {                                                                              }
 {$IFNDEF SupportAnsiChar}
 type
-  AnsiChar = Byte;
-  PAnsiChar = ^AnsiChar;
-{$DEFINE AnsiCharIsOrd}
+  AnsiChar = ByteChar;
+{$IFDEF ByteCharIsOrd}
+  {$DEFINE AnsiCharIsOrd}
 {$ENDIF}
+{$ENDIF}
+
 
 
 
@@ -328,14 +355,20 @@ type
 {   Under Delphi 2009 RawByteString is defined as "type AnsiString($FFFF)".    }
 {                                                                              }
 type
-  RawByteChar = AnsiChar;
+  RawByteChar = ByteChar;
   PRawByteChar = ^RawByteChar;
+
+  {$IFNDEF SupportRawByteString}
+  {$IFDEF SupportAnsiString}
+  RawByteString = AnsiString;
+  {$ENDIF}
+  {$ENDIF}
+
   {$IFDEF SupportRawByteString}
   {$IFDEF FREEPASCAL}
   PRawByteString = ^RawByteString;
   {$ENDIF}
   {$ENDIF}
-  RawByteCharSet = set of RawByteChar;
 
 
 
@@ -345,9 +378,9 @@ type
 {   For Ascii values, a UTF8String is the same as a AsciiString.               }
 {   Under Delphi 2009 UTF8String is defined as "type AnsiString($FDE9)"        }
 {                                                                              }
-{$IFNDEF SupportUTF8String}
+{$IFNDEF SupportUTF8Char}
 type
-  UTF8Char = AnsiChar;
+  UTF8Char = ByteChar;
   PUTF8Char = ^UTF8Char;
 {$ENDIF}
 
@@ -398,11 +431,10 @@ type
 { Sets                                                                         }
 {                                                                              }
 type
-  CharSet = set of AnsiChar;
-  AnsiCharSet = CharSet;
   ByteSet = set of Byte;
+  ByteCharSet = set of ByteChar;
 
-  PCharSet = ^CharSet;
+  PCharSet = ^ByteCharSet;
   PByteSet = ^ByteSet;
 
 
@@ -413,6 +445,7 @@ type
 type
   ByteArray = array of Byte;
   WordArray = array of Word;
+  Word32Array = array of Word32;
   LongWordArray = array of LongWord;
   CardinalArray = LongWordArray;
   NativeUIntArray = array of NativeUInt;
@@ -421,23 +454,32 @@ type
   LongIntArray = array of LongInt;
   IntegerArray = LongIntArray;
   NativeIntArray = array of NativeInt;
+  Int32Array = array of Int32;
   Int64Array = array of Int64;
   SingleArray = array of Single;
   DoubleArray = array of Double;
   ExtendedArray = array of Extended;
   CurrencyArray = array of Currency;
   BooleanArray = array of Boolean;
+  {$IFDEF SupportAnsiString}
   AnsiStringArray = array of AnsiString;
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
   RawByteStringArray = array of RawByteString;
+  {$ENDIF}
+  {$IFDEF SupportWideString}
   WideStringArray = array of WideString;
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   UnicodeStringArray = array of UnicodeString;
+  {$ENDIF}
   StringArray = array of String;
   {$IFNDEF ManagedCode}
   PointerArray = array of Pointer;
   {$ENDIF}
   ObjectArray = array of TObject;
   InterfaceArray = array of IInterface;
-  CharSetArray = array of CharSet;
+  ByteCharSetArray = array of ByteCharSet;
   ByteSetArray = array of ByteSet;
 
 
@@ -462,6 +504,7 @@ const
   MaxArraySize = $7FFFFFFF; // 2 Gigabytes
   MaxByteArrayElements = MaxArraySize div Sizeof(Byte);
   MaxWordArrayElements = MaxArraySize div Sizeof(Word);
+  MaxWord32ArrayElements = MaxArraySize div Sizeof(Word32);
   MaxLongWordArrayElements = MaxArraySize div Sizeof(LongWord);
   MaxCardinalArrayElements = MaxArraySize div Sizeof(Cardinal);
   MaxNativeUIntArrayElements = MaxArraySize div Sizeof(NativeUInt);
@@ -469,51 +512,67 @@ const
   MaxSmallIntArrayElements = MaxArraySize div Sizeof(SmallInt);
   MaxLongIntArrayElements = MaxArraySize div Sizeof(LongInt);
   MaxIntegerArrayElements = MaxArraySize div Sizeof(Integer);
+  MaxInt32ArrayElements = MaxArraySize div Sizeof(Int32);
   MaxInt64ArrayElements = MaxArraySize div Sizeof(Int64);
   MaxNativeIntArrayElements = MaxArraySize div Sizeof(NativeInt);
   MaxSingleArrayElements = MaxArraySize div Sizeof(Single);
   MaxDoubleArrayElements = MaxArraySize div Sizeof(Double);
   MaxExtendedArrayElements = MaxArraySize div Sizeof(Extended);
   MaxBooleanArrayElements = MaxArraySize div Sizeof(Boolean);
-  {$IFNDEF CLR}
+  {$IFDEF SupportCurrency}
   MaxCurrencyArrayElements = MaxArraySize div Sizeof(Currency);
-  MaxAnsiStringArrayElements = MaxArraySize div Sizeof(AnsiString);
-  MaxRawByteStringArrayElements = MaxArraySize div Sizeof(RawByteString);
-  MaxWideStringArrayElements = MaxArraySize div Sizeof(WideString);
-  MaxUnicodeStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
-  {$IFDEF StringIsUnicode}
-  MaxStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
-  {$ELSE}
-  MaxStringArrayElements = MaxArraySize div Sizeof(AnsiString);
   {$ENDIF}
+  {$IFDEF SupportAnsiString}
+  MaxAnsiStringArrayElements = MaxArraySize div Sizeof(AnsiString);
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
+  MaxRawByteStringArrayElements = MaxArraySize div Sizeof(RawByteString);
+  {$ENDIF}
+  {$IFDEF SupportWideString}
+  MaxWideStringArrayElements = MaxArraySize div Sizeof(WideString);
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
+  MaxUnicodeStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
+  {$ENDIF}
+  MaxStringArrayElements = MaxArraySize div Sizeof(String);
   MaxPointerArrayElements = MaxArraySize div Sizeof(Pointer);
   MaxObjectArrayElements = MaxArraySize div Sizeof(TObject);
   MaxInterfaceArrayElements = MaxArraySize div Sizeof(IInterface);
-  MaxCharSetArrayElements = MaxArraySize div Sizeof(CharSet);
+  MaxCharSetArrayElements = MaxArraySize div Sizeof(ByteCharSet);
   MaxByteSetArrayElements = MaxArraySize div Sizeof(ByteSet);
-  {$ENDIF}
 
 { Static array types                                                           }
 type
   TStaticByteArray = array[0..MaxByteArrayElements - 1] of Byte;
   TStaticWordArray = array[0..MaxWordArrayElements - 1] of Word;
+  TStaticWord32Array = array[0..MaxWord32ArrayElements - 1] of Word32;
   TStaticLongWordArray = array[0..MaxLongWordArrayElements - 1] of LongWord;
   TStaticNativeUIntArray = array[0..MaxNativeUIntArrayElements - 1] of NativeUInt;
   TStaticShortIntArray = array[0..MaxShortIntArrayElements - 1] of ShortInt;
   TStaticSmallIntArray = array[0..MaxSmallIntArrayElements - 1] of SmallInt;
   TStaticLongIntArray = array[0..MaxLongIntArrayElements - 1] of LongInt;
+  TStaticInt32Array = array[0..MaxInt32ArrayElements - 1] of Int32;
   TStaticInt64Array = array[0..MaxInt64ArrayElements - 1] of Int64;
   TStaticNativeIntArray = array[0..MaxNativeIntArrayElements - 1] of NativeInt;
   TStaticSingleArray = array[0..MaxSingleArrayElements - 1] of Single;
   TStaticDoubleArray = array[0..MaxDoubleArrayElements - 1] of Double;
   TStaticExtendedArray = array[0..MaxExtendedArrayElements - 1] of Extended;
   TStaticBooleanArray = array[0..MaxBooleanArrayElements - 1] of Boolean;
-  {$IFNDEF CLR}
+  {$IFDEF SupportCurrency}
   TStaticCurrencyArray = array[0..MaxCurrencyArrayElements - 1] of Currency;
+  {$ENDIF}
+  {$IFDEF SupportAnsiString}
   TStaticAnsiStringArray = array[0..MaxAnsiStringArrayElements - 1] of AnsiString;
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
   TStaticRawByteStringArray = array[0..MaxRawByteStringArrayElements - 1] of RawByteString;
+  {$ENDIF}
+  {$IFDEF SupportWideString}
   TStaticWideStringArray = array[0..MaxWideStringArrayElements - 1] of WideString;
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   TStaticUnicodeStringArray = array[0..MaxUnicodeStringArrayElements - 1] of UnicodeString;
+  {$ENDIF}
   {$IFDEF StringIsUnicode}
   TStaticStringArray = TStaticUnicodeStringArray;
   {$ELSE}
@@ -522,9 +581,8 @@ type
   TStaticPointerArray = array[0..MaxPointerArrayElements - 1] of Pointer;
   TStaticObjectArray = array[0..MaxObjectArrayElements - 1] of TObject;
   TStaticInterfaceArray = array[0..MaxInterfaceArrayElements - 1] of IInterface;
-  TStaticCharSetArray = array[0..MaxCharSetArrayElements - 1] of CharSet;
+  TStaticCharSetArray = array[0..MaxCharSetArrayElements - 1] of ByteCharSet;
   TStaticByteSetArray = array[0..MaxByteSetArrayElements - 1] of ByteSet;
-  {$ENDIF}
   TStaticCardinalArray = TStaticLongWordArray;
   TStaticIntegerArray = TStaticLongIntArray;
 
@@ -532,6 +590,7 @@ type
 type
   PStaticByteArray = ^TStaticByteArray;
   PStaticWordArray = ^TStaticWordArray;
+  PStaticWord32Array = ^TStaticWord32Array;
   PStaticLongWordArray = ^TStaticLongWordArray;
   PStaticCardinalArray = ^TStaticCardinalArray;
   PStaticNativeUIntArray = ^TStaticNativeUIntArray;
@@ -539,25 +598,34 @@ type
   PStaticSmallIntArray = ^TStaticSmallIntArray;
   PStaticLongIntArray = ^TStaticLongIntArray;
   PStaticIntegerArray = ^TStaticIntegerArray;
+  PStaticInt32Array = ^TStaticInt32Array;
   PStaticInt64Array = ^TStaticInt64Array;
   PStaticNativeIntArray = ^TStaticNativeIntArray;
   PStaticSingleArray = ^TStaticSingleArray;
   PStaticDoubleArray = ^TStaticDoubleArray;
   PStaticExtendedArray = ^TStaticExtendedArray;
   PStaticBooleanArray = ^TStaticBooleanArray;
-  {$IFNDEF CLR}
+  {$IFDEF SupportCurrency}
   PStaticCurrencyArray = ^TStaticCurrencyArray;
+  {$ENDIF}
+  {$IFDEF SupportAnsiString}
   PStaticAnsiStringArray = ^TStaticAnsiStringArray;
+  {$ENDIF}
+  {$IFDEF SupportRawByteString}
   PStaticRawByteStringArray = ^TStaticRawByteStringArray;
+  {$ENDIF}
+  {$IFDEF SupportWideString}
   PStaticWideStringArray = ^TStaticWideStringArray;
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   PStaticUnicodeStringArray = ^TStaticUnicodeStringArray;
+  {$ENDIF}
   PStaticStringArray = ^TStaticStringArray;
   PStaticPointerArray = ^TStaticPointerArray;
   PStaticObjectArray = ^TStaticObjectArray;
   PStaticInterfaceArray = ^TStaticInterfaceArray;
   PStaticCharSetArray = ^TStaticCharSetArray;
   PStaticByteSetArray = ^TStaticByteSetArray;
-  {$ENDIF}
 
 
 
@@ -566,3 +634,4 @@ implementation
 
 
 end.
+

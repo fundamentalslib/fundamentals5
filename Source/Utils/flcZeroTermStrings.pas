@@ -70,7 +70,7 @@ uses
 { Zero terminated string pointer                                               }
 {                                                                              }
 type
-  PStrZA = PAnsiChar;
+  PStrZA = PByteChar;
   PStrZW = PWideChar;
   PStrZ = PChar;
 
@@ -79,7 +79,7 @@ type
 {                                                                              }
 { Length                                                                       }
 {                                                                              }
-function  StrZLenA(const S: PAnsiChar): Integer;
+function  StrZLenA(const S: Pointer): Integer;
 function  StrZLenW(const S: PWideChar): Integer;
 function  StrZLen(const S: PChar): Integer;
 
@@ -88,10 +88,16 @@ function  StrZLen(const S: PChar): Integer;
 {                                                                              }
 { Conversion                                                                   }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  StrZPasA(const A: PAnsiChar): AnsiString;
-function  StrZPasB(const A: PAnsiChar): RawByteString;
+{$ENDIF}
+function  StrZPasB(const A: PByteChar): RawByteString;
+{$IFDEF SupportWideString}
 function  StrZPasW(const A: PWideChar): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrZPasU(const A: PWideChar): UnicodeString;
+{$ENDIF}
 function  StrZPas(const A: PChar): String;
 
 
@@ -99,109 +105,159 @@ function  StrZPas(const A: PChar): String;
 {                                                                              }
 { Match                                                                        }
 {                                                                              }
-function  StrZMatchLenA(const P: PAnsiChar; const M: CharSet; const MaxLen: Integer = -1): Integer;
-function  StrZMatchLenW(const P: PWideChar; const M: CharSet; const MaxLen: Integer = -1): Integer; overload;
+function  StrZMatchLenA(const P: PByteChar; const M: ByteCharSet; const MaxLen: Integer = -1): Integer;
+function  StrZMatchLenW(const P: PWideChar; const M: ByteCharSet; const MaxLen: Integer = -1): Integer; overload;
 function  StrZMatchLenW(const P: PWideChar; const M: TWideCharMatchFunction; const MaxLen: Integer = -1): Integer; overload;
 
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrA(const P: PAnsiChar; const M: AnsiString): Boolean;
-function  StrZMatchStrB(const P: PAnsiChar; const M: RawByteString): Boolean;
+{$ENDIF}
+function  StrZMatchStrB(const P: PByteChar; const M: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrZMatchStrW(const P: PWideChar; const M: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrAW(const P: PWideChar; const M: AnsiString): Boolean;
+{$ENDIF}
 function  StrZMatchStrBW(const P: PWideChar; const M: RawByteString): Boolean;
+{$IFDEF SupportUnicodeString}
 function  StrZMatchStrU(const P: PWideChar; const M: UnicodeString): Boolean;
+{$ENDIF}
 function  StrZMatchStr(const P: PChar; const M: String): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrNoAsciiCaseA(const P: PAnsiChar; const M: AnsiString): Boolean;
-function  StrZMatchStrNoAsciiCaseB(const P: PAnsiChar; const M: RawByteString): Boolean;
+{$ENDIF}
+function  StrZMatchStrNoAsciiCaseB(const P: PByteChar; const M: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrZMatchStrNoAsciiCaseW(const P: PWideChar; const M: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrNoAsciiCaseAW(const P: PWideChar; const M: AnsiString): Boolean;
+{$ENDIF}
 function  StrZMatchStrNoAsciiCaseBW(const P: PWideChar; const M: RawByteString): Boolean;
+{$IFDEF SupportUnicodeString}
 function  StrZMatchStrNoAsciiCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
+{$ENDIF}
 function  StrZMatchStrNoAsciiCase(const P: PChar; const M: String): Boolean;
 
+{$IFDEF SupportWideString}
 function  StrZMatchStrNoUnicodeCaseW(const P: PWideChar; const M: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrAsciiA(const P: PAnsiChar; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
-function  StrZMatchStrAsciiB(const P: PAnsiChar; const M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+{$ENDIF}
+function  StrZMatchStrAsciiB(const P: PByteChar; const M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+{$IFDEF SupportWideString}
 function  StrZMatchStrAsciiW(const P: PWideChar; const M: WideString; const AsciiCaseSensitive: Boolean): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZMatchStrAsciiAW(const P: PWideChar; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
+{$ENDIF}
 function  StrZMatchStrAsciiBW(const P: PWideChar; const M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+{$IFDEF SupportUnicodeString}
 function  StrZMatchStrAsciiU(const P: PWideChar; const M: UnicodeString; const AsciiCaseSensitive: Boolean): Boolean;
+{$ENDIF}
 function  StrZMatchStrAscii(const P: PChar; const M: String; const AsciiCaseSensitive: Boolean): Boolean;
 
+{$IFDEF SupportWideString}
 function  StrZMatchStrUnicodeW(const P: PWideChar; const M: WideString; const UnicodeCaseSensitive: Boolean): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrZMatchStrUnicodeU(const P: PWideChar; const M: UnicodeString; const UnicodeCaseSensitive: Boolean): Boolean;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Pos                                                                          }
 {                                                                              }
-function  StrZPosCharA(const F: AnsiChar; const S: PAnsiChar): Integer;
+function  StrZPosCharA(const F: AnsiChar; const S: PByteChar): Integer;
 function  StrZPosCharW(const F: WideChar; const S: PWideChar): Integer;
 function  StrZPosChar(const F: Char; const S: PChar): Integer;
 
-function  StrZPosCharSetA(const F: CharSet; const S: PAnsiChar): Integer;
-function  StrZPosCharSetW(const F: CharSet; const S: PWideChar): Integer; overload;
+function  StrZPosCharSetA(const F: ByteCharSet; const S: PByteChar): Integer;
+function  StrZPosCharSetW(const F: ByteCharSet; const S: PWideChar): Integer; overload;
 function  StrZPosCharSetW(const F: TWideCharMatchFunction; const S: PWideChar): Integer; overload;
-function  StrZPosCharSet(const F: CharSet; const S: PChar): Integer;
+function  StrZPosCharSet(const F: ByteCharSet; const S: PChar): Integer;
 
-function  StrZPosNotCharSetA(const F: CharSet; const S: PAnsiChar): Integer;
-function  StrZPosNotCharSetW(const F: CharSet; const S: PWideChar): Integer; overload;
+function  StrZPosNotCharSetA(const F: ByteCharSet; const S: PByteChar): Integer;
+function  StrZPosNotCharSetW(const F: ByteCharSet; const S: PWideChar): Integer; overload;
 function  StrZPosNotCharSetW(const F: TWideCharMatchFunction; const S: PWideChar): Integer; overload;
-function  StrZPosNotCharSet(const F: CharSet; const S: PChar): Integer;
+function  StrZPosNotCharSet(const F: ByteCharSet; const S: PChar): Integer;
 
+{$IFDEF SupportAnsiString}
 function  StrZPosA(const F: AnsiString; const S: PAnsiChar): Integer;
-function  StrZPosB(const F: RawByteString; const S: PAnsiChar): Integer;
+{$ENDIF}
+function  StrZPosB(const F: RawByteString; const S: PByteChar): Integer;
+{$IFDEF SupportWideString}
 function  StrZPosW(const F: WideString; const S: PWideChar): Integer;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZPosAW(const F: AnsiString; const S: PWideChar): Integer;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Skip                                                                         }
 {                                                                              }
-function  StrZSkipCharA(var P: PAnsiChar; const C: AnsiChar): Boolean; overload;
-function  StrZSkipCharA(var P: PAnsiChar; const C: CharSet): Boolean; overload;
+function  StrZSkipCharA(var P: PByteChar; const C: AnsiChar): Boolean; overload;
+function  StrZSkipCharA(var P: PByteChar; const C: ByteCharSet): Boolean; overload;
 
 function  StrZSkipCharW(var P: PWideChar; const C: WideChar): Boolean; overload;
-function  StrZSkipCharW(var P: PWideChar; const C: CharSet): Boolean; overload;
+function  StrZSkipCharW(var P: PWideChar; const C: ByteCharSet): Boolean; overload;
 function  StrZSkipCharW(var P: PWideChar; const C: TWideCharMatchFunction): Boolean; overload;
 
 function  StrZSkipChar(var P: PChar; const C: Char): Boolean; overload;
-function  StrZSkipChar(var P: PChar; const C: CharSet): Boolean; overload;
+function  StrZSkipChar(var P: PChar; const C: ByteCharSet): Boolean; overload;
 
-function  StrZSkipAllA(var P: PAnsiChar; const C: AnsiChar): Integer; overload;
-function  StrZSkipAllA(var P: PAnsiChar; const C: CharSet): Integer; overload;
+function  StrZSkipAllA(var P: Pointer; const C: AnsiChar): Integer; overload;
+function  StrZSkipAllA(var P: Pointer; const C: ByteCharSet): Integer; overload;
 
 function  StrZSkipAllW(var P: PWideChar; const C: WideChar): Integer; overload;
-function  StrZSkipAllW(var P: PWideChar; const C: CharSet): Integer; overload;
+function  StrZSkipAllW(var P: PWideChar; const C: ByteCharSet): Integer; overload;
 function  StrZSkipAllW(var P: PWideChar; const C: TWideCharMatchFunction): Integer; overload;
 
 function  StrZSkipAll(var P: PChar; const C: Char): Integer; overload;
-function  StrZSkipAll(var P: PChar; const C: CharSet): Integer; overload;
+function  StrZSkipAll(var P: PChar; const C: ByteCharSet): Integer; overload;
 
-function  StrZSkipToCharA(var P: PAnsiChar; const C: AnsiChar): Integer; overload;
-function  StrZSkipToCharA(var P: PAnsiChar; const C: CharSet): Integer; overload;
+function  StrZSkipToCharA(var P: Pointer; const C: AnsiChar): Integer; overload;
+function  StrZSkipToCharA(var P: Pointer; const C: ByteCharSet): Integer; overload;
 function  StrZSkipToCharW(var P: PWideChar; const C: WideChar): Integer; overload;
-function  StrZSkipToCharW(var P: PWideChar; const C: CharSet): Integer; overload;
+function  StrZSkipToCharW(var P: PWideChar; const C: ByteCharSet): Integer; overload;
 function  StrZSkipToCharW(var P: PWideChar; const C: TWideCharMatchFunction): Integer; overload;
-function  StrZSkipToChar(var P: PChar; const C: CharSet): Integer;
+function  StrZSkipToChar(var P: PChar; const C: ByteCharSet): Integer;
 
+{$IFDEF SupportAnsiString}
 function  StrZSkipToStrA(var P: PAnsiChar; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Integer;
-function  StrZSkipToStrB(var P: PAnsiChar; const S: RawByteString; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+function  StrZSkipToStrB(var P: PByteChar; const S: RawByteString; const AsciiCaseSensitive: Boolean = True): Integer;
+{$IFDEF SupportWideString}
 function  StrZSkipToStrW(var P: PWideChar; const S: WideString; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZSkipToStrAW(var P: PWideChar; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  StrZSkipToStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean = True): Integer;
 
-function  StrZSkip2CharSeq(var P: PAnsiChar; const S1, S2: CharSet): Boolean;
-function  StrZSkip3CharSeq(var P: PAnsiChar; const S1, S2, S3: CharSet): Boolean;
+function  StrZSkip2CharSeq(var P: PByteChar; const S1, S2: ByteCharSet): Boolean;
+function  StrZSkip3CharSeq(var P: PByteChar; const S1, S2, S3: ByteCharSet): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrZSkipStrA(var P: PAnsiChar; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
-function  StrZSkipStrB(var P: PAnsiChar; const S: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+function  StrZSkipStrB(var P: PByteChar; const S: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$IFDEF SupportWideString}
 function  StrZSkipStrW(var P: PWideChar; const S: WideString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZSkipStrAW(var P: PWideChar; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
 function  StrZSkipStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
 
@@ -209,36 +265,60 @@ function  StrZSkipStr(var P: PChar; const S: String; const AsciiCaseSensitive: B
 {                                                                              }
 { Extract                                                                      }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  StrZExtractAllA(var P: PAnsiChar; const C: AnsiChar): AnsiString; overload;
-function  StrZExtractAllA(var P: PAnsiChar; const C: CharSet): AnsiString; overload;
+function  StrZExtractAllA(var P: PAnsiChar; const C: ByteCharSet): AnsiString; overload;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrZExtractAllW(var P: PWideChar; const C: WideChar): WideString; overload;
-function  StrZExtractAllW(var P: PWideChar; const C: CharSet): WideString; overload;
+function  StrZExtractAllW(var P: PWideChar; const C: ByteCharSet): WideString; overload;
 function  StrZExtractAllW(var P: PWideChar; const C: TWideCharMatchFunction): WideString; overload;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function  StrZExtractAllU(var P: PWideChar; const C: WideChar): UnicodeString; overload;
-function  StrZExtractAllU(var P: PWideChar; const C: CharSet): UnicodeString; overload;
+function  StrZExtractAllU(var P: PWideChar; const C: ByteCharSet): UnicodeString; overload;
 function  StrZExtractAllU(var P: PWideChar; const C: TWideCharMatchFunction): UnicodeString; overload;
+{$ENDIF}
 
 function  StrZExtractAll(var P: PChar; const C: Char): String; overload;
-function  StrZExtractAll(var P: PChar; const C: CharSet): String; overload;
+function  StrZExtractAll(var P: PChar; const C: ByteCharSet): String; overload;
 
+{$IFDEF SupportAnsiString}
 function  StrZExtractToA(var P: PAnsiChar; const C: AnsiChar): AnsiString; overload;
-function  StrZExtractToA(var P: PAnsiChar; const C: CharSet): AnsiString; overload;
+function  StrZExtractToA(var P: PAnsiChar; const C: ByteCharSet): AnsiString; overload;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  StrZExtractToW(var P: PWideChar; const C: WideChar): WideString; overload;
-function  StrZExtractToW(var P: PWideChar; const C: CharSet): WideString; overload;
+function  StrZExtractToW(var P: PWideChar; const C: ByteCharSet): WideString; overload;
 function  StrZExtractToW(var P: PWideChar; const C: TWideCharMatchFunction): WideString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrZExtractToU(var P: PWideChar; const C: WideChar): UnicodeString; overload;
-function  StrZExtractToU(var P: PWideChar; const C: CharSet): UnicodeString; overload;
+function  StrZExtractToU(var P: PWideChar; const C: ByteCharSet): UnicodeString; overload;
 function  StrZExtractToU(var P: PWideChar; const C: TWideCharMatchFunction): UnicodeString; overload;
-function  StrZExtractTo(var P: PChar; const C: CharSet): String;
+{$ENDIF}
+function  StrZExtractTo(var P: PChar; const C: ByteCharSet): String;
 
+{$IFDEF SupportAnsiString}
 function  StrZExtractToStrA(var P: PAnsiChar; const S: AnsiString; const CaseSensitive: Boolean = True): AnsiString;
-function  StrZExtractToStrB(var P: PAnsiChar; const S: RawByteString; const CaseSensitive: Boolean = True): RawByteString;
+{$ENDIF}
+function  StrZExtractToStrB(var P: PByteChar; const S: RawByteString; const CaseSensitive: Boolean = True): RawByteString;
+{$IFDEF SupportWideString}
 function  StrZExtractToStrW(var P: PWideChar; const S: WideString; const CaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrZExtractToStrAW(var P: PWideChar; const S: AnsiString; const CaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrZExtractToStrU(var P: PWideChar; const S: UnicodeString; const CaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrZExtractToStrAU(var P: PWideChar; const S: AnsiString; const CaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
+{$ENDIF}
 function  StrZExtractToStr(var P: PChar; const S: String; const CaseSensitive: Boolean = True): String;
 
 const
@@ -246,11 +326,17 @@ const
   zchDoubleQuote  = AnsiChar('"');
   zcsQuotes       = [zchSingleQuote, zchDoubleQuote];
 
-function  StrZExtractQuotedA(var P: PAnsiChar; var S: AnsiString; const Quote: CharSet = zcsQuotes): Boolean;
-function  StrZExtractQuotedB(var P: PAnsiChar; var S: RawByteString; const Quote: CharSet = zcsQuotes): Boolean;
-function  StrZExtractQuotedW(var P: PWideChar; var S: WideString; const Quote: CharSet = zcsQuotes): Boolean;
-function  StrZExtractQuotedU(var P: PWideChar; var S: UnicodeString; const Quote: CharSet = zcsQuotes): Boolean;
-function  StrZExtractQuoted(var P: PChar; var S: String; const Quote: CharSet = zcsQuotes): Boolean;
+{$IFDEF SupportAnsiString}
+function  StrZExtractQuotedA(var P: PAnsiChar; var S: AnsiString; const Quote: ByteCharSet = zcsQuotes): Boolean;
+{$ENDIF}
+function  StrZExtractQuotedB(var P: PByteChar; var S: RawByteString; const Quote: ByteCharSet = zcsQuotes): Boolean;
+{$IFDEF SupportWideString}
+function  StrZExtractQuotedW(var P: PWideChar; var S: WideString; const Quote: ByteCharSet = zcsQuotes): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrZExtractQuotedU(var P: PWideChar; var S: UnicodeString; const Quote: ByteCharSet = zcsQuotes): Boolean;
+{$ENDIF}
+function  StrZExtractQuoted(var P: PChar; var S: String; const Quote: ByteCharSet = zcsQuotes): Boolean;
 
 
 
@@ -268,8 +354,8 @@ uses
 {                                                                              }
 { Length                                                                       }
 {                                                                              }
-function StrZLenA(const S: PAnsiChar): Integer;
-var P : PAnsiChar;
+function StrZLenA(const S: Pointer): Integer;
+var P : PByteChar;
 begin
   if not Assigned(S) then
     Result := 0
@@ -324,6 +410,7 @@ end;
 {                                                                              }
 { Conversion                                                                   }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function StrZPasA(const A: PAnsiChar): AnsiString;
 var I, L : Integer;
     P : PAnsiChar;
@@ -341,10 +428,11 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
-function StrZPasB(const A: PAnsiChar): RawByteString;
+function StrZPasB(const A: PByteChar): RawByteString;
 var I, L : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   L := StrZLenA(A);
   SetLength(Result, L);
@@ -360,6 +448,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function StrZPasW(const A: PWideChar): WideString;
 var I, L : Integer;
 begin
@@ -374,7 +463,9 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZPasU(const A: PWideChar): UnicodeString;
 var I, L : Integer;
 begin
@@ -389,6 +480,7 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
 function StrZPas(const A: PChar): String;
 var I, L : Integer;
@@ -410,8 +502,8 @@ end;
 {                                                                              }
 { Match                                                                        }
 {                                                                              }
-function StrZMatchLenA(const P: PAnsiChar; const M: CharSet; const MaxLen: Integer): Integer;
-var Q : PAnsiChar;
+function StrZMatchLenA(const P: PByteChar; const M: ByteCharSet; const MaxLen: Integer): Integer;
+var Q : PByteChar;
     L : Integer;
     C : AnsiChar;
 begin
@@ -437,7 +529,7 @@ begin
     end;
 end;
 
-function StrZMatchLenW(const P: PWideChar; const M: CharSet; const MaxLen: Integer): Integer;
+function StrZMatchLenW(const P: PWideChar; const M: ByteCharSet; const MaxLen: Integer): Integer;
 var Q : PWideChar;
     L : Integer;
     C : WideChar;
@@ -491,6 +583,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrA(const P: PAnsiChar; const M: AnsiString): Boolean;
 var T, Q : PAnsiChar;
     I, L : Integer;
@@ -519,9 +612,10 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
-function StrZMatchStrB(const P: PAnsiChar; const M: RawByteString): Boolean;
-var T, Q : PAnsiChar;
+function StrZMatchStrB(const P: PByteChar; const M: RawByteString): Boolean;
+var T, Q : PByteChar;
     I, L : Integer;
     C    : AnsiChar;
 begin
@@ -549,6 +643,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportWideString}
 function StrZMatchStrW(const P: PWideChar; const M: WideString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -577,7 +672,9 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrAW(const P: PWideChar; const M: AnsiString): Boolean;
 var T    : PWideChar;
     Q    : PAnsiChar;
@@ -607,10 +704,11 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
 function StrZMatchStrBW(const P: PWideChar; const M: RawByteString): Boolean;
 var T    : PWideChar;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
     I, L : Integer;
     C    : WideChar;
 begin
@@ -638,6 +736,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrU(const P: PWideChar; const M: UnicodeString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -666,6 +765,7 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
 function StrZMatchStr(const P: PChar; const M: String): Boolean;
 var T, Q : PChar;
@@ -696,6 +796,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrNoAsciiCaseA(const P: PAnsiChar; const M: AnsiString): Boolean;
 var T, Q : PByte;
     I, L : Integer;
@@ -733,8 +834,9 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
-function StrZMatchStrNoAsciiCaseB(const P: PAnsiChar; const M: RawByteString): Boolean;
+function StrZMatchStrNoAsciiCaseB(const P: PByteChar; const M: RawByteString): Boolean;
 var T, Q : PByte;
     I, L : Integer;
     C, D : Byte;
@@ -772,6 +874,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportWideString}
 function StrZMatchStrNoAsciiCaseW(const P: PWideChar; const M: WideString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -815,10 +918,12 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrNoAsciiCaseAW(const P: PWideChar; const M: AnsiString): Boolean;
 var T    : PWideChar;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
     I, L : Integer;
     C    : WideChar;
     D    : AnsiChar;
@@ -861,10 +966,11 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
 function StrZMatchStrNoAsciiCaseBW(const P: PWideChar; const M: RawByteString): Boolean;
 var T    : PWideChar;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
     I, L : Integer;
     C    : WideChar;
     D    : AnsiChar;
@@ -908,6 +1014,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrNoAsciiCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -951,6 +1058,7 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
 function StrZMatchStrNoAsciiCase(const P: PChar; const M: String): Boolean;
 var T, Q : PChar;
@@ -998,6 +1106,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportWideString}
 function StrZMatchStrNoUnicodeCaseW(const P: PWideChar; const M: WideString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -1030,7 +1139,9 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -1063,7 +1174,9 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrAsciiA(const P: PAnsiChar; const M: AnsiString;
     const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -1072,8 +1185,9 @@ begin
   else
     Result := StrZMatchStrNoAsciiCaseA(P, M);
 end;
+{$ENDIF}
 
-function StrZMatchStrAsciiB(const P: PAnsiChar; const M: RawByteString;
+function StrZMatchStrAsciiB(const P: PByteChar; const M: RawByteString;
     const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -1082,6 +1196,7 @@ begin
     Result := StrZMatchStrNoAsciiCaseB(P, M);
 end;
 
+{$IFDEF SupportWideString}
 function StrZMatchStrAsciiW(const P: PWideChar; const M: WideString;
     const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -1090,7 +1205,9 @@ begin
   else
     Result := StrZMatchStrNoAsciiCaseW(P, M);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZMatchStrAsciiAW(const P: PWideChar; const M: AnsiString;
     const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -1099,6 +1216,7 @@ begin
   else
     Result := StrZMatchStrNoAsciiCaseAW(P, M);
 end;
+{$ENDIF}
 
 function StrZMatchStrAsciiBW(const P: PWideChar; const M: RawByteString;
     const AsciiCaseSensitive: Boolean): Boolean;
@@ -1109,6 +1227,7 @@ begin
     Result := StrZMatchStrNoAsciiCaseBW(P, M);
 end;
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrAsciiU(const P: PWideChar; const M: UnicodeString;
     const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -1117,6 +1236,7 @@ begin
   else
     Result := StrZMatchStrNoAsciiCaseU(P, M);
 end;
+{$ENDIF}
 
 function StrZMatchStrAscii(const P: PChar; const M: String; const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -1126,6 +1246,7 @@ begin
     Result := StrZMatchStrNoAsciiCase(P, M);
 end;
 
+{$IFDEF SupportWideString}
 function StrZMatchStrUnicodeW(const P: PWideChar; const M: WideString; const UnicodeCaseSensitive: Boolean): Boolean;
 begin
   if UnicodeCaseSensitive then
@@ -1133,7 +1254,9 @@ begin
   else
     Result := StrZMatchStrNoUnicodeCaseW(P, M);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrUnicodeU(const P: PWideChar; const M: UnicodeString; const UnicodeCaseSensitive: Boolean): Boolean;
 begin
   if UnicodeCaseSensitive then
@@ -1141,15 +1264,16 @@ begin
   else
     Result := StrZMatchStrNoUnicodeCaseU(P, M);
 end;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Pos                                                                          }
 {                                                                              }
-function StrZPosCharA(const F: AnsiChar; const S: PAnsiChar): Integer;
+function StrZPosCharA(const F: AnsiChar; const S: PByteChar): Integer;
 var C : AnsiChar;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if not Assigned(S) or (Ord(F) = 0) then
     Result := -1
@@ -1225,9 +1349,9 @@ begin
     end;
 end;
 
-function StrZPosCharSetA(const F: CharSet; const S: PAnsiChar): Integer;
+function StrZPosCharSetA(const F: ByteCharSet; const S: PByteChar): Integer;
 var C : AnsiChar;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if not Assigned(S) or (F = []) then
     Result := -1
@@ -1250,7 +1374,7 @@ begin
     end;
 end;
 
-function StrZPosCharSetW(const F: CharSet; const S: PWideChar): Integer;
+function StrZPosCharSetW(const F: ByteCharSet; const S: PWideChar): Integer;
 var C : WideChar;
     P : PWideChar;
 begin
@@ -1301,7 +1425,7 @@ begin
     end;
 end;
 
-function StrZPosCharSet(const F: CharSet; const S: PChar): Integer;
+function StrZPosCharSet(const F: ByteCharSet; const S: PChar): Integer;
 var C : Char;
     P : PChar;
 begin
@@ -1332,9 +1456,9 @@ begin
     end;
 end;
 
-function StrZPosNotCharSetA(const F: CharSet; const S: PAnsiChar): Integer;
+function StrZPosNotCharSetA(const F: ByteCharSet; const S: PByteChar): Integer;
 var C : AnsiChar;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if not Assigned(S) then
     Result := -1
@@ -1357,7 +1481,7 @@ begin
     end;
 end;
 
-function StrZPosNotCharSetW(const F: CharSet; const S: PWideChar): Integer;
+function StrZPosNotCharSetW(const F: ByteCharSet; const S: PWideChar): Integer;
 var C : WideChar;
     P : PWideChar;
 begin
@@ -1409,7 +1533,7 @@ begin
     end;
 end;
 
-function StrZPosNotCharSet(const F: CharSet; const S: PChar): Integer;
+function StrZPosNotCharSet(const F: ByteCharSet; const S: PChar): Integer;
 var C : Char;
     P : PChar;
 begin
@@ -1441,6 +1565,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZPosA(const F: AnsiString; const S: PAnsiChar): Integer;
 var C : AnsiChar;
     P : PAnsiChar;
@@ -1465,10 +1590,11 @@ begin
       until False;
     end;
 end;
+{$ENDIF}
 
-function StrZPosB(const F: RawByteString; const S: PAnsiChar): Integer;
+function StrZPosB(const F: RawByteString; const S: PByteChar): Integer;
 var C : AnsiChar;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if not Assigned(S) or (Length(F) = 0) then
     Result := -1
@@ -1491,6 +1617,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function StrZPosW(const F: WideString; const S: PWideChar): Integer;
 var C : WideChar;
     P : PWideChar;
@@ -1515,7 +1642,9 @@ begin
       until False;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZPosAW(const F: AnsiString; const S: PWideChar): Integer;
 var C : WideChar;
     P : PWideChar;
@@ -1540,14 +1669,15 @@ begin
       until False;
     end;
 end;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Skip                                                                         }
 {                                                                              }
-function StrZSkipCharA(var P: PAnsiChar; const C: AnsiChar): Boolean;
-var Q : PAnsiChar;
+function StrZSkipCharA(var P: PByteChar; const C: AnsiChar): Boolean;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Q := P;
@@ -1568,8 +1698,8 @@ begin
     end;
 end;
 
-function StrZSkipCharA(var P: PAnsiChar; const C: CharSet): Boolean;
-var Q : PAnsiChar;
+function StrZSkipCharA(var P: PByteChar; const C: ByteCharSet): Boolean;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Q := P;
@@ -1612,7 +1742,7 @@ begin
     end;
 end;
 
-function StrZSkipCharW(var P: PWideChar; const C: CharSet): Boolean;
+function StrZSkipCharW(var P: PWideChar; const C: ByteCharSet): Boolean;
 var Q : PWideChar;
     D : WideChar;
 begin
@@ -1681,7 +1811,7 @@ begin
     end;
 end;
 
-function StrZSkipChar(var P: PChar; const C: CharSet): Boolean;
+function StrZSkipChar(var P: PChar; const C: ByteCharSet): Boolean;
 var Q : PChar;
     D : Char;
 begin
@@ -1714,8 +1844,8 @@ begin
     end;
 end;
 
-function StrZSkipAllA(var P: PAnsiChar; const C: AnsiChar): Integer;
-var Q : PAnsiChar;
+function StrZSkipAllA(var P: Pointer; const C: AnsiChar): Integer;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Result := 0;
@@ -1732,8 +1862,8 @@ begin
   P := Q;
 end;
 
-function StrZSkipAllA(var P: PAnsiChar; const C: CharSet): Integer;
-var Q : PAnsiChar;
+function StrZSkipAllA(var P: Pointer; const C: ByteCharSet): Integer;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Result := 0;
@@ -1768,7 +1898,7 @@ begin
   P := Q;
 end;
 
-function StrZSkipAllW(var P: PWideChar; const C: CharSet): Integer;
+function StrZSkipAllW(var P: PWideChar; const C: ByteCharSet): Integer;
 var Q : PWideChar;
     D : WideChar;
 begin
@@ -1826,7 +1956,7 @@ begin
   P := Q;
 end;
 
-function StrZSkipAll(var P: PChar; const C: CharSet): Integer;
+function StrZSkipAll(var P: PChar; const C: ByteCharSet): Integer;
 var Q : PChar;
     D : Char;
 begin
@@ -1851,8 +1981,8 @@ begin
   P := Q;
 end;
 
-function StrZSkipToCharA(var P: PAnsiChar; const C: AnsiChar): Integer;
-var Q : PAnsiChar;
+function StrZSkipToCharA(var P: Pointer; const C: AnsiChar): Integer;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Result := 0;
@@ -1869,8 +1999,8 @@ begin
   P := Q;
 end;
 
-function StrZSkipToCharA(var P: PAnsiChar; const C: CharSet): Integer;
-var Q : PAnsiChar;
+function StrZSkipToCharA(var P: Pointer; const C: ByteCharSet): Integer;
+var Q : PByteChar;
     D : AnsiChar;
 begin
   Result := 0;
@@ -1905,7 +2035,7 @@ begin
   P := Q;
 end;
 
-function StrZSkipToCharW(var P: PWideChar; const C: CharSet): Integer;
+function StrZSkipToCharW(var P: PWideChar; const C: ByteCharSet): Integer;
 var Q : PWideChar;
     D : WideChar;
 begin
@@ -1945,7 +2075,7 @@ begin
   P := Q;
 end;
 
-function StrZSkipToChar(var P: PChar; const C: CharSet): Integer;
+function StrZSkipToChar(var P: PChar; const C: ByteCharSet): Integer;
 var Q : PChar;
     D : Char;
 begin
@@ -1972,6 +2102,7 @@ begin
   P := Q;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZSkipToStrA(var P: PAnsiChar; const S: AnsiString; const AsciiCaseSensitive: Boolean): Integer;
 var Q : PAnsiChar;
 begin
@@ -1986,9 +2117,10 @@ begin
     end;
   P := Q;
 end;
+{$ENDIF}
 
-function StrZSkipToStrB(var P: PAnsiChar; const S: RawByteString; const AsciiCaseSensitive: Boolean): Integer;
-var Q : PAnsiChar;
+function StrZSkipToStrB(var P: PByteChar; const S: RawByteString; const AsciiCaseSensitive: Boolean): Integer;
+var Q : PByteChar;
 begin
   Result := 0;
   Q := P;
@@ -2002,6 +2134,7 @@ begin
   P := Q;
 end;
 
+{$IFDEF SupportWideString}
 function StrZSkipToStrW(var P: PWideChar; const S: WideString; const AsciiCaseSensitive: Boolean): Integer;
 var Q : PWideChar;
 begin
@@ -2016,7 +2149,9 @@ begin
     end;
   P := Q;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZSkipToStrAW(var P: PWideChar; const S: AnsiString; const AsciiCaseSensitive: Boolean): Integer;
 var Q : PWideChar;
 begin
@@ -2031,6 +2166,7 @@ begin
     end;
   P := Q;
 end;
+{$ENDIF}
 
 function StrZSkipToStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean): Integer;
 var Q : PChar;
@@ -2047,8 +2183,8 @@ begin
   P := Q;
 end;
 
-function StrZSkip2CharSeq(var P: PAnsiChar; const S1, S2: CharSet): Boolean;
-var Q : PAnsiChar;
+function StrZSkip2CharSeq(var P: PByteChar; const S1, S2: ByteCharSet): Boolean;
+var Q : PByteChar;
     C : AnsiChar;
 begin
   Q := P;
@@ -2074,8 +2210,8 @@ begin
     end;
 end;
 
-function StrZSkip3CharSeq(var P: PAnsiChar; const S1, S2, S3: CharSet): Boolean;
-var Q : PAnsiChar;
+function StrZSkip3CharSeq(var P: PByteChar; const S1, S2, S3: ByteCharSet): Boolean;
+var Q : PByteChar;
     C : AnsiChar;
 begin
   Q := P;
@@ -2108,33 +2244,39 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZSkipStrA(var P: PAnsiChar; const S: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := StrZMatchStrAsciiA(P, S, AsciiCaseSensitive);
   if Result then
     Inc(P, Length(S));
 end;
+{$ENDIF}
 
-function StrZSkipStrB(var P: PAnsiChar; const S: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+function StrZSkipStrB(var P: PByteChar; const S: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := StrZMatchStrAsciiB(P, S, AsciiCaseSensitive);
   if Result then
     Inc(P, Length(S));
 end;
 
+{$IFDEF SupportWideString}
 function StrZSkipStrW(var P: PWideChar; const S: WideString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := StrZMatchStrAsciiW(P, S, AsciiCaseSensitive);
   if Result then
     Inc(P, Length(S));
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZSkipStrAW(var P: PWideChar; const S: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := StrZMatchStrAsciiAW(P, S, AsciiCaseSensitive);
   if Result then
     Inc(P, Length(S));
 end;
+{$ENDIF}
 
 function StrZSkipStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -2148,24 +2290,29 @@ end;
 {                                                                              }
 { Extract                                                                      }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function StrZExtractAllA(var P: PAnsiChar; const C: AnsiChar): AnsiString;
 var Q : PAnsiChar;
     I : Integer;
 begin
   Q := P;
-  I := StrZSkipAllA(P, C);
+  I := StrZSkipAllA(Pointer(P), C);
   Result := StrPToStrA(Q, I);
 end;
+{$ENDIF}
 
-function StrZExtractAllA(var P: PAnsiChar; const C: CharSet): AnsiString;
+{$IFDEF SupportAnsiString}
+function StrZExtractAllA(var P: PAnsiChar; const C: ByteCharSet): AnsiString;
 var Q : PAnsiChar;
     I : Integer;
 begin
   Q := P;
-  I := StrZSkipAllA(P, C);
+  I := StrZSkipAllA(Pointer(P), C);
   Result := StrPToStrA(Q, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrZExtractAllW(var P: PWideChar; const C: WideChar): WideString;
 var Q : PWideChar;
     I : Integer;
@@ -2174,8 +2321,10 @@ begin
   I := StrZSkipAllW(P, C);
   Result := StrPToStrW(Q, I);
 end;
+{$ENDIF}
 
-function StrZExtractAllW(var P: PWideChar; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrZExtractAllW(var P: PWideChar; const C: ByteCharSet): WideString;
 var Q : PWideChar;
     I : Integer;
 begin
@@ -2183,7 +2332,9 @@ begin
   I := StrZSkipAllW(P, C);
   Result := StrPToStrW(Q, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrZExtractAllW(var P: PWideChar; const C: TWideCharMatchFunction): WideString;
 var Q : PWideChar;
     I : Integer;
@@ -2192,7 +2343,9 @@ begin
   I := StrZSkipAllW(P, C);
   Result := StrPToStrW(Q, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZExtractAllU(var P: PWideChar; const C: WideChar): UnicodeString;
 var Q : PWideChar;
     I : Integer;
@@ -2202,7 +2355,7 @@ begin
   Result := StrPToStrU(Q, I);
 end;
 
-function StrZExtractAllU(var P: PWideChar; const C: CharSet): UnicodeString;
+function StrZExtractAllU(var P: PWideChar; const C: ByteCharSet): UnicodeString;
 var Q : PWideChar;
     I : Integer;
 begin
@@ -2219,6 +2372,7 @@ begin
   I := StrZSkipAllW(P, C);
   Result := StrPToStrU(Q, I);
 end;
+{$ENDIF}
 
 function StrZExtractAll(var P: PChar; const C: Char): String;
 var Q : PChar;
@@ -2229,7 +2383,7 @@ begin
   Result := StrPToStr(Q, I);
 end;
 
-function StrZExtractAll(var P: PChar; const C: CharSet): String;
+function StrZExtractAll(var P: PChar; const C: ByteCharSet): String;
 var Q : PChar;
     I : Integer;
 begin
@@ -2238,24 +2392,29 @@ begin
   Result := StrPToStr(Q, I);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZExtractToA(var P: PAnsiChar; const C: AnsiChar): AnsiString;
 var Q : PAnsiChar;
     L : Integer;
 begin
   Q := P;
-  L := StrZSkipToCharA(P, C);
+  L := StrZSkipToCharA(Pointer(P), C);
   Result := StrPToStrA(Q, L);
 end;
+{$ENDIF}
 
-function StrZExtractToA(var P: PAnsiChar; const C: CharSet): AnsiString;
+{$IFDEF SupportAnsiString}
+function StrZExtractToA(var P: PAnsiChar; const C: ByteCharSet): AnsiString;
 var Q : PAnsiChar;
     L : Integer;
 begin
   Q := P;
-  L := StrZSkipToCharA(P, C);
+  L := StrZSkipToCharA(Pointer(P), C);
   Result := StrPToStrA(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrZExtractToW(var P: PWideChar; const C: WideChar): WideString;
 var Q : PWideChar;
     L : Integer;
@@ -2264,8 +2423,10 @@ begin
   L := StrZSkipToCharW(P, C);
   Result := StrPToStrW(Q, L);
 end;
+{$ENDIF}
 
-function StrZExtractToW(var P: PWideChar; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrZExtractToW(var P: PWideChar; const C: ByteCharSet): WideString;
 var Q : PWideChar;
     L : Integer;
 begin
@@ -2273,7 +2434,9 @@ begin
   L := StrZSkipToCharW(P, C);
   Result := StrPToStrW(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrZExtractToW(var P: PWideChar; const C: TWideCharMatchFunction): WideString;
 var Q : PWideChar;
     L : Integer;
@@ -2282,7 +2445,9 @@ begin
   L := StrZSkipToCharW(P, C);
   Result := StrPToStrW(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZExtractToU(var P: PWideChar; const C: WideChar): UnicodeString;
 var Q : PWideChar;
     L : Integer;
@@ -2292,7 +2457,7 @@ begin
   Result := StrPToStrU(Q, L);
 end;
 
-function StrZExtractToU(var P: PWideChar; const C: CharSet): UnicodeString;
+function StrZExtractToU(var P: PWideChar; const C: ByteCharSet): UnicodeString;
 var Q : PWideChar;
     L : Integer;
 begin
@@ -2309,8 +2474,9 @@ begin
   L := StrZSkipToCharW(P, C);
   Result := StrPToStrU(Q, L);
 end;
+{$ENDIF}
 
-function StrZExtractTo(var P: PChar; const C: CharSet): String;
+function StrZExtractTo(var P: PChar; const C: ByteCharSet): String;
 var Q : PChar;
     L : Integer;
 begin
@@ -2319,6 +2485,7 @@ begin
   Result := StrPToStr(Q, L);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrZExtractToStrA(var P: PAnsiChar; const S: AnsiString;
     const CaseSensitive: Boolean): AnsiString;
 var Q : PAnsiChar;
@@ -2333,10 +2500,11 @@ begin
     end;
   Result := StrPToStrA(Q, L);
 end;
+{$ENDIF}
 
-function StrZExtractToStrB(var P: PAnsiChar; const S: RawByteString;
+function StrZExtractToStrB(var P: PByteChar; const S: RawByteString;
     const CaseSensitive: Boolean): RawByteString;
-var Q : PAnsiChar;
+var Q : PByteChar;
     L : Integer;
 begin
   Q := P;
@@ -2349,6 +2517,7 @@ begin
   Result := StrPToStrB(Q, L);
 end;
 
+{$IFDEF SupportWideString}
 function StrZExtractToStrW(var P: PWideChar; const S: WideString;
     const CaseSensitive: Boolean): WideString;
 var Q : PWideChar;
@@ -2363,7 +2532,9 @@ begin
     end;
   Result := StrPToStrW(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrZExtractToStrAW(var P: PWideChar; const S: AnsiString;
     const CaseSensitive: Boolean): WideString;
 var Q : PWideChar;
@@ -2378,7 +2549,9 @@ begin
     end;
   Result := StrPToStrW(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZExtractToStrU(var P: PWideChar; const S: UnicodeString;
     const CaseSensitive: Boolean): UnicodeString;
 var Q : PWideChar;
@@ -2393,7 +2566,10 @@ begin
     end;
   Result := StrPToStrU(Q, L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrZExtractToStrAU(var P: PWideChar; const S: AnsiString;
     const CaseSensitive: Boolean): UnicodeString;
 var Q : PWideChar;
@@ -2408,6 +2584,8 @@ begin
     end;
   Result := StrPToStrU(Q, L);
 end;
+{$ENDIF}
+{$ENDIF}
 
 function StrZExtractToStr(var P: PChar; const S: String;
     const CaseSensitive: Boolean): String;
@@ -2424,7 +2602,8 @@ begin
   Result := StrPToStr(Q, L);
 end;
 
-function StrZExtractQuotedA(var P: PAnsiChar; var S: AnsiString; const Quote: CharSet): Boolean;
+{$IFDEF SupportAnsiString}
+function StrZExtractQuotedA(var P: PAnsiChar; var S: AnsiString; const Quote: ByteCharSet): Boolean;
 var Q    : PAnsiChar;
     C, D : AnsiChar;
     L    : Integer;
@@ -2453,9 +2632,10 @@ begin
   S := StrPToStrA(Q, L);
   Result := True;
 end;
+{$ENDIF}
 
-function StrZExtractQuotedB(var P: PAnsiChar; var S: RawByteString; const Quote: CharSet): Boolean;
-var Q    : PAnsiChar;
+function StrZExtractQuotedB(var P: PByteChar; var S: RawByteString; const Quote: ByteCharSet): Boolean;
+var Q    : PByteChar;
     C, D : AnsiChar;
     L    : Integer;
 begin
@@ -2484,7 +2664,8 @@ begin
   Result := True;
 end;
 
-function StrZExtractQuotedW(var P: PWideChar; var S: WideString; const Quote: CharSet): Boolean;
+{$IFDEF SupportWideString}
+function StrZExtractQuotedW(var P: PWideChar; var S: WideString; const Quote: ByteCharSet): Boolean;
 var Q    : PWideChar;
     C, D : WideChar;
     L    : Integer;
@@ -2513,8 +2694,10 @@ begin
   S := StrPToStrW(Q, L);
   Result := True;
 end;
+{$ENDIF}
 
-function StrZExtractQuotedU(var P: PWideChar; var S: UnicodeString; const Quote: CharSet): Boolean;
+{$IFDEF SupportUnicodeString}
+function StrZExtractQuotedU(var P: PWideChar; var S: UnicodeString; const Quote: ByteCharSet): Boolean;
 var Q    : PWideChar;
     C, D : WideChar;
     L    : Integer;
@@ -2543,8 +2726,9 @@ begin
   S := StrPToStrU(Q, L);
   Result := True;
 end;
+{$ENDIF}
 
-function StrZExtractQuoted(var P: PChar; var S: String; const Quote: CharSet): Boolean;
+function StrZExtractQuoted(var P: PChar; var S: String; const Quote: ByteCharSet): Boolean;
 var Q    : PChar;
     C, D : Char;
     L    : Integer;

@@ -486,10 +486,10 @@ end;
 
 // Returns pointer to TCP buffer head
 function TCPBufferPtr(const TCPBuf: TTCPBuffer): Pointer; {$IFDEF UseInline}inline;{$ENDIF}
-var P : PAnsiChar;
+var P : PByte;
 begin
   Assert(Assigned(TCPBuf.Ptr));
-  P := PAnsiChar(TCPBuf.Ptr);
+  P := TCPBuf.Ptr;
   Inc(P, TCPBuf.Head);
   Result := P;
 end;

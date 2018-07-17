@@ -53,34 +53,6 @@ uses
 
 
 
-{                                                                              }
-{ Types                                                                        }
-{                                                                              }
-{$IFDEF DELPHI5}
-type
-  PByte = ^Byte;
-  PWord = ^Word;
-  PLongWord = ^LongWord;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ AnsiString                                                                   }
-{                                                                              }
-{$IFNDEF SupportAnsiChar}
-type
-  AnsiChar = Byte;
-  PAnsiChar = ^AnsiChar;
-{$DEFINE AnsiCharIsOrd}
-{$ENDIF}
-
-{$IFNDEF SupportAnsiString}
-type
-  AnsiString = array of AnsiChar;
-{$DEFINE AnsiStringIsArray}
-{$ENDIF}
-
 
 
 {                                                                              }

@@ -85,7 +85,7 @@ function  EncodeBase64(const S, Alphabet: RawByteString;
           const PadChar: AnsiChar = AnsiChar(Ord('='))): RawByteString;
 
 function  DecodeBase64(const S, Alphabet: RawByteString;
-          const PadSet: CharSet{$IFNDEF CLR} = []{$ENDIF}): RawByteString;
+          const PadSet: ByteCharSet{$IFNDEF CLR} = []{$ENDIF}): RawByteString;
 
 const
   b64_MIMEBase64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -323,7 +323,7 @@ begin
       Result := Result + AnsiChar(OutB[OutPos]);
 end;
 {$ELSE}
-function DecodeBase64(const S, Alphabet: RawByteString; const PadSet: CharSet): RawByteString;
+function DecodeBase64(const S, Alphabet: RawByteString; const PadSet: ByteCharSet): RawByteString;
 var F, L, M, P : Integer;
     B, OutPos  : Byte;
     OutB       : array[1..3] of Byte;

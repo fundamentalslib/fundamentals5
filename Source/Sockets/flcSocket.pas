@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocket.pas                                            }
-{   File version:     5.08                                                     }
+{   File version:     5.09                                                     }
 {   Description:      System independent socket class.                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -44,14 +44,13 @@
 {   2011/10/13  4.06  Change to Recv error handling.                           }
 {   2014/04/23  4.07  Revision.                                                }
 {   2016/01/09  5.08  Revised for Fundamentals 5.                              }
+{   2018/07/11  5.09  Type changes for Win64.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
 {   Delphi XE2 Win32                    4.07  2014/04/23                       }
 {   Delphi XE7 Win32                    5.08  2016/01/09                       }
-{   Delphi XE7 Win64                    5.08  2016/01/09                       }
 {   Delphi 10 Win32                     5.08  2016/01/09                       }
-{   Delphi 10 Win64                     5.08  2016/01/09                       }
 {   FreePascal 2.6.2 Linux i386         4.07  2014/04/23                       }
 {   FreePascal 2.6.2 Win32 i386         4.07  2014/04/23                       }
 {                                                                              }
@@ -74,6 +73,12 @@
 {$IFDEF MSWIN}
   {$DEFINE SOCKET_WIN}
   {$DEFINE SOCKET_SUPPORT_ASYNC}
+{$ELSE}
+  {$IFDEF FREEPASCAL}
+    {$DEFINE SOCKET_POSIX_FPC}
+  {$ELSE}
+    {$DEFINE SOCKET_POSIX_DELPHI}
+  {$ENDIF}
 {$ENDIF}
 
 unit flcSocket;
@@ -89,7 +94,7 @@ uses
   SyncObjs,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcSocketLib;
 
 
@@ -112,7 +117,7 @@ type
   TSysSocketReadEvent    = procedure (Sender: TSysSocket) of object;
   TSysSocketWriteEvent   = procedure (Sender: TSysSocket) of object;
   TSysSocketAcceptEvent  = procedure (Sender: TSysSocket) of object;
-  TSysSocketResolveEvent = procedure (Sender: TSysSocket; Host, Port: AnsiString;
+  TSysSocketResolveEvent = procedure (Sender: TSysSocket; Host, Port: RawByteString;
                            var SockAddr: TSocketAddr; var Resolved: Boolean) of object;
 
   {$IFDEF SOCKET_SUPPORT_ASYNC}
@@ -169,7 +174,7 @@ type
 
     // Events
     procedure TriggerResolve(
-              const Host, Port: AnsiString;
+              const Host, Port: RawByteString;
               var SockAddr: TSocketAddr;
               var Resolved: Boolean); virtual;
 
@@ -194,8 +199,8 @@ type
     procedure SetBroadcastEnabled(const BroadcastEnabled: Boolean);
 
     // Resolve
-    procedure Resolve(const Host, Port: AnsiString; var SockAddr: TSocketAddr);
-    procedure ResolveRequired(const Host, Port: AnsiString; var SockAddr: TSocketAddr);
+    procedure Resolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
+    procedure ResolveRequired(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
 
   public
     constructor Create(
@@ -245,8 +250,8 @@ type
     procedure Bind(const Address: TSocketAddr); overload;
     procedure Bind(const Address: TIP4Addr; const Port: Word); overload;
     procedure Bind(const Address: TIP6Addr; const Port: Word); overload;
-    procedure Bind(const Host, Port: AnsiString); overload;
-    procedure Bind(const Host: AnsiString; const Port: Word); overload;
+    procedure Bind(const Host, Port: RawByteString); overload;
+    procedure Bind(const Host: RawByteString; const Port: Word); overload;
 
     function  GetLocalAddress: TSocketAddr;
     function  GetLocalAddressIP: TIP4Addr;
@@ -260,7 +265,7 @@ type
     function  Connect(const Address: TSocketAddr): Boolean; overload;
     function  Connect(const Address: TIP4Addr; const Port: Word): Boolean; overload;
     function  Connect(const Address: TIP6Addr; const Port: Word): Boolean; overload;
-    function  Connect(const Host, Port: AnsiString): Boolean; overload;
+    function  Connect(const Host, Port: RawByteString): Boolean; overload;
 
     procedure Listen(const Backlog: Integer);
 
@@ -274,14 +279,14 @@ type
     function  GetRemoteAddress: TSocketAddr;
     function  GetRemoteAddressIP: TIP4Addr;
     function  GetRemoteAddressIP6: TIP6Addr;
-    function  GetRemoteAddressStr: AnsiString;
-    function  GetRemoteHostName: AnsiString;
+    function  GetRemoteAddressStr: RawByteString;
+    function  GetRemoteHostName: RawByteString;
 
     function  Send(const Buf; const BufSize: Integer): Integer; overload;
     function  Send(const Buf: RawByteString): Integer; overload;
 
     function  SendTo(const Address: TSocketAddr; const Buf; const BufSize: Integer): Integer; overload;
-    function  SendTo(const Host, Port: AnsiString; const Buf; const BufSize: Integer): Integer; overload;
+    function  SendTo(const Host, Port: RawByteString; const Buf; const BufSize: Integer): Integer; overload;
     procedure SendToBroadcast(const Port: Word; const Data; const DataSize: Integer);
 
     function  Recv(var Buf; const BufSize: Integer): Integer;
@@ -313,6 +318,10 @@ uses
   { System }
   Messages;
 {$ENDIF}
+{$IFDEF SOCKET_POSIX_DELPHI}
+uses
+  flcSocketLibPosixDelphi;
+{$ENDIF}
 
 
 
@@ -329,8 +338,8 @@ const
 
 { Socket message handling procedure                                            }
 function SocketHandleMessageProc(
-         const WindowHandle: HWND; const Msg: LongWord;
-         const wParam, lParam: LongWord): Integer; stdcall;
+         const WindowHandle: HWND; const Msg: UINT;
+         const wParam: WPARAM; const lParam: LPARAM): LRESULT; stdcall;
 var Events : Word;
     Param  : Word;
     Socket : TSysSocket;
@@ -339,7 +348,7 @@ begin
   if Msg = WM_SOCKET then
     begin
       // dispatch socket messages to socket object
-      Socket := TSysSocket(GetWindowLong(WindowHandle, 0));
+      Socket := TSysSocket(GetWindowLongPtr(WindowHandle, 0));
       Assert(TObject(Socket) is TSysSocket);
       if Assigned(Socket) then
         if Socket.FSocketHandle = TSocketHandle(wParam) then
@@ -425,7 +434,7 @@ begin
   if Result = 0 then
     raise ESysSocket.CreateFmt(SWindowHandleAllocationFailed, []);
   // associate instance pointer with window handle
-  SetWindowLong(Result, 0, LongInt(Instance));
+  SetWindowLongPtr(Result, 0, NativeInt(Instance));
 end;
 {$ENDIF}
 
@@ -650,7 +659,7 @@ begin
     FOnAccept(self);
 end;
 
-procedure TSysSocket.TriggerResolve(const Host, Port: AnsiString; var SockAddr: TSocketAddr;
+procedure TSysSocket.TriggerResolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr;
           var Resolved: Boolean);
 begin
   if Assigned(FOnResolve) then
@@ -740,7 +749,9 @@ end;
 
 procedure TSysSocket.GetLingerOption(var LingerOption: Boolean; var LingerTimeSec: Integer);
 begin
+  {$IFDEF MSWIN}
   flcSocketLib.GetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  {$ENDIF}
 end;
 
 procedure TSysSocket.SetLingerOption(const LingerOption: Boolean; const LingerTimeSec: Integer);
@@ -748,10 +759,12 @@ begin
   {$IFDEF SOCKET_DEBUG}
   Log(sltDebug, 'SetLingerOption:%d:%ds', [Ord(LingerOption), LingerTimeSec]);
   {$ENDIF}
+  {$IFDEF MSWIN}
   flcSocketLib.SetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  {$ENDIF}
 end;
 
-procedure TSysSocket.Resolve(const Host, Port: AnsiString; var SockAddr: TSocketAddr);
+procedure TSysSocket.Resolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
 var R : Boolean;
 begin
   {$IFDEF SOCKET_DEBUG}
@@ -766,7 +779,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TSysSocket.ResolveRequired(const Host, Port: AnsiString; var SockAddr: TSocketAddr);
+procedure TSysSocket.ResolveRequired(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
 begin
   if Host = '' then
     raise ESysSocket.Create('Host not specified');
@@ -825,14 +838,14 @@ begin
   Bind(SockAddr);
 end;
 
-procedure TSysSocket.Bind(const Host, Port: AnsiString);
+procedure TSysSocket.Bind(const Host, Port: RawByteString);
 var SockAddr : TSocketAddr;
 begin
   Resolve(Host, Port, SockAddr);
   Bind(SockAddr);
 end;
 
-procedure TSysSocket.Bind(const Host: AnsiString; const Port: Word);
+procedure TSysSocket.Bind(const Host: RawByteString; const Port: Word);
 var SockAddr : TSocketAddr;
 begin
   Resolve(Host, '0', SockAddr);
@@ -946,7 +959,7 @@ begin
   Result := Connect(SockAddr);
 end;
 
-function TSysSocket.Connect(const Host, Port: AnsiString): Boolean;
+function TSysSocket.Connect(const Host, Port: RawByteString): Boolean;
 var SockAddr : TSocketAddr;
 begin
   ResolveRequired(Host, Port, SockAddr);
@@ -1065,7 +1078,7 @@ begin
     IP6AddrSetZero(Result);
 end;
 
-function TSysSocket.GetRemoteAddressStr: AnsiString;
+function TSysSocket.GetRemoteAddressStr: RawByteString;
 var A : TSocketAddr;
 begin
   A := GetRemoteAddress;
@@ -1085,7 +1098,7 @@ begin
   end;
 end;
 
-function TSysSocket.GetRemoteHostName: AnsiString;
+function TSysSocket.GetRemoteHostName: RawByteString;
 var Address : TIP4Addr;
 begin
   Address := GetRemoteAddressIP;
@@ -1144,7 +1157,7 @@ begin
     end;
 end;
 
-function TSysSocket.SendTo(const Host, Port: AnsiString; const Buf; const BufSize: Integer): Integer;
+function TSysSocket.SendTo(const Host, Port: RawByteString; const Buf; const BufSize: Integer): Integer;
 var SockAddr : TSocketAddr;
 begin
   ResolveRequired(Host, Port, SockAddr);
@@ -1325,7 +1338,7 @@ begin
     Assert(Assigned(C));
 
     R := True; W := True; E := True;
-    Assert(C.Select(0, R, W, E));
+    Assert(C.Select(15, R, W, E));
     Assert(not R and W and not E);
 
     Assert(T.GetRemoteAddressStr = '127.0.0.1');
@@ -1342,7 +1355,9 @@ begin
 
     FillChar(B[0], Sizeof(B), #0);
 
+    {$IFNDEF SOCKET_POSIX_DELPHI}
     Assert(C.AvailableToRecv = 3);
+    {$ENDIF}
     Assert(C.Recv(B[0], 3) = 3);
     Assert((B[0] = 'a') and (B[1] = 'b') and (B[2] = 'c'));
     Assert(C.AvailableToRecv = 0);
@@ -1354,7 +1369,9 @@ begin
     C.Send('de');
     Sleep(1);
 
+    {$IFNDEF SOCKET_POSIX_DELPHI}
     Assert(T.AvailableToRecv = 2);
+    {$ENDIF}
     Assert(T.Recv(B[0], 2) = 2);
     Assert((B[0] = 'd') and (B[1] = 'e'));
     Assert(T.AvailableToRecv = 0);
@@ -1362,7 +1379,9 @@ begin
     T.Send('fghi');
     Sleep(1);
 
+    {$IFNDEF SOCKET_POSIX_DELPHI}
     Assert(C.AvailableToRecv = 4);
+    {$ENDIF}
     Assert(C.Recv(B[0], 4) = 4);
     Assert((B[0] = 'f') and (B[1] = 'g') and (B[2] = 'h') and (B[3] = 'i'));
     Assert(C.AvailableToRecv = 0);

@@ -565,7 +565,7 @@ begin
       begin
         Delete(S, I, 1);
         if I <= Length(S) then
-          S[I] := AsciiUpCaseA(S[I]);
+          S[I] := AsciiUpCaseB(S[I]);
       end;
   until I = 0;
   // first character upper case

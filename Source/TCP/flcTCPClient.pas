@@ -75,8 +75,6 @@ uses
   SysUtils,
   SyncObjs,
   Classes,
-  { Fundamentals }
-  flcUtils,
   { Sockets }
   flcSocketLib,
   flcSocket,
@@ -170,10 +168,10 @@ type
   protected
     // parameters
     FAddressFamily      : TTCPClientAddressFamily;
-    FHost               : AnsiString;
-    FPort               : AnsiString;
-    FLocalHost          : AnsiString;
-    FLocalPort          : AnsiString;
+    FHost               : RawByteString;
+    FPort               : RawByteString;
+    FLocalHost          : RawByteString;
+    FLocalPort          : RawByteString;
 
     FRetryFailedConnect            : Boolean;
     FRetryFailedConnectDelaySec    : Integer;
@@ -181,8 +179,8 @@ type
 
     {$IFDEF TCPCLIENT_SOCKS}
     FSocksEnabled       : Boolean;
-    FSocksHost          : AnsiString;
-    FSocksPort          : AnsiString;
+    FSocksHost          : RawByteString;
+    FSocksPort          : RawByteString;
     FSocksAuth          : Boolean;
     FSocksUsername      : RawByteString;
     FSocksPassword      : RawByteString;
@@ -246,7 +244,7 @@ type
     FConnection        : TTCPConnection;
     FSyncListLog       : TList;
     FSyncLogType       : TTCPClientLogType;
-    FSyncLogMsg        : AnsiString;
+    FSyncLogMsg        : RawByteString;
     FSyncLogLevel      : Integer;
 
     {$IFDEF TCPCLIENT_TLS}
@@ -283,12 +281,12 @@ type
     procedure CheckActive;
 
     procedure SetAddressFamily(const AddressFamily: TTCPClientAddressFamily);
-    procedure SetHost(const Host: AnsiString);
-    procedure SetPort(const Port: AnsiString);
+    procedure SetHost(const Host: RawByteString);
+    procedure SetPort(const Port: RawByteString);
     function  GetPortInt: Integer;
     procedure SetPortInt(const PortInt: Integer);
-    procedure SetLocalHost(const LocalHost: AnsiString);
-    procedure SetLocalPort(const LocalPort: AnsiString);
+    procedure SetLocalHost(const LocalHost: RawByteString);
+    procedure SetLocalPort(const LocalPort: RawByteString);
 
     procedure SetRetryFailedConnect(const RetryFailedConnect: Boolean);
     procedure SetRetryFailedConnectDelaySec(const RetryFailedConnectDelaySec: Integer);
@@ -296,8 +294,8 @@ type
 
     {$IFDEF TCPCLIENT_SOCKS}
     procedure SetSocksProxy(const SocksProxy: Boolean);
-    procedure SetSocksHost(const SocksHost: AnsiString);
-    procedure SetSocksPort(const SocksPort: AnsiString);
+    procedure SetSocksHost(const SocksHost: RawByteString);
+    procedure SetSocksPort(const SocksPort: RawByteString);
     procedure SetSocksAuth(const SocksAuth: Boolean);
     procedure SetSocksUsername(const SocksUsername: RawByteString);
     procedure SetSocksPassword(const SocksPassword: RawByteString);
@@ -420,11 +418,11 @@ type
 
     // Parameters
     property  AddressFamily: TTCPClientAddressFamily read FAddressFamily write SetAddressFamily default cafIP4;
-    property  Host: AnsiString read FHost write SetHost;
-    property  Port: AnsiString read FPort write SetPort;
+    property  Host: RawByteString read FHost write SetHost;
+    property  Port: RawByteString read FPort write SetPort;
     property  PortInt: Integer read GetPortInt write SetPortInt;
-    property  LocalHost: AnsiString read FLocalHost write SetLocalHost;
-    property  LocalPort: AnsiString read FLocalPort write SetLocalPort;
+    property  LocalHost: RawByteString read FLocalHost write SetLocalHost;
+    property  LocalPort: RawByteString read FLocalPort write SetLocalPort;
 
     // Connect retry
     // If RetryFailedConnect if True, a failed connection attempt will be
@@ -439,8 +437,8 @@ type
     // Socks
     {$IFDEF TCPCLIENT_SOCKS}
     property  SocksEnabled: Boolean read FSocksEnabled write SetSocksProxy default False;
-    property  SocksHost: AnsiString read FSocksHost write SetSocksHost;
-    property  SocksPort: AnsiString read FSocksPort write SetSocksPort;
+    property  SocksHost: RawByteString read FSocksHost write SetSocksHost;
+    property  SocksPort: RawByteString read FSocksPort write SetSocksPort;
     property  SocksAuth: Boolean read FSocksAuth write SetSocksAuth default False;
     property  SocksUsername: RawByteString read FSocksUsername write SetSocksUsername;
     property  SocksPassword: RawByteString read FSocksPassword write SetSocksPassword;
@@ -627,6 +625,11 @@ type
 
 
 implementation
+
+uses
+  { Fundamentals }
+  flcStdTypes,
+  flcUtils;
 
 
 
@@ -1280,7 +1283,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5TCPClient.SetHost(const Host: AnsiString);
+procedure TF5TCPClient.SetHost(const Host: RawByteString);
 begin
   if Host = FHost then
     exit;
@@ -1291,7 +1294,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPClient.SetPort(const Port: AnsiString);
+procedure TF5TCPClient.SetPort(const Port: RawByteString);
 begin
   if Port = FPort then
     exit;
@@ -1304,15 +1307,15 @@ end;
 
 function TF5TCPClient.GetPortInt: Integer;
 begin
-  Result := StringToIntDefA(FPort, -1)
+  Result := StringToIntDefB(FPort, -1)
 end;
 
 procedure TF5TCPClient.SetPortInt(const PortInt: Integer);
 begin
-  SetPort(IntToStringA(PortInt));
+  SetPort(IntToStringB(PortInt));
 end;
 
-procedure TF5TCPClient.SetLocalHost(const LocalHost: AnsiString);
+procedure TF5TCPClient.SetLocalHost(const LocalHost: RawByteString);
 begin
   if LocalHost = FLocalHost then
     exit;
@@ -1323,7 +1326,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPClient.SetLocalPort(const LocalPort: AnsiString);
+procedure TF5TCPClient.SetLocalPort(const LocalPort: RawByteString);
 begin
   if LocalPort = FLocalPort then
     exit;
@@ -1364,7 +1367,7 @@ begin
   FSocksEnabled := SocksProxy;
 end;
 
-procedure TF5TCPClient.SetSocksHost(const SocksHost: AnsiString);
+procedure TF5TCPClient.SetSocksHost(const SocksHost: RawByteString);
 begin
   if SocksHost = FSocksHost then
     exit;
@@ -1372,7 +1375,7 @@ begin
   FSocksHost := SocksHost;
 end;
 
-procedure TF5TCPClient.SetSocksPort(const SocksPort: AnsiString);
+procedure TF5TCPClient.SetSocksPort(const SocksPort: RawByteString);
 begin
   if SocksPort = FSocksPort then
     exit;
@@ -2152,6 +2155,11 @@ begin
   {$IFDEF TCP_DEBUG_THREAD}
   Log(cltDebug, 'StopThread');
   {$ENDIF}
+  if Assigned(FProcessThread) then
+    begin
+      FProcessThread.Terminate;
+      FProcessThread.WaitFor;
+    end;
   FreeAndNil(FProcessThread);
 end;
 
@@ -2191,7 +2199,7 @@ procedure TF5TCPClient.ThreadExecute(const Thread: TTCPClientProcessThread);
 
   function WaitSec(const NSec: Integer): Boolean;
   var
-    T : LongWord;
+    T : Word32;
   begin
     Result := True;
     if NSec <= 0 then
@@ -2522,7 +2530,7 @@ end;
 
 // Wait until one of the States or time out
 function TF5TCPClient.WaitForState(const States: TTCPClientStates; const TimeOutMs: Integer): TTCPClientState;
-var T : LongWord;
+var T : Word32;
     S : TTCPClientState;
 begin
   CheckActive;

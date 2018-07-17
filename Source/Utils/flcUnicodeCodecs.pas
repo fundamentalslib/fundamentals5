@@ -5,7 +5,7 @@
 {   File version:     5.23                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2002-2016                                  }
+{   Copyright:        Copyright (c) 2002-2018                                  }
 {                     David J Butler and Dieter Köhler                         }
 {                     All rights reserved.                                     }
 {                     See license below.                                       }
@@ -119,8 +119,9 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -220,7 +221,9 @@ type
     class function GetAlias(const Idx: Integer): String; virtual;
 
     class function IsAlias(const Alias: String): Boolean;
+    {$IFDEF SupportAnsiString}
     class function IsAliasA(const Alias: AnsiString): Boolean;
+    {$ENDIF}
     class function IsAliasU(const Alias: UnicodeString): Boolean;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
@@ -229,9 +232,16 @@ type
     function  Encode(const S: PWideChar; const Length: Integer;
               out ProcessedChars: Integer): RawByteString; virtual; abstract;
 
-    procedure DecodeStr(const Buf: Pointer; const BufSize: Integer;
+    {$IFDEF SupportWideString}
+    procedure DecodeStrW(const Buf: Pointer; const BufSize: Integer;
               var Dest: WideString);
-    function  EncodeStr(const S: WideString): RawByteString;
+    function  EncodeStrW(const S: WideString): RawByteString;
+    {$ENDIF}
+    {$IFDEF SupportUnicodeString}
+    procedure DecodeStrU(const Buf: Pointer; const BufSize: Integer;
+              var Dest: UnicodeString);
+    function  EncodeStrU(const S: UnicodeString): RawByteString;
+    {$ENDIF}
 
     procedure ReadUCS4Char(out C: UCS4Char; out ByteCount: Integer);
     procedure WriteUCS4Char(const C: UCS4Char; out ByteCount: Integer); virtual;
@@ -293,20 +303,39 @@ function  DetectUTFEncoding(const Buf: Pointer; const BufSize: Integer;
 {                                                                              }
 { Encoding conversion functions                                                }
 {                                                                              }
-function  EncodingToUTF16(const CodecClass: TUnicodeCodecClass;
+{$IFDEF SupportWideString}
+function  EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
           const Buf: Pointer; const BufSize: Integer): WideString; overload;
-function  EncodingToUTF16(const CodecClass: TUnicodeCodecClass;
+function  EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
           const S: RawByteString): WideString; overload;
 
-function  EncodingToUTF16(const CodecAlias: String;
+function  EncodingToUTF16W(const CodecAlias: String;
           const Buf: Pointer; const BufSize: Integer): WideString; overload;
-function  EncodingToUTF16(const CodecAlias: String;
+function  EncodingToUTF16W(const CodecAlias: String;
           const S: RawByteString): WideString; overload;
 
-function  UTF16ToEncoding(const CodecClass: TUnicodeCodecClass;
+function  UTF16ToEncodingW(const CodecClass: TUnicodeCodecClass;
           const S: WideString): RawByteString; overload;
-function  UTF16ToEncoding(const CodecAlias: String;
+function  UTF16ToEncodingW(const CodecAlias: String;
           const S: WideString): RawByteString; overload;
+{$ENDIF}
+
+{$IFDEF SupportUnicodeString}
+function  EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
+          const Buf: Pointer; const BufSize: Integer): UnicodeString; overload;
+function  EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
+          const S: RawByteString): UnicodeString; overload;
+
+function  EncodingToUTF16U(const CodecAlias: String;
+          const Buf: Pointer; const BufSize: Integer): UnicodeString; overload;
+function  EncodingToUTF16U(const CodecAlias: String;
+          const S: RawByteString): UnicodeString; overload;
+
+function  UTF16ToEncodingU(const CodecClass: TUnicodeCodecClass;
+          const S: UnicodeString): RawByteString; overload;
+function  UTF16ToEncodingU(const CodecAlias: String;
+          const S: UnicodeString): RawByteString; overload;
+{$ENDIF}
 
 
 
@@ -510,7 +539,7 @@ type
 type
   TCustomSingleByteCodec = class(TCustomUnicodeCodec)
   protected
-    FEncodeReplaceChar : AnsiChar;
+    FEncodeReplaceChar : ByteChar;
 
     procedure InternalReadUCS4Char(out C: UCS4Char;
               out ByteCount: Integer); override;
@@ -521,9 +550,9 @@ type
     constructor Create; override;
     constructor CreateEx(const ErrorAction: TCodecErrorAction = eaException;
                 const DecodeReplaceChar: WideChar = WideChar(#$FFFD);
-                const EncodeReplaceChar: AnsiChar = AnsiChar(#32));
+                const EncodeReplaceChar: ByteChar = ByteChar(#32));
 
-    property  EncodeReplaceChar: AnsiChar read FEncodeReplaceChar write FEncodeReplaceChar;
+    property  EncodeReplaceChar: ByteChar read FEncodeReplaceChar write FEncodeReplaceChar;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
@@ -531,11 +560,11 @@ type
     function  Encode(const S: PWideChar; const Length: Integer;
               out ProcessedChars: Integer): RawByteString; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; virtual; abstract;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; virtual; abstract;
+    function  DecodeChar(const P: ByteChar): WideChar; virtual; abstract;
+    function  EncodeChar(const Ch: WideChar): ByteChar; virtual; abstract;
 
-    function  DecodeUCS4Char(const P: AnsiChar): UCS4Char; virtual;
-    function  EncodeUCS4Char(const Ch: UCS4Char): AnsiChar; virtual;
+    function  DecodeUCS4Char(const P: ByteChar): UCS4Char; virtual;
+    function  EncodeUCS4Char(const Ch: UCS4Char): ByteChar; virtual;
   end;
 
   TUnicodeSingleByteCodecClass = class of TCustomSingleByteCodec;
@@ -554,8 +583,8 @@ type
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
               const DestBuf: Pointer; const DestSize: Integer;
               out ProcessedBytes, DestLength: Integer); override;
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_2Codec = class(TCustomSingleByteCodec)
@@ -563,8 +592,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_3Codec = class(TCustomSingleByteCodec)
@@ -572,8 +601,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_4Codec = class(TCustomSingleByteCodec)
@@ -581,8 +610,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_5Codec = class(TCustomSingleByteCodec)
@@ -590,8 +619,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_6Codec = class(TCustomSingleByteCodec)
@@ -599,8 +628,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_7Codec = class(TCustomSingleByteCodec)
@@ -608,8 +637,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_8Codec = class(TCustomSingleByteCodec)
@@ -617,8 +646,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_9Codec = class(TCustomSingleByteCodec)
@@ -626,8 +655,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_10Codec = class(TCustomSingleByteCodec)
@@ -635,8 +664,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_13Codec = class(TCustomSingleByteCodec)
@@ -644,8 +673,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_14Codec = class(TCustomSingleByteCodec)
@@ -653,8 +682,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TISO8859_15Codec = class(TCustomSingleByteCodec)
@@ -662,8 +691,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
 
@@ -674,200 +703,200 @@ type
 type
   TWindows37Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows437Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows500Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows708Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows737Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows775Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows850Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows852Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows855Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows857Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows858Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows861Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows862Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows863Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows864Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows865Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows866Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows869Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows870Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows874Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows875Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1026Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1047Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1140Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1141Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1142Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1143Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1144Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1145Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1146Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1147Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1148Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1149Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1250Codec = class(TCustomSingleByteCodec)
@@ -875,8 +904,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1251Codec = class(TCustomSingleByteCodec)
@@ -884,8 +913,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1252Codec = class(TCustomSingleByteCodec)
@@ -893,44 +922,44 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1253Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1254Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1255Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1256Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1257Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TWindows1258Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
 
@@ -941,104 +970,104 @@ type
 type
   TIBM037Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM038Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM256Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM273Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM274Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM275Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM277Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM278Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM280Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM281Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM284Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM285Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM290Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM297Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM420Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM423Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM424Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM437Codec = class(TCustomSingleByteCodec)
@@ -1046,164 +1075,164 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM500Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM850Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM851Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM852Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM855Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM857Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM860Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM861Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM862Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM863Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM864Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM865Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM866Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM868Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM869Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM870Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM871Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM874Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM875Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM880Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM904Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM905Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM918Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM1004Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM1026Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TIBM1047Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
 
@@ -1218,8 +1247,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TMacRomanCodec = class(TCustomSingleByteCodec)
@@ -1227,8 +1256,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TMacCyrillicCodec = class(TCustomSingleByteCodec)
@@ -1236,26 +1265,26 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TMacGreekCodec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TMacIcelandicCodec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TMacTurkishCodec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
 
@@ -1270,8 +1299,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TEBCDIC_USCodec = class(TCustomSingleByteCodec)
@@ -1279,8 +1308,8 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TKOI8_RCodec = class(TCustomSingleByteCodec)
@@ -1288,20 +1317,20 @@ type
     class function GetAliasCount: Integer; override;
     class function GetAlias(const Idx: Integer): String; override;
 
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TJIS_X0201Codec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
   TNextStepCodec = class(TCustomSingleByteCodec)
   public
-    function  DecodeChar(const P: AnsiChar): WideChar; override;
-    function  EncodeChar(const Ch: WideChar): AnsiChar; override;
+    function  DecodeChar(const P: ByteChar): WideChar; override;
+    function  EncodeChar(const Ch: WideChar): ByteChar; override;
   end;
 
 
@@ -1323,6 +1352,7 @@ uses
   Windows,
   {$ENDIF}
   { Fundamentals }
+  flcUtils,
   flcUTF,
   flcUnicodeChar;
 
@@ -1577,7 +1607,8 @@ end;
 {                                                                              }
 { Unicode conversion functions                                                 }
 {                                                                              }
-function EncodingToUTF16(const CodecClass: TUnicodeCodecClass;
+{$IFDEF SupportWideString}
+function EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
     const Buf: Pointer; const BufSize: Integer): WideString;
 var C : TCustomUnicodeCodec;
 begin
@@ -1588,13 +1619,13 @@ begin
     end;
   C := CodecClass.Create;
   try
-    C.DecodeStr(Buf, BufSize, Result);
+    C.DecodeStrW(Buf, BufSize, Result);
   finally
     C.Free;
   end;
 end;
 
-function EncodingToUTF16(const CodecClass: TUnicodeCodecClass;
+function EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
     const S: RawByteString): WideString;
 var C : TCustomUnicodeCodec;
 begin
@@ -1605,25 +1636,25 @@ begin
     end;
   C := CodecClass.Create;
   try
-    C.DecodeStr(PAnsiChar(S), Length(S), Result);
+    C.DecodeStrW(PAnsiChar(S), Length(S), Result);
   finally
     C.Free;
   end;
 end;
 
-function EncodingToUTF16(const CodecAlias: String;
+function EncodingToUTF16W(const CodecAlias: String;
     const Buf: Pointer; const BufSize: Integer): WideString;
 begin
-  Result := EncodingToUTF16(GetCodecClassByAlias(CodecAlias),
+  Result := EncodingToUTF16W(GetCodecClassByAlias(CodecAlias),
       Buf, BufSize);
 end;
 
-function EncodingToUTF16(const CodecAlias: String; const S: RawByteString): WideString;
+function EncodingToUTF16W(const CodecAlias: String; const S: RawByteString): WideString;
 begin
-  Result := EncodingToUTF16(GetCodecClassByAlias(CodecAlias), S);
+  Result := EncodingToUTF16W(GetCodecClassByAlias(CodecAlias), S);
 end;
 
-function UTF16ToEncoding(const CodecClass: TUnicodeCodecClass;
+function UTF16ToEncodingW(const CodecClass: TUnicodeCodecClass;
     const S: WideString): RawByteString;
 var C : TCustomUnicodeCodec;
     I : Integer;
@@ -1641,10 +1672,82 @@ begin
   end;
 end;
 
-function UTF16ToEncoding(const CodecAlias: String; const S: WideString): RawByteString;
+function UTF16ToEncodingW(const CodecAlias: String; const S: WideString): RawByteString;
 begin
-  Result := UTF16ToEncoding(GetCodecClassByAlias(CodecAlias), S);
+  Result := UTF16ToEncodingW(GetCodecClassByAlias(CodecAlias), S);
 end;
+{$ENDIF}
+
+{$IFDEF SupportUnicodeString}
+function EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
+    const Buf: Pointer; const BufSize: Integer): UnicodeString;
+var C : TCustomUnicodeCodec;
+begin
+  if not Assigned(CodecClass) then
+    begin
+      Result := '';
+      exit;
+    end;
+  C := CodecClass.Create;
+  try
+    C.DecodeStrU(Buf, BufSize, Result);
+  finally
+    C.Free;
+  end;
+end;
+
+function EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
+    const S: RawByteString): UnicodeString;
+var C : TCustomUnicodeCodec;
+begin
+  if not Assigned(CodecClass) then
+    begin
+      Result := '';
+      exit;
+    end;
+  C := CodecClass.Create;
+  try
+    C.DecodeStrU(PByteChar(S), Length(S), Result);
+  finally
+    C.Free;
+  end;
+end;
+
+function EncodingToUTF16U(const CodecAlias: String;
+    const Buf: Pointer; const BufSize: Integer): UnicodeString;
+begin
+  Result := EncodingToUTF16U(GetCodecClassByAlias(CodecAlias),
+      Buf, BufSize);
+end;
+
+function EncodingToUTF16U(const CodecAlias: String; const S: RawByteString): UnicodeString;
+begin
+  Result := EncodingToUTF16U(GetCodecClassByAlias(CodecAlias), S);
+end;
+
+function UTF16ToEncodingU(const CodecClass: TUnicodeCodecClass;
+    const S: UnicodeString): RawByteString;
+var C : TCustomUnicodeCodec;
+    I : Integer;
+begin
+  if not Assigned(CodecClass) then
+    begin
+      SetLength(Result, 0);
+      exit;
+    end;
+  C := CodecClass.Create;
+  try
+    Result := C.Encode(Pointer(S), Length(S), I);
+  finally
+    C.Free;
+  end;
+end;
+
+function UTF16ToEncodingU(const CodecAlias: String; const S: UnicodeString): RawByteString;
+begin
+  Result := UTF16ToEncodingU(GetCodecClassByAlias(CodecAlias), S);
+end;
+{$ENDIF}
 
 
 
@@ -1718,12 +1821,14 @@ begin
   Result := False;
 end;
 
+{$IFDEF SupportAnsiString}
 class function TCustomUnicodeCodec.IsAliasA(const Alias: AnsiString): Boolean;
 var S : String;
 begin
   S := String(Alias);
   Result := IsAlias(S);
 end;
+{$ENDIF}
 
 class function TCustomUnicodeCodec.IsAliasU(const Alias: UnicodeString): Boolean;
 var S : String;
@@ -1767,7 +1872,8 @@ begin
     end;
 end;
 
-procedure TCustomUnicodeCodec.DecodeStr(const Buf: Pointer; const BufSize: Integer;
+{$IFDEF SupportWideString}
+procedure TCustomUnicodeCodec.DecodeStrW(const Buf: Pointer; const BufSize: Integer;
     var Dest: WideString);
 var P    : PAnsiChar;
     Q    : PWideChar;
@@ -1798,11 +1904,51 @@ begin
     SetLength(Dest, M);
 end;
 
-function TCustomUnicodeCodec.EncodeStr(const S: WideString): RawByteString;
+function TCustomUnicodeCodec.EncodeStrW(const S: WideString): RawByteString;
 var I : Integer;
 begin
   Result := Encode(Pointer(S), Length(S), I);
 end;
+{$ENDIF}
+
+{$IFDEF SupportUnicodeString}
+procedure TCustomUnicodeCodec.DecodeStrU(const Buf: Pointer; const BufSize: Integer;
+    var Dest: UnicodeString);
+var P    : PByteChar;
+    Q    : PWideChar;
+    L, M : Integer;
+    I, J : Integer;
+begin
+  P := Buf;
+  L := BufSize;
+  if not Assigned(P) or (L <= 0) then
+    begin
+      Dest := '';
+      exit;
+    end;
+  SetLength(Dest, BufSize);
+  M := 0;
+  repeat
+    Q := Pointer(Dest);
+    Inc(Q, M);
+    Decode(P, L, Q, BufSize * Sizeof(WideChar), I, J);
+    Dec(L, I);
+    Inc(P, I);
+    Inc(M, J);
+    if (J < BufSize) or (L <= 0) then
+      break;
+    SetLength(Dest, M + BufSize);
+  until False;
+  if Length(Dest) <> M then
+    SetLength(Dest, M);
+end;
+
+function TCustomUnicodeCodec.EncodeStrU(const S: UnicodeString): RawByteString;
+var I : Integer;
+begin
+  Result := Encode(Pointer(S), Length(S), I);
+end;
+{$ENDIF}
 
 function TCustomUnicodeCodec.ReadBuffer(var Buf; Count: Integer): Boolean;
 begin
@@ -1882,7 +2028,7 @@ end;
 procedure TCustomSingleByteCodec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
-var P       : PAnsiChar;
+var P       : PByteChar;
     Q       : PWideChar;
     I, L, C : Integer;
 begin
@@ -1940,7 +2086,7 @@ end;
 
 function TCustomSingleByteCodec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
-var P       : PAnsiChar;
+var P       : PByteChar;
     Q       : PWideChar;
     I, L, M : Integer;
 begin
@@ -2057,7 +2203,7 @@ end;
 procedure TUTF8Codec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
-var P    : PAnsiChar;
+var P    : PByteChar;
     Q    : PWideChar;
     L, I : Integer;
     M, N : Integer;
@@ -2140,7 +2286,7 @@ end;
 function TUTF8Codec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var P     : PWideChar;
-    Q     : PAnsiChar;
+    Q     : PByteChar;
     I, L,
     M, J  : Integer;
 begin
@@ -2538,7 +2684,7 @@ procedure TUCS4BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
   const DestBuf: Pointer; const DestSize: Integer;
   out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
-    N, P, Q : PAnsiChar;
+    N, P, Q : PByteChar;
     T, U, V : PByte;
     L, C    : Integer;
 begin
@@ -2662,7 +2808,7 @@ end;
 function TUCS4BECodec.Encode(const S: PWideChar; const Length: Integer;
   out ProcessedChars: Integer): RawByteString;
 var P, N          : PWideChar;
-    Q             : PAnsiChar;
+    Q             : PByteChar;
     M             : Integer;
     HighSurrogate : Word;
     LowSurrogate  : Word;
@@ -2793,7 +2939,7 @@ procedure TUCS4LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
-    N, P, Q : PAnsiChar;
+    N, P, Q : PByteChar;
     T, U, V : PByte;
     L, C    : Integer;
 begin
@@ -2910,7 +3056,7 @@ end;
 function TUCS4LECodec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var P, N          : PWideChar;
-    Q             : PAnsiChar;
+    Q             : PByteChar;
     M             : Integer;
     HighSurrogate : Word;
     LowSurrogate  : Word;
@@ -3042,7 +3188,7 @@ procedure TUCS4_2143Codec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
-    N, P, Q : PAnsiChar;
+    N, P, Q : PByteChar;
     T       : PByte;
     L, C    : Integer;
 begin
@@ -3155,7 +3301,7 @@ end;
 function TUCS4_2143Codec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var P, N          : PWideChar;
-    Q             : PAnsiChar;
+    Q             : PByteChar;
     M             : Integer;
     HighSurrogate : Word;
     LowSurrogate  : Word;
@@ -3285,7 +3431,7 @@ procedure TUCS4_3412Codec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var Ch4     : UCS4Char;
-    N, P, Q : PAnsiChar;
+    N, P, Q : PByteChar;
     T, U    : PByte;
     L, C    : Integer;
 begin
@@ -3404,7 +3550,7 @@ end;
 function TUCS4_3412Codec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var P, N          : PWideChar;
-    Q             : PAnsiChar;
+    Q             : PByteChar;
     M             : Integer;
     HighSurrogate : Word;
     LowSurrogate  : Word;
@@ -3739,12 +3885,12 @@ begin
   Result := ISO8859_1Alias[Idx];
 end;
 
-function TISO8859_1Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_1Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := WideChar(P);
 end;
 
-function TISO8859_1Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_1Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) >= $100 then
     raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), 'ISO-8859-1']);
@@ -3809,7 +3955,7 @@ const
       #$0111, #$0144, #$0148, #$00F3, #$00F4, #$0151, #$00F6, #$00F7,
       #$0159, #$016F, #$00FA, #$0171, #$00FC, #$00FD, #$0163, #$02D9);
 
-function TISO8859_2Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_2Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -3817,7 +3963,7 @@ begin
     Result := ISO8859_2Map[Ord(P)];
 end;
 
-function TISO8859_2Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_2Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_2Map, 'ISO-8859-2');
 end;
@@ -3863,7 +4009,7 @@ const
       #$FFFF, #$00F1, #$00F2, #$00F3, #$00F4, #$0121, #$00F6, #$00F7,
       #$011D, #$00F9, #$00FA, #$00FB, #$00FC, #$016D, #$015D, #$02D9);
 
-function TISO8859_3Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_3Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -3871,7 +4017,7 @@ begin
     Result := ISO8859_3Map[Ord(P)];
 end;
 
-function TISO8859_3Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_3Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_3Map, 'ISO-8859-3');
 end;
@@ -3918,7 +4064,7 @@ const
       #$0111, #$0146, #$014D, #$0137, #$00F4, #$00F5, #$00F6, #$00F7,
       #$00F8, #$0173, #$00FA, #$00FB, #$00FC, #$0169, #$016B, #$02D9);
 
-function TISO8859_4Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_4Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -3926,7 +4072,7 @@ begin
     Result := ISO8859_4Map[Ord(P)];
 end;
 
-function TISO8859_4Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_4Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_4Map, 'ISO-8859-4');
 end;
@@ -3957,7 +4103,7 @@ begin
   Result := ISO8859_5Alias[Idx];
 end;
 
-function TISO8859_5Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_5Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$A0, $AD : Result := WideChar(P);
@@ -3968,7 +4114,7 @@ begin
   end;
 end;
 
-function TISO8859_5Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_5Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) <= $A0 then
     Result := AnsiChar(Ch)
@@ -4015,7 +4161,7 @@ begin
   Result := ISO8859_6Alias[Idx];
 end;
 
-function TISO8859_6Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_6Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$A0, $A4, $AD                : Result := WideChar(P);
@@ -4025,7 +4171,7 @@ begin
   end;
 end;
 
-function TISO8859_6Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_6Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) <= $A0 then
     Result := AnsiChar(Ch)
@@ -4066,7 +4212,7 @@ begin
   Result := ISO8859_7Alias[Idx];
 end;
 
-function TISO8859_7Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_7Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$A0, $A6..$A9, $AB..$AD, $B0..$B3, $B7, $BB, $BD :
@@ -4080,7 +4226,7 @@ begin
   end;
 end;
 
-function TISO8859_7Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_7Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) <= $A0 then
     Result := AnsiChar(Ch)
@@ -4123,7 +4269,7 @@ begin
   Result := ISO8859_8Alias[Idx];
 end;
 
-function TISO8859_8Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_8Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$A0, $A2..$A9, $AB..$AE, $B0..$B9, $BB..$BE :
@@ -4138,7 +4284,7 @@ begin
   end;
 end;
 
-function TISO8859_8Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_8Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) <= $A0 then
     Result := AnsiChar(Ch)
@@ -4183,7 +4329,7 @@ begin
   Result := ISO8859_9Alias[Idx];
 end;
 
-function TISO8859_9Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_9Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $D0 : Result := #$011E;
@@ -4197,7 +4343,7 @@ begin
   end;
 end;
 
-function TISO8859_9Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_9Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ch of
     #$011E : Result := AnsiChar($D0);
@@ -4257,7 +4403,7 @@ const
       #$00F0, #$0146, #$014D, #$00F3, #$00F4, #$00F5, #$00F6, #$0169,
       #$00F8, #$0173, #$00FA, #$00FB, #$00FC, #$00FD, #$00FE, #$0138);
 
-function TISO8859_10Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_10Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -4265,7 +4411,7 @@ begin
     Result := ISO8859_10Map[Ord(P)];
 end;
 
-function TISO8859_10Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_10Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_10Map, 'ISO-8859-10');
 end;
@@ -4309,7 +4455,7 @@ const
     #$0161, #$0144, #$0146, #$00F3, #$014D, #$00F5, #$00F6, #$00F7,
     #$0173, #$0142, #$015B, #$016B, #$00FC, #$017B, #$017E, #$2019);
 
-function TISO8859_13Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_13Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -4317,7 +4463,7 @@ begin
     Result := ISO8859_13Map[Ord(P)];
 end;
 
-function TISO8859_13Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_13Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_13Map, 'ISO-8859-13');
 end;
@@ -4362,7 +4508,7 @@ const
     #$0175, #$00F1, #$00F2, #$00F3, #$00F4, #$00F5, #$00F6, #$1E6B,
     #$00F8, #$00F9, #$00FA, #$00FB, #$00FC, #$00FD, #$0177, #$00FF);
 
-function TISO8859_14Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_14Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $A0 then
     Result := WideChar(P)
@@ -4370,7 +4516,7 @@ begin
     Result := ISO8859_14Map[Ord(P)];
 end;
 
-function TISO8859_14Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_14Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromISOMap(Ch, ISO8859_14Map, 'ISO-8859-14');
 end;
@@ -4400,7 +4546,7 @@ begin
   Result := ISO8859_15Alias[Idx];
 end;
 
-function TISO8859_15Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TISO8859_15Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $A4 : Result := #$20AC;
@@ -4416,7 +4562,7 @@ begin
   end;
 end;
 
-function TISO8859_15Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TISO8859_15Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ch of
     #$20AC : Result := AnsiChar($A4);
@@ -4481,12 +4627,12 @@ const
 {                                                                              }
 { Windows-37                                                                   }
 {                                                                              }
-function TWindows37Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows37Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := CP37Map[P];
 end;
 
-function TWindows37Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows37Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, CP37Map, 'Windows-37');
 end;
@@ -4496,12 +4642,12 @@ end;
 {                                                                              }
 { IBM037                                                                       }
 {                                                                              }
-function TIBM037Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM037Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := CP37Map[P];
 end;
 
-function TIBM037Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM037Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, CP37Map, 'IBM037');
 end;
@@ -4546,12 +4692,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$009F);
 
-function TIBM038Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM038Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM038Map[P];
 end;
 
-function TIBM038Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM038Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM038Map, 'IBM038');
 end;
@@ -4596,12 +4742,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM256Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM256Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM256Map[P];
 end;
 
-function TIBM256Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM256Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM256Map, 'IBM256');
 end;
@@ -4646,12 +4792,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$005D, #$00D9, #$00DA, #$009F);
 
-function TIBM273Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM273Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM273Map[P];
 end;
 
-function TIBM273Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM273Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM273Map, 'IBM273');
 end;
@@ -4696,12 +4842,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$009F);
 
-function TIBM274Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM274Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM274Map[P];
 end;
 
-function TIBM274Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM274Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM274Map, 'IBM274');
 end;
@@ -4746,12 +4892,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$009F);
 
-function TIBM275Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM275Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM275Map[P];
 end;
 
-function TIBM275Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM275Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM275Map, 'IBM275');
 end;
@@ -4796,12 +4942,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM277Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM277Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM277Map[P];
 end;
 
-function TIBM277Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM277Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM277Map, 'IBM277');
 end;
@@ -4846,12 +4992,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM278Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM278Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM278Map[P];
 end;
 
-function TIBM278Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM278Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM278Map, 'IBM278');
 end;
@@ -4896,12 +5042,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM280Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM280Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM280Map[P];
 end;
 
-function TIBM280Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM280Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM280Map, 'IBM280');
 end;
@@ -4912,7 +5058,7 @@ end;
 { IBM281                                                                       }
 {   Similar to IBM038.                                                         }
 {                                                                              }
-function TIBM281Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM281Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $4A : Result := #$00A3;
@@ -4927,7 +5073,7 @@ begin
   end;
 end;
 
-function TIBM281Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM281Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $00A3 : Result := AnsiChar($4A);
@@ -4982,12 +5128,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM284Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM284Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM284Map[P];
 end;
 
-function TIBM284Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM284Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM284Map, 'IBM284');
 end;
@@ -5032,12 +5178,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM285Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM285Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM285Map[P];
 end;
 
-function TIBM285Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM285Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM285Map, 'IBM285');
 end;
@@ -5082,12 +5228,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$009F);
 
-function TIBM290Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM290Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM290Map[P];
 end;
 
-function TIBM290Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM290Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM290Map, 'IBM290');
 end;
@@ -5132,12 +5278,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM297Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM297Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM297Map[P];
 end;
 
-function TIBM297Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM297Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM297Map, 'IBM297');
 end;
@@ -5182,12 +5328,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$FFFF, #$0666, #$0667, #$0668, #$0669, #$009F);
 
-function TIBM420Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM420Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM420Map[P];
 end;
 
-function TIBM420Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM420Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM420Map, 'IBM420');
 end;
@@ -5232,12 +5378,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00FF, #$00E7, #$00C7, #$FFFF, #$FFFF, #$009F);
 
-function TIBM423Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM423Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM423Map[P];
 end;
 
-function TIBM423Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM423Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM423Map, 'IBM423');
 end;
@@ -5282,12 +5428,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$009F);
 
-function TIBM424Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM424Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM424Map[P];
 end;
 
-function TIBM424Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM424Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM424Map, 'IBM424');
 end;
@@ -5328,7 +5474,7 @@ const
 {                                                                              }
 { Windows-437                                                                  }
 {                                                                              }
-function TWindows437Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows437Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5336,7 +5482,7 @@ begin
     Result := CP437Map[Ord(P)];
 end;
 
-function TWindows437Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows437Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP437Map, 'Windows-437');
 end;
@@ -5360,7 +5506,7 @@ begin
   Result := CP437Alias[Idx];
 end;
 
-function TIBM437Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM437Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5368,7 +5514,7 @@ begin
     Result := CP437Map[Ord(P)];
 end;
 
-function TIBM437Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM437Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP437Map, 'IBM437');
 end;
@@ -5419,12 +5565,12 @@ const
 {                                                                              }
 { Windows-500                                                                  }
 {                                                                              }
-function TWindows500Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows500Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := CP500Map[P];
 end;
 
-function TWindows500Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows500Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, CP500Map, 'Windows-500');
 end;
@@ -5434,12 +5580,12 @@ end;
 {                                                                              }
 { IBM500                                                                       }
 {                                                                              }
-function TIBM500Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM500Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := CP500Map[P];
 end;
 
-function TIBM500Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM500Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, CP500Map, 'IBM500');
 end;
@@ -5468,7 +5614,7 @@ const
       #$0650, #$0651, #$0652, #$F8C2, #$F8C3, #$F8C4, #$F8C5, #$F8C6,
       #$F8C7, #$256A, #$2518, #$250C, #$00B5, #$00A3, #$25A0, #$00A0);
 
-function TWindows708Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows708Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5476,7 +5622,7 @@ begin
     Result := Windows708Map[Ord(P)];
 end;
 
-function TWindows708Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows708Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows708Map, 'Windows-708');
 end;
@@ -5505,7 +5651,7 @@ const
       #$038F, #$00B1, #$2265, #$2264, #$03AA, #$03AB, #$00F7, #$2248,
       #$00B0, #$2219, #$00B7, #$221A, #$207F, #$00B2, #$25A0, #$00A0);
 
-function TWindows737Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows737Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5513,7 +5659,7 @@ begin
     Result := Windows737Map[Ord(P)];
 end;
 
-function TWindows737Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows737Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows737Map, 'Windows-737');
 end;
@@ -5542,7 +5688,7 @@ const
       #$00AD, #$00B1, #$201C, #$00BE, #$00B6, #$00A7, #$00F7, #$201E,
       #$00B0, #$2219, #$00B7, #$00B9, #$00B3, #$00B2, #$25A0, #$00A0);
 
-function TWindows775Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows775Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5550,7 +5696,7 @@ begin
     Result := Windows775Map[Ord(P)];
 end;
 
-function TWindows775Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows775Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows775Map, 'Windows-775');
 end;
@@ -5585,7 +5731,7 @@ const
 {                                                                              }
 { Windows-850                                                                  }
 {                                                                              }
-function TWindows850Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows850Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5593,7 +5739,7 @@ begin
     Result := CP850Map[Ord(P)];
 end;
 
-function TWindows850Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows850Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP850Map, 'Windows-850');
 end;
@@ -5603,7 +5749,7 @@ end;
 {                                                                              }
 { IBM850                                                                       }
 {                                                                              }
-function TIBM850Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM850Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5611,7 +5757,7 @@ begin
     Result := CP850Map[Ord(P)];
 end;
 
-function TIBM850Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM850Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP850Map, 'IBM850');
 end;
@@ -5640,7 +5786,7 @@ const
       #$00AD, #$00B1, #$03C5, #$03C6, #$03C7, #$00A7, #$03C8, #$02DB,
       #$00B0, #$00A8, #$03C9, #$03CB, #$03B0, #$03CE, #$25A0, #$00A0);
 
-function TIBM851Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM851Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5648,7 +5794,7 @@ begin
     Result := IBM851Map[Ord(P)];
 end;
 
-function TIBM851Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM851Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, IBM851Map, 'IBM851');
 end;
@@ -5683,7 +5829,7 @@ const
 {                                                                              }
 { Windows-852                                                                  }
 {                                                                              }
-function TWindows852Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows852Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5691,7 +5837,7 @@ begin
     Result := CP852Map[Ord(P)];
 end;
 
-function TWindows852Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows852Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP852Map, 'Windows-852');
 end;
@@ -5701,7 +5847,7 @@ end;
 {                                                                              }
 { IBM852                                                                       }
 {                                                                              }
-function TIBM852Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM852Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5709,7 +5855,7 @@ begin
     Result := CP852Map[Ord(P)];
 end;
 
-function TIBM852Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM852Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP852Map, 'IBM852');
 end;
@@ -5744,7 +5890,7 @@ const
 {                                                                              }
 { Windows-855                                                                  }
 {                                                                              }
-function TWindows855Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows855Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5752,7 +5898,7 @@ begin
     Result := CP855Map[Ord(P)];
 end;
 
-function TWindows855Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows855Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP855Map, 'Windows-855');
 end;
@@ -5762,7 +5908,7 @@ end;
 {                                                                              }
 { IBM855                                                                       }
 {                                                                              }
-function TIBM855Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM855Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5770,7 +5916,7 @@ begin
     Result := CP855Map[Ord(P)];
 end;
 
-function TIBM855Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM855Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP855Map, 'IBM855');
 end;
@@ -5805,7 +5951,7 @@ const
 {                                                                              }
 { Windows-857                                                                  }
 {                                                                              }
-function TWindows857Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows857Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5813,7 +5959,7 @@ begin
     Result := CP857Map[Ord(P)];
 end;
 
-function TWindows857Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows857Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP857Map, 'Windows-857');
 end;
@@ -5823,7 +5969,7 @@ end;
 {                                                                              }
 { IBM857                                                                       }
 {                                                                              }
-function TIBM857Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM857Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$7F      : Result := WideChar(P);
@@ -5833,7 +5979,7 @@ begin
   end;
 end;
 
-function TIBM857Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM857Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP857Map, 'IBM857');
   if Result in [AnsiChar($D5), AnsiChar($E7), AnsiChar($F2)] then
@@ -5846,7 +5992,7 @@ end;
 { Windows-858                                                                  }
 {   Similar to CP850.                                                          }
 {                                                                              }
-function TWindows858Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows858Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$7F : Result := WideChar(P);
@@ -5856,7 +6002,7 @@ begin
   end;
 end;
 
-function TWindows858Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows858Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $20AC : Result := AnsiChar($D5);
@@ -5889,7 +6035,7 @@ const
       #$2261, #$00B1, #$2265, #$2264, #$2320, #$2321, #$00F7, #$2248,
       #$00B0, #$2219, #$00B7, #$221A, #$207F, #$00B2, #$25A0, #$00A0);
 
-function TIBM860Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM860Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5897,7 +6043,7 @@ begin
     Result := IBM860Map[Ord(P)];
 end;
 
-function TIBM860Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM860Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, IBM860Map, 'IBM860');
 end;
@@ -5932,7 +6078,7 @@ const
 {                                                                              }
 { Windows-861                                                                  }
 {                                                                              }
-function TWindows861Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows861Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5940,7 +6086,7 @@ begin
     Result := CP861Map[Ord(P)];
 end;
 
-function TWindows861Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows861Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP861Map, 'Windows-861');
 end;
@@ -5950,7 +6096,7 @@ end;
 {                                                                              }
 { IBM861                                                                       }
 {                                                                              }
-function TIBM861Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM861Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -5958,7 +6104,7 @@ begin
     Result := CP861Map[Ord(P)]
 end;
 
-function TIBM861Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM861Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP861Map, 'IBM861');
 end;
@@ -5993,7 +6139,7 @@ const
 {                                                                              }
 { Windows-862                                                                  }
 {                                                                              }
-function TWindows862Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows862Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6001,7 +6147,7 @@ begin
     Result := CP862Map[Ord(P)];
 end;
 
-function TWindows862Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows862Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP862Map, 'Windows-862');
 end;
@@ -6011,7 +6157,7 @@ end;
 {                                                                              }
 { IBM862                                                                       }
 {                                                                              }
-function TIBM862Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM862Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6019,7 +6165,7 @@ begin
     Result := CP862Map[Ord(P)];
 end;
 
-function TIBM862Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM862Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP862Map, 'IBM862');
 end;
@@ -6054,7 +6200,7 @@ const
 {                                                                              }
 { Windows-863                                                                  }
 {                                                                              }
-function TWindows863Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows863Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6062,7 +6208,7 @@ begin
     Result := CP863Map[Ord(P)];
 end;
 
-function TWindows863Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows863Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP863Map, 'Windows-863');
 end;
@@ -6072,7 +6218,7 @@ end;
 {                                                                              }
 { IBM863                                                                       }
 {                                                                              }
-function TIBM863Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM863Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6080,7 +6226,7 @@ begin
     Result := CP863Map[Ord(P)];
 end;
 
-function TIBM863Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM863Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP863Map, 'IBM863');
 end;
@@ -6109,7 +6255,7 @@ const
       #$FE7D, #$0651, #$FEE5, #$FEE9, #$FEEC, #$FEF0, #$FEF2, #$FED0,
       #$FED5, #$FEF5, #$FEF6, #$FEDD, #$FED9, #$FEF1, #$25A0, #$F8C0);
 
-function TWindows864Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows864Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6117,7 +6263,7 @@ begin
     Result := Windows864Map[Ord(P)];
 end;
 
-function TWindows864Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows864Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows864Map, 'Windows-864');
 end;
@@ -6158,7 +6304,7 @@ const
       #$FEF0, #$FEF2, #$FED0, #$FED5, #$FEF5, #$FEF6, #$FEDD, #$FED9,
       #$FEF1, #$25A0, #$FFFF);
 
-function TIBM864Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM864Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) >= $25 then
     Result := IBM864Map[Ord(P)]
@@ -6166,7 +6312,7 @@ begin
     Result := WideChar(P);
 end;
 
-function TIBM864Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM864Codec.EncodeChar(const Ch: WideChar): ByteChar;
 var I : Byte;
 begin
   if Ch = #$FFFF then
@@ -6213,7 +6359,7 @@ const
 {                                                                              }
 { Windows-865                                                                  }
 {                                                                              }
-function TWindows865Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows865Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6221,7 +6367,7 @@ begin
     Result := CP865Map[Ord(P)];
 end;
 
-function TWindows865Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows865Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP865Map, 'Windows-865');
 end;
@@ -6231,7 +6377,7 @@ end;
 {                                                                              }
 { IBM865                                                                       }
 {                                                                              }
-function TIBM865Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM865Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6239,7 +6385,7 @@ begin
     Result := CP865Map[Ord(P)];
 end;
 
-function TIBM865Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM865Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP437Map, 'IBM865');
 end;
@@ -6274,7 +6420,7 @@ const
 {                                                                              }
 { Windows-866                                                                  }
 {                                                                              }
-function TWindows866Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows866Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6282,7 +6428,7 @@ begin
     Result := CP866Map[Ord(P)];
 end;
 
-function TWindows866Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows866Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP866Map, 'Windows-866');
 end;
@@ -6292,7 +6438,7 @@ end;
 {                                                                              }
 { IBM866                                                                       }
 {                                                                              }
-function TIBM866Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM866Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6300,7 +6446,7 @@ begin
     Result := CP866Map[Ord(P)];
 end;
 
-function TIBM866Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM866Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP866Map, 'IBM866');
 end;
@@ -6329,7 +6475,7 @@ const
       #$FFFF, #$0621, #$00AD, #$FFFF, #$FFFF, #$FFFF, #$FFFF, #$FFFF,
       #$FFFF, #$FFFF, #$FFFF, #$0651, #$FE7D, #$FFFF, #$25A0, #$00A0);
 
-function TIBM868Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM868Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6337,7 +6483,7 @@ begin
     Result := IBM868Map[Ord(P)];
 end;
 
-function TIBM868Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM868Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP866Map, 'IBM868');
 end;
@@ -6372,7 +6518,7 @@ const
 {                                                                              }
 { Windows-869                                                                  }
 {                                                                              }
-function TWindows869Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows869Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$7F : Result := WideChar(P);
@@ -6384,7 +6530,7 @@ begin
   end;
 end;
 
-function TWindows869Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows869Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $0087 : Result := AnsiChar($87);
@@ -6400,7 +6546,7 @@ end;
 {                                                                              }
 { IBM869                                                                       }
 {                                                                              }
-function TIBM869Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM869Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6408,7 +6554,7 @@ begin
     Result := CP869Map[Ord(P)];
 end;
 
-function TIBM869Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM869Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, CP869Map, 'IBM869');
 end;
@@ -6453,12 +6599,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$010E, #$0170, #$00DC, #$0164, #$00DA, #$009F);
 
-function TWindows870Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows870Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows870Map[P];
 end;
 
-function TWindows870Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows870Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows870Map, 'Windows-870');
 end;
@@ -6503,12 +6649,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$010E, #$0170, #$00DC, #$0164, #$00DA, #$009F);
 
-function TIBM870Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM870Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM870Map[P];
 end;
 
-function TIBM870Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM870Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows870Map, 'IBM870');
 end;
@@ -6553,12 +6699,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TIBM871Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM871Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM871Map[P];
 end;
 
-function TIBM871Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM871Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM871Map, 'IBM871');
 end;
@@ -6587,7 +6733,7 @@ const
       #$0E50, #$0E51, #$0E52, #$0E53, #$0E54, #$0E55, #$0E56, #$0E57,
       #$0E58, #$0E59, #$0E5A, #$0E5B, #$F8C5, #$F8C6, #$F8C7, #$F8C8);
 
-function TWindows874Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows874Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6595,7 +6741,7 @@ begin
     Result := Windows874Map[Ord(P)];
 end;
 
-function TWindows874Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows874Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows874Map, 'Windows-874');
 end;
@@ -6624,7 +6770,7 @@ const
       #$0E50, #$0E51, #$0E52, #$0E53, #$0E54, #$0E55, #$0E56, #$0E57,
       #$0E58, #$0E59, #$0E5A, #$0E5B, #$FFFF, #$FFFF, #$FFFF, #$FFFF);
 
-function TIBM874Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM874Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -6632,7 +6778,7 @@ begin
     Result := IBM874Map[Ord(P)];
 end;
 
-function TIBM874Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM874Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, IBM874Map, 'IBM874');
 end;
@@ -6677,12 +6823,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00A9, #$FFFF, #$FFFF, #$00BB, #$009F);
 
-function TWindows875Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows875Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows875Map[P];
 end;
 
-function TWindows875Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows875Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows875Map, 'Windows-875');
 end;
@@ -6727,12 +6873,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00A9, #$FFFF, #$FFFF, #$00BB, #$009F);
 
-function TIBM875Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM875Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM875Map[P];
 end;
 
-function TIBM875Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM875Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM875Map, 'IBM875');
 end;
@@ -6777,12 +6923,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$0417, #$0428, #$042D, #$0429, #$0427, #$009F);
 
-function TIBM880Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM880Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM880Map[P];
 end;
 
-function TIBM880Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM880Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM880Map, 'IBM880');
 end;
@@ -6792,7 +6938,7 @@ end;
 {                                                                              }
 { IBM904                                                                       }
 {                                                                              }
-function TIBM904Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM904Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $00..$7F : Result := WideChar(P);
@@ -6804,7 +6950,7 @@ begin
   end;
 end;
 
-function TIBM904Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM904Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $00..$7F : Result := AnsiChar(Ch);
@@ -6856,12 +7002,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$0022, #$00D9, #$00DA, #$009F);
 
-function TIBM905Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM905Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM905Map[P];
 end;
 
-function TIBM905Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM905Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM905Map, 'IBM905');
 end;
@@ -6906,12 +7052,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$FFFF, #$FFFF, #$FFFF, #$0651, #$FE7D, #$009F);
 
-function TIBM918Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM918Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := IBM918Map[P];
 end;
 
-function TIBM918Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM918Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, IBM905Map, 'IBM918');
 end;
@@ -6940,7 +7086,7 @@ const
       #$00F0, #$00F1, #$00F2, #$00F3, #$00F4, #$00F5, #$00F6, #$00F7,
       #$00F8, #$00F9, #$00FA, #$00FB, #$00FC, #$00FD, #$00FE, #$00FF);
 
-function TIBM1004Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM1004Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) >= $80 then
       Result := IBM1004Map[Ord(P)]
@@ -6948,7 +7094,7 @@ begin
       Result := WideChar(P);
 end;
 
-function TIBM1004Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM1004Codec.EncodeChar(const Ch: WideChar): ByteChar;
 var
   I: Byte;
 begin
@@ -7014,7 +7160,7 @@ const
 {                                                                              }
 { Windows-1026                                                                 }
 {                                                                              }
-function TWindows1026Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1026Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $9D : Result := #$00B8;
@@ -7024,7 +7170,7 @@ begin
   end;
 end;
 
-function TWindows1026Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1026Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $00B8 : Result := AnsiChar($9D);
@@ -7039,7 +7185,7 @@ end;
 {                                                                              }
 { IBM1026                                                                      }
 {                                                                              }
-function TIBM1026Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM1026Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $9D : Result := #$02DB;
@@ -7049,7 +7195,7 @@ begin
   end;
 end;
 
-function TIBM1026Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM1026Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $02DB : Result := AnsiChar($9D);
@@ -7106,7 +7252,7 @@ const
 {                                                                              }
 { Windows-1047                                                                 }
 {                                                                              }
-function TWindows1047Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1047Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $15 : Result := #$000A;
@@ -7116,7 +7262,7 @@ begin
   end;
 end;
 
-function TWindows1047Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1047Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $000A : Result := AnsiChar($15);
@@ -7131,7 +7277,7 @@ end;
 {                                                                              }
 { IBM1047                                                                      }
 {                                                                              }
-function TIBM1047Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TIBM1047Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $15 : Result := #$0085;
@@ -7141,7 +7287,7 @@ begin
   end;
 end;
 
-function TIBM1047Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TIBM1047Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $000A : Result := AnsiChar($25);
@@ -7157,7 +7303,7 @@ end;
 { Windows-1140                                                                 }
 {   Similar to CP37.                                                           }
 {                                                                              }
-function TWindows1140Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1140Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $9F : Result := #$20AC;
@@ -7166,7 +7312,7 @@ begin
   end;
 end;
 
-function TWindows1140Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1140Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $20AC : Result := AnsiChar($9F);
@@ -7220,12 +7366,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$005D, #$00D9, #$00DA, #$009F);
 
-function TWindows1141Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1141Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1141Map[P];
 end;
 
-function TWindows1141Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1141Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1141Map, 'Windows-1141');
 end;
@@ -7271,12 +7417,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1142Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1142Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1142Map[P];
 end;
 
-function TWindows1142Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1142Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1142Map, 'Windows-1142');
 end;
@@ -7322,12 +7468,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1143Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1143Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1143Map[P];
 end;
 
-function TWindows1143Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1143Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1143Map, 'Windows-1143');
 end;
@@ -7373,12 +7519,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1144Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1144Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1144Map[P];
 end;
 
-function TWindows1144Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1144Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1144Map, 'Windows-1144');
 end;
@@ -7424,12 +7570,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1145Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1145Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1145Map[P];
 end;
 
-function TWindows1145Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1145Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1145Map, 'Windows-1145');
 end;
@@ -7475,12 +7621,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037, 
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1146Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1146Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1146Map[P];
 end;
 
-function TWindows1146Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1146Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1146Map, 'Windows-1146');
 end;
@@ -7526,12 +7672,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1147Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1147Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1147Map[P];
 end;
 
-function TWindows1147Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1147Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1147Map, 'Windows-1147');
 end;
@@ -7577,12 +7723,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1148Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1148Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1148Map[P];
 end;
 
-function TWindows1148Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1148Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1148Map, 'Windows-1148');
 end;
@@ -7628,12 +7774,12 @@ const
       #$0030, #$0031, #$0032, #$0033, #$0034, #$0035, #$0036, #$0037,
       #$0038, #$0039, #$00B3, #$00DB, #$00DC, #$00D9, #$00DA, #$009F);
 
-function TWindows1149Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1149Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   Result := Windows1149Map[P];
 end;
 
-function TWindows1149Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1149Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromMap(Ch, Windows1149Map, 'Windows-1149');
 end;
@@ -7681,7 +7827,7 @@ const
       #$0111, #$0144, #$0148, #$00F3, #$00F4, #$0151, #$00F6, #$00F7,
       #$0159, #$016F, #$00FA, #$0171, #$00FC, #$00FD, #$0163, #$02D9);
 
-function TWindows1250Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1250Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7689,7 +7835,7 @@ begin
     Result := Windows1250Map[Ord(P)];
 end;
 
-function TWindows1250Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1250Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1250Map, 'Windows-1250');
 end;
@@ -7737,7 +7883,7 @@ const
       #$0440, #$0441, #$0442, #$0443, #$0444, #$0445, #$0446, #$0447,
       #$0448, #$0449, #$044A, #$044B, #$044C, #$044D, #$044E, #$044F);
 
-function TWindows1251Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1251Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7745,7 +7891,7 @@ begin
     Result := Windows1251Map[Ord(P)];
 end;
 
-function TWindows1251Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1251Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1251Map, 'Windows-1251');
 end;
@@ -7781,7 +7927,7 @@ const
       #$0090, #$2018, #$2019, #$201C, #$201D, #$2022, #$2013, #$2014,
       #$02DC, #$2122, #$0161, #$203A, #$0153, #$009D, #$017E, #$0178);
 
-function TWindows1252Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1252Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) in [$80..$9F] then
     Result := Windows1252Map[Ord(P)]
@@ -7789,7 +7935,7 @@ begin
     Result := WideChar(P);
 end;
 
-function TWindows1252Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1252Codec.EncodeChar(const Ch: WideChar): ByteChar;
 var I : Byte;
 begin
   if (Ord(Ch) < $80) or
@@ -7831,7 +7977,7 @@ const
       #$03C0, #$03C1, #$03C2, #$03C3, #$03C4, #$03C5, #$03C6, #$03C7,
       #$03C8, #$03C9, #$03CA, #$03CB, #$03CC, #$03CD, #$03CE, #$F8FB);
 
-function TWindows1253Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1253Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7839,7 +7985,7 @@ begin
     Result := Windows1253Map[Ord(P)];
 end;
 
-function TWindows1253Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1253Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1253Map, 'Windows-1253');
 end;
@@ -7868,7 +8014,7 @@ const
       #$011F, #$00F1, #$00F2, #$00F3, #$00F4, #$00F5, #$00F6, #$00F7,
       #$00F8, #$00F9, #$00FA, #$00FB, #$00FC, #$0131, #$015F, #$00FF);
 
-function TWindows1254Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1254Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7876,7 +8022,7 @@ begin
     Result := Windows1254Map[Ord(P)];
 end;
 
-function TWindows1254Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1254Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1254Map, 'Windows-1254');
 end;
@@ -7905,7 +8051,7 @@ const
       #$05E0, #$05E1, #$05E2, #$05E3, #$05E4, #$05E5, #$05E6, #$05E7, 
       #$05E8, #$05E9, #$05EA, #$F894, #$F895, #$200E, #$200F, #$F896);
 
-function TWindows1255Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1255Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7913,7 +8059,7 @@ begin
     Result := Windows1255Map[Ord(P)];
 end;
 
-function TWindows1255Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1255Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1255Map, 'Windows-1255');
 end;
@@ -7942,7 +8088,7 @@ const
       #$064B, #$064C, #$064D, #$064E, #$00F4, #$064F, #$0650, #$00F7,
       #$0651, #$00F9, #$0652, #$00FB, #$00FC, #$200E, #$200F, #$06D2);
 
-function TWindows1256Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1256Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7950,7 +8096,7 @@ begin
     Result := Windows1256Map[Ord(P)];
 end;
 
-function TWindows1256Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1256Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1256Map, 'Windows-1256');
 end;
@@ -7979,7 +8125,7 @@ const
       #$0161, #$0144, #$0146, #$00F3, #$014D, #$00F5, #$00F6, #$00F7,
       #$0173, #$0142, #$015B, #$016B, #$00FC, #$017C, #$017E, #$02D9);
 
-function TWindows1257Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1257Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -7987,7 +8133,7 @@ begin
     Result := Windows1257Map[Ord(P)];
 end;
 
-function TWindows1257Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1257Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1257Map, 'Windows-1257');
 end;
@@ -8016,7 +8162,7 @@ const
       #$0111, #$00F1, #$0323, #$00F3, #$00F4, #$01A1, #$00F6, #$00F7,
       #$00F8, #$00F9, #$00FA, #$00FB, #$00FC, #$01B0, #$20AB, #$00FF);
 
-function TWindows1258Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TWindows1258Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8024,7 +8170,7 @@ begin
     Result := Windows1258Map[Ord(P)];
 end;
 
-function TWindows1258Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TWindows1258Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, Windows1258Map, 'Windows-1258');
 end;
@@ -8072,7 +8218,7 @@ const
     #$016B, #$016E, #$00DA, #$016F, #$0170, #$0171, #$0172, #$0173,
     #$00DD, #$00FD, #$0137, #$017B, #$0141, #$017C, #$0122, #$02C7);
 
-function TMacLatin2Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacLatin2Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8080,7 +8226,7 @@ begin
     Result := MacLatin2Map[Ord(P)];
 end;
 
-function TMacLatin2Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacLatin2Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacLatin2Map, 'MacLatin2');
 end;
@@ -8128,7 +8274,7 @@ const
     #$FFFF, #$00D2, #$00DA, #$00DB, #$00D9, #$0131, #$02C6, #$02DC,
     #$00AF, #$02D8, #$02D9, #$02DA, #$00B8, #$02DD, #$02DB, #$02C7);
 
-function TMacRomanCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacRomanCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8136,7 +8282,7 @@ begin
     Result := MacRomanMap[Ord(P)];
 end;
 
-function TMacRomanCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacRomanCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacRomanMap, 'MacRoman');
 end;
@@ -8184,7 +8330,7 @@ const
     #$0440, #$0441, #$0442, #$0443, #$0444, #$0445, #$0446, #$0447,
     #$0448, #$0449, #$044A, #$044B, #$044C, #$044D, #$044E, #$00A4);
 
-function TMacCyrillicCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacCyrillicCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8192,7 +8338,7 @@ begin
     Result := MacCyrillicMap[Ord(P)];
 end;
 
-function TMacCyrillicCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacCyrillicCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacCyrillicMap, 'MacCyrillic');
 end;
@@ -8221,7 +8367,7 @@ const
     #$03C0, #$03CE, #$03C1, #$03C3, #$03C4, #$03B8, #$03C9, #$03C2,
     #$03C7, #$03C5, #$03B6, #$03CA, #$03CB, #$0390, #$03B0, #$FFFF);
 
-function TMacGreekCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacGreekCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8229,7 +8375,7 @@ begin
     Result := MacGreekMap[Ord(P)];
 end;
 
-function TMacGreekCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacGreekCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacGreekMap, 'MacGreek');
 end;
@@ -8258,7 +8404,7 @@ const
     #$FFFF, #$00D2, #$00DA, #$00DB, #$00D9, #$0131, #$02C6, #$02DC,
     #$00AF, #$02D8, #$02D9, #$02DA, #$00B8, #$02DD, #$02DB, #$02C7);
 
-function TMacIcelandicCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacIcelandicCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8266,7 +8412,7 @@ begin
     Result := MacIcelandicMap[Ord(P)];
 end;
 
-function TMacIcelandicCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacIcelandicCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacIcelandicMap, 'MacIcelandic');
 end;
@@ -8295,7 +8441,7 @@ const
     #$FFFF, #$00D2, #$00DA, #$00DB, #$00D9, #$FFFF, #$02C6, #$02DC,
     #$00AF, #$02D8, #$02D9, #$02DA, #$00B8, #$02DD, #$02DB, #$02C7);
 
-function TMacTurkishCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TMacTurkishCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8303,7 +8449,7 @@ begin
     Result := MacTurkishMap[Ord(P)];
 end;
 
-function TMacTurkishCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TMacTurkishCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, MacTurkishMap, 'MacTurkish');
 end;
@@ -8336,7 +8482,7 @@ begin
   Result := USASCIIAlias[Idx];
 end;
 
-function TUSASCIICodec.DecodeChar(const P: AnsiChar): WideChar;
+function TUSASCIICodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8344,7 +8490,7 @@ begin
     raise EConvertError.CreateFmt(SInvalidCodePoint, [Ord(P), 'US-ASCII']);
 end;
 
-function TUSASCIICodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TUSASCIICodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   if Ord(Ch) < $80 then
     Result := AnsiChar(Ch)
@@ -8376,7 +8522,7 @@ begin
   Result := EBCDIC_USAlias[Idx];
 end;
 
-function TEBCDIC_USCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TEBCDIC_USCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $40      : Result := #$0020;                         // SPACE
@@ -8424,7 +8570,7 @@ begin
   end;
 end;
 
-function TEBCDIC_USCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TEBCDIC_USCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $0020        : Result := AnsiChar($40);                            // SPACE
@@ -8515,7 +8661,7 @@ const
     #$041F, #$042F, #$0420, #$0421, #$0422, #$0423, #$0416, #$0412,
     #$042C, #$042B, #$0417, #$0428, #$042D, #$0429, #$0427, #$042A);
 
-function TKOI8_RCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TKOI8_RCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8523,7 +8669,7 @@ begin
     Result := KOI8_RMap[Ord(P)];
 end;
 
-function TKOI8_RCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TKOI8_RCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   Result := CharFromHighMap(Ch, KOI8_RMap, 'KOI8-R');
 end;
@@ -8533,7 +8679,7 @@ end;
 {                                                                              }
 { JIS_X0201                                                                    }
 {                                                                              }
-function TJIS_X0201Codec.DecodeChar(const P: AnsiChar): WideChar;
+function TJIS_X0201Codec.DecodeChar(const P: ByteChar): WideChar;
 begin
   case Ord(P) of
     $20..$5B,
@@ -8546,7 +8692,7 @@ begin
   end;
 end;
 
-function TJIS_X0201Codec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TJIS_X0201Codec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $0020..$005B,
@@ -8696,7 +8842,7 @@ const
     #$FFFF   //  Not defined
   );
 
-function TNextStepCodec.DecodeChar(const P: AnsiChar): WideChar;
+function TNextStepCodec.DecodeChar(const P: ByteChar): WideChar;
 begin
   if Ord(P) < $80 then
     Result := WideChar(P)
@@ -8704,7 +8850,7 @@ begin
     Result := NextStepMap[Ord(P)];
 end;
 
-function TNextStepCodec.EncodeChar(const Ch: WideChar): AnsiChar;
+function TNextStepCodec.EncodeChar(const Ch: WideChar): ByteChar;
 begin
   case Ord(Ch) of
     $0000..$007F,

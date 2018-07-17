@@ -51,6 +51,10 @@ unit flcCipherAES;
 
 interface
 
+uses
+  { Fundamentals }
+  flcStdTypes;
+
 
 
 {                                                                              }
@@ -64,7 +68,7 @@ const
 
 type
   TAESState = array[0..3, 0..AES_Nb - 1] of Byte;
-  TAESKeySchedule = array[0..AES_KeyScheduleSize - 1] of LongWord;
+  TAESKeySchedule = array[0..AES_KeyScheduleSize - 1] of Word32;
   TAESContext = record
     Nk     : Byte;              // Nk = length of cipher key in multiples of 32 bits (4, 6 or 8)
     Nr     : Byte;              // Nr = number of rounds
@@ -338,7 +342,7 @@ begin
   SecureClear(T, SizeOf(T));
 end;
 
-function xbyte(const R: Byte; const K: LongWord): Byte;
+function xbyte(const R: Byte; const K: Word32): Byte;
 begin
   Result := Byte((K shr (R * 8)) and $FF);
 end;
@@ -346,7 +350,7 @@ end;
 procedure XorRoundKey(var Context: TAESContext; const Rk: TAESKeySchedule; const RkIdx: Integer);
 var R, C : Byte;
     P : PByte;
-    RkC : LongWord;
+    RkC : Word32;
 begin
   for C := 0 to AES_Nb - 1 do
     begin
@@ -363,7 +367,7 @@ end;
 
 { AES key expansion }
 
-function SubWord(const A: LongWord): LongWord;
+function SubWord(const A: Word32): Word32;
 begin
   Result :=
        AES_S[Byte (A and $000000FF)] or
@@ -372,7 +376,7 @@ begin
       (AES_S[Byte((A and $FF000000) shr 24)] shl 24);
 end;
 
-function RotWord(const A: LongWord): LongWord;
+function RotWord(const A: Word32): Word32;
 begin
   Result :=
       ((A and $FFFFFF00) shr 8) or
@@ -401,8 +405,8 @@ const
 procedure AESKeyExpansion(var Context: TAESContext; const KeyBuf; const KeyBufSize: Integer);
 var Nk : Byte;
     I : Integer;
-    T : LongWord;
-    P : PLongWord;
+    T : Word32;
+    P : PWord32;
 begin
   Nk := Context.Nk;
   if KeyBufSize <> Nk * 4 then

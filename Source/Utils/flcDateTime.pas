@@ -92,7 +92,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -284,8 +284,8 @@ function  TwoDigitRadix2000YearToYear(const Y: Integer): Integer;
 function  DateTimeAsElapsedTimeA(const D: TDateTime;
           const IncludeMilliseconds: Boolean = False): AnsiString;
 
-function  UnixTimeToDateTime(const UnixTime: LongWord): TDateTime;
-function  DateTimeToUnixTime(const D: TDateTime): LongWord;
+function  UnixTimeToDateTime(const UnixTime: Word32): TDateTime;
+function  DateTimeToUnixTime(const D: TDateTime): Word32;
 
 
 
@@ -535,7 +535,7 @@ uses
   {$ENDIF}
 
   { Fundamentals }
-  flcStdTypes,
+  flcUtils,
   {$IFDEF DEBUG}{$IFDEF SELFTEST}
   flcTimers,
   {$ENDIF}{$ENDIF}
@@ -1412,12 +1412,12 @@ end;
 const
   UnixBaseTime = 25569.0; // 1 Jan 1970 as TDateTime
 
-function UnixTimeToDateTime(const UnixTime: LongWord): TDateTime;
+function UnixTimeToDateTime(const UnixTime: Word32): TDateTime;
 begin
   Result := UnixBaseTime + UnixTime / SecondsPerDay;
 end;
 
-function DateTimeToUnixTime(const D: TDateTime): LongWord;
+function DateTimeToUnixTime(const D: TDateTime): Word32;
 begin
   Result := Trunc((D - UnixBaseTime) * SecondsPerDay);
 end;

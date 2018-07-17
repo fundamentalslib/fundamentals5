@@ -569,6 +569,8 @@ uses
     {$INCLUDE cHTTPClientUses.inc}
   {$ENDIF}
   { Fundamentals }
+  flcBase64,
+  flcStringBuilder,
   flcDateTime,
   flcSocketLib
   {$IFDEF HTTP_TLS},

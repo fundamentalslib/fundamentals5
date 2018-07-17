@@ -77,9 +77,9 @@ type
       UTF8ErrorInvalidBuffer,
       UTF8ErrorOutOfRange );
 
-function  UTF8ToUCS4Char(const P: PAnsiChar; const Size: Integer;
+function  UTF8ToUCS4Char(const P: Pointer; const Size: Integer;
           out SeqSize: Integer; out Ch: UCS4Char): TUTF8Error;
-function  UTF8ToWideChar(const P: PAnsiChar; const Size: Integer;
+function  UTF8ToWideChar(const P: Pointer; const Size: Integer;
           out SeqSize: Integer; out Ch: WideChar): TUTF8Error;
 
 procedure UCS4CharToUTF8(const Ch: UCS4Char; const Dest: Pointer;
@@ -105,15 +105,19 @@ procedure UCS4CharToUTF16LE(const Ch: UCS4Char; const Dest: Pointer;
 const
   UTF8BOMSize = 3;
 
-function  DetectUTF8BOM(const P: PAnsiChar; const Size: Integer): Boolean;
+function  DetectUTF8BOM(const P: Pointer; const Size: Integer): Boolean;
 
-function  UTF8CharSize(const P: PAnsiChar; const Size: Integer): Integer;
-function  UTF8BufLength(const P: PAnsiChar; const Size: Integer): Integer;
+function  UTF8CharSize(const P: Pointer; const Size: Integer): Integer;
+function  UTF8BufLength(const P: Pointer; const Size: Integer): Integer;
 {$IFDEF SupportRawByteString}
 function  UTF8StringLength(const S: RawByteString): Integer;
+{$IFDEF SupportWideString}
 function  UTF8StringToWideString(const S: RawByteString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
-function  UTF8StringToUnicodeStringP(const S: PAnsiChar; const Size: Integer): UnicodeString;
+function  UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
+{$ENDIF}
 function  UTF8StringToLongString(const S: RawByteString): RawByteString;
 function  UTF8StringToString(const S: RawByteString): String;
 {$ENDIF}
@@ -123,13 +127,21 @@ function  WideBufToUTF8Size(const Buf: PWideChar; const Len: Integer): Integer;
 {$IFDEF SupportWideString}
 function  WideStringToUTF8Size(const S: WideString): Integer;
 {$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
+{$ENDIF}
 {$IFDEF SupportRawByteString}
 function  WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  WideStringToUTF8String(const S: WideString): RawByteString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
+{$IFDEF SupportWideString}
 function  UnicodeStringToWideString(const S: UnicodeString): WideString;
-function  RawByteBufToUTF8Size(const Buf: PAnsiChar; const Len: Integer): Integer;
+{$ENDIF}
+{$ENDIF}
+function  RawByteBufToUTF8Size(const Buf: Pointer; const Len: Integer): Integer;
 function  RawByteStringToUTF8Size(const S: RawByteString): Integer;
 function  RawByteStringToUTF8String(const S: RawByteString): RawByteString;
 function  UCS4CharToUTF8String(const Ch: UCS4Char): RawByteString;
@@ -168,6 +180,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
+  flcStdTypes,
   flcASCII;
 
 
@@ -188,12 +201,12 @@ resourcestring
 { invalid UTF-8 sequence is encountered, the function returns                  }
 { UTF8ErrorInvalidEncoding and SeqSize (<= Size) is the size of the            }
 { invalid sequence, and Ch may be the intended character.                      }
-function UTF8ToUCS4Char(const P: PAnsiChar; const Size: Integer;
+function UTF8ToUCS4Char(const P: Pointer; const Size: Integer;
     out SeqSize: Integer; out Ch: UCS4Char): TUTF8Error;
 var C, D : Byte;
-    V    : LongWord;
+    V    : Word32;
     I    : Integer;
-    Q    : PAnsiChar;
+    Q    : PByte;
 begin
   if not Assigned(P) or (Size <= 0) then
     begin
@@ -202,7 +215,7 @@ begin
       Result := UTF8ErrorInvalidBuffer;
       exit;
     end;
-  C := Ord(P^);
+  C := PByte(P)^;
   if C < $80 then
     begin
       SeqSize := 1;
@@ -264,7 +277,7 @@ begin
   Result := UTF8ErrorNone;
 end;
 
-function UTF8ToWideChar(const P: PAnsiChar; const Size: Integer;
+function UTF8ToWideChar(const P: Pointer; const Size: Integer;
     out SeqSize: Integer; out Ch: WideChar): TUTF8Error;
 var Ch4 : UCS4Char;
 begin
@@ -475,34 +488,34 @@ end;
 {                                                                              }
 { UTF-8 string functions                                                       }
 {                                                                              }
-function DetectUTF8BOM(const P: PAnsiChar; const Size: Integer): Boolean;
-var Q : PAnsiChar;
+function DetectUTF8BOM(const P: Pointer; const Size: Integer): Boolean;
+var Q : PByte;
 begin
   Result := False;
-  if Assigned(P) and (Size >= 3) and (Ord(P^) = $EF) then
+  if Assigned(P) and (Size >= 3) and (PByte(P)^ = $EF) then
     begin
       Q := P;
       Inc(Q);
-      if Ord(Q^) = $BB then
+      if Q^ = $BB then
         begin
           Inc(Q);
-          if Ord(Q^) = $BF then
+          if Q^ = $BF then
             Result := True;
         end;
     end;
 end;
 
-function UTF8CharSize(const P: PAnsiChar; const Size: Integer): Integer;
+function UTF8CharSize(const P: Pointer; const Size: Integer): Integer;
 var C : Byte;
     I : Integer;
-    Q : PAnsiChar;
+    Q : PByte;
 begin
   if not Assigned(P) or (Size <= 0) then
     begin
       Result := 0;
       exit;
     end;
-  C := Ord(P^);
+  C := PByte(P)^;
   if C < $80 then // 1-byte (US-ASCII value)
     Result := 1 else
   if C and $C0 = $80 then // invalid encoding
@@ -533,8 +546,8 @@ begin
     end;
 end;
 
-function UTF8BufLength(const P: PAnsiChar; const Size: Integer): Integer;
-var Q    : PAnsiChar;
+function UTF8BufLength(const P: Pointer; const Size: Integer): Integer;
+var Q    : PByte;
     L, C : Integer;
 begin
   Q := P;
@@ -589,8 +602,8 @@ begin
     end;
 end;
 
-function RawByteBufToUTF8Size(const Buf: PAnsiChar; const Len: Integer): Integer;
-var P : PAnsiChar;
+function RawByteBufToUTF8Size(const Buf: Pointer; const Len: Integer): Integer;
+var P : PByte;
     I : Integer;
 begin
   P := Buf;
@@ -598,7 +611,7 @@ begin
   for I := 1 to Len do
     begin
       Inc(Result);
-      if Ord(P^) >= $80 then
+      if P^ >= $80 then
         Inc(Result);
       Inc(P);
     end;
@@ -611,17 +624,22 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
 begin
   Result := WideBufToUTF8Size(Pointer(S), Length(S));
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function RawByteStringToUTF8Size(const S: RawByteString): Integer;
 begin
   Result := RawByteBufToUTF8Size(Pointer(S), Length(S));
 end;
+{$ENDIF}
 
 {$IFDEF SupportRawByteString}
+{$IFDEF SupportWideString}
 function UTF8StringToWideString(const S: RawByteString): WideString;
 var P       : PAnsiChar;
     Q       : PWideChar;
@@ -656,9 +674,11 @@ begin
   SetLength(Result, M); // actual size
 end;
 {$ENDIF}
+{$ENDIF}
 
-function UTF8StringToUnicodeStringP(const S: PAnsiChar; const Size: Integer): UnicodeString;
-var P       : PAnsiChar;
+{$IFDEF SupportUnicodeString}
+function UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
+var P       : PByte;
     Q       : PWideChar;
     L, M, I : Integer;
     C       : WideChar;
@@ -690,15 +710,19 @@ begin
   until L <= 0;
   SetLength(Result, M); // actual size
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
 begin
   Result := UTF8StringToUnicodeStringP(Pointer(S), Length(S));
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function UTF8StringToLongString(const S: RawByteString): RawByteString;
-var P       : PAnsiChar;
-    Q       : PAnsiChar;
+var P       : PByte;
+    Q       : PByte;
     L, M, I : Integer;
     C       : WideChar;
 begin
@@ -708,7 +732,7 @@ begin
       Result := '';
       exit;
     end;
-  if IsAsciiStringA(S) then // optimize for US-ASCII strings
+  if IsAsciiStringB(S) then // optimize for US-ASCII strings
     begin
       Result := S;
       exit;
@@ -723,7 +747,7 @@ begin
     Assert(I > 0, 'I > 0');
     if Ord(C) > $FF then
       raise EConvertError.Create(SUTFStringConvertError);
-    Q^ := AnsiChar(Ord(C));
+    Q^ := Byte(Ord(C));
     Inc(Q);
     Inc(M);
     Inc(P, I);
@@ -731,7 +755,9 @@ begin
   until L <= 0;
   SetLength(Result, M); // actual size
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function UTF8StringToString(const S: RawByteString): String;
 begin
   {$IFDEF StringIsUnicode}
@@ -740,11 +766,12 @@ begin
   Result := S;
   {$ENDIF}
 end;
+{$ENDIF}
 
 {$IFDEF SupportRawByteString}
 function WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
 var P     : PWideChar;
-    Q     : PAnsiChar;
+    Q     : PByte;
     I, M,
     N, J  : Integer;
 begin
@@ -775,8 +802,8 @@ begin
 end;
 
 function RawByteStringToUTF8String(const S: RawByteString): RawByteString;
-var P       : PAnsiChar;
-    Q       : PAnsiChar;
+var P       : PByte;
+    Q       : PByte;
     I, M, N : Integer;
     J, L    : Integer;
 begin
@@ -807,26 +834,19 @@ begin
   SetLength(Result, M); // actual size
 end;
 
+{$IFDEF SupportWideString}
 function WideStringToUTF8String(const S: WideString): RawByteString;
 begin
   Result := WideBufToUTF8String(Pointer(S), Length(S));
 end;
+{$ENDIF}
 
 function UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
 begin
   Result := WideBufToUTF8String(Pointer(S), Length(S));
 end;
 
-{$IFNDEF SupportWideString}
-function UnicodeStringToWideString(const S: UnicodeString): WideString;
-var L, I : Integer;
-begin
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 0 to L - 1 do
-    Result[I] := S[I + 1];
-end;
-{$ELSE}
+{$IFDEF SupportWideString}
 function UnicodeStringToWideString(const S: UnicodeString): WideString;
 begin
   Result := S;
@@ -839,7 +859,7 @@ const
 function UCS4CharToUTF8String(const Ch: UCS4Char): RawByteString;
 var Buf     : array[0..MaxUTF8SequenceSize - 1] of Byte;
     Size, I : Integer;
-    P, Q    : PAnsiChar;
+    P, Q    : PByte;
 begin
   Size := 0;
   UCS4CharToUTF8(Ch, @Buf, Sizeof(Buf), Size);
@@ -858,7 +878,7 @@ begin
 end;
 
 function ISO8859_1StringToUTF8String(const S: RawByteString): RawByteString;
-var P, Q  : PAnsiChar;
+var P, Q  : PByte;
     L, I,
     M, J  : Integer;
 begin
@@ -975,12 +995,14 @@ const
   S3 = RawByteString(#$E6#$97#$A5#$E6#$9C#$AC#$E8#$AA#$9E);
 begin
   // UTF-8 test cases from RFC 2279
+  {$IFDEF SupportWideString}
   Assert(WideStringToUTF8String(W1) = #$41#$E2#$89#$A2#$CE#$91#$2E, 'WideStringToUTF8String');
   Assert(WideStringToUTF8String(W2) = #$ED#$95#$9C#$EA#$B5#$AD#$EC#$96#$B4, 'WideStringToUTF8String');
   Assert(WideStringToUTF8String(W3) = #$E6#$97#$A5#$E6#$9C#$AC#$E8#$AA#$9E, 'WideStringToUTF8String');
   Assert(UTF8StringToWideString(S1) = W1, 'UTF8StringToWideString');
   Assert(UTF8StringToWideString(S2) = W2, 'UTF8StringToWideString');
   Assert(UTF8StringToWideString(S3) = W3, 'UTF8StringToWideString');
+  {$ENDIF}
   Assert(UTF8StringLength(S1) = 4, 'UTF8StringLength');
   Assert(UTF8StringLength(S2) = 3, 'UTF8StringLength');
   Assert(UTF8StringLength(S3) = 3, 'UTF8StringLength');

@@ -81,7 +81,7 @@ uses
   Classes,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcSocket,
   flcTCPBuffer;
 
@@ -161,9 +161,9 @@ type
   TTCPConnectionStates = set of TTCPConnectionState;
 
   TTCPConnectionTransferState = record
-    LastUpdate   : LongWord;
+    LastUpdate   : Word32;
     ByteCount    : Int64;
-    TransferRate : LongWord;
+    TransferRate : Word32;
   end;
 
   TRawByteCharSet = set of AnsiChar;
@@ -451,9 +451,9 @@ type
 {                                                                              }
 { TCP timer helpers                                                            }
 {                                                                              }
-function  TCPGetTick: LongWord;
-function  TCPTickDelta(const D1, D2: LongWord): Integer;
-function  TCPTickDeltaU(const D1, D2: LongWord): LongWord;
+function  TCPGetTick: Word32;
+function  TCPTickDelta(const D1, D2: Word32): Integer;
+function  TCPTickDeltaU(const D1, D2: Word32): Word32;
 
 
 
@@ -612,20 +612,20 @@ end;
 {                                                                              }
 { TCP timer helpers                                                            }
 {                                                                              }
-function TCPGetTick: LongWord;
+function TCPGetTick: Word32;
 begin
   Result := Trunc(Frac(Now) * $5265C00);
 end;
 
 {$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-function TCPTickDelta(const D1, D2: LongWord): Integer; {$IFDEF UseInline}inline;{$ENDIF}
+function TCPTickDelta(const D1, D2: Word32): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := Integer(D2 - D1);
 end;
 
-function TCPTickDeltaU(const D1, D2: LongWord): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function TCPTickDeltaU(const D1, D2: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Result := LongWord(D2 - D1);
+  Result := Word32(D2 - D1);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
@@ -675,19 +675,19 @@ begin
       Result := True;
       exit;
     end;
-  D := LongWord(Count) div 4;
+  D := Word32(Count) div 4;
   for I := 1 to D do
-    if PLongWord(P)^ = PLongWord(Q)^ then
+    if PWord32(P)^ = PWord32(Q)^ then
       begin
-        Inc(PLongWord(P));
-        Inc(PLongWord(Q));
+        Inc(PWord32(P));
+        Inc(PWord32(Q));
       end
     else
       begin
         Result := False;
         exit;
       end;
-  D := LongWord(Count) and 3;
+  D := Word32(Count) and 3;
   for I := 1 to D do
     if PByte(P)^ = PByte(Q)^ then
       begin
@@ -719,7 +719,7 @@ end;
 
 // Update the transfer's internal state for elapsed time
 procedure TCPConnectionTransferUpdate(var State: TTCPConnectionTransferState;
-          const CurrentTick: LongWord;
+          const CurrentTick: Word32;
           out Elapsed: Integer);
 begin
   Elapsed := TCPTickDelta(State.LastUpdate, CurrentTick);
@@ -735,12 +735,12 @@ begin
       Elapsed := Elapsed div 2;
       State.ByteCount := State.ByteCount div 2;
     end;
-  State.LastUpdate := TCPTickDeltaU(LongWord(Elapsed), CurrentTick);
+  State.LastUpdate := TCPTickDeltaU(Word32(Elapsed), CurrentTick);
 end;
 
 // Returns the number of bytes that can be transferred with this throttle in place
 function TCPConnectionTransferThrottledSize(var State: TTCPConnectionTransferState;
-         const CurrentTick: LongWord;
+         const CurrentTick: Word32;
          const MaxTransferRate: Integer;
          const BufferSize: Integer): Integer;
 var Elapsed, Quota, QuotaFree : Integer;
@@ -1584,7 +1584,7 @@ end;
 function TTCPConnection.LocateChrInBuffer(const Delimiter: TRawByteCharSet; const MaxSize: Integer): Integer;
 var BufSize : Integer;
     LocLen  : Integer;
-    BufPtr  : PAnsiChar;
+    BufPtr  : PByteChar;
     I       : Integer;
 begin
   if MaxSize = 0 then
@@ -1626,8 +1626,8 @@ function TTCPConnection.LocateStrInBuffer(const Delimiter: RawByteString; const 
 var DelLen  : Integer;
     BufSize : Integer;
     LocLen  : Integer;
-    BufPtr  : PAnsiChar;
-    DelPtr  : PAnsiChar;
+    BufPtr  : PByteChar;
+    DelPtr  : PByteChar;
     I       : Integer;
 begin
   if MaxSize = 0 then
@@ -1655,7 +1655,7 @@ begin
     else
       LocLen := MaxSize;
   BufPtr := TCPBufferPtr(FReadBuffer);
-  DelPtr := PAnsiChar(Delimiter);
+  DelPtr := PByteChar(Delimiter);
   for I := 0 to LocLen - DelLen do
     if TCPCompareMem(BufPtr^, DelPtr^, DelLen) then
       begin
@@ -1675,7 +1675,7 @@ end;
 function TTCPConnection.PeekDelimited(var Buf; const BufSize: Integer;
          const Delimiter: TRawByteCharSet; const MaxSize: Integer): Integer;
 var DelPos : Integer;
-    BufPtr : PAnsiChar;
+    BufPtr : PByteChar;
     BufLen : Integer;
 begin
   Lock;
@@ -1706,7 +1706,7 @@ end;
 function TTCPConnection.PeekDelimited(var Buf; const BufSize: Integer;
          const Delimiter: RawByteString; const MaxSize: Integer): Integer;
 var DelPos : Integer;
-    BufPtr : PAnsiChar;
+    BufPtr : PByteChar;
     BufLen : Integer;
 begin
   Assert(Delimiter <> '');
@@ -1773,7 +1773,7 @@ end;
 // Throttles reading.
 function TTCPConnection.Read(var Buf; const BufSize: Integer): Integer;
 var
-  BufPtr : PAnsiChar;
+  BufPtr : PByteChar;
   SizeRead, SizeReadBuf, SizeReadSocket, SizeRemain, SizeTotal : Integer;
 begin
   Lock;
@@ -1899,7 +1899,7 @@ end;
 
 function TTCPConnection.WriteToTransport(const Buf; const BufSize: Integer): Integer;
 var L : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     B : Boolean;
 begin
   Result := 0;
@@ -2066,7 +2066,7 @@ begin
       exit;
     SetLength(Line, DelPos);
     if DelPos > 0 then
-      Read(PAnsiChar(Line)^, DelPos);
+      Read(PByteChar(Line)^, DelPos);
     DelLen := Length(Delimiter);
     Discard(DelLen);
   finally
@@ -2219,7 +2219,7 @@ end;
 
 // Wait until one of the States or time out.
 function TTCPBlockingConnection.WaitForState(const States: TTCPConnectionStates; const TimeOutMs: Integer): TTCPConnectionState;
-var T : LongWord;
+var T : Word32;
     S : TTCPConnectionState;
     C : TTCPConnection;
 begin
@@ -2239,7 +2239,7 @@ end;
 
 // Wait until amount of data received, closed or time out.
 function TTCPBlockingConnection.WaitForReceiveData(const BufferSize: Integer; const TimeOutMs: Integer): Boolean;
-var T : LongWord;
+var T : Word32;
     L : Integer;
     C : TTCPConnection;
 begin
@@ -2261,7 +2261,7 @@ end;
 
 // Wait until send buffer is cleared to socket, closed or time out.
 function TTCPBlockingConnection.WaitForTransmitFin(const TimeOutMs: Integer): Boolean;
-var T : LongWord;
+var T : Word32;
     L : Integer;
     C : TTCPConnection;
 begin

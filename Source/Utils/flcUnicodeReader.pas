@@ -127,9 +127,9 @@ type
               const Skip: Boolean): Boolean;
 
     function  MatchChars(const CharMatchFunc: TWideCharMatchFunction): Integer;
-    function  MatchRawByteChars(const C: CharSet): Integer;
+    function  MatchRawByteChars(const C: ByteCharSet): Integer;
 
-    function  LocateRawByteChar(const C: CharSet;
+    function  LocateRawByteChar(const C: ByteCharSet;
               const Optional: Boolean = False): Integer;
     function  LocateRawByteStr(const S: RawByteString; const CaseSensitive: Boolean;
               const Optional: Boolean = False): Integer;
@@ -139,13 +139,13 @@ type
     function  GetPeekBuffer(const Len: Integer; var Buffer: PWideChar): Integer;
 
     function  ReadChars(const CharMatchFunc: TWideCharMatchFunction): UnicodeString;
-    function  ReadRawByteChars(const C: CharSet): RawByteString;
+    function  ReadRawByteChars(const C: ByteCharSet): RawByteString;
 
-    function  SkipToRawByteChar(const C: CharSet;
+    function  SkipToRawByteChar(const C: ByteCharSet;
               const SkipDelimiter: Boolean): Integer;
-    function  ReadToRawByteChar(const C: CharSet;
+    function  ReadToRawByteChar(const C: ByteCharSet;
               const SkipDelimiter: Boolean = False): UnicodeString;
-    function  ReadUTF8StrToRawByteChar(const C: CharSet;
+    function  ReadUTF8StrToRawByteChar(const C: ByteCharSet;
               const SkipDelimiter: Boolean = False): RawByteString;
 
     function  ReadToRawByteStr(const S: RawByteString;
@@ -638,7 +638,7 @@ begin
   until False;
 end;
 
-function TUnicodeReader.MatchRawByteChars(const C: CharSet): Integer;
+function TUnicodeReader.MatchRawByteChars(const C: ByteCharSet): Integer;
 var P: PWideChar;
     N, I: Integer;
 begin
@@ -666,7 +666,7 @@ begin
   until False;
 end;
 
-function TUnicodeReader.LocateRawByteChar(const C: CharSet;
+function TUnicodeReader.LocateRawByteChar(const C: ByteCharSet;
     const Optional: Boolean): Integer;
 var P: PWideChar;
     N, I: Integer;
@@ -840,7 +840,7 @@ begin
     end;
 end;
 
-function TUnicodeReader.ReadRawByteChars(const C: CharSet): RawByteString;
+function TUnicodeReader.ReadRawByteChars(const C: ByteCharSet): RawByteString;
 var P : PWideChar;
     L : Integer;
 begin
@@ -859,7 +859,7 @@ begin
     end;
 end;
 
-function TUnicodeReader.SkipToRawByteChar(const C: CharSet;
+function TUnicodeReader.SkipToRawByteChar(const C: ByteCharSet;
     const SkipDelimiter: Boolean): Integer;
 var L: Integer;
 begin
@@ -881,7 +881,7 @@ begin
     Inc(FBufPos);
 end;
 
-function TUnicodeReader.ReadToRawByteChar(const C: CharSet;
+function TUnicodeReader.ReadToRawByteChar(const C: ByteCharSet;
     const SkipDelimiter: Boolean): UnicodeString;
 var L, M: Integer;
 begin
@@ -903,7 +903,7 @@ begin
     Inc(FBufPos);
 end;
 
-function TUnicodeReader.ReadUTF8StrToRawByteChar(const C: CharSet;
+function TUnicodeReader.ReadUTF8StrToRawByteChar(const C: ByteCharSet;
     const SkipDelimiter: Boolean): RawByteString;
 var L, M: Integer;
 begin

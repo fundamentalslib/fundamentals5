@@ -243,7 +243,7 @@ type
     function  MatchChar(const Ch: AnsiChar;
               const MatchNonMatch: Boolean = False;
               const SkipOnMatch: Boolean = False): Boolean; overload;
-    function  MatchChar(const C: CharSet; var Ch: AnsiChar;
+    function  MatchChar(const C: ByteCharSet; var Ch: AnsiChar;
               const MatchNonMatch: Boolean = False;
               const SkipOnMatch: Boolean = False): Boolean; overload;
 
@@ -252,13 +252,13 @@ type
 
     function  SkipAll(const Ch: AnsiChar; const MatchNonMatch: Boolean = False;
               const MaxCount: Integer = -1): Integer; overload;
-    function  SkipAll(const C: CharSet; const MatchNonMatch: Boolean = False;
+    function  SkipAll(const C: ByteCharSet; const MatchNonMatch: Boolean = False;
               const MaxCount: Integer = -1): Integer; overload;
 
     function  Locate(const Ch: AnsiChar;
               const LocateNonMatch: Boolean = False;
               const MaxOffset: Integer = -1): Integer; overload; virtual;
-    function  Locate(const C: CharSet;
+    function  Locate(const C: ByteCharSet;
               const LocateNonMatch: Boolean = False;
               const MaxOffset: Integer = -1): Integer; overload; virtual;
 
@@ -272,14 +272,14 @@ type
     {$ENDIF}
 
     {$IFDEF SupportRawByteString}
-    function  ExtractAllB(const C: CharSet;
+    function  ExtractAllB(const C: ByteCharSet;
               const ExtractNonMatch: Boolean = False;
               const MaxCount: Integer = -1): RawByteString;
     function  ExtractToStrB(const S: RawByteString; const MaxLength: Integer = -1;
               const CaseSensitive: Boolean = True): RawByteString;
     function  ExtractToCharB(const C: AnsiChar; const MaxLength: Integer = -1): RawByteString; overload;
-    function  ExtractToCharB(const C: CharSet; const MaxLength: Integer = -1): RawByteString; overload;
-    function  ExtractQuotedB(const QuoteChars: CharSet): RawByteString;
+    function  ExtractToCharB(const C: ByteCharSet; const MaxLength: Integer = -1): RawByteString; overload;
+    function  ExtractQuotedB(const QuoteChars: ByteCharSet): RawByteString;
 
     function  ExtractLineB(const MaxLineLength: Integer = -1;
               const EOLTypes: TReaderEOLTypes = DefaultReaderEOLTypes): RawByteString;
@@ -491,7 +491,7 @@ type
 
     function  FillBuf: Boolean;
     procedure BufferByte;
-    function  PosBuf(const C: CharSet; const LocateNonMatch: Boolean;
+    function  PosBuf(const C: ByteCharSet; const LocateNonMatch: Boolean;
               const MaxOffset: Integer): Integer;
 
   public
@@ -506,7 +506,7 @@ type
     function  PeekByte: Byte; override;
     procedure Skip(const Count: Integer = 1); override;
 
-    function  Locate(const C: CharSet; const LocateNonMatch: Boolean = False;
+    function  Locate(const C: ByteCharSet; const LocateNonMatch: Boolean = False;
               const MaxOffset: Integer = -1): Integer; override;
 
     property  BufferSize: Integer read FBufferSize;
@@ -1652,7 +1652,7 @@ begin
     Skip(Sizeof(Byte));
 end;
 
-function AReaderEx.MatchChar(const C: CharSet; var Ch: AnsiChar; const MatchNonMatch: Boolean;
+function AReaderEx.MatchChar(const C: ByteCharSet; var Ch: AnsiChar; const MatchNonMatch: Boolean;
     const SkipOnMatch: Boolean): Boolean;
 begin
   if EOF then
@@ -1691,7 +1691,7 @@ begin
       Inc(Result);
 end;
 
-function AReaderEx.SkipAll(const C: CharSet; const MatchNonMatch: Boolean;
+function AReaderEx.SkipAll(const C: ByteCharSet; const MatchNonMatch: Boolean;
     const MaxCount: Integer): Integer;
 var Ch : AnsiChar;
 begin
@@ -1723,7 +1723,7 @@ begin
   Result := -1;
 end;
 
-function AReaderEx.Locate(const C: CharSet; const LocateNonMatch: Boolean;
+function AReaderEx.Locate(const C: ByteCharSet; const LocateNonMatch: Boolean;
     const MaxOffset: Integer): Integer;
 var P : Int64;
     I : Integer;
@@ -1810,7 +1810,7 @@ begin
   Result := LocateBuffer(Pointer(S)^, Length(S), MaxOffset, CaseSensitive);
 end;
 
-function AReaderEx.ExtractAllB(const C: CharSet; const ExtractNonMatch: Boolean;
+function AReaderEx.ExtractAllB(const C: ByteCharSet; const ExtractNonMatch: Boolean;
     const MaxCount: Integer): RawByteString;
 var I : Integer;
 begin
@@ -1851,7 +1851,7 @@ begin
     Result := ReadStrB(I);
 end;
 
-function AReaderEx.ExtractToCharB(const C: CharSet; const MaxLength: Integer = -1): RawByteString;
+function AReaderEx.ExtractToCharB(const C: ByteCharSet; const MaxLength: Integer = -1): RawByteString;
 var I : Integer;
 begin
   I := Locate(C, False, MaxLength);
@@ -1864,7 +1864,7 @@ begin
     Result := ReadStrB(I);
 end;
 
-function AReaderEx.ExtractQuotedB(const QuoteChars: CharSet): RawByteString;
+function AReaderEx.ExtractQuotedB(const QuoteChars: ByteCharSet): RawByteString;
 var QuoteCh : AnsiChar;
 begin
   QuoteCh := AnsiChar(PeekByte);
@@ -1879,14 +1879,14 @@ begin
 end;
 
 const
-  csNewLineNone    : CharSet = [];
-  csNewLineCR      : CharSet = [#13];
-  csNewLineLF      : CharSet = [#10];
-  csNewLineEOF     : CharSet = [#26];
-  csNewLineCRLF    : CharSet = [#10, #13];
-  csNewLineCREOF   : CharSet = [#13, #26];
-  csNewLineLFEOF   : CharSet = [#10, #26];
-  csNewLineCRLFEOF : CharSet = [#10, #13, #26];
+  csNewLineNone    : ByteCharSet = [];
+  csNewLineCR      : ByteCharSet = [#13];
+  csNewLineLF      : ByteCharSet = [#10];
+  csNewLineEOF     : ByteCharSet = [#26];
+  csNewLineCRLF    : ByteCharSet = [#10, #13];
+  csNewLineCREOF   : ByteCharSet = [#13, #26];
+  csNewLineLFEOF   : ByteCharSet = [#10, #26];
+  csNewLineCRLFEOF : ByteCharSet = [#10, #13, #26];
 
 procedure FirstNewLineCharsFromEOLTypes(const EOLTypes: TReaderEOLTypes;
     var Chars: PCharSet);
@@ -2698,7 +2698,7 @@ begin
   Result := P^;
 end;
 
-function TBufferedReader.PosBuf(const C: CharSet; const LocateNonMatch: Boolean;
+function TBufferedReader.PosBuf(const C: ByteCharSet; const LocateNonMatch: Boolean;
     const MaxOffset: Integer): Integer;
 var P : PAnsiChar;
     L : Integer;
@@ -2718,7 +2718,7 @@ begin
   Result := -1;
 end;
 
-function TBufferedReader.Locate(const C: CharSet; const LocateNonMatch: Boolean;
+function TBufferedReader.Locate(const C: ByteCharSet; const LocateNonMatch: Boolean;
     const MaxOffset: Integer): Integer;
 var I, J, M, K : Integer;
     P : Int64;

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.62                                                     }
+{   File version:     5.63                                                     }
 {   Description:      Simple data types: Definitions and utility functions.    }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -110,7 +110,7 @@
 {   2017/10/07  5.60  Moved functions to units flcBase64, flcUTF, flcCharSet.  }
 {   2017/11/01  5.61  Added TBytes functions.                                  }
 {   2018/07/11  5.62  Moved functions to units flcFloats, flcASCII.            }
-{   2018/07/11  5.62  Moved standard types to unit flcStdTypes.                }
+{   2018/07/11  5.63  Moved standard types to unit flcStdTypes.                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -130,7 +130,9 @@
 {   Delphi XE8 Win64                    5.58  2016/01/10                       }
 {   Delphi 10 Win32                     5.58  2016/01/09                       }
 {   Delphi 10 Win64                     5.58  2016/01/09                       }
-{   FreePascal 2.0.4 Linux i386                                                }
+{   Delphi 10.2 Win32                   5.63  2018/07/17                       }
+{   Delphi 10.2 Win64                   5.63  2018/07/17                       }
+{   Delphi 10.2 Linux64                 5.63  2018/07/17                       }
 {   FreePascal 2.4.0 OSX x86-64         4.46  2010/06/27                       }
 {   FreePascal 2.6.0 Win32              4.50  2012/08/30                       }
 {   FreePascal 2.6.2 Linux x64          4.55  2015/04/01                       }
@@ -199,13 +201,13 @@ function  MinCrd(const A, B: Cardinal): Cardinal; {$IFDEF UseInline}inline;{$END
 function  MaxCrd(const A, B: Cardinal): Cardinal; {$IFDEF UseInline}inline;{$ENDIF}
 
 { Bounded returns Value if in Min..Max range, otherwise Min or Max             }
-function  Int32Bounded(const Value: LongInt; const Min, Max: LongInt): LongInt; {$IFDEF UseInline}inline;{$ENDIF}
+function  Int32Bounded(const Value: Int32; const Min, Max: Int32): Int32;       {$IFDEF UseInline}inline;{$ENDIF}
 function  Int64Bounded(const Value: Int64; const Min, Max: Int64): Int64;       {$IFDEF UseInline}inline;{$ENDIF}
-function  Int32BoundedByte(const Value: LongInt): LongInt;                      {$IFDEF UseInline}inline;{$ENDIF}
+function  Int32BoundedByte(const Value: Int32): Int32;                          {$IFDEF UseInline}inline;{$ENDIF}
 function  Int64BoundedByte(const Value: Int64): Int64;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int32BoundedWord(const Value: LongInt): LongInt;                      {$IFDEF UseInline}inline;{$ENDIF}
+function  Int32BoundedWord(const Value: Int32): Int32;                          {$IFDEF UseInline}inline;{$ENDIF}
 function  Int64BoundedWord(const Value: Int64): Int64;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int64BoundedLongWord(const Value: Int64): LongWord;                   {$IFDEF UseInline}inline;{$ENDIF}
+function  Int64BoundedWord32(const Value: Int64): Word32;                       {$IFDEF UseInline}inline;{$ENDIF}
 
 
 
@@ -213,10 +215,16 @@ function  Int64BoundedLongWord(const Value: Int64): LongWord;                   
 { String construction from buffer                                              }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function  StrPToStrA(const P: PAnsiChar; const L: Integer): AnsiString;
-function  StrPToStrB(const P: PAnsiChar; const L: Integer): RawByteString;
+{$ENDIF}
+function  StrPToStrB(const P: Pointer; const L: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  StrPToStrW(const P: PWideChar; const L: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrPToStrU(const P: PWideChar; const L: Integer): UnicodeString;
+{$ENDIF}
 function  StrPToStr(const P: PChar; const L: Integer): String;
 {$ENDIF}
 
@@ -226,28 +234,50 @@ function  StrPToStr(const P: PChar; const L: Integer): String;
 { RawByteString conversion functions                                           }
 {                                                                              }
 procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: Integer; const DestBuf: Pointer);
+{$IFDEF SupportWideString}
 function  RawByteStrPtrToWideString(const S: PAnsiChar; const Len: Integer): WideString;
-function  RawByteStrPtrToUnicodeString(const S: PAnsiChar; const Len: Integer): UnicodeString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  RawByteStrPtrToUnicodeString(const S: Pointer; const Len: Integer): UnicodeString;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  RawByteStringToWideString(const S: RawByteString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  RawByteStringToUnicodeString(const S: RawByteString): UnicodeString;
+{$ENDIF}
 
 procedure WideBufToRawByteBuf(const Buf: Pointer; const Len: Integer; const DestBuf: Pointer);
 function  WideBufToRawByteString(const P: PWideChar; const Len: Integer): RawByteString;
 
+{$IFDEF SupportWideString}
 function  WideStringToRawByteString(const S: WideString): RawByteString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UnicodeStringToRawByteString(const S: UnicodeString): RawByteString;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportUnicodeString}
 function  WideStringToUnicodeString(const S: WideString): UnicodeString;
+{$ENDIF}
+{$ENDIF}
 
 
 
 {                                                                              }
 { String conversion functions                                                  }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  ToAnsiString(const A: String): AnsiString;       {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  ToRawByteString(const A: String): RawByteString; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportWideString}
 function  ToWideString(const A: String): WideString;       {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  ToUnicodeString(const A: String): UnicodeString; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 
 
 
@@ -256,8 +286,10 @@ function  ToUnicodeString(const A: String): UnicodeString; {$IFDEF UseInline}inl
 {                                                                              }
 {$IFNDEF SupportStringRefCount}
 {$IFDEF DELPHI}
-function StringRefCount(const S: RawByteString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
-function StringRefCount(const S: UnicodeString): LongInt; overload; {$IFDEF UseInline}inline;{$ENDIF}
+function StringRefCount(const S: RawByteString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function StringRefCount(const S: UnicodeString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 {$DEFINE ImplementsStringRefCount}
 {$ENDIF}
 {$ENDIF}
@@ -267,10 +299,18 @@ function StringRefCount(const S: UnicodeString): LongInt; overload; {$IFDEF UseI
 {                                                                              }
 { String append functions                                                      }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 procedure StrAppendChA(var A: AnsiString; const C: AnsiChar);    {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportAnsiChar}
 procedure StrAppendChB(var A: RawByteString; const C: AnsiChar); {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrAppendChW(var A: WideString; const C: WideChar);    {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure StrAppendChU(var A: UnicodeString; const C: WideChar); {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 procedure StrAppendCh(var A: String; const C: Char);             {$IFDEF UseInline}inline;{$ENDIF}
 
 
@@ -289,16 +329,22 @@ function  CharCompare(const A, B: Char): Integer;      {$IFDEF UseInline}inline;
 {$IFDEF ManagedCode}
 function  StrPCompareA(const A, B: AnsiString; const Len: Integer): Integer;
 {$ELSE}
-function  StrPCompareA(const A, B: PAnsiChar; const Len: Integer): Integer;
+function  StrPCompareA(const A, B: Pointer; const Len: Integer): Integer;
 function  StrPCompareW(const A, B: PWideChar; const Len: Integer): Integer;
 function  StrPCompare(const A, B: PChar; const Len: Integer): Integer;
 {$ENDIF}
 
 {$IFNDEF CLR}
+{$IFDEF SupportAnsiString}
 function  StrCompareA(const A, B: AnsiString): Integer;
+{$ENDIF}
 function  StrCompareB(const A, B: RawByteString): Integer;
+{$IFDEF SupportWideString}
 function  StrCompareW(const A, B: WideString): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrCompareU(const A, B: UnicodeString): Integer;
+{$ENDIF}
 function  StrCompare(const A, B: String): Integer;
 {$ENDIF}
 
@@ -310,19 +356,25 @@ function  StrCompare(const A, B: String): Integer;
 procedure Swap(var X, Y: Boolean); overload;
 procedure Swap(var X, Y: Byte); overload;
 procedure Swap(var X, Y: Word); overload;
-procedure Swap(var X, Y: LongWord); overload;
+procedure Swap(var X, Y: Word32); overload;
 procedure Swap(var X, Y: ShortInt); overload;
 procedure Swap(var X, Y: SmallInt); overload;
-procedure Swap(var X, Y: LongInt); overload;
+procedure Swap(var X, Y: Int32); overload;
 procedure Swap(var X, Y: Int64); overload;
 procedure Swap(var X, Y: Single); overload;
 procedure Swap(var X, Y: Double); overload;
 procedure Swap(var X, Y: Extended); overload;
 procedure Swap(var X, Y: Currency); overload;
+{$IFDEF SupportAnsiString}
 procedure SwapA(var X, Y: AnsiString); overload;
+{$ENDIF}
 procedure SwapB(var X, Y: RawByteString);
+{$IFDEF SupportWideString}
 procedure SwapW(var X, Y: WideString); overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure SwapU(var X, Y: UnicodeString); overload;
+{$ENDIF}
 procedure Swap(var X, Y: String); overload;
 procedure Swap(var X, Y: TObject); overload;
 {$IFDEF ManagedCode}
@@ -347,14 +399,20 @@ function  iif(const Expr: Boolean; const TrueValue: Int64;
           const FalseValue: Int64 = 0): Int64; overload;                  {$IFDEF UseInline}inline;{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: Extended;
           const FalseValue: Extended = 0.0): Extended; overload;          {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  iifA(const Expr: Boolean; const TrueValue: AnsiString;
-          const FalseValue: AnsiString = ''): AnsiString; overload;{$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: AnsiString = ''): AnsiString; overload;       {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  iifB(const Expr: Boolean; const TrueValue: RawByteString;
           const FalseValue: RawByteString = ''): RawByteString; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportWideString}
 function  iifW(const Expr: Boolean; const TrueValue: WideString;
           const FalseValue: WideString = ''): WideString; overload;       {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  iifU(const Expr: Boolean; const TrueValue: UnicodeString;
           const FalseValue: UnicodeString = ''): UnicodeString; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: String;
           const FalseValue: String = ''): String; overload;               {$IFDEF UseInline}inline;{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: TObject;
@@ -372,14 +430,19 @@ function  Compare(const I1, I2: Boolean): TCompareResult; overload;
 function  Compare(const I1, I2: Integer): TCompareResult; overload;
 function  Compare(const I1, I2: Int64): TCompareResult; overload;
 function  Compare(const I1, I2: Extended): TCompareResult; overload;
+{$IFDEF SupportAnsiString}
 function  CompareA(const I1, I2: AnsiString): TCompareResult;
+{$ENDIF}
 function  CompareB(const I1, I2: RawByteString): TCompareResult;
+{$IFDEF SupportWideString}
 function  CompareW(const I1, I2: WideString): TCompareResult;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CompareU(const I1, I2: UnicodeString): TCompareResult;
+{$ENDIF}
 function  CompareChA(const I1, I2: AnsiChar): TCompareResult;
 function  CompareChW(const I1, I2: WideChar): TCompareResult;
 
-function  Sgn(const A: LongInt): Integer; overload;
 function  Sgn(const A: Int64): Integer; overload;
 function  Sgn(const A: Extended): Integer; overload;
 
@@ -428,140 +491,268 @@ function  IntToLowerHexAnsiChar(const A: Integer): AnsiChar;
 function  IntToLowerHexWideChar(const A: Integer): WideChar;
 function  IntToLowerHexChar(const A: Integer): Char;                            {$IFDEF UseInline}inline;{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  IntToStringA(const A: Int64): AnsiString;
+{$ENDIF}
 function  IntToStringB(const A: Int64): RawByteString;
+{$IFDEF SupportWideString}
 function  IntToStringW(const A: Int64): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  IntToStringU(const A: Int64): UnicodeString;
+{$ENDIF}
 function  IntToString(const A: Int64): String;
 
+{$IFDEF SupportAnsiString}
 function  UIntToStringA(const A: NativeUInt): AnsiString;
+{$ENDIF}
 function  UIntToStringB(const A: NativeUInt): RawByteString;
+{$IFDEF SupportWideString}
 function  UIntToStringW(const A: NativeUInt): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UIntToStringU(const A: NativeUInt): UnicodeString;
+{$ENDIF}
 function  UIntToString(const A: NativeUInt): String;
 
-function  LongWordToStrA(const A: LongWord; const Digits: Integer = 0): AnsiString;
-function  LongWordToStrB(const A: LongWord; const Digits: Integer = 0): RawByteString;
-function  LongWordToStrW(const A: LongWord; const Digits: Integer = 0): WideString;
-function  LongWordToStrU(const A: LongWord; const Digits: Integer = 0): UnicodeString;
-function  LongWordToStr(const A: LongWord; const Digits: Integer = 0): String;
+{$IFDEF SupportAnsiString}
+function  Word32ToStrA(const A: Word32; const Digits: Integer = 0): AnsiString;
+{$ENDIF}
+function  Word32ToStrB(const A: Word32; const Digits: Integer = 0): RawByteString;
+{$IFDEF SupportWideString}
+function  Word32ToStrW(const A: Word32; const Digits: Integer = 0): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  Word32ToStrU(const A: Word32; const Digits: Integer = 0): UnicodeString;
+{$ENDIF}
+function  Word32ToStr(const A: Word32; const Digits: Integer = 0): String;
 
-function  LongWordToHexA(const A: LongWord; const Digits: Integer = 0; const UpperCase: Boolean = True): AnsiString;
-function  LongWordToHexB(const A: LongWord; const Digits: Integer = 0; const UpperCase: Boolean = True): RawByteString;
-function  LongWordToHexW(const A: LongWord; const Digits: Integer = 0; const UpperCase: Boolean = True): WideString;
-function  LongWordToHexU(const A: LongWord; const Digits: Integer = 0; const UpperCase: Boolean = True): UnicodeString;
-function  LongWordToHex(const A: LongWord; const Digits: Integer = 0; const UpperCase: Boolean = True): String;
+{$IFDEF SupportAnsiString}
+function  Word32ToHexA(const A: Word32; const Digits: Integer = 0; const UpperCase: Boolean = True): AnsiString;
+{$ENDIF}
+function  Word32ToHexB(const A: Word32; const Digits: Integer = 0; const UpperCase: Boolean = True): RawByteString;
+{$IFDEF SupportWideString}
+function  Word32ToHexW(const A: Word32; const Digits: Integer = 0; const UpperCase: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  Word32ToHexU(const A: Word32; const Digits: Integer = 0; const UpperCase: Boolean = True): UnicodeString;
+{$ENDIF}
+function  Word32ToHex(const A: Word32; const Digits: Integer = 0; const UpperCase: Boolean = True): String;
 
-function  LongWordToOctA(const A: LongWord; const Digits: Integer = 0): AnsiString;
-function  LongWordToOctB(const A: LongWord; const Digits: Integer = 0): RawByteString;
-function  LongWordToOctW(const A: LongWord; const Digits: Integer = 0): WideString;
-function  LongWordToOctU(const A: LongWord; const Digits: Integer = 0): UnicodeString;
-function  LongWordToOct(const A: LongWord; const Digits: Integer = 0): String;
+{$IFDEF SupportAnsiString}
+function  Word32ToOctA(const A: Word32; const Digits: Integer = 0): AnsiString;
+{$ENDIF}
+function  Word32ToOctB(const A: Word32; const Digits: Integer = 0): RawByteString;
+{$IFDEF SupportWideString}
+function  Word32ToOctW(const A: Word32; const Digits: Integer = 0): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  Word32ToOctU(const A: Word32; const Digits: Integer = 0): UnicodeString;
+{$ENDIF}
+function  Word32ToOct(const A: Word32; const Digits: Integer = 0): String;
 
-function  LongWordToBinA(const A: LongWord; const Digits: Integer = 0): AnsiString;
-function  LongWordToBinB(const A: LongWord; const Digits: Integer = 0): RawByteString;
-function  LongWordToBinW(const A: LongWord; const Digits: Integer = 0): WideString;
-function  LongWordToBinU(const A: LongWord; const Digits: Integer = 0): UnicodeString;
-function  LongWordToBin(const A: LongWord; const Digits: Integer = 0): String;
+{$IFDEF SupportAnsiString}
+function  Word32ToBinA(const A: Word32; const Digits: Integer = 0): AnsiString;
+{$ENDIF}
+function  Word32ToBinB(const A: Word32; const Digits: Integer = 0): RawByteString;
+{$IFDEF SupportWideString}
+function  Word32ToBinW(const A: Word32; const Digits: Integer = 0): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  Word32ToBinU(const A: Word32; const Digits: Integer = 0): UnicodeString;
+{$ENDIF}
+function  Word32ToBin(const A: Word32; const Digits: Integer = 0): String;
 
 function  TryStringToInt64PA(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 function  TryStringToInt64PW(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 function  TryStringToInt64P(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 
+{$IFDEF SupportAnsiString}
 function  TryStringToInt64A(const S: AnsiString; out A: Int64): Boolean;
+{$ENDIF}
 function  TryStringToInt64B(const S: RawByteString; out A: Int64): Boolean;
+{$IFDEF SupportWideString}
 function  TryStringToInt64W(const S: WideString; out A: Int64): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  TryStringToInt64U(const S: UnicodeString; out A: Int64): Boolean;
+{$ENDIF}
 function  TryStringToInt64(const S: String; out A: Int64): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StringToInt64DefA(const S: AnsiString; const Default: Int64): Int64;
+{$ENDIF}
 function  StringToInt64DefB(const S: RawByteString; const Default: Int64): Int64;
+{$IFDEF SupportWideString}
 function  StringToInt64DefW(const S: WideString; const Default: Int64): Int64;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StringToInt64DefU(const S: UnicodeString; const Default: Int64): Int64;
+{$ENDIF}
 function  StringToInt64Def(const S: String; const Default: Int64): Int64;
 
+{$IFDEF SupportAnsiString}
 function  StringToInt64A(const S: AnsiString): Int64;
+{$ENDIF}
 function  StringToInt64B(const S: RawByteString): Int64;
+{$IFDEF SupportWideString}
 function  StringToInt64W(const S: WideString): Int64;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StringToInt64U(const S: UnicodeString): Int64;
+{$ENDIF}
 function  StringToInt64(const S: String): Int64;
 
+{$IFDEF SupportAnsiString}
 function  TryStringToIntA(const S: AnsiString; out A: Integer): Boolean;
+{$ENDIF}
 function  TryStringToIntB(const S: RawByteString; out A: Integer): Boolean;
+{$IFDEF SupportWideString}
 function  TryStringToIntW(const S: WideString; out A: Integer): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  TryStringToIntU(const S: UnicodeString; out A: Integer): Boolean;
+{$ENDIF}
 function  TryStringToInt(const S: String; out A: Integer): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StringToIntDefA(const S: AnsiString; const Default: Integer): Integer;
+{$ENDIF}
 function  StringToIntDefB(const S: RawByteString; const Default: Integer): Integer;
+{$IFDEF SupportWideString}
 function  StringToIntDefW(const S: WideString; const Default: Integer): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StringToIntDefU(const S: UnicodeString; const Default: Integer): Integer;
+{$ENDIF}
 function  StringToIntDef(const S: String; const Default: Integer): Integer;
 
+{$IFDEF SupportAnsiString}
 function  StringToIntA(const S: AnsiString): Integer;
+{$ENDIF}
 function  StringToIntB(const S: RawByteString): Integer;
+{$IFDEF SupportWideString}
 function  StringToIntW(const S: WideString): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StringToIntU(const S: UnicodeString): Integer;
+{$ENDIF}
 function  StringToInt(const S: String): Integer;
 
-function  TryStringToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
-function  TryStringToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
-function  TryStringToLongWordW(const S: WideString; out A: LongWord): Boolean;
-function  TryStringToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
-function  TryStringToLongWord(const S: String; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function  TryStringToWord32A(const S: AnsiString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryStringToWord32B(const S: RawByteString; out A: Word32): Boolean;
+{$IFDEF SupportWideString}
+function  TryStringToWord32W(const S: WideString; out A: Word32): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  TryStringToWord32U(const S: UnicodeString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryStringToWord32(const S: String; out A: Word32): Boolean;
 
-function  StringToLongWordA(const S: AnsiString): LongWord;
-function  StringToLongWordB(const S: RawByteString): LongWord;
-function  StringToLongWordW(const S: WideString): LongWord;
-function  StringToLongWordU(const S: UnicodeString): LongWord;
-function  StringToLongWord(const S: String): LongWord;
+{$IFDEF SupportAnsiString}
+function  StringToWord32A(const S: AnsiString): Word32;
+{$ENDIF}
+function  StringToWord32B(const S: RawByteString): Word32;
+{$IFDEF SupportWideString}
+function  StringToWord32W(const S: WideString): Word32;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StringToWord32U(const S: UnicodeString): Word32;
+{$ENDIF}
+function  StringToWord32(const S: String): Word32;
 
+{$IFDEF SupportAnsiString}
 function  HexToUIntA(const S: AnsiString): NativeUInt;
+{$ENDIF}
 function  HexToUIntB(const S: RawByteString): NativeUInt;
+{$IFDEF SupportWideString}
 function  HexToUIntW(const S: WideString): NativeUInt;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  HexToUIntU(const S: UnicodeString): NativeUInt;
+{$ENDIF}
 function  HexToUInt(const S: String): NativeUInt;
 
-function  TryHexToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
-function  TryHexToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
-function  TryHexToLongWordW(const S: WideString; out A: LongWord): Boolean;
-function  TryHexToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
-function  TryHexToLongWord(const S: String; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function  TryHexToWord32A(const S: AnsiString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryHexToWord32B(const S: RawByteString; out A: Word32): Boolean;
+{$IFDEF SupportWideString}
+function  TryHexToWord32W(const S: WideString; out A: Word32): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  TryHexToWord32U(const S: UnicodeString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryHexToWord32(const S: String; out A: Word32): Boolean;
 
-function  HexToLongWordA(const S: AnsiString): LongWord;
-function  HexToLongWordB(const S: RawByteString): LongWord;
-function  HexToLongWordW(const S: WideString): LongWord;
-function  HexToLongWordU(const S: UnicodeString): LongWord;
-function  HexToLongWord(const S: String): LongWord;
+{$IFDEF SupportAnsiString}
+function  HexToWord32A(const S: AnsiString): Word32;
+{$ENDIF}
+function  HexToWord32B(const S: RawByteString): Word32;
+{$IFDEF SupportWideString}
+function  HexToWord32W(const S: WideString): Word32;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  HexToWord32U(const S: UnicodeString): Word32;
+{$ENDIF}
+function  HexToWord32(const S: String): Word32;
 
-function  TryOctToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
-function  TryOctToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
-function  TryOctToLongWordW(const S: WideString; out A: LongWord): Boolean;
-function  TryOctToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
-function  TryOctToLongWord(const S: String; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function  TryOctToWord32A(const S: AnsiString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryOctToWord32B(const S: RawByteString; out A: Word32): Boolean;
+{$IFDEF SupportWideString}
+function  TryOctToWord32W(const S: WideString; out A: Word32): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  TryOctToWord32U(const S: UnicodeString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryOctToWord32(const S: String; out A: Word32): Boolean;
 
-function  OctToLongWordA(const S: AnsiString): LongWord;
-function  OctToLongWordB(const S: RawByteString): LongWord;
-function  OctToLongWordW(const S: WideString): LongWord;
-function  OctToLongWordU(const S: UnicodeString): LongWord;
-function  OctToLongWord(const S: String): LongWord;
+{$IFDEF SupportAnsiString}
+function  OctToWord32A(const S: AnsiString): Word32;
+{$ENDIF}
+function  OctToWord32B(const S: RawByteString): Word32;
+{$IFDEF SupportWideString}
+function  OctToWord32W(const S: WideString): Word32;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  OctToWord32U(const S: UnicodeString): Word32;
+{$ENDIF}
+function  OctToWord32(const S: String): Word32;
 
-function  TryBinToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
-function  TryBinToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
-function  TryBinToLongWordW(const S: WideString; out A: LongWord): Boolean;
-function  TryBinToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
-function  TryBinToLongWord(const S: String; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function  TryBinToWord32A(const S: AnsiString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryBinToWord32B(const S: RawByteString; out A: Word32): Boolean;
+{$IFDEF SupportWideString}
+function  TryBinToWord32W(const S: WideString; out A: Word32): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  TryBinToWord32U(const S: UnicodeString; out A: Word32): Boolean;
+{$ENDIF}
+function  TryBinToWord32(const S: String; out A: Word32): Boolean;
 
-function  BinToLongWordA(const S: AnsiString): LongWord;
-function  BinToLongWordB(const S: RawByteString): LongWord;
-function  BinToLongWordW(const S: WideString): LongWord;
-function  BinToLongWordU(const S: UnicodeString): LongWord;
-function  BinToLongWord(const S: String): LongWord;
+{$IFDEF SupportAnsiString}
+function  BinToWord32A(const S: AnsiString): Word32;
+{$ENDIF}
+function  BinToWord32B(const S: RawByteString): Word32;
+{$IFDEF SupportWideString}
+function  BinToWord32W(const S: WideString): Word32;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  BinToWord32U(const S: UnicodeString): Word32;
+{$ENDIF}
+function  BinToWord32(const S: String): Word32;
 
+{$IFDEF SupportAnsiString}
 function  BytesToHex(
           {$IFDEF ManagedCode}const P: array of Byte;
           {$ELSE}             const P: Pointer; const Count: Integer;{$ENDIF}
           const UpperCase: Boolean = True): AnsiString;
+{$ENDIF}
 
 
 
@@ -570,8 +761,8 @@ function  BytesToHex(
 {                                                                              }
 function  hton16(const A: Word): Word;
 function  ntoh16(const A: Word): Word;
-function  hton32(const A: LongWord): LongWord;
-function  ntoh32(const A: LongWord): LongWord;
+function  hton32(const A: Word32): Word32;
+function  ntoh32(const A: Word32): Word32;
 function  hton64(const A: Int64): Int64;
 function  ntoh64(const A: Int64): Int64;
 
@@ -581,23 +772,41 @@ function  ntoh64(const A: Int64): Int64;
 { Pointer-String conversions                                                   }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function  PointerToStrA(const P: Pointer): AnsiString;
+{$ENDIF}
 function  PointerToStrB(const P: Pointer): RawByteString;
+{$IFDEF SupportWideString}
 function  PointerToStrW(const P: Pointer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PointerToStrU(const P: Pointer): UnicodeString;
+{$ENDIF}
 function  PointerToStr(const P: Pointer): String;
 
+{$IFDEF SupportAnsiString}
 function  StrToPointerA(const S: AnsiString): Pointer;
+{$ENDIF}
 function  StrToPointerB(const S: RawByteString): Pointer;
+{$IFDEF SupportWideString}
 function  StrToPointerW(const S: WideString): Pointer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrToPointerU(const S: UnicodeString): Pointer;
+{$ENDIF}
 function  StrToPointer(const S: String): Pointer;
 
 {$IFDEF SupportInterface}
+{$IFDEF SupportAnsiString}
 function  InterfaceToStrA(const I: IInterface): AnsiString;
+{$ENDIF}
 function  InterfaceToStrB(const I: IInterface): RawByteString;
+{$IFDEF SupportWideString}
 function  InterfaceToStrW(const I: IInterface): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  InterfaceToStrU(const I: IInterface): UnicodeString;
+{$ENDIF}
 function  InterfaceToStr(const I: IInterface): String;
 {$ENDIF}
 {$ENDIF}
@@ -615,35 +824,41 @@ function  ObjectToStr(const O: TObject): String;
 {                                                                              }
 {   HashStr is a general purpose string hashing function.                      }
 {                                                                              }
-{   If Slots = 0 the hash value is in the LongWord range (0-$FFFFFFFF),        }
+{   If Slots = 0 the hash value is in the Word32 range (0-$FFFFFFFF),          }
 {   otherwise the value is in the range from 0 to Slots-1. Note that the       }
 {   'mod' operation, which is used when Slots <> 0, is comparitively slow.     }
 {                                                                              }
-function  HashBuf(const Hash: LongWord; const Buf; const BufSize: Integer): LongWord;
+function  HashBuf(const Hash: Word32; const Buf; const BufSize: Integer): Word32;
 
+{$IFDEF SupportAnsiString}
 function  HashStrA(const S: AnsiString;
           const Index: Integer = 1; const Count: Integer = -1;
           const AsciiCaseSensitive: Boolean = True;
-          const Slots: LongWord = 0): LongWord;
+          const Slots: Word32 = 0): Word32;
+{$ENDIF}
 function  HashStrB(const S: RawByteString;
           const Index: Integer = 1; const Count: Integer = -1;
           const AsciiCaseSensitive: Boolean = True;
-          const Slots: LongWord = 0): LongWord;
+          const Slots: Word32 = 0): Word32;
+{$IFDEF SupportWideString}
 function  HashStrW(const S: WideString;
           const Index: Integer = 1; const Count: Integer = -1;
           const AsciiCaseSensitive: Boolean = True;
-          const Slots: LongWord = 0): LongWord;
+          const Slots: Word32 = 0): Word32;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  HashStrU(const S: UnicodeString;
           const Index: Integer = 1; const Count: Integer = -1;
           const AsciiCaseSensitive: Boolean = True;
-          const Slots: LongWord = 0): LongWord;
+          const Slots: Word32 = 0): Word32;
+{$ENDIF}
 function  HashStr(const S: String;
           const Index: Integer = 1; const Count: Integer = -1;
           const AsciiCaseSensitive: Boolean = True;
-          const Slots: LongWord = 0): LongWord;
+          const Slots: Word32 = 0): Word32;
 
-function  HashInteger(const I: Integer; const Slots: LongWord = 0): LongWord;
-function  HashLongWord(const I: LongWord; const Slots: LongWord = 0): LongWord;
+function  HashInteger(const I: Integer; const Slots: Word32 = 0): Word32;
+function  HashWord32(const I: Word32; const Slots: Word32 = 0): Word32;
 
 
 
@@ -656,7 +871,7 @@ const
   Bytes1GB  = 1024 * Bytes1MB;
   Bytes64KB = 64 * Bytes1KB;
   Bytes64MB = 64 * Bytes1MB;
-  Bytes2GB  = 2 * LongWord(Bytes1GB);
+  Bytes2GB  = 2 * Word32(Bytes1GB);
 
 {$IFNDEF ManagedCode}
 {$IFDEF ASM386_DELPHI}{$IFNDEF DELPHI2006_UP}
@@ -852,7 +1067,7 @@ begin
     Result := B;
 end;
 
-function Int32Bounded(const Value: LongInt; const Min, Max: LongInt): LongInt;
+function Int32Bounded(const Value: Int32; const Min, Max: Int32): Int32;
 begin
   if Value < Min then
     Result := Min else
@@ -872,7 +1087,7 @@ begin
     Result := Value;
 end;
 
-function Int32BoundedByte(const Value: LongInt): LongInt;
+function Int32BoundedByte(const Value: Int32): Int32;
 begin
   if Value < MinByte then
     Result := MinByte else
@@ -892,7 +1107,7 @@ begin
     Result := Value;
 end;
 
-function Int32BoundedWord(const Value: LongInt): LongInt;
+function Int32BoundedWord(const Value: Int32): Int32;
 begin
   if Value < MinWord then
     Result := MinWord else
@@ -912,14 +1127,14 @@ begin
     Result := Value;
 end;
 
-function Int64BoundedLongWord(const Value: Int64): LongWord;
+function Int64BoundedWord32(const Value: Int64): Word32;
 begin
-  if Value < MinLongWord then
-    Result := MinLongWord else
-  if Value > MaxLongWord then
-    Result := MaxLongWord
+  if Value < MinWord32 then
+    Result := MinWord32 else
+  if Value > MaxWord32 then
+    Result := MaxWord32
   else
-    Result := LongWord(Value);
+    Result := Word32(Value);
 end;
 
 
@@ -928,6 +1143,7 @@ end;
 { String construction from buffer                                              }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function StrPToStrA(const P: PAnsiChar; const L: Integer): AnsiString;
 begin
   if L <= 0 then
@@ -938,8 +1154,9 @@ begin
       MoveMem(P^, Pointer(Result)^, L);
     end;
 end;
+{$ENDIF}
 
-function StrPToStrB(const P: PAnsiChar; const L: Integer): RawByteString;
+function StrPToStrB(const P: Pointer; const L: Integer): RawByteString;
 begin
   if L <= 0 then
     SetLength(Result, 0)
@@ -950,6 +1167,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function StrPToStrW(const P: PWideChar; const L: Integer): WideString;
 begin
   if L <= 0 then
@@ -960,7 +1178,9 @@ begin
       MoveMem(P^, Pointer(Result)^, L * SizeOf(WideChar));
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrPToStrU(const P: PWideChar; const L: Integer): UnicodeString;
 begin
   if L <= 0 then
@@ -971,6 +1191,7 @@ begin
       MoveMem(P^, Pointer(Result)^, L * SizeOf(WideChar));
     end;
 end;
+{$ENDIF}
 
 function StrPToStr(const P: PChar; const L: Integer): String;
 begin
@@ -998,7 +1219,7 @@ procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: Integer;
 var I : Integer;
     P : Pointer;
     Q : Pointer;
-    V : LongWord;
+    V : Word32;
 begin
   if BufSize <= 0 then
     exit;
@@ -1007,13 +1228,13 @@ begin
   for I := 1 to BufSize div 4 do
     begin
       // convert 4 characters per iteration
-      V := PLongWord(P)^;
-      Inc(PLongWord(P));
-      PLongWord(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
-      Inc(PLongWord(Q));
+      V := PWord32(P)^;
+      Inc(PWord32(P));
+      PWord32(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(PWord32(Q));
       V := V shr 16;
-      PLongWord(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
-      Inc(PLongWord(Q));
+      PWord32(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(PWord32(Q));
     end;
   // convert remaining (<4)
   for I := 1 to BufSize mod 4 do
@@ -1024,6 +1245,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function RawByteStrPtrToWideString(const S: PAnsiChar; const Len: Integer): WideString;
 begin
   if Len <= 0 then
@@ -1034,8 +1256,10 @@ begin
       RawByteBufToWideBuf(S, Len, PWideChar(Result));
     end;
 end;
+{$ENDIF}
 
-function RawByteStrPtrToUnicodeString(const S: PAnsiChar; const Len: Integer): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function RawByteStrPtrToUnicodeString(const S: Pointer; const Len: Integer): UnicodeString;
 begin
   if Len <= 0 then
     Result := ''
@@ -1045,7 +1269,9 @@ begin
       RawByteBufToWideBuf(S, Len, PWideChar(Result));
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function RawByteStringToWideString(const S: RawByteString): WideString;
 var L : Integer;
 begin
@@ -1054,22 +1280,25 @@ begin
   if L > 0 then
     RawByteBufToWideBuf(PAnsiChar(S), L, PWideChar(Result));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function RawByteStringToUnicodeString(const S: RawByteString): UnicodeString;
 var L : Integer;
 begin
   L := Length(S);
   SetLength(Result, L);
   if L > 0 then
-    RawByteBufToWideBuf(PAnsiChar(S), L, PWideChar(Result));
+    RawByteBufToWideBuf(Pointer(S), L, PWideChar(Result));
 end;
+{$ENDIF}
 
 procedure WideBufToRawByteBuf(const Buf: Pointer; const Len: Integer;
     const DestBuf: Pointer);
 var I : Integer;
     S : PWideChar;
-    Q : PAnsiChar;
-    V : LongWord;
+    Q : PByte;
+    V : Word32;
     W : Word;
 begin
   if Len <= 0 then
@@ -1079,12 +1308,12 @@ begin
   for I := 1 to Len div 2 do
     begin
       // convert 2 characters per iteration
-      V := PLongWord(S)^;
+      V := PWord32(S)^;
       if V and $FF00FF00 <> 0 then
         raise EConvertError.Create(SRawByteStringConvertError);
-      Q^ := AnsiChar(V);
+      Q^ := Byte(V);
       Inc(Q);
-      Q^ := AnsiChar(V shr 16);
+      Q^ := Byte(V shr 16);
       Inc(Q);
       Inc(S, 2);
     end;
@@ -1094,14 +1323,14 @@ begin
       W := Ord(S^);
       if W > $FF then
         raise EConvertError.Create(SRawByteStringConvertError);
-      Q^ := AnsiChar(W);
+      Q^ := Byte(W);
     end;
 end;
 
 function WideBufToRawByteString(const P: PWideChar; const Len: Integer): RawByteString;
 var I : Integer;
     S : PWideChar;
-    Q : PAnsiChar;
+    Q : PByte;
     V : WideChar;
 begin
   if Len <= 0 then
@@ -1111,33 +1340,38 @@ begin
     end;
   SetLength(Result, Len);
   S := P;
-  Q := PAnsiChar(Result);
+  Q := Pointer(Result);
   for I := 1 to Len do
     begin
       V := S^;
       if Ord(V) > $FF then
         raise EConvertError.Create(SRawByteStringConvertError);
-      Q^ := AnsiChar(Byte(V));
+      Q^ := Byte(V);
       Inc(S);
       Inc(Q);
     end;
 end;
 
+{$IFDEF SupportWideString}
 function WideStringToRawByteString(const S: WideString): RawByteString;
 begin
   Result := WideBufToRawByteString(PWideChar(S), Length(S));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeStringToRawByteString(const S: UnicodeString): RawByteString;
 begin
   Result := WideBufToRawByteString(PWideChar(S), Length(S));
 end;
+{$ENDIF}
 
 
 
 {                                                                              }
 { String conversion functions                                                  }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function ToAnsiString(const A: String): AnsiString;
 begin
   {$IFDEF StringIsUnicode}
@@ -1146,6 +1380,7 @@ begin
   Result := A;
   {$ENDIF}
 end;
+{$ENDIF}
 
 function ToRawByteString(const A: String): RawByteString;
 begin
@@ -1156,7 +1391,7 @@ begin
   {$ENDIF}
 end;
 
-{$IFNDEF SupportWideString}
+{$IFDEF SupportWideString}
 {$IFDEF StringIsUnicode}
 function ToWideString(const A: String): WideString;
 var L : Integer;
@@ -1174,21 +1409,14 @@ begin
   RawByteBufToWideBuf(PChar(A), Length(A), PWideChar(Result));
 end;
 {$ENDIF}
-{$ELSE}
-function ToWideString(const A: String): WideString;
-var L, I : Integer;
-begin
-  L := Length(A);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := WideChar(A[I]);
-end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function ToUnicodeString(const A: String): UnicodeString;
 begin
   Result := UnicodeString(A);
 end;
+{$ENDIF}
 
 
 
@@ -1197,8 +1425,9 @@ end;
 {                                                                              }
 {$IFNDEF SupportStringRefCount}
 {$IFDEF DELPHI}
-function StringRefCount(const S: UnicodeString): LongInt;
-var P : PLongInt;
+{$IFDEF SupportUnicodeString}
+function StringRefCount(const S: UnicodeString): Integer;
+var P : PInt32;
 begin
   P := Pointer(S);
   if not Assigned(P) then
@@ -1209,9 +1438,10 @@ begin
       Result := P^;
     end;
 end;
+{$ENDIF}
 
-function StringRefCount(const S: RawByteString): LongInt;
-var P : PLongInt;
+function StringRefCount(const S: RawByteString): Integer;
+var P : PInt32;
 begin
   P := Pointer(S);
   if not Assigned(P) then
@@ -1230,60 +1460,28 @@ end;
 {                                                                              }
 { String append functions                                                      }
 {                                                                              }
-{$IFNDEF SupportAnsiString}
-procedure StrAppendChA(var A: AnsiString; const C: AnsiChar);
-var L : Integer;
-begin
-  L := Length(A);
-  SetLength(A, L + 1);
-  A[L] := C;
-end;
-{$ELSE}
+{$IFDEF SupportAnsiString}
 procedure StrAppendChA(var A: AnsiString; const C: AnsiChar);
 begin
   A := A + C;
 end;
 {$ENDIF}
 
-{$IFNDEF SupportAnsiString}
-procedure StrAppendChB(var A: RawByteString; const C: AnsiChar);
-var L : Integer;
-begin
-  L := Length(A);
-  SetLength(A, L + 1);
-  A[L] := C;
-end;
-{$ELSE}
+{$IFDEF SupportAnsiChar}
 procedure StrAppendChB(var A: RawByteString; const C: AnsiChar);
 begin
   A := A + C;
 end;
 {$ENDIF}
 
-{$IFNDEF SupportWideString}
-procedure StrAppendChW(var A: WideString; const C: WideChar);
-var L : Integer;
-begin
-  L := Length(A);
-  SetLength(A, L + 1);
-  A[L] := C;
-end;
-{$ELSE}
+{$IFDEF SupportWideString}
 procedure StrAppendChW(var A: WideString; const C: WideChar);
 begin
   A := A + C;
 end;
 {$ENDIF}
 
-{$IFNDEF SupportUnicodeString}
-procedure StrAppendChU(var A: UnicodeString; const C: WideChar);
-var L : Integer;
-begin
-  L := Length(A);
-  SetLength(A, L + 1);
-  A[L] := C;
-end;
-{$ELSE}
+{$IFDEF SupportUnicodeString}
 procedure StrAppendChU(var A: UnicodeString; const C: WideChar);
 begin
   A := A + C;
@@ -1350,8 +1548,8 @@ begin
   Result := 0;
 end;
 {$ELSE}
-function StrPCompareA(const A, B: PAnsiChar; const Len: Integer): Integer;
-var P, Q : PAnsiChar;
+function StrPCompareA(const A, B: Pointer; const Len: Integer): Integer;
+var P, Q : PByte;
     I    : Integer;
 begin
   P := A;
@@ -1466,6 +1664,7 @@ end;
 {$ENDIF}
 
 {$IFNDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrCompareA(const A, B: AnsiString): Integer;
 var L, M, I: Integer;
 begin
@@ -1485,6 +1684,7 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
 function StrCompareB(const A, B: RawByteString): Integer;
 var L, M, I: Integer;
@@ -1506,6 +1706,7 @@ begin
     Result := 1;
 end;
 
+{$IFDEF SupportWideString}
 function StrCompareW(const A, B: WideString): Integer;
 var L, M, I: Integer;
 begin
@@ -1525,7 +1726,9 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCompareU(const A, B: UnicodeString): Integer;
 var L, M, I: Integer;
 begin
@@ -1545,6 +1748,7 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
 function StrCompare(const A, B: String): Integer;
 var L, M, I: Integer;
@@ -1658,15 +1862,15 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Swap(var X, Y: LongInt); register; assembler;
+procedure Swap(var X, Y: Int32); register; assembler;
 asm
       MOV     ECX, [EDX]
       XCHG    [EAX], ECX
       MOV     [EDX], ECX
 end;
 {$ELSE}
-procedure Swap(var X, Y: LongInt);
-var F : LongInt;
+procedure Swap(var X, Y: Int32);
+var F : Int32;
 begin
   F := X;
   X := Y;
@@ -1675,15 +1879,15 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Swap(var X, Y: LongWord); register; assembler;
+procedure Swap(var X, Y: Word32); register; assembler;
 asm
       MOV     ECX, [EDX]
       XCHG    [EAX], ECX
       MOV     [EDX], ECX
 end;
 {$ELSE}
-procedure Swap(var X, Y: LongWord);
-var F : LongWord;
+procedure Swap(var X, Y: Word32);
+var F : Word32;
 begin
   F := X;
   X := Y;
@@ -1767,6 +1971,7 @@ begin
   Y := F;
 end;
 
+{$IFDEF SupportAnsiString}
 procedure SwapA(var X, Y: AnsiString);
 var F : AnsiString;
 begin
@@ -1774,6 +1979,7 @@ begin
   X := Y;
   Y := F;
 end;
+{$ENDIF}
 
 procedure SwapB(var X, Y: RawByteString);
 var F : RawByteString;
@@ -1783,6 +1989,7 @@ begin
   Y := F;
 end;
 
+{$IFDEF SupportWideString}
 procedure SwapW(var X, Y: WideString);
 var F : WideString;
 begin
@@ -1790,7 +1997,9 @@ begin
   X := Y;
   Y := F;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure SwapU(var X, Y: UnicodeString);
 var F : UnicodeString;
 begin
@@ -1798,6 +2007,7 @@ begin
   X := Y;
   Y := F;
 end;
+{$ENDIF}
 
 procedure Swap(var X, Y: String);
 var F : String;
@@ -1870,6 +2080,7 @@ begin
     Result := FalseValue;
 end;
 
+{$IFDEF SupportAnsiString}
 function iifA(const Expr: Boolean; const TrueValue, FalseValue: AnsiString): AnsiString;
 begin
   if Expr then
@@ -1877,6 +2088,7 @@ begin
   else
     Result := FalseValue;
 end;
+{$ENDIF}
 
 function iifB(const Expr: Boolean; const TrueValue, FalseValue: RawByteString): RawByteString;
 begin
@@ -1886,6 +2098,7 @@ begin
     Result := FalseValue;
 end;
 
+{$IFDEF SupportWideString}
 function iifW(const Expr: Boolean; const TrueValue, FalseValue: WideString): WideString;
 begin
   if Expr then
@@ -1893,7 +2106,9 @@ begin
   else
     Result := FalseValue;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function iifU(const Expr: Boolean; const TrueValue, FalseValue: UnicodeString): UnicodeString;
 begin
   if Expr then
@@ -1901,6 +2116,7 @@ begin
   else
     Result := FalseValue;
 end;
+{$ENDIF}
 
 function iif(const Expr: Boolean; const TrueValue, FalseValue: TObject): TObject;
 begin
@@ -1966,6 +2182,7 @@ begin
     Result := crLess;
 end;
 
+{$IFDEF SupportAnsiString}
 function CompareA(const I1, I2: AnsiString): TCompareResult;
 begin
   case StrCompareA(I1, I2) of
@@ -1975,6 +2192,7 @@ begin
     Result := crEqual;
   end;
 end;
+{$ENDIF}
 
 function CompareB(const I1, I2: RawByteString): TCompareResult;
 begin
@@ -1986,6 +2204,7 @@ begin
   end;
 end;
 
+{$IFDEF SupportWideString}
 function CompareW(const I1, I2: WideString): TCompareResult;
 begin
   case StrCompareW(I1, I2) of
@@ -1995,7 +2214,9 @@ begin
     Result := crEqual;
   end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CompareU(const I1, I2: UnicodeString): TCompareResult;
 begin
   if I1 = I2 then
@@ -2005,6 +2226,7 @@ begin
   else
     Result := crLess;
 end;
+{$ENDIF}
 
 function CompareChA(const I1, I2: AnsiChar): TCompareResult;
 begin
@@ -2024,16 +2246,6 @@ begin
     Result := crGreater
   else
     Result := crLess;
-end;
-
-function Sgn(const A: LongInt): Integer;
-begin
-  if A < 0 then
-    Result := -1 else
-  if A > 0 then
-    Result := 1
-  else
-    Result := 0;
 end;
 
 function Sgn(const A: Int64): Integer;
@@ -2062,7 +2274,7 @@ end;
 { Ascii char conversion lookup                                                 }
 {                                                                              }
 const
-  HexLookup: array[AnsiChar] of Byte = (
+  HexLookup: array[Byte] of Byte = (
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
@@ -2137,13 +2349,13 @@ end;
 
 function IsHexAnsiChar(const Ch: AnsiChar): Boolean;
 begin
-  Result := HexLookup[Ch] <= 15;
+  Result := HexLookup[Ord(Ch)] <= 15;
 end;
 
 function IsHexWideChar(const Ch: WideChar): Boolean;
 begin
   if Ord(Ch) <= $FF then
-    Result := HexLookup[AnsiChar(Ch)] <= 15
+    Result := HexLookup[Ord(Ch)] <= 15
   else
     Result := False;
 end;
@@ -2160,7 +2372,7 @@ end;
 function HexAnsiCharToInt(const A: AnsiChar): Integer;
 var B : Byte;
 begin
-  B := HexLookup[A];
+  B := HexLookup[Ord(A)];
   if B = $FF then
     Result := -1
   else
@@ -2174,7 +2386,7 @@ begin
     Result := -1
   else
     begin
-      B := HexLookup[AnsiChar(Ord(A))];
+      B := HexLookup[Ord(A)];
       if B = $FF then
         Result := -1
       else
@@ -2253,6 +2465,7 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF SupportAnsiString}
 function IntToStringA(const A: Int64): AnsiString;
 var T : Int64;
     L, I : Integer;
@@ -2295,6 +2508,7 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
 function IntToStringB(const A: Int64): RawByteString;
 var T : Int64;
@@ -2328,17 +2542,18 @@ begin
   T := A;
   if T < 0 then
     begin
-      Result[1] := AnsiChar('-');
+      Result[1] := '-';
       T := -T;
     end;
   while T > 0 do
     begin
-      Result[L - I] := IntToAnsiChar(T mod 10);
+      Result[L - I] := UTF8Char(IntToAnsiChar(T mod 10));
       T := T div 10;
       Inc(I);
     end;
 end;
 
+{$IFDEF SupportWideString}
 function IntToStringW(const A: Int64): WideString;
 var T : Int64;
     L, I : Integer;
@@ -2381,7 +2596,9 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function IntToStringU(const A: Int64): UnicodeString;
 var L, T, I : Integer;
 begin
@@ -2423,6 +2640,7 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
 function IntToString(const A: Int64): String;
 var T : Int64;
@@ -2467,6 +2685,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function NativeUIntToBaseA(
          const Value: NativeUInt;
          const Digits: Integer;
@@ -2517,6 +2736,7 @@ begin
       Dec(L);
     end;
 end;
+{$ENDIF}
 
 function NativeUIntToBaseB(
          const Value: NativeUInt;
@@ -2536,7 +2756,7 @@ begin
         L := Digits;
       SetLength(Result, L);
       for V := 0 to L - 1 do
-        Result[1 + V] := AnsiChar(Ord('0'));
+        Result[1 + V] := '0';
       exit;
     end;
   // determine number of digits in result
@@ -2556,19 +2776,20 @@ begin
     begin
       V := D mod Base + 1;
       if UpperCase then
-        Result[L] := AnsiChar(StrHexDigitsUpper[V])
+        Result[L] := UTF8Char(StrHexDigitsUpper[V])
       else
-        Result[L] := AnsiChar(StrHexDigitsLower[V]);
+        Result[L] := UTF8Char(StrHexDigitsLower[V]);
       Dec(L);
       D := D div Base;
     end;
   while L > 0 do
     begin
-      Result[L] := AnsiChar(Ord('0'));
+      Result[L] := '0';
       Dec(L);
     end;
 end;
 
+{$IFDEF SupportWideString}
 function NativeUIntToBaseW(
          const Value: NativeUInt;
          const Digits: Integer;
@@ -2619,7 +2840,9 @@ begin
       Dec(L);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function NativeUIntToBaseU(
          const Value: NativeUInt;
          const Digits: Integer;
@@ -2670,6 +2893,7 @@ begin
       Dec(L);
     end;
 end;
+{$ENDIF}
 
 function NativeUIntToBase(
          const Value: NativeUInt;
@@ -2722,127 +2946,157 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function UIntToStringA(const A: NativeUInt): AnsiString;
 begin
   Result := NativeUIntToBaseA(A, 0, 10);
 end;
+{$ENDIF}
 
 function UIntToStringB(const A: NativeUInt): RawByteString;
 begin
   Result := NativeUIntToBaseB(A, 0, 10);
 end;
 
+{$IFDEF SupportWideString}
 function UIntToStringW(const A: NativeUInt): WideString;
 begin
   Result := NativeUIntToBaseW(A, 0, 10);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UIntToStringU(const A: NativeUInt): UnicodeString;
 begin
   Result := NativeUIntToBaseU(A, 0, 10);
 end;
+{$ENDIF}
 
 function UIntToString(const A: NativeUInt): String;
 begin
   Result := NativeUIntToBase(A, 0, 10);
 end;
 
-function LongWordToStrA(const A: LongWord; const Digits: Integer): AnsiString;
+{$IFDEF SupportAnsiString}
+function Word32ToStrA(const A: Word32; const Digits: Integer): AnsiString;
 begin
   Result := NativeUIntToBaseA(A, Digits, 10);
 end;
+{$ENDIF}
 
-function LongWordToStrB(const A: LongWord; const Digits: Integer): RawByteString;
+function Word32ToStrB(const A: Word32; const Digits: Integer): RawByteString;
 begin
   Result := NativeUIntToBaseB(A, Digits, 10);
 end;
 
-function LongWordToStrW(const A: LongWord; const Digits: Integer): WideString;
+{$IFDEF SupportWideString}
+function Word32ToStrW(const A: Word32; const Digits: Integer): WideString;
 begin
   Result := NativeUIntToBaseW(A, Digits, 10);
 end;
+{$ENDIF}
 
-function LongWordToStrU(const A: LongWord; const Digits: Integer): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function Word32ToStrU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
   Result := NativeUIntToBaseU(A, Digits, 10);
 end;
+{$ENDIF}
 
-function LongWordToStr(const A: LongWord; const Digits: Integer): String;
+function Word32ToStr(const A: Word32; const Digits: Integer): String;
 begin
   Result := NativeUIntToBase(A, Digits, 10);
 end;
 
-function LongWordToHexA(const A: LongWord; const Digits: Integer; const UpperCase: Boolean): AnsiString;
+{$IFDEF SupportAnsiString}
+function Word32ToHexA(const A: Word32; const Digits: Integer; const UpperCase: Boolean): AnsiString;
 begin
   Result := NativeUIntToBaseA(A, Digits, 16, UpperCase);
 end;
+{$ENDIF}
 
-function LongWordToHexB(const A: LongWord; const Digits: Integer; const UpperCase: Boolean): RawByteString;
+function Word32ToHexB(const A: Word32; const Digits: Integer; const UpperCase: Boolean): RawByteString;
 begin
   Result := NativeUIntToBaseB(A, Digits, 16, UpperCase);
 end;
 
-function LongWordToHexW(const A: LongWord; const Digits: Integer; const UpperCase: Boolean): WideString;
+{$IFDEF SupportWideString}
+function Word32ToHexW(const A: Word32; const Digits: Integer; const UpperCase: Boolean): WideString;
 begin
   Result := NativeUIntToBaseW(A, Digits, 16, UpperCase);
 end;
+{$ENDIF}
 
-function LongWordToHexU(const A: LongWord; const Digits: Integer; const UpperCase: Boolean): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function Word32ToHexU(const A: Word32; const Digits: Integer; const UpperCase: Boolean): UnicodeString;
 begin
   Result := NativeUIntToBaseU(A, Digits, 16, UpperCase);
 end;
+{$ENDIF}
 
-function LongWordToHex(const A: LongWord; const Digits: Integer; const UpperCase: Boolean): String;
+function Word32ToHex(const A: Word32; const Digits: Integer; const UpperCase: Boolean): String;
 begin
   Result := NativeUIntToBase(A, Digits, 16, UpperCase);
 end;
 
-function LongWordToOctA(const A: LongWord; const Digits: Integer): AnsiString;
+{$IFDEF SupportAnsiString}
+function Word32ToOctA(const A: Word32; const Digits: Integer): AnsiString;
 begin
   Result := NativeUIntToBaseA(A, Digits, 8);
 end;
+{$ENDIF}
 
-function LongWordToOctB(const A: LongWord; const Digits: Integer): RawByteString;
+function Word32ToOctB(const A: Word32; const Digits: Integer): RawByteString;
 begin
   Result := NativeUIntToBaseB(A, Digits, 8);
 end;
 
-function LongWordToOctW(const A: LongWord; const Digits: Integer): WideString;
+{$IFDEF SupportWideString}
+function Word32ToOctW(const A: Word32; const Digits: Integer): WideString;
 begin
   Result := NativeUIntToBaseW(A, Digits, 8);
 end;
+{$ENDIF}
 
-function LongWordToOctU(const A: LongWord; const Digits: Integer): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function Word32ToOctU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
   Result := NativeUIntToBaseU(A, Digits, 8);
 end;
+{$ENDIF}
 
-function LongWordToOct(const A: LongWord; const Digits: Integer): String;
+function Word32ToOct(const A: Word32; const Digits: Integer): String;
 begin
   Result := NativeUIntToBase(A, Digits, 8);
 end;
 
-function LongWordToBinA(const A: LongWord; const Digits: Integer): AnsiString;
+{$IFDEF SupportAnsiString}
+function Word32ToBinA(const A: Word32; const Digits: Integer): AnsiString;
 begin
   Result := NativeUIntToBaseA(A, Digits, 2);
 end;
+{$ENDIF}
 
-function LongWordToBinB(const A: LongWord; const Digits: Integer): RawByteString;
+function Word32ToBinB(const A: Word32; const Digits: Integer): RawByteString;
 begin
   Result := NativeUIntToBaseB(A, Digits, 2);
 end;
 
-function LongWordToBinW(const A: LongWord; const Digits: Integer): WideString;
+{$IFDEF SupportWideString}
+function Word32ToBinW(const A: Word32; const Digits: Integer): WideString;
 begin
   Result := NativeUIntToBaseW(A, Digits, 2);
 end;
+{$ENDIF}
 
-function LongWordToBinU(const A: LongWord; const Digits: Integer): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function Word32ToBinU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
   Result := NativeUIntToBaseU(A, Digits, 2);
 end;
+{$ENDIF}
 
-function LongWordToBin(const A: LongWord; const Digits: Integer): String;
+function Word32ToBin(const A: Word32; const Digits: Integer): String;
 begin
   Result := NativeUIntToBase(A, Digits, 2);
 end;
@@ -2851,8 +3105,8 @@ end;
 function TryStringToInt64PA(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
-    P : PAnsiChar;
-    Ch : AnsiChar;
+    P : PByte;
+    Ch : Byte;
     HasDig : Boolean;
     Neg : Boolean;
     Res : Int64;
@@ -2868,17 +3122,17 @@ begin
   Len := 0;
   // check sign
   Ch := P^;
-  if Ch in [AnsiChar(Ord('+')), AnsiChar(Ord('-'))] then
+  if Ch in [Ord('+'), Ord('-')] then
     begin
       Inc(Len);
       Inc(P);
-      Neg := Ch = AnsiChar(Ord('-'));
+      Neg := Ch = Ord('-');
     end
   else
     Neg := False;
   // skip leading zeros
   HasDig := False;
-  while (Len < BufLen) and (P^ = AnsiChar(Ord('0'))) do
+  while (Len < BufLen) and (P^ = Ord('0')) do
     begin
       Inc(Len);
       Inc(P);
@@ -2889,7 +3143,7 @@ begin
   while Len < BufLen do
     begin
       Ch := P^;
-      if Ch in [AnsiChar(Ord('0'))..AnsiChar(Ord('9'))] then
+      if Ch in [Ord('0')..Ord('9')] then
         begin
           HasDig := True;
           if (Res > 922337203685477580) or
@@ -2901,7 +3155,7 @@ begin
               exit;
             end;
           Res := Res * 10;
-          DigVal := AnsiCharToInt(Ch);
+          DigVal := AnsiCharToInt(AnsiChar(Ch));
           if ((Res = 9223372036854775800) and (DigVal > 7)) or
              ((Res = -9223372036854775800) and (DigVal > 8)) then
             begin
@@ -3108,6 +3362,7 @@ begin
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function TryStringToInt64A(const S: AnsiString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
@@ -3117,17 +3372,19 @@ begin
     if N < L then
       Result := False;
 end;
+{$ENDIF}
 
 function TryStringToInt64B(const S: RawByteString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
   L := Length(S);
-  Result := TryStringToInt64PA(PAnsiChar(S), L, A, N) = convertOK;
+  Result := TryStringToInt64PA(Pointer(S), L, A, N) = convertOK;
   if Result then
     if N < L then
       Result := False;
 end;
 
+{$IFDEF SupportWideString}
 function TryStringToInt64W(const S: WideString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
@@ -3137,7 +3394,9 @@ begin
     if N < L then
       Result := False;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function TryStringToInt64U(const S: UnicodeString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
@@ -3147,6 +3406,7 @@ begin
     if N < L then
       Result := False;
 end;
+{$ENDIF}
 
 function TryStringToInt64(const S: String; out A: Int64): Boolean;
 var L, N : Integer;
@@ -3158,11 +3418,13 @@ begin
       Result := False;
 end;
 
+{$IFDEF SupportAnsiString}
 function StringToInt64DefA(const S: AnsiString; const Default: Int64): Int64;
 begin
   if not TryStringToInt64A(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
 function StringToInt64DefB(const S: RawByteString; const Default: Int64): Int64;
 begin
@@ -3170,17 +3432,21 @@ begin
     Result := Default;
 end;
 
+{$IFDEF SupportWideString}
 function StringToInt64DefW(const S: WideString; const Default: Int64): Int64;
 begin
   if not TryStringToInt64W(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StringToInt64DefU(const S: UnicodeString; const Default: Int64): Int64;
 begin
   if not TryStringToInt64U(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
 function StringToInt64Def(const S: String; const Default: Int64): Int64;
 begin
@@ -3188,11 +3454,13 @@ begin
     Result := Default;
 end;
 
+{$IFDEF SupportAnsiString}
 function StringToInt64A(const S: AnsiString): Int64;
 begin
   if not TryStringToInt64A(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function StringToInt64B(const S: RawByteString): Int64;
 begin
@@ -3200,17 +3468,21 @@ begin
     RaiseRangeCheckError;
 end;
 
+{$IFDEF SupportWideString}
 function StringToInt64W(const S: WideString): Int64;
 begin
   if not TryStringToInt64W(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StringToInt64U(const S: UnicodeString): Int64;
 begin
   if not TryStringToInt64U(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function StringToInt64(const S: String): Int64;
 begin
@@ -3218,6 +3490,7 @@ begin
     RaiseRangeCheckError;
 end;
 
+{$IFDEF SupportAnsiString}
 function TryStringToIntA(const S: AnsiString; out A: Integer): Boolean;
 var B : Int64;
 begin
@@ -3236,6 +3509,7 @@ begin
   A := Integer(B);
   Result := True;
 end;
+{$ENDIF}
 
 function TryStringToIntB(const S: RawByteString; out A: Integer): Boolean;
 var B : Int64;
@@ -3256,6 +3530,7 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportWideString}
 function TryStringToIntW(const S: WideString; out A: Integer): Boolean;
 var B : Int64;
 begin
@@ -3274,7 +3549,9 @@ begin
   A := Integer(B);
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function TryStringToIntU(const S: UnicodeString; out A: Integer): Boolean;
 var B : Int64;
 begin
@@ -3293,6 +3570,7 @@ begin
   A := Integer(B);
   Result := True;
 end;
+{$ENDIF}
 
 function TryStringToInt(const S: String; out A: Integer): Boolean;
 var B : Int64;
@@ -3313,11 +3591,13 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportAnsiString}
 function StringToIntDefA(const S: AnsiString; const Default: Integer): Integer;
 begin
   if not TryStringToIntA(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
 function StringToIntDefB(const S: RawByteString; const Default: Integer): Integer;
 begin
@@ -3325,17 +3605,21 @@ begin
     Result := Default;
 end;
 
+{$IFDEF SupportWideString}
 function StringToIntDefW(const S: WideString; const Default: Integer): Integer;
 begin
   if not TryStringToIntW(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StringToIntDefU(const S: UnicodeString; const Default: Integer): Integer;
 begin
   if not TryStringToIntU(S, Result) then
     Result := Default;
 end;
+{$ENDIF}
 
 function StringToIntDef(const S: String; const Default: Integer): Integer;
 begin
@@ -3343,11 +3627,13 @@ begin
     Result := Default;
 end;
 
+{$IFDEF SupportAnsiString}
 function StringToIntA(const S: AnsiString): Integer;
 begin
   if not TryStringToIntA(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function StringToIntB(const S: RawByteString): Integer;
 begin
@@ -3355,17 +3641,21 @@ begin
     RaiseRangeCheckError;
 end;
 
+{$IFDEF SupportWideString}
 function StringToIntW(const S: WideString): Integer;
 begin
   if not TryStringToIntW(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StringToIntU(const S: UnicodeString): Integer;
 begin
   if not TryStringToIntU(S, Result) then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function StringToInt(const S: String): Integer;
 begin
@@ -3373,7 +3663,8 @@ begin
     RaiseRangeCheckError;
 end;
 
-function TryStringToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function TryStringToWord32A(const S: AnsiString; out A: Word32): Boolean;
 var B : Int64;
 begin
   Result := TryStringToInt64A(S, B);
@@ -3382,17 +3673,18 @@ begin
       A := 0;
       exit;
     end;
-  if (B < MinLongWord) or (B > MaxLongWord) then
+  if (B < MinWord32) or (B > MaxWord32) then
     begin
       A := 0;
       Result := False;
       exit;
     end;
-  A := LongWord(B);
+  A := Word32(B);
   Result := True;
 end;
+{$ENDIF}
 
-function TryStringToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
+function TryStringToWord32B(const S: RawByteString; out A: Word32): Boolean;
 var B : Int64;
 begin
   Result := TryStringToInt64B(S, B);
@@ -3401,17 +3693,18 @@ begin
       A := 0;
       exit;
     end;
-  if (B < MinLongWord) or (B > MaxLongWord) then
+  if (B < MinWord32) or (B > MaxWord32) then
     begin
       A := 0;
       Result := False;
       exit;
     end;
-  A := LongWord(B);
+  A := Word32(B);
   Result := True;
 end;
 
-function TryStringToLongWordW(const S: WideString; out A: LongWord): Boolean;
+{$IFDEF SupportWideString}
+function TryStringToWord32W(const S: WideString; out A: Word32): Boolean;
 var B : Int64;
 begin
   Result := TryStringToInt64W(S, B);
@@ -3420,17 +3713,19 @@ begin
       A := 0;
       exit;
     end;
-  if (B < MinLongWord) or (B > MaxLongWord) then
+  if (B < MinWord32) or (B > MaxWord32) then
     begin
       A := 0;
       Result := False;
       exit;
     end;
-  A := LongWord(B);
+  A := Word32(B);
   Result := True;
 end;
+{$ENDIF}
 
-function TryStringToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
+{$IFDEF SupportUnicodeString}
+function TryStringToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 var B : Int64;
 begin
   Result := TryStringToInt64U(S, B);
@@ -3439,17 +3734,18 @@ begin
       A := 0;
       exit;
     end;
-  if (B < MinLongWord) or (B > MaxLongWord) then
+  if (B < MinWord32) or (B > MaxWord32) then
     begin
       A := 0;
       Result := False;
       exit;
     end;
-  A := LongWord(B);
+  A := Word32(B);
   Result := True;
 end;
+{$ENDIF}
 
-function TryStringToLongWord(const S: String; out A: LongWord): Boolean;
+function TryStringToWord32(const S: String; out A: Word32): Boolean;
 var B : Int64;
 begin
   Result := TryStringToInt64(S, B);
@@ -3458,46 +3754,53 @@ begin
       A := 0;
       exit;
     end;
-  if (B < MinLongWord) or (B > MaxLongWord) then
+  if (B < MinWord32) or (B > MaxWord32) then
     begin
       A := 0;
       Result := False;
       exit;
     end;
-  A := LongWord(B);
+  A := Word32(B);
   Result := True;
 end;
 
-function StringToLongWordA(const S: AnsiString): LongWord;
+{$IFDEF SupportAnsiString}
+function StringToWord32A(const S: AnsiString): Word32;
 begin
-  if not TryStringToLongWordA(S, Result) then
+  if not TryStringToWord32A(S, Result) then
+    RaiseRangeCheckError;
+end;
+{$ENDIF}
+
+function StringToWord32B(const S: RawByteString): Word32;
+begin
+  if not TryStringToWord32B(S, Result) then
     RaiseRangeCheckError;
 end;
 
-function StringToLongWordB(const S: RawByteString): LongWord;
+{$IFDEF SupportWideString}
+function StringToWord32W(const S: WideString): Word32;
 begin
-  if not TryStringToLongWordB(S, Result) then
+  if not TryStringToWord32W(S, Result) then
+    RaiseRangeCheckError;
+end;
+{$ENDIF}
+
+{$IFDEF SupportUnicodeString}
+function StringToWord32U(const S: UnicodeString): Word32;
+begin
+  if not TryStringToWord32U(S, Result) then
+    RaiseRangeCheckError;
+end;
+{$ENDIF}
+
+function StringToWord32(const S: String): Word32;
+begin
+  if not TryStringToWord32(S, Result) then
     RaiseRangeCheckError;
 end;
 
-function StringToLongWordW(const S: WideString): LongWord;
-begin
-  if not TryStringToLongWordW(S, Result) then
-    RaiseRangeCheckError;
-end;
-
-function StringToLongWordU(const S: UnicodeString): LongWord;
-begin
-  if not TryStringToLongWordU(S, Result) then
-    RaiseRangeCheckError;
-end;
-
-function StringToLongWord(const S: String): LongWord;
-begin
-  if not TryStringToLongWord(S, Result) then
-    RaiseRangeCheckError;
-end;
-
+{$IFDEF SupportAnsiString}
 function BaseStrToNativeUIntA(const S: AnsiString; const BaseLog2: Byte;
     var Valid: Boolean): NativeUInt;
 var N : Byte;
@@ -3517,7 +3820,7 @@ begin
   N := 0;
   Result := 0;
   repeat
-    C := HexLookup[S[L]];
+    C := HexLookup[Ord(S[L])];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3540,6 +3843,7 @@ begin
   until L = 0;
   Valid := True;
 end;
+{$ENDIF}
 
 function BaseStrToNativeUIntB(const S: RawByteString; const BaseLog2: Byte;
     var Valid: Boolean): NativeUInt;
@@ -3560,7 +3864,7 @@ begin
   N := 0;
   Result := 0;
   repeat
-    C := HexLookup[S[L]];
+    C := HexLookup[Ord(S[L])];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3584,6 +3888,7 @@ begin
   Valid := True;
 end;
 
+{$IFDEF SupportWideString}
 function BaseStrToNativeUIntW(const S: WideString; const BaseLog2: Byte;
     var Valid: Boolean): NativeUInt;
 var N : Byte;
@@ -3608,7 +3913,7 @@ begin
     if Ord(D) > $FF then
       C := $FF
     else
-      C := HexLookup[AnsiChar(Ord(D))];
+      C := HexLookup[Ord(D)];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3631,7 +3936,9 @@ begin
   until L = 0;
   Valid := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function BaseStrToNativeUIntU(const S: UnicodeString; const BaseLog2: Byte;
     var Valid: Boolean): NativeUInt;
 var N : Byte;
@@ -3656,7 +3963,7 @@ begin
     if Ord(D) > $FF then
       C := $FF
     else
-      C := HexLookup[AnsiChar(Ord(D))];
+      C := HexLookup[Ord(D)];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3679,6 +3986,7 @@ begin
   until L = 0;
   Valid := True;
 end;
+{$ENDIF}
 
 function BaseStrToNativeUInt(const S: String; const BaseLog2: Byte;
     var Valid: Boolean): NativeUInt;
@@ -3705,9 +4013,9 @@ begin
     if Ord(D) > $FF then
       C := $FF
     else
-      C := HexLookup[AnsiChar(Ord(D))];
+      C := HexLookup[Ord(D)];
     {$ELSE}
-    C := HexLookup[D];
+    C := HexLookup[Ord(D)];
     {$ENDIF}
     if C > M then // invalid digit
       begin
@@ -3732,6 +4040,7 @@ begin
   Valid := True;
 end;
 
+{$IFDEF SupportAnsiString}
 function HexToUIntA(const S: AnsiString): NativeUInt;
 var R : Boolean;
 begin
@@ -3739,6 +4048,7 @@ begin
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function HexToUIntB(const S: RawByteString): NativeUInt;
 var R : Boolean;
@@ -3748,6 +4058,7 @@ begin
     RaiseRangeCheckError;
 end;
 
+{$IFDEF SupportWideString}
 function HexToUIntW(const S: WideString): NativeUInt;
 var R : Boolean;
 begin
@@ -3755,7 +4066,9 @@ begin
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function HexToUIntU(const S: UnicodeString): NativeUInt;
 var R : Boolean;
 begin
@@ -3763,6 +4076,7 @@ begin
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
 function HexToUInt(const S: String): NativeUInt;
 var R : Boolean;
@@ -3772,40 +4086,48 @@ begin
     RaiseRangeCheckError;
 end;
 
-function TryHexToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function TryHexToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntA(S, 4, Result);
 end;
+{$ENDIF}
 
-function TryHexToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
+function TryHexToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntB(S, 4, Result);
 end;
 
-function TryHexToLongWordW(const S: WideString; out A: LongWord): Boolean;
+{$IFDEF SupportWideString}
+function TryHexToWord32W(const S: WideString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntW(S, 4, Result);
 end;
+{$ENDIF}
 
-function TryHexToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
+{$IFDEF SupportUnicodeString}
+function TryHexToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntU(S, 4, Result);
 end;
+{$ENDIF}
 
-function TryHexToLongWord(const S: String; out A: LongWord): Boolean;
+function TryHexToWord32(const S: String; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUInt(S, 4, Result);
 end;
 
-function HexToLongWordA(const S: AnsiString): LongWord;
+{$IFDEF SupportAnsiString}
+function HexToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 4, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function HexToLongWordB(const S: RawByteString): LongWord;
+function HexToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 4, R);
@@ -3813,23 +4135,27 @@ begin
     RaiseRangeCheckError;
 end;
 
-function HexToLongWordW(const S: WideString): LongWord;
+{$IFDEF SupportWideString}
+function HexToWord32W(const S: WideString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntW(S, 4, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function HexToLongWordU(const S: UnicodeString): LongWord;
+{$IFDEF SupportUnicodeString}
+function HexToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 4, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function HexToLongWord(const S: String): LongWord;
+function HexToWord32(const S: String): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 4, R);
@@ -3837,40 +4163,48 @@ begin
     RaiseRangeCheckError;
 end;
 
-function TryOctToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function TryOctToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntA(S, 3, Result);
 end;
+{$ENDIF}
 
-function TryOctToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
+function TryOctToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntB(S, 3, Result);
 end;
 
-function TryOctToLongWordW(const S: WideString; out A: LongWord): Boolean;
+{$IFDEF SupportWideString}
+function TryOctToWord32W(const S: WideString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntW(S, 3, Result);
 end;
+{$ENDIF}
 
-function TryOctToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
+{$IFDEF SupportUnicodeString}
+function TryOctToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntU(S, 3, Result);
 end;
+{$ENDIF}
 
-function TryOctToLongWord(const S: String; out A: LongWord): Boolean;
+function TryOctToWord32(const S: String; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUInt(S, 3, Result);
 end;
 
-function OctToLongWordA(const S: AnsiString): LongWord;
+{$IFDEF SupportAnsiString}
+function OctToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 3, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function OctToLongWordB(const S: RawByteString): LongWord;
+function OctToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 3, R);
@@ -3878,64 +4212,76 @@ begin
     RaiseRangeCheckError;
 end;
 
-function OctToLongWordW(const S: WideString): LongWord;
+{$IFDEF SupportWideString}
+function OctToWord32W(const S: WideString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntW(S, 3, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function OctToLongWordU(const S: UnicodeString): LongWord;
+{$IFDEF SupportUnicodeString}
+function OctToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 3, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function OctToLongWord(const S: String): LongWord;
+function OctToWord32(const S: String): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntW(ToWideString(S), 3, R);
+  Result := BaseStrToNativeUInt(S, 3, R);
   if not R then
     RaiseRangeCheckError;
 end;
 
-function TryBinToLongWordA(const S: AnsiString; out A: LongWord): Boolean;
+{$IFDEF SupportAnsiString}
+function TryBinToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntA(S, 1, Result);
 end;
+{$ENDIF}
 
-function TryBinToLongWordB(const S: RawByteString; out A: LongWord): Boolean;
+function TryBinToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntB(S, 1, Result);
 end;
 
-function TryBinToLongWordW(const S: WideString; out A: LongWord): Boolean;
+{$IFDEF SupportWideString}
+function TryBinToWord32W(const S: WideString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntW(S, 1, Result);
 end;
+{$ENDIF}
 
-function TryBinToLongWordU(const S: UnicodeString; out A: LongWord): Boolean;
+{$IFDEF SupportUnicodeString}
+function TryBinToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUIntU(S, 1, Result);
 end;
+{$ENDIF}
 
-function TryBinToLongWord(const S: String; out A: LongWord): Boolean;
+function TryBinToWord32(const S: String; out A: Word32): Boolean;
 begin
   A := BaseStrToNativeUInt(S, 1, Result);
 end;
 
-function BinToLongWordA(const S: AnsiString): LongWord;
+{$IFDEF SupportAnsiString}
+function BinToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 1, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function BinToLongWordB(const S: RawByteString): LongWord;
+function BinToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 1, R);
@@ -3943,23 +4289,27 @@ begin
     RaiseRangeCheckError;
 end;
 
-function BinToLongWordW(const S: WideString): LongWord;
+{$IFDEF SupportWideString}
+function BinToWord32W(const S: WideString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntW(S, 1, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function BinToLongWordU(const S: UnicodeString): LongWord;
+{$IFDEF SupportUnicodeString}
+function BinToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 1, R);
   if not R then
     RaiseRangeCheckError;
 end;
+{$ENDIF}
 
-function BinToLongWord(const S: String): LongWord;
+function BinToWord32(const S: String): Word32;
 var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 1, R);
@@ -4006,6 +4356,7 @@ begin
     end;
 end;
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function BytesToHex(const P: Pointer; const Count: Integer;
          const UpperCase: Boolean): AnsiString;
 var Q : PByte;
@@ -4041,6 +4392,7 @@ begin
     end;
 end;
 {$ENDIF}
+{$ENDIF}
 
 
 
@@ -4057,28 +4409,28 @@ begin
   Result := Word(A shr 8) or Word(A shl 8);
 end;
 
-function hton32(const A: LongWord): LongWord;
+function hton32(const A: Word32): Word32;
 var BufH : array[0..3] of Byte;
     BufN : array[0..3] of Byte;
 begin
-  PLongWord(@BufH)^ := A;
+  PWord32(@BufH)^ := A;
   BufN[0] := BufH[3];
   BufN[1] := BufH[2];
   BufN[2] := BufH[1];
   BufN[3] := BufH[0];
-  Result := PLongWord(@BufN)^;
+  Result := PWord32(@BufN)^;
 end;
 
-function ntoh32(const A: LongWord): LongWord;
+function ntoh32(const A: Word32): Word32;
 var BufH : array[0..3] of Byte;
     BufN : array[0..3] of Byte;
 begin
-  PLongWord(@BufH)^ := A;
+  PWord32(@BufH)^ := A;
   BufN[0] := BufH[3];
   BufN[1] := BufH[2];
   BufN[2] := BufH[1];
   BufN[3] := BufH[0];
-  Result := PLongWord(@BufN)^;
+  Result := PWord32(@BufN)^;
 end;
 
 function hton64(const A: Int64): Int64;
@@ -4115,20 +4467,13 @@ end;
 
 
 
-{$IFNDEF SupportWideString}
-function WideStringToUnicodeString(const S: WideString): UnicodeString;
-var L, I : Integer;
-begin
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := S[I - 1];
-end;
-{$ELSE}
+{$IFDEF SupportWideString}
+{$IFDEF SupportUnicodeString}
 function WideStringToUnicodeString(const S: WideString): UnicodeString;
 begin
   Result := S;
 end;
+{$ENDIF}
 {$ENDIF}
 
 
@@ -4137,36 +4482,44 @@ end;
 { Pointer-String conversions                                                   }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function PointerToStrA(const P: Pointer): AnsiString;
 begin
   Result := NativeUIntToBaseA(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
 function PointerToStrB(const P: Pointer): RawByteString;
 begin
   Result := NativeUIntToBaseB(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 
+{$IFDEF SupportWideString}
 function PointerToStrW(const P: Pointer): WideString;
 begin
   Result := NativeUIntToBaseW(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PointerToStrU(const P: Pointer): UnicodeString;
 begin
   Result := NativeUIntToBaseU(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
 function PointerToStr(const P: Pointer): String;
 begin
   Result := NativeUIntToBase(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrToPointerA(const S: AnsiString): Pointer;
 var V : Boolean;
 begin
   Result := Pointer(BaseStrToNativeUIntA(S, 4, V));
 end;
+{$ENDIF}
 
 function StrToPointerB(const S: RawByteString): Pointer;
 var V : Boolean;
@@ -4174,17 +4527,21 @@ begin
   Result := Pointer(BaseStrToNativeUIntB(S, 4, V));
 end;
 
+{$IFDEF SupportWideString}
 function StrToPointerW(const S: WideString): Pointer;
 var V : Boolean;
 begin
   Result := Pointer(BaseStrToNativeUIntW(S, 4, V));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrToPointerU(const S: UnicodeString): Pointer;
 var V : Boolean;
 begin
   Result := Pointer(BaseStrToNativeUIntU(S, 4, V));
 end;
+{$ENDIF}
 
 function StrToPointer(const S: String): Pointer;
 var V : Boolean;
@@ -4193,25 +4550,31 @@ begin
 end;
 
 {$IFDEF SupportInterface}
+{$IFDEF SupportAnsiString}
 function InterfaceToStrA(const I: IInterface): AnsiString;
 begin
   Result := NativeUIntToBaseA(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
 function InterfaceToStrB(const I: IInterface): RawByteString;
 begin
   Result := NativeUIntToBaseB(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
 
+{$IFDEF SupportWideString}
 function InterfaceToStrW(const I: IInterface): WideString;
 begin
   Result := NativeUIntToBaseW(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function InterfaceToStrU(const I: IInterface): UnicodeString;
 begin
-  Result := WideStringToUnicodeString(NativeUIntToBaseW(NativeUInt(I), NativeWordSize * 2, 16, True));
+  Result := NativeUIntToBaseU(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
+{$ENDIF}
 
 function InterfaceToStr(const I: IInterface): String;
 begin
@@ -4252,12 +4615,12 @@ end;
 {                                                                              }
 var
   HashTableInit : Boolean = False;
-  HashTable     : array[Byte] of LongWord;
-  HashPoly      : LongWord = $EDB88320;
+  HashTable     : array[Byte] of Word32;
+  HashPoly      : Word32 = $EDB88320;
 
 procedure InitHashTable;
 var I, J : Byte;
-    R    : LongWord;
+    R    : Word32;
 begin
   for I := $00 to $FF do
     begin
@@ -4272,17 +4635,17 @@ begin
   HashTableInit := True;
 end;
 
-function HashByte(const Hash: LongWord; const C: Byte): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashByte(const Hash: Word32; const C: Byte): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := HashTable[Byte(Hash) xor C] xor (Hash shr 8);
 end;
 
-function HashCharA(const Hash: LongWord; const Ch: AnsiChar): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharA(const Hash: Word32; const Ch: AnsiChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := HashByte(Hash, Byte(Ch));
 end;
 
-function HashCharW(const Hash: LongWord; const Ch: WideChar): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharW(const Hash: Word32; const Ch: WideChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var C1, C2 : Byte;
 begin
   C1 := Byte(Ord(Ch) and $FF);
@@ -4292,7 +4655,7 @@ begin
   Result := HashByte(Result, C2);
 end;
 
-function HashChar(const Hash: LongWord; const Ch: Char): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashChar(const Hash: Word32; const Ch: Char): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   {$IFDEF CharIsWide}
   Result := HashCharW(Hash, Ch);
@@ -4301,7 +4664,7 @@ begin
   {$ENDIF}
 end;
 
-function HashCharNoAsciiCaseA(const Hash: LongWord; const Ch: AnsiChar): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharNoAsciiCaseA(const Hash: Word32; const Ch: AnsiChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var C : Byte;
 begin
   C := Byte(Ch);
@@ -4310,7 +4673,7 @@ begin
   Result := HashCharA(Hash, AnsiChar(C));
 end;
 
-function HashCharNoAsciiCaseW(const Hash: LongWord; const Ch: WideChar): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharNoAsciiCaseW(const Hash: Word32; const Ch: WideChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var C : Word;
 begin
   C := Word(Ch);
@@ -4320,7 +4683,7 @@ begin
   Result := HashCharW(Hash, WideChar(C));
 end;
 
-function HashCharNoAsciiCase(const Hash: LongWord; const Ch: Char): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharNoAsciiCase(const Hash: Word32; const Ch: Char): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   {$IFDEF CharIsWide}
   Result := HashCharNoAsciiCaseW(Hash, Ch);
@@ -4329,7 +4692,7 @@ begin
   {$ENDIF}
 end;
 
-function HashBuf(const Hash: LongWord; const Buf; const BufSize: Integer): LongWord;
+function HashBuf(const Hash: Word32; const Buf; const BufSize: Integer): Word32;
 var P : PByte;
     I : Integer;
 begin
@@ -4344,10 +4707,11 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function HashStrA(const S: AnsiString;
          const Index: Integer; const Count: Integer;
          const AsciiCaseSensitive: Boolean;
-         const Slots: LongWord): LongWord;
+         const Slots: Word32): Word32;
 var I, L, A, B : Integer;
 begin
   if not HashTableInit then
@@ -4375,11 +4739,12 @@ begin
   if Slots > 0 then
     Result := Result mod Slots;
 end;
+{$ENDIF}
 
 function HashStrB(const S: RawByteString;
          const Index: Integer; const Count: Integer;
          const AsciiCaseSensitive: Boolean;
-         const Slots: LongWord): LongWord;
+         const Slots: Word32): Word32;
 var I, L, A, B : Integer;
 begin
   if not HashTableInit then
@@ -4400,18 +4765,19 @@ begin
   Result := $FFFFFFFF;
   if AsciiCaseSensitive then
     for I := A to B do
-      Result := HashCharA(Result, S[I])
+      Result := HashCharA(Result, AnsiChar(S[I]))
   else
     for I := A to B do
-      Result := HashCharNoAsciiCaseA(Result, S[I]);
+      Result := HashCharNoAsciiCaseA(Result, AnsiChar(S[I]));
   if Slots > 0 then
     Result := Result mod Slots;
 end;
 
+{$IFDEF SupportWideString}
 function HashStrW(const S: WideString;
          const Index: Integer; const Count: Integer;
          const AsciiCaseSensitive: Boolean;
-         const Slots: LongWord): LongWord;
+         const Slots: Word32): Word32;
 var I, L, A, B : Integer;
 begin
   if not HashTableInit then
@@ -4439,11 +4805,13 @@ begin
   if Slots > 0 then
     Result := Result mod Slots;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function HashStrU(const S: UnicodeString;
          const Index: Integer; const Count: Integer;
          const AsciiCaseSensitive: Boolean;
-         const Slots: LongWord): LongWord;
+         const Slots: Word32): Word32;
 var I, L, A, B : Integer;
 begin
   if not HashTableInit then
@@ -4471,11 +4839,12 @@ begin
   if Slots > 0 then
     Result := Result mod Slots;
 end;
+{$ENDIF}
 
 function HashStr(const S: String;
          const Index: Integer; const Count: Integer;
          const AsciiCaseSensitive: Boolean;
-         const Slots: LongWord): LongWord;
+         const Slots: Word32): Word32;
 var I, L, A, B : Integer;
 begin
   if not HashTableInit then
@@ -4507,7 +4876,7 @@ end;
 { HashInteger based on the CRC32 algorithm. It is a very good all purpose hash }
 { with a highly uniform distribution of results.                               }
 {$IFDEF ManagedCode}
-function HashInteger(const I: Integer; const Slots: LongWord): LongWord;
+function HashInteger(const I: Integer; const Slots: Word32): Word32;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4520,7 +4889,7 @@ begin
     Result := Result mod Slots;
 end;
 {$ELSE}
-function HashInteger(const I: Integer; const Slots: LongWord): LongWord;
+function HashInteger(const I: Integer; const Slots: Word32): Word32;
 var P : PByte;
 begin
   if not HashTableInit then
@@ -4540,7 +4909,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ManagedCode}
-function HashLongWord(const I: LongWord; const Slots: LongWord): LongWord;
+function HashWord32(const I: Word32; const Slots: Word32): Word32;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4553,7 +4922,7 @@ begin
     Result := Result mod Slots;
 end;
 {$ELSE}
-function HashLongWord(const I: LongWord; const Slots: LongWord): LongWord;
+function HashWord32(const I: Word32; const Slots: Word32): Word32;
 var P : PByte;
 begin
   if not HashTableInit then
@@ -5027,19 +5396,19 @@ begin
       Result := True;
       exit;
     end;
-  D := LongWord(Count) div 4;
+  D := Word32(Count) div 4;
   for I := 1 to D do
-    if PLongWord(P)^ = PLongWord(Q)^ then
+    if PWord32(P)^ = PWord32(Q)^ then
       begin
-        Inc(PLongWord(P));
-        Inc(PLongWord(Q));
+        Inc(PWord32(P));
+        Inc(PWord32(Q));
       end
     else
       begin
         Result := False;
         exit;
       end;
-  D := LongWord(Count) and 3;
+  D := Word32(Count) and 3;
   for I := 1 to D do
     if PByte(P)^ = PByte(Q)^ then
       begin
@@ -5414,13 +5783,13 @@ end;
 {$ASSERTIONS ON}
 procedure Test_Misc;
 var A, B : Byte;
-    C, D : LongWord;
+    C, D : Word32;
     P, Q : TObject;
 begin
   // Integer types
   {$IFNDEF ManagedCode}
-  Assert(Sizeof(SmallIntRec) = Sizeof(SmallInt), 'SmallIntRec');
-  Assert(Sizeof(LongIntRec) = Sizeof(LongInt),   'LongIntRec');
+  Assert(Sizeof(Int16Rec) = Sizeof(Int16), 'Int16Rec');
+  Assert(Sizeof(Int32Rec) = Sizeof(Int32), 'Int32Rec');
   {$ENDIF}
 
   // Min / Max
@@ -5437,7 +5806,7 @@ begin
   Assert(Int32Bounded(15, 5, 12) = 12,                            'Bounded');
   Assert(Int32BoundedByte(256) = 255,                             'BoundedByte');
   Assert(Int32BoundedWord(-5) = 0,                                'BoundedWord');
-  Assert(Int64BoundedLongWord($100000000) = $FFFFFFFF,            'BoundedWord');
+  Assert(Int64BoundedWord32($100000000) = $FFFFFFFF,              'BoundedWord');
 
   // Swap
   A := $11; B := $22;
@@ -5459,10 +5828,14 @@ begin
   Assert(iif(False, -1, -2) = -2,     'iif');
   Assert(iif(True, '1', '2') = '1',   'iif');
   Assert(iif(False, '1', '2') = '2',  'iif');
+  {$IFDEF SupportWideString}
   Assert(iifW(True, ToWideString('1'), ToWideString('2')) = ToWideString('1'),  'iif');
   Assert(iifW(False, ToWideString('1'), ToWideString('2')) = ToWideString('2'), 'iif');
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   Assert(iifU(True, '1', '2') = '1',  'iif');
   Assert(iifU(False, '1', '2') = '2', 'iif');
+  {$ENDIF}
   Assert(iif(True, 1.1, 2.2) = 1.1,   'iif');
   Assert(iif(False, 1.1, 2.2) = 2.2,  'iif');
 
@@ -5480,6 +5853,7 @@ begin
   Assert(Compare(False, True) = crLess,    'Compare');
   Assert(Compare(True, False) = crGreater, 'Compare');
 
+  {$IFDEF SupportAnsiString}
   Assert(CompareA(ToAnsiString(''), ToAnsiString('')) = crEqual,        'Compare');
   Assert(CompareA(ToAnsiString('a'), ToAnsiString('a')) = crEqual,      'Compare');
   Assert(CompareA(ToAnsiString('a'), ToAnsiString('b')) = crLess,       'Compare');
@@ -5487,6 +5861,7 @@ begin
   Assert(CompareA(ToAnsiString(''), ToAnsiString('a')) = crLess,        'Compare');
   Assert(CompareA(ToAnsiString('a'), ToAnsiString('')) = crGreater,     'Compare');
   Assert(CompareA(ToAnsiString('aa'), ToAnsiString('a')) = crGreater,   'Compare');
+  {$ENDIF}
 
   Assert(CompareB(ToRawByteString(''), ToRawByteString('')) = crEqual,        'Compare');
   Assert(CompareB(ToRawByteString('a'), ToRawByteString('a')) = crEqual,      'Compare');
@@ -5496,6 +5871,7 @@ begin
   Assert(CompareB(ToRawByteString('a'), ToRawByteString('')) = crGreater,     'Compare');
   Assert(CompareB(ToRawByteString('aa'), ToRawByteString('a')) = crGreater,   'Compare');
 
+  {$IFDEF SupportWideString}
   Assert(CompareW(ToWideString(''), ToWideString('')) = crEqual,        'Compare');
   Assert(CompareW(ToWideString('a'), ToWideString('a')) = crEqual,      'Compare');
   Assert(CompareW(ToWideString('a'), ToWideString('b')) = crLess,       'Compare');
@@ -5503,6 +5879,7 @@ begin
   Assert(CompareW(ToWideString(''), ToWideString('a')) = crLess,        'Compare');
   Assert(CompareW(ToWideString('a'), ToWideString('')) = crGreater,     'Compare');
   Assert(CompareW(ToWideString('aa'), ToWideString('a')) = crGreater,   'Compare');
+  {$ENDIF}
 
   Assert(Sgn(1) = 1,     'Sign');
   Assert(Sgn(0) = 0,     'Sign');
@@ -5519,9 +5896,11 @@ end;
 
 procedure Test_IntStr;
 var I : Int64;
-    W : LongWord;
+    W : Word32;
     L : Integer;
+    {$IFDEF SupportAnsiString}
     A : AnsiString;
+    {$ENDIF}
 begin
   Assert(HexCharToInt('A') = 10,   'HexCharToInt');
   Assert(HexCharToInt('a') = 10,   'HexCharToInt');
@@ -5530,6 +5909,7 @@ begin
   Assert(HexCharToInt('F') = 15,   'HexCharToInt');
   Assert(HexCharToInt('G') = -1,   'HexCharToInt');
 
+  {$IFDEF SupportAnsiString}
   Assert(IntToStringA(0) = ToAnsiString('0'),                           'IntToStringA');
   Assert(IntToStringA(1) = ToAnsiString('1'),                           'IntToStringA');
   Assert(IntToStringA(-1) = ToAnsiString('-1'),                         'IntToStringA');
@@ -5537,14 +5917,15 @@ begin
   Assert(IntToStringA(-10) = ToAnsiString('-10'),                       'IntToStringA');
   Assert(IntToStringA(123) = ToAnsiString('123'),                       'IntToStringA');
   Assert(IntToStringA(-123) = ToAnsiString('-123'),                     'IntToStringA');
-  Assert(IntToStringA(MinLongInt) = ToAnsiString('-2147483648'),        'IntToStringA');
+  Assert(IntToStringA(MinInt32) = ToAnsiString('-2147483648'),          'IntToStringA');
   {$IFNDEF DELPHI7_DOWN}
   Assert(IntToStringA(-2147483649) = ToAnsiString('-2147483649'),       'IntToStringA');
   {$ENDIF}
-  Assert(IntToStringA(MaxLongInt) = ToAnsiString('2147483647'),         'IntToStringA');
+  Assert(IntToStringA(MaxInt32) = ToAnsiString('2147483647'),           'IntToStringA');
   Assert(IntToStringA(2147483648) = ToAnsiString('2147483648'),         'IntToStringA');
   Assert(IntToStringA(MinInt64) = ToAnsiString('-9223372036854775808'), 'IntToStringA');
   Assert(IntToStringA(MaxInt64) = ToAnsiString('9223372036854775807'),  'IntToStringA');
+  {$ENDIF}
 
   Assert(IntToStringB(0) = ToRawByteString('0'),                           'IntToStringB');
   Assert(IntToStringB(1) = ToRawByteString('1'),                           'IntToStringB');
@@ -5553,26 +5934,30 @@ begin
   Assert(IntToStringB(-10) = ToRawByteString('-10'),                       'IntToStringB');
   Assert(IntToStringB(123) = ToRawByteString('123'),                       'IntToStringB');
   Assert(IntToStringB(-123) = ToRawByteString('-123'),                     'IntToStringB');
-  Assert(IntToStringB(MinLongInt) = ToRawByteString('-2147483648'),        'IntToStringB');
+  Assert(IntToStringB(MinInt32) = ToRawByteString('-2147483648'),          'IntToStringB');
   {$IFNDEF DELPHI7_DOWN}
   Assert(IntToStringB(-2147483649) = ToRawByteString('-2147483649'),       'IntToStringB');
   {$ENDIF}
-  Assert(IntToStringB(MaxLongInt) = ToRawByteString('2147483647'),         'IntToStringB');
+  Assert(IntToStringB(MaxInt32) = ToRawByteString('2147483647'),           'IntToStringB');
   Assert(IntToStringB(2147483648) = ToRawByteString('2147483648'),         'IntToStringB');
   Assert(IntToStringB(MinInt64) = ToRawByteString('-9223372036854775808'), 'IntToStringB');
   Assert(IntToStringB(MaxInt64) = ToRawByteString('9223372036854775807'),  'IntToStringB');
 
+  {$IFDEF SupportWideString}
   Assert(IntToStringW(0) = ToWideString('0'),                     'IntToWideString');
   Assert(IntToStringW(1) = ToWideString('1'),                     'IntToWideString');
   Assert(IntToStringW(-1) = ToWideString('-1'),                   'IntToWideString');
   Assert(IntToStringW(1234567890) = ToWideString('1234567890'),   'IntToWideString');
   Assert(IntToStringW(-1234567890) = ToWideString('-1234567890'), 'IntToWideString');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(IntToStringU(0) = '0',                     'IntToString');
   Assert(IntToStringU(1) = '1',                     'IntToString');
   Assert(IntToStringU(-1) = '-1',                   'IntToString');
   Assert(IntToStringU(1234567890) = '1234567890',   'IntToString');
   Assert(IntToStringU(-1234567890) = '-1234567890', 'IntToString');
+  {$ENDIF}
 
   Assert(IntToString(0) = '0',                     'IntToString');
   Assert(IntToString(1) = '1',                     'IntToString');
@@ -5580,59 +5965,78 @@ begin
   Assert(IntToString(1234567890) = '1234567890',   'IntToString');
   Assert(IntToString(-1234567890) = '-1234567890', 'IntToString');
 
+  {$IFDEF SupportAnsiString}
   Assert(UIntToStringA(0) = ToAnsiString('0'),                  'UIntToString');
   Assert(UIntToStringA($FFFFFFFF) = ToAnsiString('4294967295'), 'UIntToString');
+  {$ENDIF}
+  {$IFDEF SupportWideString}
   Assert(UIntToStringW(0) = ToWideString('0'),                  'UIntToString');
   Assert(UIntToStringW($FFFFFFFF) = ToWideString('4294967295'), 'UIntToString');
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   Assert(UIntToStringU(0) = '0',                  'UIntToString');
   Assert(UIntToStringU($FFFFFFFF) = '4294967295', 'UIntToString');
+  {$ENDIF}
   Assert(UIntToString(0) = '0',                   'UIntToString');
   Assert(UIntToString($FFFFFFFF) = '4294967295',  'UIntToString');
 
-  Assert(LongWordToStrA(0, 8) = ToAnsiString('00000000'),           'LongWordToStr');
-  Assert(LongWordToStrA($FFFFFFFF, 0) = ToAnsiString('4294967295'), 'LongWordToStr');
-  Assert(LongWordToStrB(0, 8) = ToRawByteString('00000000'),           'LongWordToStr');
-  Assert(LongWordToStrB($FFFFFFFF, 0) = ToRawByteString('4294967295'), 'LongWordToStr');
-  Assert(LongWordToStrW(0, 8) = ToWideString('00000000'),           'LongWordToStr');
-  Assert(LongWordToStrW($FFFFFFFF, 0) = ToWideString('4294967295'), 'LongWordToStr');
-  Assert(LongWordToStrU(0, 8) = '00000000',           'LongWordToStr');
-  Assert(LongWordToStrU($FFFFFFFF, 0) = '4294967295', 'LongWordToStr');
-  Assert(LongWordToStr(0, 8) = '00000000',            'LongWordToStr');
-  Assert(LongWordToStr($FFFFFFFF, 0) = '4294967295',  'LongWordToStr');
-  Assert(LongWordToStr(123) = '123',                  'LongWordToStr');
-  Assert(LongWordToStr(10000) = '10000',              'LongWordToStr');
-  Assert(LongWordToStr(99999) = '99999',              'LongWordToStr');
-  Assert(LongWordToStr(1, 1) = '1',                   'LongWordToStr');
-  Assert(LongWordToStr(1, 3) = '001',                 'LongWordToStr');
-  Assert(LongWordToStr(1234, 3) = '1234',             'LongWordToStr');
+  {$IFDEF SupportAnsiString}
+  Assert(Word32ToStrA(0, 8) = ToAnsiString('00000000'),           'Word32ToStr');
+  Assert(Word32ToStrA($FFFFFFFF, 0) = ToAnsiString('4294967295'), 'Word32ToStr');
+  {$ENDIF}
+  Assert(Word32ToStrB(0, 8) = ToRawByteString('00000000'),           'Word32ToStr');
+  Assert(Word32ToStrB($FFFFFFFF, 0) = ToRawByteString('4294967295'), 'Word32ToStr');
+  {$IFDEF SupportWideString}
+  Assert(Word32ToStrW(0, 8) = ToWideString('00000000'),           'Word32ToStr');
+  Assert(Word32ToStrW($FFFFFFFF, 0) = ToWideString('4294967295'), 'Word32ToStr');
+  {$ENDIF}
+  {$IFDEF SupportUnicodeString}
+  Assert(Word32ToStrU(0, 8) = '00000000',           'Word32ToStr');
+  Assert(Word32ToStrU($FFFFFFFF, 0) = '4294967295', 'Word32ToStr');
+  {$ENDIF}
+  Assert(Word32ToStr(0, 8) = '00000000',            'Word32ToStr');
+  Assert(Word32ToStr($FFFFFFFF, 0) = '4294967295',  'Word32ToStr');
+  Assert(Word32ToStr(123) = '123',                  'Word32ToStr');
+  Assert(Word32ToStr(10000) = '10000',              'Word32ToStr');
+  Assert(Word32ToStr(99999) = '99999',              'Word32ToStr');
+  Assert(Word32ToStr(1, 1) = '1',                   'Word32ToStr');
+  Assert(Word32ToStr(1, 3) = '001',                 'Word32ToStr');
+  Assert(Word32ToStr(1234, 3) = '1234',             'Word32ToStr');
 
-  Assert(LongWordToHexA(0, 8) = ToAnsiString('00000000'),         'LongWordToHex');
-  Assert(LongWordToHexA($FFFFFFFF, 0) = ToAnsiString('FFFFFFFF'), 'LongWordToHex');
-  Assert(LongWordToHexA($10000) = ToAnsiString('10000'),          'LongWordToHex');
-  Assert(LongWordToHexA($12345678) = ToAnsiString('12345678'),    'LongWordToHex');
-  Assert(LongWordToHexA($AB, 4) = ToAnsiString('00AB'),           'LongWordToHex');
-  Assert(LongWordToHexA($ABCD, 8) = ToAnsiString('0000ABCD'),     'LongWordToHex');
-  Assert(LongWordToHexA($CDEF, 2) = ToAnsiString('CDEF'),         'LongWordToHex');
-  Assert(LongWordToHexA($ABC3, 0, False) = ToAnsiString('abc3'),  'LongWordToHex');
+  {$IFDEF SupportAnsiString}
+  Assert(Word32ToHexA(0, 8) = ToAnsiString('00000000'),         'Word32ToHex');
+  Assert(Word32ToHexA($FFFFFFFF, 0) = ToAnsiString('FFFFFFFF'), 'Word32ToHex');
+  Assert(Word32ToHexA($10000) = ToAnsiString('10000'),          'Word32ToHex');
+  Assert(Word32ToHexA($12345678) = ToAnsiString('12345678'),    'Word32ToHex');
+  Assert(Word32ToHexA($AB, 4) = ToAnsiString('00AB'),           'Word32ToHex');
+  Assert(Word32ToHexA($ABCD, 8) = ToAnsiString('0000ABCD'),     'Word32ToHex');
+  Assert(Word32ToHexA($CDEF, 2) = ToAnsiString('CDEF'),         'Word32ToHex');
+  Assert(Word32ToHexA($ABC3, 0, False) = ToAnsiString('abc3'),  'Word32ToHex');
+  {$ENDIF}
 
-  Assert(LongWordToHexW(0, 8) = ToWideString('00000000'),         'LongWordToHex');
-  Assert(LongWordToHexW(0) = ToWideString('0'),                   'LongWordToHex');
-  Assert(LongWordToHexW($FFFFFFFF, 0) = ToWideString('FFFFFFFF'), 'LongWordToHex');
-  Assert(LongWordToHexW($AB, 4) = ToWideString('00AB'),           'LongWordToHex');
-  Assert(LongWordToHexW($ABC3, 0, False) = ToWideString('abc3'),  'LongWordToHex');
+  {$IFDEF SupportWideString}
+  Assert(Word32ToHexW(0, 8) = ToWideString('00000000'),         'Word32ToHex');
+  Assert(Word32ToHexW(0) = ToWideString('0'),                   'Word32ToHex');
+  Assert(Word32ToHexW($FFFFFFFF, 0) = ToWideString('FFFFFFFF'), 'Word32ToHex');
+  Assert(Word32ToHexW($AB, 4) = ToWideString('00AB'),           'Word32ToHex');
+  Assert(Word32ToHexW($ABC3, 0, False) = ToWideString('abc3'),  'Word32ToHex');
+  {$ENDIF}
 
-  Assert(LongWordToHexU(0, 8) = '00000000',         'LongWordToHex');
-  Assert(LongWordToHexU(0) = '0',                   'LongWordToHex');
-  Assert(LongWordToHexU($FFFFFFFF, 0) = 'FFFFFFFF', 'LongWordToHex');
-  Assert(LongWordToHexU($AB, 4) = '00AB',           'LongWordToHex');
-  Assert(LongWordToHexU($ABC3, 0, False) = 'abc3',  'LongWordToHex');
+  {$IFDEF SupportUnicodeString}
+  Assert(Word32ToHexU(0, 8) = '00000000',         'Word32ToHex');
+  Assert(Word32ToHexU(0) = '0',                   'Word32ToHex');
+  Assert(Word32ToHexU($FFFFFFFF, 0) = 'FFFFFFFF', 'Word32ToHex');
+  Assert(Word32ToHexU($AB, 4) = '00AB',           'Word32ToHex');
+  Assert(Word32ToHexU($ABC3, 0, False) = 'abc3',  'Word32ToHex');
+  {$ENDIF}
 
-  Assert(LongWordToHex(0, 8) = '00000000',          'LongWordToHex');
-  Assert(LongWordToHex($FFFFFFFF, 0) = 'FFFFFFFF',  'LongWordToHex');
-  Assert(LongWordToHex(0) = '0',                    'LongWordToHex');
-  Assert(LongWordToHex($ABCD, 8) = '0000ABCD',      'LongWordToHex');
-  Assert(LongWordToHex($ABC3, 0, False) = 'abc3',   'LongWordToHex');
+  Assert(Word32ToHex(0, 8) = '00000000',          'Word32ToHex');
+  Assert(Word32ToHex($FFFFFFFF, 0) = 'FFFFFFFF',  'Word32ToHex');
+  Assert(Word32ToHex(0) = '0',                    'Word32ToHex');
+  Assert(Word32ToHex($ABCD, 8) = '0000ABCD',      'Word32ToHex');
+  Assert(Word32ToHex($ABC3, 0, False) = 'abc3',   'Word32ToHex');
 
+  {$IFDEF SupportAnsiString}
   Assert(StringToIntA(ToAnsiString('0')) = 0,       'StringToInt');
   Assert(StringToIntA(ToAnsiString('1')) = 1,       'StringToInt');
   Assert(StringToIntA(ToAnsiString('-1')) = -1,     'StringToInt');
@@ -5642,16 +6046,22 @@ begin
   Assert(StringToIntA(ToAnsiString('-01')) = -1,    'StringToInt');
   Assert(StringToIntA(ToAnsiString('123')) = 123,   'StringToInt');
   Assert(StringToIntA(ToAnsiString('-123')) = -123, 'StringToInt');
+  {$ENDIF}
 
   Assert(StringToIntB(ToRawByteString('321')) = 321,   'StringToInt');
   Assert(StringToIntB(ToRawByteString('-321')) = -321, 'StringToInt');
 
+  {$IFDEF SupportWideString}
   Assert(StringToIntW(ToWideString('321')) = 321,   'StringToInt');
   Assert(StringToIntW(ToWideString('-321')) = -321, 'StringToInt');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StringToIntU('321') = 321,   'StringToInt');
   Assert(StringToIntU('-321') = -321, 'StringToInt');
+  {$ENDIF}
 
+  {$IFDEF SupportAnsiString}
   A := ToAnsiString('-012A');
   Assert(TryStringToInt64PA(PAnsiChar(A), Length(A), I, L) = convertOK,          'StringToInt');
   Assert((I = -12) and (L = 4),                                                  'StringToInt');
@@ -5697,7 +6107,9 @@ begin
   {$IFNDEF DELPHI7_DOWN}
   Assert(not TryStringToInt64A(ToAnsiString('-9223372036854775809'), I), 'StringToInt');
   {$ENDIF}
+  {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(TryStringToInt64W(ToWideString('9223372036854775807'), I),      'StringToInt');
   Assert(I = 9223372036854775807,                          'StringToInt');
   {$IFNDEF DELPHI7_DOWN}
@@ -5711,7 +6123,9 @@ begin
   {$IFNDEF DELPHI7_DOWN}
   Assert(not TryStringToInt64W(ToWideString('-9223372036854775809'), I), 'StringToInt');
   {$ENDIF}
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(TryStringToInt64U('9223372036854775807', I),      'StringToInt');
   Assert(I = 9223372036854775807,                          'StringToInt');
   {$IFNDEF DELPHI7_DOWN}
@@ -5724,6 +6138,7 @@ begin
   Assert(not TryStringToInt64U('9223372036854775808', I),  'StringToInt');
   {$IFNDEF DELPHI7_DOWN}
   Assert(not TryStringToInt64U('-9223372036854775809', I), 'StringToInt');
+  {$ENDIF}
   {$ENDIF}
 
   Assert(TryStringToInt64('9223372036854775807', I),       'StringToInt');
@@ -5739,6 +6154,7 @@ begin
   Assert(not TryStringToInt64('-9223372036854775809', I),  'StringToInt');
   {$ENDIF}
 
+  {$IFDEF SupportAnsiString}
   Assert(StringToInt64A(ToAnsiString('0')) = 0,                                       'StringToInt64');
   Assert(StringToInt64A(ToAnsiString('1')) = 1,                                       'StringToInt64');
   Assert(StringToInt64A(ToAnsiString('-123')) = -123,                                 'StringToInt64');
@@ -5751,81 +6167,98 @@ begin
 
   Assert(HexToUIntA(ToAnsiString('FFFFFFFF')) = $FFFFFFFF, 'HexStringToUInt');
   Assert(HexToUIntA(ToAnsiString('FFFFFFFF')) = $FFFFFFFF, 'HexStringToUInt');
+  {$ENDIF}
   Assert(HexToUInt('FFFFFFFF') = $FFFFFFFF,  'HexStringToUInt');
 
-  Assert(HexToLongWord('FFFFFFFF') = $FFFFFFFF,  'HexToLongWord');
-  Assert(HexToLongWord('0') = 0,                 'HexToLongWord');
-  Assert(HexToLongWord('123456') = $123456,      'HexToLongWord');
-  Assert(HexToLongWord('ABC') = $ABC,            'HexToLongWord');
-  Assert(HexToLongWord('abc') = $ABC,            'HexToLongWord');
-  Assert(not TryHexToLongWord('', W),            'HexToLongWord');
-  Assert(not TryHexToLongWord('x', W),           'HexToLongWord');
+  Assert(HexToWord32('FFFFFFFF') = $FFFFFFFF,  'HexToWord32');
+  Assert(HexToWord32('0') = 0,                 'HexToWord32');
+  Assert(HexToWord32('123456') = $123456,      'HexToWord32');
+  Assert(HexToWord32('ABC') = $ABC,            'HexToWord32');
+  Assert(HexToWord32('abc') = $ABC,            'HexToWord32');
+  Assert(not TryHexToWord32('', W),            'HexToWord32');
+  Assert(not TryHexToWord32('x', W),           'HexToWord32');
 
-  Assert(HexToLongWordA(ToAnsiString('FFFFFFFF')) = $FFFFFFFF, 'HexToLongWord');
-  Assert(HexToLongWordA(ToAnsiString('0')) = 0,                'HexToLongWord');
-  Assert(HexToLongWordA(ToAnsiString('ABC')) = $ABC,           'HexToLongWord');
-  Assert(HexToLongWordA(ToAnsiString('abc')) = $ABC,           'HexToLongWord');
-  Assert(not TryHexToLongWordA(ToAnsiString(''), W),           'HexToLongWord');
-  Assert(not TryHexToLongWordA(ToAnsiString('x'), W),          'HexToLongWord');
+  {$IFDEF SupportAnsiString}
+  Assert(HexToWord32A(ToAnsiString('FFFFFFFF')) = $FFFFFFFF, 'HexToWord32');
+  Assert(HexToWord32A(ToAnsiString('0')) = 0,                'HexToWord32');
+  Assert(HexToWord32A(ToAnsiString('ABC')) = $ABC,           'HexToWord32');
+  Assert(HexToWord32A(ToAnsiString('abc')) = $ABC,           'HexToWord32');
+  Assert(not TryHexToWord32A(ToAnsiString(''), W),           'HexToWord32');
+  Assert(not TryHexToWord32A(ToAnsiString('x'), W),          'HexToWord32');
+  {$ENDIF}
 
-  Assert(HexToLongWordB(ToRawByteString('FFFFFFFF')) = $FFFFFFFF, 'HexToLongWord');
-  Assert(HexToLongWordB(ToRawByteString('0')) = 0,                'HexToLongWord');
-  Assert(HexToLongWordB(ToRawByteString('ABC')) = $ABC,           'HexToLongWord');
-  Assert(HexToLongWordB(ToRawByteString('abc')) = $ABC,           'HexToLongWord');
-  Assert(not TryHexToLongWordB(ToRawByteString(''), W),           'HexToLongWord');
-  Assert(not TryHexToLongWordB(ToRawByteString('x'), W),          'HexToLongWord');
+  Assert(HexToWord32B(ToRawByteString('FFFFFFFF')) = $FFFFFFFF, 'HexToWord32');
+  Assert(HexToWord32B(ToRawByteString('0')) = 0,                'HexToWord32');
+  Assert(HexToWord32B(ToRawByteString('ABC')) = $ABC,           'HexToWord32');
+  Assert(HexToWord32B(ToRawByteString('abc')) = $ABC,           'HexToWord32');
+  Assert(not TryHexToWord32B(ToRawByteString(''), W),           'HexToWord32');
+  Assert(not TryHexToWord32B(ToRawByteString('x'), W),          'HexToWord32');
 
-  Assert(HexToLongWordW(ToWideString('FFFFFFFF')) = $FFFFFFFF, 'HexToLongWord');
-  Assert(HexToLongWordW(ToWideString('0')) = 0,                'HexToLongWord');
-  Assert(HexToLongWordW(ToWideString('123456')) = $123456,     'HexToLongWord');
-  Assert(HexToLongWordW(ToWideString('ABC')) = $ABC,           'HexToLongWord');
-  Assert(HexToLongWordW(ToWideString('abc')) = $ABC,           'HexToLongWord');
-  Assert(not TryHexToLongWordW(ToWideString(''), W),           'HexToLongWord');
-  Assert(not TryHexToLongWordW(ToWideString('x'), W),          'HexToLongWord');
+  {$IFDEF SupportWideString}
+  Assert(HexToWord32W(ToWideString('FFFFFFFF')) = $FFFFFFFF, 'HexToWord32');
+  Assert(HexToWord32W(ToWideString('0')) = 0,                'HexToWord32');
+  Assert(HexToWord32W(ToWideString('123456')) = $123456,     'HexToWord32');
+  Assert(HexToWord32W(ToWideString('ABC')) = $ABC,           'HexToWord32');
+  Assert(HexToWord32W(ToWideString('abc')) = $ABC,           'HexToWord32');
+  Assert(not TryHexToWord32W(ToWideString(''), W),           'HexToWord32');
+  Assert(not TryHexToWord32W(ToWideString('x'), W),          'HexToWord32');
+  {$ENDIF}
 
-  Assert(HexToLongWordU('FFFFFFFF') = $FFFFFFFF, 'HexToLongWord');
-  Assert(HexToLongWordU('0') = 0,                'HexToLongWord');
-  Assert(HexToLongWordU('123456') = $123456,     'HexToLongWord');
-  Assert(HexToLongWordU('ABC') = $ABC,           'HexToLongWord');
-  Assert(HexToLongWordU('abc') = $ABC,           'HexToLongWord');
-  Assert(not TryHexToLongWordU('', W),           'HexToLongWord');
-  Assert(not TryHexToLongWordU('x', W),          'HexToLongWord');
+  {$IFDEF SupportUnicodeString}
+  Assert(HexToWord32U('FFFFFFFF') = $FFFFFFFF, 'HexToWord32');
+  Assert(HexToWord32U('0') = 0,                'HexToWord32');
+  Assert(HexToWord32U('123456') = $123456,     'HexToWord32');
+  Assert(HexToWord32U('ABC') = $ABC,           'HexToWord32');
+  Assert(HexToWord32U('abc') = $ABC,           'HexToWord32');
+  Assert(not TryHexToWord32U('', W),           'HexToWord32');
+  Assert(not TryHexToWord32U('x', W),          'HexToWord32');
+  {$ENDIF}
 
-  Assert(not TryStringToLongWordA(ToAnsiString(''), W),             'StringToLongWord');
-  Assert(StringToLongWordA(ToAnsiString('123')) = 123,              'StringToLongWord');
-  Assert(StringToLongWordA(ToAnsiString('4294967295')) = $FFFFFFFF, 'StringToLongWord');
-  Assert(StringToLongWordA(ToAnsiString('999999999')) = 999999999,  'StringToLongWord');
+  {$IFDEF SupportAnsiString}
+  Assert(not TryStringToWord32A(ToAnsiString(''), W),             'StringToWord32');
+  Assert(StringToWord32A(ToAnsiString('123')) = 123,              'StringToWord32');
+  Assert(StringToWord32A(ToAnsiString('4294967295')) = $FFFFFFFF, 'StringToWord32');
+  Assert(StringToWord32A(ToAnsiString('999999999')) = 999999999,  'StringToWord32');
+  {$ENDIF}
 
-  Assert(StringToLongWordB(ToRawByteString('0')) = 0,                  'StringToLongWord');
-  Assert(StringToLongWordB(ToRawByteString('4294967295')) = $FFFFFFFF, 'StringToLongWord');
+  Assert(StringToWord32B(ToRawByteString('0')) = 0,                  'StringToWord32');
+  Assert(StringToWord32B(ToRawByteString('4294967295')) = $FFFFFFFF, 'StringToWord32');
 
-  Assert(StringToLongWordW(ToWideString('0')) = 0,                  'StringToLongWord');
-  Assert(StringToLongWordW(ToWideString('4294967295')) = $FFFFFFFF, 'StringToLongWord');
+  {$IFDEF SupportWideString}
+  Assert(StringToWord32W(ToWideString('0')) = 0,                  'StringToWord32');
+  Assert(StringToWord32W(ToWideString('4294967295')) = $FFFFFFFF, 'StringToWord32');
+  {$ENDIF}
 
-  Assert(StringToLongWordU('0') = 0,                  'StringToLongWord');
-  Assert(StringToLongWordU('4294967295') = $FFFFFFFF, 'StringToLongWord');
+  {$IFDEF SupportUnicodeString}
+  Assert(StringToWord32U('0') = 0,                  'StringToWord32');
+  Assert(StringToWord32U('4294967295') = $FFFFFFFF, 'StringToWord32');
+  {$ENDIF}
 
-  Assert(StringToLongWord('0') = 0,                   'StringToLongWord');
-  Assert(StringToLongWord('4294967295') = $FFFFFFFF,  'StringToLongWord');
+  Assert(StringToWord32('0') = 0,                   'StringToWord32');
+  Assert(StringToWord32('4294967295') = $FFFFFFFF,  'StringToWord32');
 end;
 
 procedure Test_Hash;
 begin
   // HashStr
+  {$IFDEF SupportAnsiString}
   Assert(HashStrA(ToAnsiString('Fundamentals')) = $3FB7796E, 'HashStr');
   Assert(HashStrA(ToAnsiString('0')) = $B2420DE,             'HashStr');
   Assert(HashStrA(ToAnsiString('Fundamentals'), 1, -1, False) = HashStrA(ToAnsiString('FUNdamentals'), 1, -1, False), 'HashStr');
   Assert(HashStrA(ToAnsiString('Fundamentals'), 1, -1, True) <> HashStrA(ToAnsiString('FUNdamentals'), 1, -1, True),  'HashStr');
+  {$ENDIF}
 
   Assert(HashStrB(ToRawByteString('Fundamentals')) = $3FB7796E, 'HashStr');
   Assert(HashStrB(ToRawByteString('0')) = $B2420DE,             'HashStr');
   Assert(HashStrB(ToRawByteString('Fundamentals'), 1, -1, False) = HashStrB(ToRawByteString('FUNdamentals'), 1, -1, False), 'HashStr');
   Assert(HashStrB(ToRawByteString('Fundamentals'), 1, -1, True) <> HashStrB(ToRawByteString('FUNdamentals'), 1, -1, True),  'HashStr');
 
+  {$IFDEF SupportWideString}
   Assert(HashStrW(ToWideString('Fundamentals')) = $FD6ED837, 'HashStr');
   Assert(HashStrW(ToWideString('0')) = $6160DBF3,            'HashStr');
   Assert(HashStrW(ToWideString('Fundamentals'), 1, -1, False) = HashStrW(ToWideString('FUNdamentals'), 1, -1, False), 'HashStr');
   Assert(HashStrW(ToWideString('Fundamentals'), 1, -1, True) <> HashStrW(ToWideString('FUNdamentals'), 1, -1, True),  'HashStr');
+  {$ENDIF}
 
   {$IFDEF StringIsUnicode}
   Assert(HashStr('Fundamentals') = $FD6ED837, 'HashStr');
@@ -5841,8 +6274,11 @@ end;
 {$IFNDEF ManagedCode}
 procedure Test_Memory;
 var I, J : Integer;
+    {$IFDEF SupportAnsiString}
     A, B : AnsiString;
+    {$ENDIF}
 begin
+  {$IFDEF SupportAnsiString}
   for I := -1 to 33 do
     begin
       A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
@@ -5908,6 +6344,7 @@ begin
       for J := MaxInt(I + 1, 11) to 36 do
         Assert(A[J] = AnsiChar(65 + J - 11),    'FillMem');
     end;
+  {$ENDIF}
 end;
 {$ENDIF}
 
@@ -5917,7 +6354,9 @@ const
   C1 = 'ABC';
 var
   B, C : RawByteString;
+  {$IFDEF SupportUnicodeString}
   U, V : UnicodeString;
+  {$ENDIF}
 begin
   B := C1;
   Assert(StringRefCount(B) = -1);
@@ -5928,6 +6367,7 @@ begin
   B := C;
   Assert(StringRefCount(B) = 2);
 
+  {$IFDEF SupportUnicodeString}
   U := C1;
   Assert(StringRefCount(U) = -1);
   V := U;
@@ -5936,6 +6376,7 @@ begin
   Assert(StringRefCount(V) = 1);
   U := V;
   Assert(StringRefCount(U) = 2);
+  {$ENDIF}
 end;
 {$ENDIF}
 

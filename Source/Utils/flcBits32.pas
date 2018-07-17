@@ -54,14 +54,9 @@ unit flcBits32;
 
 interface
 
-
-
-{                                                                              }
-{ Type definitions                                                             }
-{                                                                              }
-type
-  Word32 = LongWord;
-  PWord32 = ^Word32;
+uses
+  { Fundamentals }
+  flcStdTypes;
 
 
 

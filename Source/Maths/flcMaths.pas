@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcMaths.pas                                             }
-{   File version:     5.63                                                     }
+{   File version:     5.64                                                     }
 {   Description:      Maths utility functions                                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 1995-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1995-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -135,6 +135,7 @@
 {                     Refactored Prime functions.                              }
 {   2005/08/14  4.62  Compilable with FreePascal 2 Win32 i386.                 }
 {   2016/01/17  5.63  Revised for Fundamentals 5.                              }
+{   2018/07/17  5.64  Word32 changes.                                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -766,17 +767,17 @@ const
 { Lookup for prime numbers in the Word range.                                  }
 const
   WordPrimesLookupEntries = $10000; // 65536
-  WordPrimesLookupLength  = WordPrimesLookupEntries div (Sizeof(LongWord) * 8); // 2048
-  WordPrimesLookupSize    = WordPrimesLookupLength * Sizeof(LongWord); // 8192
+  WordPrimesLookupLength  = WordPrimesLookupEntries div (Sizeof(Word32) * 8); // 2048
+  WordPrimesLookupSize    = WordPrimesLookupLength * Sizeof(Word32); // 8192
 
 var
   WordPrimesInit : Boolean = False;
-  WordPrimesSet  : array of LongWord; // 8192 bytes when initialized, 1 bit for
+  WordPrimesSet  : array of Word32; // 8192 bytes when initialized, 1 bit for
                                       // each number between 0-65535.
 
 procedure ClearWordPrimesBit(const N: Word);
-var I : LongWord;
-    P : PLongWord;
+var I : Word32;
+    P : PWord32;
 begin
   I := N shr 5;
   P := @WordPrimesSet[I];
@@ -806,10 +807,10 @@ end;
 function IsPrime(const N: Int64): Boolean;
 var V : Int64;
     E : MFloat;
-    M : LongWord;
-    B : LongWord;
-    I : Longword;
-    L : Longword;
+    M : Word32;
+    B : Word32;
+    I : Word32;
+    L : Word32;
 begin
   // Initialize value
   V := N;
@@ -829,7 +830,7 @@ begin
     end
   else
     begin
-      // V is in LongWord range
+      // V is in Word32 range
       // Look for factor from primes in Byte range
       for I := 0 to BytePrimesCount - 1 do
         begin
@@ -859,7 +860,7 @@ begin
               Result := False;
               exit;
             end;
-      // Look for factor from values in LongWord range
+      // Look for factor from values in Word32 range
       for I := $10000 to M do
         if V mod I = 0 then
           begin
@@ -882,8 +883,8 @@ end;
 function PrimeFactors(const N: Int64): Int64Array;
 var V : Int64;
     E : MFloat;
-    M : LongWord;
-    I : LongWord;
+    M : Word32;
+    I : Word32;
 begin
   // Initialize
   Result := nil;
@@ -1400,9 +1401,9 @@ end;
 procedure FourierTransform(const AngleNumerator: MFloat;
     const RealIn, ImagIn: array of MFloat;
     var RealOut, ImagOut: MFloatArray);
-var I, J, N, L            : LongWord;
-    NumSamples, NumBits   : LongWord;
-    BlockSize, BlockEnd   : LongWord;
+var I, J, N, L            : Word32;
+    NumSamples, NumBits   : Word32;
+    BlockSize, BlockEnd   : Word32;
     delta_angle, delta_ar : MFloat;
     alpha, beta           : MFloat;
     tr, ti, ar, ai        : MFloat;

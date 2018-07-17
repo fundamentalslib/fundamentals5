@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.37                                                     }
+{   File version:     5.38                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -47,7 +47,9 @@
 {   integer values.                                                            }
 {                                                                              }
 {   This unit implements array classes for each of the following types:        }
+{     + Int32                                                                  }
 {     + LongInt                                                                }
+{     + Word32                                                                 }
 {     + LongWord                                                               }
 {     + Int64                                                                  }
 {     + Single                                                                 }
@@ -165,6 +167,7 @@
 {   2012/09/01  4.35  Unicode string changes.                                  }
 {   2015/03/13  4.36  RawByteString support.                                   }
 {   2016/01/16  5.37  Revised for Fundamentals 5.                              }
+{   2018/07/17  5.38  Int32/Word32 arrays.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -343,6 +346,48 @@ type
 
 
 {                                                                              }
+{ AInt32Array                                                                  }
+{   Base class for an array of Int32s.                                         }
+{                                                                              }
+type
+  AInt32Array = class(AArray)
+  protected
+    function  GetItem(const Idx: Integer): Int32; virtual; abstract;
+    procedure SetItem(const Idx: Integer; const Value: Int32); virtual; abstract;
+
+    function  GetItemAsString(const Idx: Integer): String; override;
+    procedure SetItemAsString(const Idx: Integer; const Value: String); override;
+
+    function  GetRange(const LoIdx, HiIdx: Integer): Int32Array; virtual;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int32Array); virtual;
+
+  public
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); override;
+    function  IsEqual(const V: TObject): Boolean; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
+    function  AppendArray(const V: AArray): Integer; overload; override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+
+    { AInt32Array interface                                                        }
+    property  Item[const Idx: Integer]: Int32 read GetItem write SetItem; default;
+    property  Range[const LoIdx, HiIdx: Integer]: Int32Array read GetRange write SetRange;
+    procedure Fill(const Idx, Count: Integer; const Value: Int32); virtual;
+    function  AppendItem(const Value: Int32): Integer; virtual;
+    function  AppendArray(const V: Int32Array): Integer; overload; virtual;
+    function  PosNext(const Find: Int32; const PrevPos: Integer = -1;
+              const IsSortedAscending: Boolean = False): Integer;
+  end;
+  EInt32Array = class(EArray);
+
+
+
+{                                                                              }
 { ALongIntArray                                                                }
 {   Base class for an array of LongInts.                                       }
 {                                                                              }
@@ -388,8 +433,50 @@ type
 { AIntegerArray                                                                }
 {                                                                              }
 type
-  AIntegerArray = ALongIntArray;
-  EIntegerArray = ELongIntArray;
+  AIntegerArray = AInt32Array;
+  EIntegerArray = EInt32Array;
+
+
+
+{                                                                              }
+{ AWord32Array                                                                 }
+{   Base class for an array of Word32s.                                        }
+{                                                                              }
+type
+  AWord32Array = class(AArray)
+  protected
+    function  GetItem(const Idx: Integer): Word32; virtual; abstract;
+    procedure SetItem(const Idx: Integer; const Value: Word32); virtual; abstract;
+
+    function  GetItemAsString(const Idx: Integer): String; override;
+    procedure SetItemAsString(const Idx: Integer; const Value: String); override;
+
+    function  GetRange(const LoIdx, HiIdx: Integer): Word32Array; virtual;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Word32Array); virtual;
+
+  public
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); override;
+    function  IsEqual(const V: TObject): Boolean; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
+    function  AppendArray(const V: AArray): Integer; overload; override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+
+    { AWord32Array interface                                                       }
+    property  Item[const Idx: Integer]: Word32 read GetItem write SetItem; default;
+    property  Range[const LoIdx, HiIdx: Integer]: Word32Array read GetRange write SetRange;
+    procedure Fill(const Idx, Count: Integer; const Value: Word32); virtual;
+    function  AppendItem(const Value: Word32): Integer; virtual;
+    function  AppendArray(const V: Word32Array): Integer; overload; virtual;
+    function  PosNext(const Find: Word32; const PrevPos: Integer = -1;
+              const IsSortedAscending: Boolean = False): Integer;
+  end;
+  EWord32Array = class(EArray);
 
 
 
@@ -439,8 +526,8 @@ type
 { ACardinalArray                                                               }
 {                                                                              }
 type
-  ACardinalArray = ALongWordArray;
-  ECardinalArray = ELongWordArray;
+  ACardinalArray = AWord32Array;
+  ECardinalArray = EWord32Array;
 
 
 
@@ -1021,6 +1108,52 @@ type
 
 
 {                                                                              }
+{ TInt32Array                                                                  }
+{   AInt32Array implemented using a dynamic array.                             }
+{                                                                              }
+type
+  TInt32Array = class(AInt32Array)
+  protected
+    FData     : Int32Array;
+    FCapacity : Integer;
+    FCount    : Integer;
+
+    { ACollection                                                              }
+    function  GetCount: Integer; override;
+    procedure SetCount(const NewCount: Integer); override;
+
+    { AInt32Array                                                            }
+    function  GetItem(const Idx: Integer): Int32; override;
+    procedure SetItem(const Idx: Integer; const Value: Int32); override;
+    function  GetRange(const LoIdx, HiIdx: Integer): Int32Array; override;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int32Array); override;
+    procedure SetData(const Data: Int32Array); virtual;
+
+  public
+    constructor Create(const V: Int32Array = nil); overload;
+
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); overload; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+
+    { AInt32Array                                                            }
+    procedure Assign(const V: Int32Array); overload;
+    procedure Assign(const V: Array of Int32); overload;
+    function  AppendItem(const Value: Int32): Integer; override;
+
+    { TInt32Array                                                            }
+    property  Data: Int32Array read FData write SetData;
+    property  Count: Integer read FCount write SetCount;
+  end;
+
+
+
+{                                                                              }
 { TLongIntArray                                                                }
 {   ALongIntArray implemented using a dynamic array.                           }
 {                                                                              }
@@ -1070,7 +1203,53 @@ type
 { TIntegerArray                                                                }
 {                                                                              }
 type
-  TIntegerArray = TLongIntArray;
+  TIntegerArray = TInt32Array;
+
+
+
+{                                                                              }
+{ TWord32Array                                                                 }
+{   AWord32Array implemented using a dynamic array.                            }
+{                                                                              }
+type
+  TWord32Array = class(AWord32Array)
+  protected
+    FData     : Word32Array;
+    FCapacity : Integer;
+    FCount    : Integer;
+
+    { ACollection                                                              }
+    function  GetCount: Integer; override;
+    procedure SetCount(const NewCount: Integer); override;
+
+    { AWord32Array                                                            }
+    function  GetItem(const Idx: Integer): Word32; override;
+    procedure SetItem(const Idx: Integer; const Value: Word32); override;
+    function  GetRange(const LoIdx, HiIdx: Integer): Word32Array; override;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Word32Array); override;
+    procedure SetData(const Data: Word32Array); virtual;
+
+  public
+    constructor Create(const V: Word32Array = nil); overload;
+
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); overload; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+
+    { AWord32Array                                                            }
+    procedure Assign(const V: Word32Array); overload;
+    procedure Assign(const V: Array of Word32); overload;
+    function  AppendItem(const Value: Word32): Integer; override;
+
+    { TWord32Array                                                            }
+    property  Data: Word32Array read FData write SetData;
+    property  Count: Integer read FCount write SetCount;
+  end;
 
 
 
@@ -1124,7 +1303,7 @@ type
 { TCardinalArray                                                               }
 {                                                                              }
 type
-  TCardinalArray = TLongWordArray;
+  TCardinalArray = TWord32Array;
 
 
 
@@ -10722,6 +10901,212 @@ end;
 
 
 {                                                                              }
+{ AInt32Array                                                                  }
+{                                                                              }
+procedure AInt32Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Int32;
+begin
+  I := Item[Idx1];
+  Item[Idx1] := Item[Idx2];
+  Item[Idx2] := I;
+end;
+
+function AInt32Array.AppendItem(const Value: Int32): Integer;
+begin
+  Result := Count;
+  Count := Result + 1;
+  Item[Result] := Value;
+end;
+
+function AInt32Array.GetRange(const LoIdx, HiIdx: Integer): Int32Array;
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  SetLength(Result, C);
+  for I := 0 to C - 1 do
+    Result[I] := Item[L + I];
+end;
+
+function AInt32Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var I, L, H, C : Integer;
+begin
+  Result := AInt32Array(CreateInstance);
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  AInt32Array(Result).Count := C;
+  for I := 0 to C - 1 do
+    AInt32Array(Result)[I] := Item[L + I];
+end;
+
+procedure AInt32Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int32Array);
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := MinInt(Length(V), H - L + 1);
+  for I := 0 to C - 1 do
+    Item[L + I] := V[I];
+end;
+
+procedure AInt32Array.Fill(const Idx, Count: Integer; const Value: Int32);
+var I : Integer;
+begin
+  for I := Idx to Idx + Count - 1 do
+    Item[I] := Value;
+end;
+
+function AInt32Array.AppendArray(const V: Int32Array): Integer;
+begin
+  Result := Count;
+  Count := Result + Length(V);
+  Range[Result, Count - 1] := V;
+end;
+
+function AInt32Array.CompareItems(const Idx1, Idx2: Integer): TCompareResult;
+var I, J : Int32;
+begin
+  I := Item[Idx1];
+  J := Item[Idx2];
+  if I < J then
+    Result := crLess else
+  if I > J then
+    Result := crGreater else
+    Result := crEqual;
+end;
+
+function AInt32Array.PosNext(const Find: Int32;
+    const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Int32;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Count - 1;
+          repeat
+            I := (L + H) div 2;
+            D := Item[I];
+            if D = Find then
+              begin
+                while (I > 0) and (Item[I - 1] = Find) do
+                  Dec(I);
+                Result := I;
+                exit;
+              end else
+            if D > Find then
+              H := I - 1 else
+              L := I + 1;
+          until L > H;
+          Result := -1;
+        end else // find next
+        if PrevPos >= Count - 1 then
+          Result := -1 else
+          if Item[PrevPos + 1] = Find then
+            Result := PrevPos + 1 else
+            Result := -1;
+    end else // linear search
+    begin
+      for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
+        if Item[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
+function AInt32Array.GetItemAsString(const Idx: Integer): String;
+begin
+  Result := IntToStr(GetItem(Idx));
+end;
+
+procedure AInt32Array.SetItemAsString(const Idx: Integer; const Value: String);
+begin
+  SetItem(Idx, StrToInt(Value));
+end;
+
+procedure AInt32Array.Assign(const Source: TObject);
+var I, L : Integer;
+begin
+  if Source is AInt32Array then
+    begin
+      L := AInt32Array(Source).Count;
+      Count := L;
+      for I := 0 to L - 1 do
+        Item[I] := AInt32Array(Source).Item[I];
+    end else
+    inherited Assign(Source);
+end;
+
+function AInt32Array.IsEqual(const V: TObject): Boolean;
+var I, L : Integer;
+begin
+  if V is AInt32Array then
+    begin
+      L := AInt32Array(V).Count;
+      Result := L = Count;
+      if not Result then
+        exit;
+      for I := 0 to L - 1 do
+        if Item[I] <> AInt32Array(V).Item[I] then
+          begin
+            Result := False;
+            exit;
+          end;
+    end else
+    Result := inherited IsEqual(V);
+end;
+
+function AInt32Array.AppendArray(const V: AArray): Integer;
+var I, L : Integer;
+begin
+  Result := Count;
+  if V is AInt32Array then
+    begin
+      L := V.Count;
+      Count := Result + L;
+      for I := 0 to L - 1 do
+        Item[Result + I] := AInt32Array(V)[I];
+    end
+  else
+    raise EInt32Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
+end;
+
+procedure AInt32Array.Delete(const Idx: Integer; const Count: Integer);
+var I, C, J, L : Integer;
+begin
+  J := MaxInt(Idx, 0);
+  C := GetCount;
+  L := MinInt(Count, C - J);
+  if L > 0 then
+    begin
+      for I := J to J + C - 1 do
+        SetItem(I, GetItem(I + Count));
+      SetCount(C - L);
+    end;
+end;
+
+procedure AInt32Array.Insert(const Idx: Integer; const Count: Integer);
+var I, C, J, L : Integer;
+begin
+  if Count <= 0 then
+    exit;
+  C := GetCount;
+  SetCount(C + Count);
+  J := MinInt(MaxInt(Idx, 0), C);
+  L := C - J;
+  for I := C - 1 downto C - L do
+    SetItem(I + Count, GetItem(I));
+end;
+
+
+{                                                                              }
 { ALongIntArray                                                                }
 {                                                                              }
 procedure ALongIntArray.ExchangeItems(const Idx1, Idx2: Integer);
@@ -10914,6 +11299,212 @@ begin
 end;
 
 procedure ALongIntArray.Insert(const Idx: Integer; const Count: Integer);
+var I, C, J, L : Integer;
+begin
+  if Count <= 0 then
+    exit;
+  C := GetCount;
+  SetCount(C + Count);
+  J := MinInt(MaxInt(Idx, 0), C);
+  L := C - J;
+  for I := C - 1 downto C - L do
+    SetItem(I + Count, GetItem(I));
+end;
+
+
+{                                                                              }
+{ AWord32Array                                                                 }
+{                                                                              }
+procedure AWord32Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Word32;
+begin
+  I := Item[Idx1];
+  Item[Idx1] := Item[Idx2];
+  Item[Idx2] := I;
+end;
+
+function AWord32Array.AppendItem(const Value: Word32): Integer;
+begin
+  Result := Count;
+  Count := Result + 1;
+  Item[Result] := Value;
+end;
+
+function AWord32Array.GetRange(const LoIdx, HiIdx: Integer): Word32Array;
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  SetLength(Result, C);
+  for I := 0 to C - 1 do
+    Result[I] := Item[L + I];
+end;
+
+function AWord32Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var I, L, H, C : Integer;
+begin
+  Result := AWord32Array(CreateInstance);
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  AWord32Array(Result).Count := C;
+  for I := 0 to C - 1 do
+    AWord32Array(Result)[I] := Item[L + I];
+end;
+
+procedure AWord32Array.SetRange(const LoIdx, HiIdx: Integer; const V: Word32Array);
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := MinInt(Length(V), H - L + 1);
+  for I := 0 to C - 1 do
+    Item[L + I] := V[I];
+end;
+
+procedure AWord32Array.Fill(const Idx, Count: Integer; const Value: Word32);
+var I : Integer;
+begin
+  for I := Idx to Idx + Count - 1 do
+    Item[I] := Value;
+end;
+
+function AWord32Array.AppendArray(const V: Word32Array): Integer;
+begin
+  Result := Count;
+  Count := Result + Length(V);
+  Range[Result, Count - 1] := V;
+end;
+
+function AWord32Array.CompareItems(const Idx1, Idx2: Integer): TCompareResult;
+var I, J : Word32;
+begin
+  I := Item[Idx1];
+  J := Item[Idx2];
+  if I < J then
+    Result := crLess else
+  if I > J then
+    Result := crGreater else
+    Result := crEqual;
+end;
+
+function AWord32Array.PosNext(const Find: Word32;
+    const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Word32;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Count - 1;
+          repeat
+            I := (L + H) div 2;
+            D := Item[I];
+            if D = Find then
+              begin
+                while (I > 0) and (Item[I - 1] = Find) do
+                  Dec(I);
+                Result := I;
+                exit;
+              end else
+            if D > Find then
+              H := I - 1 else
+              L := I + 1;
+          until L > H;
+          Result := -1;
+        end else // find next
+        if PrevPos >= Count - 1 then
+          Result := -1 else
+          if Item[PrevPos + 1] = Find then
+            Result := PrevPos + 1 else
+            Result := -1;
+    end else // linear search
+    begin
+      for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
+        if Item[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
+function AWord32Array.GetItemAsString(const Idx: Integer): String;
+begin
+  Result := IntToStr(GetItem(Idx));
+end;
+
+procedure AWord32Array.SetItemAsString(const Idx: Integer; const Value: String);
+begin
+  SetItem(Idx, StrToInt64(Value));
+end;
+
+procedure AWord32Array.Assign(const Source: TObject);
+var I, L : Integer;
+begin
+  if Source is AWord32Array then
+    begin
+      L := AWord32Array(Source).Count;
+      Count := L;
+      for I := 0 to L - 1 do
+        Item[I] := AWord32Array(Source).Item[I];
+    end else
+    inherited Assign(Source);
+end;
+
+function AWord32Array.IsEqual(const V: TObject): Boolean;
+var I, L : Integer;
+begin
+  if V is AWord32Array then
+    begin
+      L := AWord32Array(V).Count;
+      Result := L = Count;
+      if not Result then
+        exit;
+      for I := 0 to L - 1 do
+        if Item[I] <> AWord32Array(V).Item[I] then
+          begin
+            Result := False;
+            exit;
+          end;
+    end else
+    Result := inherited IsEqual(V);
+end;
+
+function AWord32Array.AppendArray(const V: AArray): Integer;
+var I, L : Integer;
+begin
+  Result := Count;
+  if V is AWord32Array then
+    begin
+      L := V.Count;
+      Count := Result + L;
+      for I := 0 to L - 1 do
+        Item[Result + I] := AWord32Array(V)[I];
+    end
+  else
+    raise EWord32Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
+end;
+
+procedure AWord32Array.Delete(const Idx: Integer; const Count: Integer);
+var I, C, J, L : Integer;
+begin
+  J := MaxInt(Idx, 0);
+  C := GetCount;
+  L := MinInt(Count, C - J);
+  if L > 0 then
+    begin
+      for I := J to J + C - 1 do
+        SetItem(I, GetItem(I + Count));
+      SetCount(C - L);
+    end;
+end;
+
+procedure AWord32Array.Insert(const Idx: Integer; const Count: Integer);
 var I, C, J, L : Integer;
 begin
   if Count <= 0 then
@@ -13996,6 +14587,175 @@ end;
 {                                                                              }
 
 {                                                                              }
+{ TInt32Array                                                                  }
+{                                                                              }
+function TInt32Array.GetItem(const Idx: Integer): Int32;
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  Result := FData[Idx];
+end;
+
+procedure TInt32Array.SetItem(const Idx: Integer; const Value: Int32);
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  FData[Idx] := Value;
+end;
+
+procedure TInt32Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Int32;
+begin
+  {$IFOPT R+}
+  if (Idx1 < 0) or (Idx1 >= FCount) then
+    RaiseIndexError(Idx1);
+  if (Idx2 < 0) or (Idx2 >= FCount) then
+    RaiseIndexError(Idx2);
+  {$ENDIF}
+  I := FData[Idx1];
+  FData[Idx1] := FData[Idx2];
+  FData[Idx2] := I;
+end;
+
+function TInt32Array.GetCount: Integer;
+begin
+  Result := FCount;
+end;
+
+{ Memory allocation strategy to reduce memory copies:                          }
+{   * For first allocation: allocate the exact size.                           }
+{   * For change to < 16: allocate 16 entries.                                 }
+{   * For growing to >= 16: pre-allocate 1/8th of NewCount.                    }
+{   * For shrinking blocks: shrink actual allocation when Count is less        }
+{     than half of the allocated size.                                         }
+procedure TInt32Array.SetCount(const NewCount: Integer);
+var L, N : Integer;
+begin
+  N := NewCount;
+  if FCount = N then
+    exit;
+  FCount := N;
+  L := FCapacity;
+  if L > 0 then
+    if N < 16 then // pre-allocate first 16 entries
+      N := 16 else
+    if N > L then
+      N := N + N shr 3 else // pre-allocate 1/8th extra if growing
+    if N > L shr 1 then // only reduce capacity if size is at least half
+      exit;
+  if N <> L then
+    begin
+      SetLengthAndZero(FData, N);
+      FCapacity := N;
+    end;
+end;
+
+function TInt32Array.AppendItem(const Value: Int32): Integer;
+begin
+  Result := FCount;
+  if Result >= FCapacity then
+    SetCount(Result + 1)
+  else
+    FCount := Result + 1;
+  FData[Result] := Value;
+end;
+
+procedure TInt32Array.Delete(const Idx: Integer; const Count: Integer = 1);
+var N : Integer;
+begin
+  N := DynArrayRemove(FData, Idx, Count);
+  Dec(FCapacity, N);
+  Dec(FCount, N);
+end;
+
+procedure TInt32Array.Insert(const Idx: Integer; const Count: Integer = 1);
+var I : Integer;
+begin
+  I := DynArrayInsert(FData, Idx, Count);
+  if I >= 0 then
+    begin
+      Inc(FCapacity, Count);
+      Inc(FCount, Count);
+    end;
+end;
+
+function TInt32Array.GetRange(const LoIdx, HiIdx: Integer): Int32Array;
+var L, H : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  if H >= L then
+    Result := Copy(FData, L, H - L + 1) else
+    Result := nil;
+end;
+
+procedure TInt32Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int32Array);
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(MinInt(Length(V), H - L + 1), 0);
+  if C > 0 then
+    Move(V[0], FData[L], C * Sizeof(Int32));
+end;
+
+constructor TInt32Array.Create(const V: Int32Array);
+begin
+  inherited Create;
+  SetData(V);
+end;
+
+procedure TInt32Array.SetData(const Data: Int32Array);
+begin
+  FData := Data;
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+function TInt32Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(0, H - L + 1);
+  Result := CreateInstance as TInt32Array;
+  TInt32Array(Result).FCount := C;
+  if C > 0 then
+    TInt32Array(Result).FData := Copy(FData, L, C);
+end;
+
+procedure TInt32Array.Assign(const V: Int32Array);
+begin
+  FData := Copy(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TInt32Array.Assign(const V: Array of Int32);
+begin
+  FData := AsInt32Array(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TInt32Array.Assign(const Source: TObject);
+begin
+  if Source is TInt32Array then
+    begin
+      FCount := TInt32Array(Source).FCount;
+      FData := Copy(TInt32Array(Source).FData, 0, FCount);
+    end
+  else
+    inherited Assign(Source);
+end;
+
+
+
+{                                                                              }
 { TLongIntArray                                                                }
 {                                                                              }
 function TLongIntArray.GetItem(const Idx: Integer): LongInt;
@@ -14157,6 +14917,175 @@ begin
     begin
       FCount := TLongIntArray(Source).FCount;
       FData := Copy(TLongIntArray(Source).FData, 0, FCount);
+    end
+  else
+    inherited Assign(Source);
+end;
+
+
+
+{                                                                              }
+{ TWord32Array                                                                 }
+{                                                                              }
+function TWord32Array.GetItem(const Idx: Integer): Word32;
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  Result := FData[Idx];
+end;
+
+procedure TWord32Array.SetItem(const Idx: Integer; const Value: Word32);
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  FData[Idx] := Value;
+end;
+
+procedure TWord32Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Word32;
+begin
+  {$IFOPT R+}
+  if (Idx1 < 0) or (Idx1 >= FCount) then
+    RaiseIndexError(Idx1);
+  if (Idx2 < 0) or (Idx2 >= FCount) then
+    RaiseIndexError(Idx2);
+  {$ENDIF}
+  I := FData[Idx1];
+  FData[Idx1] := FData[Idx2];
+  FData[Idx2] := I;
+end;
+
+function TWord32Array.GetCount: Integer;
+begin
+  Result := FCount;
+end;
+
+{ Memory allocation strategy to reduce memory copies:                          }
+{   * For first allocation: allocate the exact size.                           }
+{   * For change to < 16: allocate 16 entries.                                 }
+{   * For growing to >= 16: pre-allocate 1/8th of NewCount.                    }
+{   * For shrinking blocks: shrink actual allocation when Count is less        }
+{     than half of the allocated size.                                         }
+procedure TWord32Array.SetCount(const NewCount: Integer);
+var L, N : Integer;
+begin
+  N := NewCount;
+  if FCount = N then
+    exit;
+  FCount := N;
+  L := FCapacity;
+  if L > 0 then
+    if N < 16 then // pre-allocate first 16 entries
+      N := 16 else
+    if N > L then
+      N := N + N shr 3 else // pre-allocate 1/8th extra if growing
+    if N > L shr 1 then // only reduce capacity if size is at least half
+      exit;
+  if N <> L then
+    begin
+      SetLengthAndZero(FData, N);
+      FCapacity := N;
+    end;
+end;
+
+function TWord32Array.AppendItem(const Value: Word32): Integer;
+begin
+  Result := FCount;
+  if Result >= FCapacity then
+    SetCount(Result + 1)
+  else
+    FCount := Result + 1;
+  FData[Result] := Value;
+end;
+
+procedure TWord32Array.Delete(const Idx: Integer; const Count: Integer = 1);
+var N : Integer;
+begin
+  N := DynArrayRemove(FData, Idx, Count);
+  Dec(FCapacity, N);
+  Dec(FCount, N);
+end;
+
+procedure TWord32Array.Insert(const Idx: Integer; const Count: Integer = 1);
+var I : Integer;
+begin
+  I := DynArrayInsert(FData, Idx, Count);
+  if I >= 0 then
+    begin
+      Inc(FCapacity, Count);
+      Inc(FCount, Count);
+    end;
+end;
+
+function TWord32Array.GetRange(const LoIdx, HiIdx: Integer): Word32Array;
+var L, H : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  if H >= L then
+    Result := Copy(FData, L, H - L + 1) else
+    Result := nil;
+end;
+
+procedure TWord32Array.SetRange(const LoIdx, HiIdx: Integer; const V: Word32Array);
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(MinInt(Length(V), H - L + 1), 0);
+  if C > 0 then
+    Move(V[0], FData[L], C * Sizeof(Word32));
+end;
+
+constructor TWord32Array.Create(const V: Word32Array);
+begin
+  inherited Create;
+  SetData(V);
+end;
+
+procedure TWord32Array.SetData(const Data: Word32Array);
+begin
+  FData := Data;
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+function TWord32Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(0, H - L + 1);
+  Result := CreateInstance as TWord32Array;
+  TWord32Array(Result).FCount := C;
+  if C > 0 then
+    TWord32Array(Result).FData := Copy(FData, L, C);
+end;
+
+procedure TWord32Array.Assign(const V: Word32Array);
+begin
+  FData := Copy(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TWord32Array.Assign(const V: Array of Word32);
+begin
+  FData := AsWord32Array(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TWord32Array.Assign(const Source: TObject);
+begin
+  if Source is TWord32Array then
+    begin
+      FCount := TWord32Array(Source).FCount;
+      FData := Copy(TWord32Array(Source).FData, 0, FCount);
     end
   else
     inherited Assign(Source);

@@ -149,7 +149,9 @@ uses
 procedure Test_Buffer;
 var A : TTCPBuffer;
     B : Byte;
+    {$IFDEF SupportAnsiString}
     S : AnsiString;
+    {$ENDIF}
     I, L : Integer;
 begin
   TCPBufferInitialise(A, 1500, 1000);
@@ -157,18 +159,23 @@ begin
   Assert(TCPBufferAvailable(A) = 1500);
   TCPBufferSetMaxSize(A, 2000);
   Assert(TCPBufferAvailable(A) = 2000);
+  {$IFDEF SupportAnsiString}
   S := 'Fundamentals';
   L := Length(S);
   TCPBufferAddBuf(A, S[1], L);
   Assert(TCPBufferUsed(A) = L);
   Assert(not TCPBufferEmpty(A));
-  FillChar(S[1], L, 'X');
+  S := '';
+  for I := 1 to L do
+    S := S + 'X';
   Assert(S = 'XXXXXXXXXXXX');
   TCPBufferPeek(A, S[1], 3);
   Assert(S = 'FunXXXXXXXXX');
   Assert(TCPBufferPeekByte(A, B));
   Assert(B = Ord('F'));
-  FillChar(S[1], L, #0);
+  S := '';
+  for I := 1 to L do
+    S := S + #0;
   TCPBufferRemove(A, S[1], L);
   Assert(S = 'Fundamentals');
   Assert(TCPBufferUsed(A) = 0);
@@ -190,6 +197,7 @@ begin
   Assert(TCPBufferEmpty(A));
   TCPBufferShrink(A);
   Assert(TCPBufferEmpty(A));
+  {$ENDIF}
   TCPBufferFinalise(A);
 end;
 
@@ -302,7 +310,7 @@ type
   TTCPClientTestObj = class
     States  : array[TTCPClientState] of Boolean;
     Connect : Boolean;
-    LogMsg  : AnsiString;
+    LogMsg  : String;
     Lock    : TCriticalSection;
     constructor Create;
     destructor Destroy; override;
@@ -687,7 +695,7 @@ var C : array of TF5TCPClient;
     S : TF5TCPServer;
     T : array of TTCPServerClient;
     I, J, K : Integer;
-    F : AnsiString;
+    F : RawByteString;
     B : Byte;
     {$IFDEF TCPCLIENTSERVER_TEST_TLS}
     // CtL : TTLSCertificateList;
@@ -889,8 +897,9 @@ begin
     if TestLargeBlock then
       begin
         // read & write (large block): client to server
-        SetLength(F, LargeBlockSize);
-        FillChar(F[1], LargeBlockSize, #1);
+        F := '';
+        for I := 1 to LargeBlockSize do
+          F := F + #1;
         for K := 0 to TestClientCount - 1 do
           C[K].Connection.WriteStrB(F);
         for K := 0 to TestClientCount - 1 do
@@ -916,8 +925,9 @@ begin
             Assert(T[K].Connection.ReadBufferUsed = 0);
           end;
         // read & write (large block): server to client
-        SetLength(F, LargeBlockSize);
-        FillChar(F[1], LargeBlockSize, #1);
+        F := '';
+        for I := 1 to LargeBlockSize do
+          F := F + #1;
         for K := 0 to TestClientCount - 1 do
           T[K].Connection.WriteStrB(F);
         for K := 0 to TestClientCount - 1 do
@@ -1227,6 +1237,7 @@ begin
   Test_Client;
   {$ENDIF}
   {$IFDEF TCPCLIENTSERVER_TEST}
+  Test_ClientServer_A;
   Test_ClientServer_Block;
   Test_ClientServer_RetryConnect;
   Test_ClientServer_A;

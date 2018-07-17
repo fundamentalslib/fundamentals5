@@ -74,7 +74,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -86,7 +86,7 @@ uses
 {     returned by RandomSeed.                                                  }
 {                                                                              }
 procedure AddEntropy(const Value: Int64);
-function  RandomSeed32: LongWord;
+function  RandomSeed32: Word32;
 
 
 
@@ -100,9 +100,9 @@ function  RandomSeed32: LongWord;
 {   RandomAlphaStr returns a string of random letters (A-Z).                   }
 {   RandomPseudoWord returns a random word-like string.                        }
 {                                                                              }
-procedure SetRandomSeed(const Seed: LongWord);
+procedure SetRandomSeed(const Seed: Word32);
 
-function  RandomUniform32: LongWord;
+function  RandomUniform32: Word32;
 function  RandomUniform(const N: Integer): Integer;
 function  RandomUniform16: Word;
 function  RandomByte: Byte;
@@ -115,10 +115,14 @@ function  RandomHex(const Digits: Integer; const UpperCase: Boolean = True): Str
 {$IFDEF SupportRawByteString}
 function  RandomHexA(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
 {$ENDIF}
+{$IFDEF SupportUnicodeString}
 {$IFDEF SupportWideString}
 function  RandomHexW(const Digits: Integer; const UpperCase: Boolean = True): WideString;
 {$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  RandomHexU(const Digits: Integer; const UpperCase: Boolean = True): UnicodeString;
+{$ENDIF}
 
 function  RandomFloat: Extended;
 
@@ -134,8 +138,8 @@ function  RandomPasswordA(const MinLength, MaxLength: Integer;
 {                                                                              }
 { Alternative uniform random number generators                                 }
 {                                                                              }
-function  mwcRandom32: LongWord;
-function  urnRandom32: LongWord;
+function  mwcRandom32: Word32;
+function  urnRandom32: Word32;
 function  moaRandomFloat: Extended;
 function  mwcRandomFloat: Extended;
 
@@ -174,15 +178,23 @@ uses
   Windows,
   {$ENDIF}
   {$ENDIF}
+
   {$IFDEF UNIX}
   {$IFDEF FREEPASCAL}
   BaseUnix,
   Unix,
-  {$ELSE}
-  Libc,
   {$ENDIF}
   {$ENDIF}
-  SysUtils;
+
+  {$IFDEF POSIX}
+  {$IFDEF DELPHI}
+  Posix.SysTime,
+  {$ENDIF}
+  {$ENDIF}
+
+  SysUtils,
+  flcZeroTermStrings,
+  flcUtils;
 
 
 
@@ -191,29 +203,29 @@ uses
 {   The general form of a linear congruential generator is:                    }
 {   SEED = (A * SEED + C) mod M                                                }
 {                                                                              }
-function lcRandom1(const Seed: LongWord): LongWord;
+function lcRandom1(const Seed: Word32): Word32;
 begin
-  Result := LongWord(29943829 * Int64(Seed) - 1);
+  Result := Word32(29943829 * Int64(Seed) - 1);
 end;
 
-function lcRandom2(const Seed: LongWord): LongWord;
+function lcRandom2(const Seed: Word32): Word32;
 begin
-  Result := LongWord(69069 * Int64(Seed) + 1);
+  Result := Word32(69069 * Int64(Seed) + 1);
 end;
 
-function lcRandom3(const Seed: LongWord): LongWord;
+function lcRandom3(const Seed: Word32): Word32;
 begin
-  Result := LongWord(1103515245 * Int64(Seed) + 12345);
+  Result := Word32(1103515245 * Int64(Seed) + 12345);
 end;
 
-function lcRandom4(const Seed: LongWord): LongWord;
+function lcRandom4(const Seed: Word32): Word32;
 begin
-  Result := LongWord(214013 * Int64(Seed) + 2531011);
+  Result := Word32(214013 * Int64(Seed) + 2531011);
 end;
 
-function lcRandom5(const Seed: LongWord): LongWord;
+function lcRandom5(const Seed: Word32): Word32;
 begin
-  Result := LongWord(134775813 * Int64(Seed) + 1);
+  Result := Word32(134775813 * Int64(Seed) + 1);
 end;
 
 
@@ -227,6 +239,7 @@ begin
   QueryPerformanceCounter(Result);
 end;
 {$ENDIF}
+
 {$IFDEF UNIX}
 {$IFDEF FREEPASCAL}
 function GetHighPrecisionCounter: Int64;
@@ -237,9 +250,13 @@ begin
   fpGetTimeOfDay(@TV, TZ);
   Result := Int64(TV.tv_sec) * 1000000 + Int64(TV.tv_usec);
 end;
-{$ELSE}
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
 function GetHighPrecisionCounter: Int64;
-var T : Ttimeval;
+var T : timeval;
 begin
   GetTimeOfDay(T, nil);
   Result := Int64(T.tv_sec) * 1000000 + Int64(T.tv_usec);
@@ -248,14 +265,14 @@ end;
 {$ENDIF}
 
 {$IFDEF WindowsPlatform}
-function GetTick: LongWord;
+function GetTick: Word32;
 begin
   Result := GetTickCount;
 end;
 {$ELSE}{$IFDEF UNIX}
-function GetTick: LongWord;
+function GetTick: Word32;
 begin
-  Result := LongWord(DateTimeToTimeStamp(Now).Time);
+  Result := Word32(DateTimeToTimeStamp(Now).Time);
 end;
 {$ENDIF}{$ENDIF}
 
@@ -279,7 +296,7 @@ begin
 end;
 
 {$IFNDEF DOT_NET}
-function HashBuffer(const Buffer: PByte; const Len: Integer): LongWord;
+function HashBuffer(const Buffer: PByte; const Len: Integer): Word32;
 var
   I : Integer;
   P : PByte;
@@ -288,12 +305,13 @@ begin
   P := Buffer;
   for I := 1 to Len do
     begin
-      Result := Result xor (LongWord(P^) shl ((I mod 7) * 4));
+      Result := Result xor (Word32(P^) shl ((I mod 7) * 4));
       Inc(P);
     end;
 end;
 
-function StrHashB(const S: RawByteString): LongWord;
+{$IFDEF SupportRawByteString}
+function StrHashB(const S: RawByteString): Word32;
 var
   L : Integer;
 begin
@@ -303,6 +321,7 @@ begin
     exit;
   Result := HashBuffer(@S[1], Length(S));
 end;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF MSWIN}
@@ -333,6 +352,7 @@ begin
   Result := L;
 end;
 
+{$IFDEF SupportRawByteString}
 function StrPasB(const A: PAnsiChar): RawByteString;
 var
   I, L : Integer;
@@ -348,29 +368,30 @@ begin
       Inc(I);
     end;
 end;
+{$ENDIF}
 
 function GetOSUserName: RawByteString;
 var
-  L : LongWord;
+  L : Word32;
   B : array[0..258] of Byte;
 begin
   L := 256;
   FillChar(B[0], Sizeof(B), 0);
   if GetUserNameA(@B, L) then
-    Result := StrPasB(@B)
+    Result := StrZPasB(@B)
   else
     Result := '';
 end;
 
 function GetOSComputerName: RawByteString;
 var
-  L : LongWord;
+  L : Word32;
   B : array[0..258] of Byte;
 begin
   L := 256;
   FillChar(B[0], Sizeof(B), 0);
   if GetComputerNameA(@B, L) then
-    Result := StrPasB(@B)
+    Result := StrZPasB(@B)
   else
     Result := '';
 end;
@@ -397,10 +418,10 @@ end;
 {$IFDEF MSWIN}
 function WinRandomState: Int64;
 var
-  F : LongWord;
+  F : Word32;
   H : THandle;
   T1, T2, T3, T4 : TFileTime;
-  A, B : LongWord;
+  A, B : Word32;
   S : Int64;
 begin
   S := 0;
@@ -453,35 +474,35 @@ var
   FixedSeed     : Int64 = 0;
   VariableSeed  : Int64 = 0;
 
-function SeedMix1(const A, B: LongWord): Int64;
+function SeedMix1(const A, B: Word32): Int64;
 begin
   Result :=
        Int64(lcRandom3(A)) or
       (Int64(lcRandom4(B)) shl 32);
 end;
 
-function SeedMix2(const A, B: LongWord): Int64;
+function SeedMix2(const A, B: Word32): Int64;
 begin
   Result :=
        Int64(lcRandom1(A)) or
       (Int64(lcRandom2(B)) shl 32);
 end;
 
-function SeedMix3(const A, B: LongWord): Int64;
+function SeedMix3(const A, B: Word32): Int64;
 begin
   Result :=
        Int64(lcRandom2(A)) or
       (Int64(lcRandom5(B)) shl 32);
 end;
 
-function SeedMix4(const A, B: LongWord): Int64;
+function SeedMix4(const A, B: Word32): Int64;
 begin
   Result :=
        Int64(lcRandom4(A)) or
       (Int64(lcRandom2(B)) shl 32);
 end;
 
-function SeedMix5(const A, B: LongWord): Int64;
+function SeedMix5(const A, B: Word32): Int64;
 begin
   Result :=
        Int64(lcRandom5(A)) or
@@ -490,27 +511,27 @@ end;
 
 function SeedMix1_64(const S: Int64): Int64;
 begin
-  Result := SeedMix1(LongWord(S), LongWord(S shr 32));
+  Result := SeedMix1(Word32(S), Word32(S shr 32));
 end;
 
 function SeedMix2_64(const S: Int64): Int64;
 begin
-  Result := SeedMix2(LongWord(S), LongWord(S shr 32));
+  Result := SeedMix2(Word32(S), Word32(S shr 32));
 end;
 
 function SeedMix3_64(const S: Int64): Int64;
 begin
-  Result := SeedMix3(LongWord(S), LongWord(S shr 32));
+  Result := SeedMix3(Word32(S), Word32(S shr 32));
 end;
 
 function SeedMix4_64(const S: Int64): Int64;
 begin
-  Result := SeedMix4(LongWord(S), LongWord(S shr 32));
+  Result := SeedMix4(Word32(S), Word32(S shr 32));
 end;
 
 function SeedMix5_64(const S: Int64): Int64;
 begin
-  Result := SeedMix5(LongWord(S), LongWord(S shr 32));
+  Result := SeedMix5(Word32(S), Word32(S shr 32));
 end;
 
 procedure AddEntropy(const Value: Int64);
@@ -544,9 +565,6 @@ var
   {$IFNDEF ManagedCode}
   Q : Pointer;
   {$ENDIF}
-  {$IFDEF UNIX}
-  T : RawByteString;
-  {$ENDIF}
 begin
   { Startup Seed }
   S := StartupSeed;
@@ -558,11 +576,11 @@ begin
   { Pointer Values }
   {$IFNDEF ManagedCode}
   Q := @FixedSeed; // Global variable
-  S := Int64(S + NativeUInt(Q));
+  S := Int64(S + Int64(NativeUInt(Q)));
   Q := @S; // Local variable
-  S := Int64(S + NativeUInt(Q));
+  S := Int64(S + Int64(NativeUInt(Q)));
   GetMem(Q, 17); // Heap memory
-  S := Int64(S + NativeUInt(Q));
+  S := Int64(S + Int64(NativeUInt(Q)));
   FreeMem(Q);
   {$ENDIF}
   {$IFDEF MSWIN}
@@ -570,18 +588,18 @@ begin
   S := S xor GetCPUFrequency;
   {$IFNDEF ManagedCode}
   { OS User Name }
-  S := Int64(S + StrHashB(GetOSUserName));
+  S := Int64(S + HashStrB(GetOSUserName));
   { OS Computer Name }
-  S := Int64(S + StrHashB(GetOSComputerName));
+  S := Int64(S + HashStrB(GetOSComputerName));
   {$ENDIF}
   {$ENDIF}
   {$IFDEF UNIX}
   { OS User Name }
-  S := Int64(S + StrHashB(GetOSUserName));
+  S := Int64(S + Int64(HashStrB(GetOSUserName)));
   { OS Computer Name }
-  S := Int64(S + StrHashB(GetOSComputerName));
+  S := Int64(S + Int64(HashStrB(GetOSComputerName)));
   { PPID }
-  S := Int64(S + StrHashB(GetEnvironmentVariable('PPID')));
+  S := Int64(S + Int64(HashStrB(GetEnvironmentVariable('PPID'))));
   {$ENDIF}
   { System Timing }
   S := Int64(S + RandomState);
@@ -605,7 +623,7 @@ end;
 
 {$IFDEF DELPHI5}{$OPTIMIZATION OFF}{$ENDIF}
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
-function RandomSeed32: LongWord;
+function RandomSeed32: Word32;
 var
   S : Int64;
 begin
@@ -628,8 +646,8 @@ begin
   VariableSeed := VariableSeed xor S;
   VariableSeed := SeedMix4_64(VariableSeed);
   { Mix/Reduce seed into result }
-  Result := LongWord(S) xor
-            LongWord(S shr 32);
+  Result := Word32(S) xor
+            Word32(S shr 32);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 {$IFDEF DELPHI5}{$OPTIMIZATION ON}{$ENDIF}
@@ -652,13 +670,13 @@ end;
 {                                                                              }
 var
   moaSeeded : Boolean = False;
-  moaX      : array[0..3] of LongWord;
-  moaC      : LongWord;
+  moaX      : array[0..3] of Word32;
+  moaC      : Word32;
 
-procedure moaInitSeed(const Seed: LongWord);
+procedure moaInitSeed(const Seed: Word32);
 var
   I : Integer;
-  S : LongWord;
+  S : Word32;
 begin
   S := Seed;
   for I := 0 to 3 do
@@ -670,10 +688,10 @@ begin
   moaSeeded := True;
 end;
 
-function moaRandom32: LongWord;
+function moaRandom32: Word32;
 var
   S  : Int64;
-  Xn : LongWord;
+  Xn : Word32;
 begin
   if not moaSeeded then
     moaInitSeed(RandomSeed32);
@@ -682,8 +700,8 @@ begin
              1776 * Int64(moaX[2]) +
              5115 * Int64(moaX[3]) +
                     Int64(moaC);
-  moaC := LongWord(S shr 32);
-  Xn := LongWord(S);
+  moaC := Word32(S shr 32);
+  Xn := Word32(S);
   moaX[0] := moaX[1];
   moaX[1] := moaX[2];
   moaX[2] := moaX[3];
@@ -693,7 +711,7 @@ end;
 
 function moaRandomFloat: Extended;
 begin
-  Result := moaRandom32 / High(LongWord);
+  Result := moaRandom32 / High(Word32);
 end;
 
 procedure moaFinalise;
@@ -726,11 +744,11 @@ end;
 {                                                                              }
 var
   mwcSeeded : Boolean = False;
-  mwcX      : LongWord;
-  mwcY      : LongWord;
-  mwcC      : LongWord;
+  mwcX      : Word32;
+  mwcY      : Word32;
+  mwcC      : Word32;
 
-procedure mwcInitSeed(const Seed: LongWord);
+procedure mwcInitSeed(const Seed: Word32);
 begin
   mwcX := lcRandom2(Seed);
   mwcY := lcRandom2(mwcX);
@@ -738,7 +756,7 @@ begin
   mwcSeeded := True;
 end;
 
-function mwcRandom32: LongWord;
+function mwcRandom32: Word32;
 var S, T : UInt64;
 begin
   if not mwcSeeded then
@@ -750,15 +768,15 @@ begin
   S := S * T;
   S := S + mwcC;
   {$IFDEF QOn}{$Q+}{$ENDIF}
-  Result := LongWord(S);
+  Result := Word32(S);
   mwcX := mwcY;
   mwcY := Result;
-  mwcC := LongWord(S shr 32);
+  mwcC := Word32(S shr 32);
 end;
 
 function mwcRandomFloat: Extended;
 begin
-  Result := mwcRandom32 / High(LongWord);
+  Result := mwcRandom32 / High(Word32);
 end;
 
 procedure mwcFinalise;
@@ -826,7 +844,7 @@ begin
   urnSeeded := True;
 end;
 
-procedure urnInitSeed(const Seed: LongWord);
+procedure urnInitSeed(const Seed: Word32);
 begin
   urnInit((Seed and $FFFF) mod 30000, (Seed shr 16) mod 30000);
 end;
@@ -855,9 +873,9 @@ begin
   Result := R;
 end;
 
-function urnRandom32: LongWord;
+function urnRandom32: Word32;
 begin
-  Result := LongWord(Trunc(urnRandomFloat * 4294967295.0));
+  Result := Word32(Trunc(urnRandomFloat * 4294967295.0));
 end;
 
 procedure urnFinalise;
@@ -881,12 +899,12 @@ end;
 {                                                                              }
 { Uniform Random                                                               }
 {                                                                              }
-procedure SetRandomSeed(const Seed: LongWord);
+procedure SetRandomSeed(const Seed: Word32);
 begin
   moaInitSeed(Seed);
 end;
 
-function RandomUniform32: LongWord;
+function RandomUniform32: Word32;
 begin
   Result := moaRandom32;
 end;
@@ -896,11 +914,11 @@ begin
   if N <= 1 then
     Result := 0
   else
-    Result := Integer(RandomUniform32 mod LongWord(N));
+    Result := Integer(RandomUniform32 mod Word32(N));
 end;
 
 function RandomUniform16: Word;
-var I : LongWord;
+var I : Word32;
 begin
   I := RandomUniform32;
   I := I xor (I shr 16);
@@ -908,7 +926,7 @@ begin
 end;
 
 function RandomByte: Byte;
-var I : LongWord;
+var I : Word32;
 begin
   I := RandomUniform32;
   I := I xor (I shr 8) xor (I shr 16) xor (I shr 24);
@@ -957,12 +975,16 @@ const
   {$IFDEF SupportRawByteString}
   HexDigitsHiA : RawByteString = '0123456789ABCDEF';
   {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   HexDigitsHiU : UnicodeString = '0123456789ABCDEF';
+  {$ENDIF}
   HexDigitsLo  : String        = '0123456789abcdef';
   {$IFDEF SupportRawByteString}
   HexDigitsLoA : RawByteString = '0123456789abcdef';
   {$ENDIF}
+  {$IFDEF SupportUnicodeString}
   HexDigitsLoU : UnicodeString = '0123456789abcdef';
+  {$ENDIF}
 
 function RandomHex(const Digits: Integer; const UpperCase: Boolean): String;
 var
@@ -1012,6 +1034,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 {$IFDEF SupportWideString}
 function RandomHexW(const Digits: Integer; const UpperCase: Boolean): WideString;
 var
@@ -1036,7 +1059,9 @@ begin
     end;
 end;
 {$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function RandomHexU(const Digits: Integer; const UpperCase: Boolean): UnicodeString;
 var
   I : Integer;
@@ -1059,6 +1084,7 @@ begin
       Result[I] := C;
     end;
 end;
+{$ENDIF}
 
 {$IFDEF SupportRawByteString}
 function RandomUpperAlphaStrA(const Length: Integer): RawByteString;
@@ -1216,7 +1242,7 @@ end;
 {$ASSERTIONS ON}
 procedure Test;
 var I, L : Integer;
-    A, B, C : LongWord;
+    A, B, C : Word32;
     V, W : Int64;
     T1, T2 : Int64;
 begin

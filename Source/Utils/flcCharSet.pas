@@ -71,32 +71,33 @@ uses
 {   Operations on byte and character sets.                                     }
 {                                                                              }
 const
-  CompleteCharSet = [AnsiChar(#0)..AnsiChar(#255)];
+  CompleteByteCharSet = [ByteChar(#0)..ByteChar(#255)];
   CompleteByteSet = [0..255];
 
-function  WideCharInCharSet(const A: WideChar; const C: CharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  CharInCharSet(const A: Char; const C: CharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
-function  AsCharSet(const C: array of AnsiChar): CharSet;
+function  WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
+function  AsAnsiCharSet(const C: array of AnsiChar): ByteCharSet;
 function  AsByteSet(const C: array of Byte): ByteSet;
-procedure ComplementChar(var C: CharSet; const Ch: AnsiChar);
-procedure ClearCharSet(var C: CharSet);
-procedure FillCharSet(var C: CharSet);
-procedure ComplementCharSet(var C: CharSet);
-procedure AssignCharSet(var DestSet: CharSet; const SourceSet: CharSet); overload;
-procedure Union(var DestSet: CharSet; const SourceSet: CharSet); overload;
-procedure Difference(var DestSet: CharSet; const SourceSet: CharSet); overload;
-procedure Intersection(var DestSet: CharSet; const SourceSet: CharSet); overload;
-procedure XORCharSet(var DestSet: CharSet; const SourceSet: CharSet);
-function  IsSubSet(const A, B: CharSet): Boolean;
-function  IsEqual(const A, B: CharSet): Boolean; overload;
-function  IsEmpty(const C: CharSet): Boolean;
-function  IsComplete(const C: CharSet): Boolean;
-function  CharCount(const C: CharSet): Integer; overload;
-procedure ConvertCaseInsensitive(var C: CharSet);
-function  CaseInsensitiveCharSet(const C: CharSet): CharSet;
+function  AsByteCharSet(const C: array of ByteChar): ByteCharSet;
+procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
+procedure ClearCharSet(var C: ByteCharSet);
+procedure FillCharSet(var C: ByteCharSet);
+procedure ComplementCharSet(var C: ByteCharSet);
+procedure AssignCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet); overload;
+procedure Union(var DestSet: ByteCharSet; const SourceSet: ByteCharSet); overload;
+procedure Difference(var DestSet: ByteCharSet; const SourceSet: ByteCharSet); overload;
+procedure Intersection(var DestSet: ByteCharSet; const SourceSet: ByteCharSet); overload;
+procedure XORCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
+function  IsSubSet(const A, B: ByteCharSet): Boolean;
+function  IsEqual(const A, B: ByteCharSet): Boolean; overload;
+function  IsEmpty(const C: ByteCharSet): Boolean;
+function  IsComplete(const C: ByteCharSet): Boolean;
+function  CharCount(const C: ByteCharSet): Integer; overload;
+procedure ConvertCaseInsensitive(var C: ByteCharSet);
+function  CaseInsensitiveCharSet(const C: ByteCharSet): ByteCharSet;
 {$IFDEF SupportAnsiString}
-function  CharSetToStrA(const C: CharSet): AnsiString;
-function  StrToCharSetA(const S: AnsiString): CharSet;
+function  CharSetToStrA(const C: ByteCharSet): AnsiString;
+function  StrToCharSetA(const S: AnsiString): ByteCharSet;
 {$ENDIF}
 
 
@@ -117,7 +118,7 @@ implementation
 {                                                                              }
 { Sets                                                                         }
 {                                                                              }
-function WideCharInCharSet(const A: WideChar; const C: CharSet): Boolean;
+function WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean;
 begin
   if Ord(A) >= $100 then
     Result := False
@@ -125,7 +126,7 @@ begin
     Result := AnsiChar(Ord(A)) in C;
 end;
 
-function CharInCharSet(const A: Char; const C: CharSet): Boolean;
+function CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;
 begin
   {$IFDEF CharIsWide}
   if Ord(A) >= $100 then
@@ -137,7 +138,7 @@ begin
   {$ENDIF}
 end;
 
-function AsCharSet(const C: array of AnsiChar): CharSet;
+function AsAnsiCharSet(const C: array of AnsiChar): ByteCharSet;
 var I: Integer;
 begin
   Result := [];
@@ -153,14 +154,22 @@ begin
     Include(Result, C[I]);
 end;
 
+function AsByteCharSet(const C: array of ByteChar): ByteCharSet;
+var I: Integer;
+begin
+  Result := [];
+  for I := 0 to High(C) do
+    Include(Result, C[I]);
+end;
+
 {$IFDEF ASM386_DELPHI}
-procedure ComplementChar(var C: CharSet; const Ch: AnsiChar);
+procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
 asm
       MOVZX   ECX, DL
       BTC     [EAX], ECX
 end;
 {$ELSE}
-procedure ComplementChar(var C: CharSet; const Ch: AnsiChar);
+procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
 begin
   if Ch in C then
     Exclude(C, Ch)
@@ -170,7 +179,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure ClearCharSet(var C: CharSet);
+procedure ClearCharSet(var C: ByteCharSet);
 asm
       XOR     EDX, EDX
       MOV     [EAX], EDX
@@ -183,14 +192,14 @@ asm
       MOV     [EAX + 28], EDX
 end;
 {$ELSE}
-procedure ClearCharSet(var C: CharSet);
+procedure ClearCharSet(var C: ByteCharSet);
 begin
   C := [];
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure FillCharSet(var C: CharSet);
+procedure FillCharSet(var C: ByteCharSet);
 asm
       MOV     EDX, $FFFFFFFF
       MOV     [EAX], EDX
@@ -203,14 +212,14 @@ asm
       MOV     [EAX + 28], EDX
 end;
 {$ELSE}
-procedure FillCharSet(var C: CharSet);
+procedure FillCharSet(var C: ByteCharSet);
 begin
   C := [AnsiChar(0)..AnsiChar(255)];
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure ComplementCharSet(var C: CharSet);
+procedure ComplementCharSet(var C: ByteCharSet);
 asm
       NOT     DWORD PTR [EAX]
       NOT     DWORD PTR [EAX + 4]
@@ -222,14 +231,14 @@ asm
       NOT     DWORD PTR [EAX + 28]
 end;
 {$ELSE}
-procedure ComplementCharSet(var C: CharSet);
+procedure ComplementCharSet(var C: ByteCharSet);
 begin
   C := [AnsiChar(0)..AnsiChar(255)] - C;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure AssignCharSet(var DestSet: CharSet; const SourceSet: CharSet);
+procedure AssignCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 asm
       MOV     ECX, [EDX]
       MOV     [EAX], ECX
@@ -249,14 +258,14 @@ asm
       MOV     [EAX + 28], ECX
 end;
 {$ELSE}
-procedure AssignCharSet(var DestSet: CharSet; const SourceSet: CharSet);
+procedure AssignCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 begin
   DestSet := SourceSet;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Union(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Union(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 asm
       MOV     ECX, [EDX]
       OR      [EAX], ECX
@@ -276,14 +285,14 @@ asm
       OR      [EAX + 28], ECX
 end;
 {$ELSE}
-procedure Union(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Union(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 begin
   DestSet := DestSet + SourceSet;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Difference(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Difference(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 asm
       MOV     ECX, [EDX]
       NOT     ECX
@@ -311,14 +320,14 @@ asm
       AND     [EAX + 28], ECX
 end;
 {$ELSE}
-procedure Difference(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Difference(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 begin
   DestSet := DestSet - SourceSet;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Intersection(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Intersection(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 asm
       MOV     ECX, [EDX]
       AND     [EAX], ECX
@@ -338,14 +347,14 @@ asm
       AND     [EAX + 28], ECX
 end;
 {$ELSE}
-procedure Intersection(var DestSet: CharSet; const SourceSet: CharSet);
+procedure Intersection(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 begin
   DestSet := DestSet * SourceSet;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure XORCharSet(var DestSet: CharSet; const SourceSet: CharSet);
+procedure XORCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 asm
       MOV     ECX, [EDX]
       XOR     [EAX], ECX
@@ -365,7 +374,7 @@ asm
       XOR     [EAX + 28], ECX
 end;
 {$ELSE}
-procedure XORCharSet(var DestSet: CharSet; const SourceSet: CharSet);
+procedure XORCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
 var Ch: AnsiChar;
 begin
   for Ch := AnsiChar(0) to AnsiChar(255) do
@@ -380,7 +389,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-function IsSubSet(const A, B: CharSet): Boolean;
+function IsSubSet(const A, B: ByteCharSet): Boolean;
 asm
       MOV     ECX, [EDX]
       NOT     ECX
@@ -420,14 +429,14 @@ asm
       XOR     EAX, EAX
 end;
 {$ELSE}
-function IsSubSet(const A, B: CharSet): Boolean;
+function IsSubSet(const A, B: ByteCharSet): Boolean;
 begin
   Result := A <= B;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-function IsEqual(const A, B: CharSet): Boolean;
+function IsEqual(const A, B: ByteCharSet): Boolean;
 asm
       MOV     ECX, [EDX]
       XOR     ECX, [EAX]
@@ -459,14 +468,14 @@ asm
       XOR     EAX, EAX
 end;
 {$ELSE}
-function IsEqual(const A, B: CharSet): Boolean;
+function IsEqual(const A, B: ByteCharSet): Boolean;
 begin
   Result := A = B;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-function IsEmpty(const C: CharSet): Boolean;
+function IsEmpty(const C: ByteCharSet): Boolean;
 asm
       MOV     EDX, [EAX]
       OR      EDX, [EAX + 4]
@@ -483,14 +492,14 @@ asm
       XOR     EAX,EAX
 end;
 {$ELSE}
-function IsEmpty(const C: CharSet): Boolean;
+function IsEmpty(const C: ByteCharSet): Boolean;
 begin
   Result := C = [];
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-function IsComplete(const C: CharSet): Boolean;
+function IsComplete(const C: ByteCharSet): Boolean;
 asm
       MOV     EDX, [EAX]
       AND     EDX, [EAX + 4]
@@ -508,14 +517,14 @@ asm
       XOR     EAX, EAX
 end;
 {$ELSE}
-function IsComplete(const C: CharSet): Boolean;
+function IsComplete(const C: ByteCharSet): Boolean;
 begin
-  Result := C = CompleteCharSet;
+  Result := C = CompleteByteCharSet;
 end;
 {$ENDIF}
 
 {$IFDEF __ASM386_DELPHI}
-function CharCount(const C: CharSet): Integer;
+function CharCount(const C: ByteCharSet): Integer;
 asm
       PUSH    EBX
       PUSH    ESI
@@ -549,7 +558,7 @@ asm
       POP     EBX
 end;
 {$ELSE}
-function CharCount(const C: CharSet): Integer;
+function CharCount(const C: ByteCharSet): Integer;
 var I : AnsiChar;
 begin
   Result := 0;
@@ -560,7 +569,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure ConvertCaseInsensitive(var C: CharSet);
+procedure ConvertCaseInsensitive(var C: ByteCharSet);
 asm
       MOV     ECX, [EAX + 12]
       AND     ECX, $3FFFFFF
@@ -570,7 +579,7 @@ asm
       OR      [EAX + 12], ECX
 end;
 {$ELSE}
-procedure ConvertCaseInsensitive(var C: CharSet);
+procedure ConvertCaseInsensitive(var C: ByteCharSet);
 var Ch : AnsiChar;
 begin
   for Ch := AnsiChar(Ord('A')) to AnsiChar(Ord('Z')) do
@@ -582,7 +591,7 @@ begin
 end;
 {$ENDIF}
 
-function CaseInsensitiveCharSet(const C: CharSet): CharSet;
+function CaseInsensitiveCharSet(const C: ByteCharSet): ByteCharSet;
 begin
   AssignCharSet(Result, C);
   ConvertCaseInsensitive(Result);
@@ -590,7 +599,7 @@ end;
 
 {$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
-function CharSetToStrA(const C: CharSet): AnsiString; // Andrew N. Driazgov
+function CharSetToStrA(const C: ByteCharSet): AnsiString; // Andrew N. Driazgov
 asm
       PUSH    EBX
       MOV     ECX, $100
@@ -617,7 +626,7 @@ asm
       JMP     @@nx
 end;
 {$ELSE}
-function CharSetToStrA(const C: CharSet): AnsiString;
+function CharSetToStrA(const C: ByteCharSet): AnsiString;
 // Implemented recursively to avoid multiple memory allocations
   procedure CharMatch(const Start: AnsiChar; const Count: Integer);
   var Ch : AnsiChar;
@@ -642,7 +651,7 @@ end;
 
 {$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
-function StrToCharSetA(const S: AnsiString): CharSet; // Andrew N. Driazgov
+function StrToCharSetA(const S: AnsiString): ByteCharSet; // Andrew N. Driazgov
 asm
       XOR     ECX, ECX
       MOV     [EDX], ECX
@@ -699,7 +708,7 @@ asm
 @@qt:
 end;
 {$ELSE}
-function StrToCharSetA(const S: AnsiString): CharSet;
+function StrToCharSetA(const S: AnsiString): ByteCharSet;
 var I : Integer;
 begin
   ClearCharSet(Result);
@@ -712,7 +721,7 @@ end;
 {$IFDEF CHARSET_TEST}
 procedure Test;
 begin
-  // CharSet
+  // ByteCharSet
   Assert(CharCount([]) = 0, 'CharCount');
   Assert(CharCount([AnsiChar(Ord('a'))..AnsiChar(Ord('z'))]) = 26, 'CharCount');
   Assert(CharCount([AnsiChar(0), AnsiChar(255)]) = 2, 'CharCount');

@@ -112,6 +112,7 @@
 {   SupportWideString          - Compiler supports WideString type.            }
 {   SupportShortString         - Compiler supports short String type.          }
 {   SupportUCS4Char            - Compiler supports UC4Char type.               }
+{   SupportUTF8Char            - Compiler supports UTF8Char type.              }
 {   SupportUTF8String          - Compiler supports UTF8String type.            }
 {   SupportUCS4String          - Cimpiler supports UCS4String type.            }
 {   SupportCurrency            - Compiler supports Currency type.              }
@@ -945,13 +946,8 @@
 
 {$IFDEF DELPHI6_UP}
   {$DEFINE SupportInterface}
-  {$DEFINE SupportUTF8String}
   {$DEFINE SupportUCS4String}
   {$DEFINE SupportUCS4Char}
-  {$IFDEF DELPHI2009_UP}{$IFDEF ManagedCode}
-    {$UNDEF SupportUCS4String}
-    {$UNDEF SupportUCS4Char}
-  {$ENDIF}{$ENDIF}
   {$DEFINE SupportEnumValue}
 {$ENDIF}
 
@@ -978,9 +974,13 @@
   {$DEFINE SupportGenerics}
   {$DEFINE SupportUnicodeString}
   {$DEFINE SupportRawByteString}
+  {$DEFINE SupportUTF8String}
   {$IFDEF ManagedCode}
     {$UNDEF SupportRawByteString}
     {$UNDEF SupportUTF8String}
+    {$UNDEF SupportUTF8Char}
+    {$UNDEF SupportUCS4String}
+    {$UNDEF SupportUCS4Char}
   {$ENDIF}
   {$DEFINE SupportNativeInt}
   {$DEFINE SupportNativeUInt}
@@ -1003,11 +1003,13 @@
 {$ENDIF}
 
 {$IFDEF DELPHIXE4_UP}
+  {$DEFINE SupportUTF8Char}
   {$IFDEF IOS}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
     {$UNDEF SupportRawByteString}
     {$UNDEF SupportUTF8String}
+    {$UNDEF SupportUTF8Char}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}
@@ -1016,6 +1018,7 @@
     {$UNDEF SupportAnsiString}
     {$UNDEF SupportRawByteString}
     {$UNDEF SupportUTF8String}
+    {$UNDEF SupportUTF8Char}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}
@@ -1027,8 +1030,6 @@
   {$IFDEF LINUX}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
-    {$UNDEF SupportRawByteString}
-    {$UNDEF SupportUTF8String}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}

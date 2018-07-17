@@ -1,9 +1,9 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcUnixSock.pas                                          }
+{   File name:        flcSocketLibPosixFpc.pas                                 }
 {   File version:     5.08                                                     }
-{   Description:      Unix Sockets                                             }
+{   Description:      FreePascal Posix socket library                          }
 {                                                                              }
 {   Copyright:        Copyright © 2001-2016, David J Butler                    }
 {                     All rights reserved.                                     }
@@ -56,7 +56,7 @@
 
 {$INCLUDE ..\flcInclude.inc}
 
-unit flcUnixSock;
+unit flcSocketLibPosixFpc;
 
 interface
 
@@ -496,9 +496,11 @@ function  UnixSockErrorMessage(const ErrorCode: Integer): String;
 {                                                                              }
 { Socket library functions                                                     }
 {                                                                              }
+type
+  TAddrLen = LongInt;
 
 { Berkeley socket interface                                                    }
-function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: Integer): TSocket;
+function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TAddrLen): TSocket;
 function  Bind(const S: TSocket; const Name: TSockAddr; const NameLen: Integer): Integer;
 function  CloseSocket(const S: TSocket): Integer;
 function  Connect(const S: TSocket; const Name: PSockAddr; const NameLen: Integer): Integer;
@@ -887,10 +889,12 @@ begin
   end;
 end;
 
+
+
 {                                                                              }
 { Socket library functions                                                     }
 {                                                                              }
-function Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: Integer): TSocket;
+function Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TAddrLen): TSocket;
 begin
   if not Assigned(AcceptProc) then
     GetSocketProc('accept', @AcceptProc);

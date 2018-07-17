@@ -250,9 +250,8 @@ procedure Test;
 implementation
 
 uses
-  flcASCII,
-  flcUtils,
-  flcStrings;
+  { Fundamentals }
+  flcASCII;
 
 
 
@@ -349,7 +348,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S)^, P^, M);
+  Move(Pointer(S)^, P^, M);
   FLength := L;
 end;
 
@@ -381,7 +380,7 @@ begin
   Inc(P, N);
   for I := 1 to Count do
     begin
-      MoveMem(Pointer(S)^, P^, M);
+      Move(Pointer(S)^, P^, M);
       Inc(P, M);
     end;
   FLength := L;
@@ -413,7 +412,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  FillMem(P^, Count, Ord(C));
+  FillChar(P^, Count, Ord(C));
   FLength := L;
 end;
 
@@ -429,7 +428,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(BufPtr^, P^, Size);
+  Move(BufPtr^, P^, Size);
   FLength := L;
 end;
 
@@ -446,7 +445,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S.FString)^, P^, M);
+  Move(Pointer(S.FString)^, P^, M);
   FLength := L;
 end;
 
@@ -539,7 +538,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S)^, P^, M);
+  Move(Pointer(S)^, P^, M);
   FLength := L;
 end;
 
@@ -571,7 +570,7 @@ begin
   Inc(P, N);
   for I := 1 to Count do
     begin
-      MoveMem(Pointer(S)^, P^, M);
+      Move(Pointer(S)^, P^, M);
       Inc(P, M);
     end;
   FLength := L;
@@ -603,7 +602,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  FillMem(P^, Count, Ord(C));
+  FillChar(P^, Count, Ord(C));
   FLength := L;
 end;
 
@@ -619,7 +618,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(BufPtr^, P^, Size);
+  Move(BufPtr^, P^, Size);
   FLength := L;
 end;
 
@@ -636,7 +635,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S.FString)^, P^, M);
+  Move(Pointer(S.FString)^, P^, M);
   FLength := L;
 end;
 
@@ -720,7 +719,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S)^, P^, M * SizeOf(WideChar));
+  Move(Pointer(S)^, P^, M * SizeOf(WideChar));
   FLength := L;
 end;
 
@@ -752,7 +751,7 @@ begin
   Inc(P, N);
   for I := 1 to Count do
     begin
-      MoveMem(Pointer(S)^, P^, M * SizeOf(WideChar));
+      Move(Pointer(S)^, P^, M * SizeOf(WideChar));
       Inc(P, M);
     end;
   FLength := L;
@@ -805,7 +804,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S.FString)^, P^, M * SizeOf(WideChar));
+  Move(Pointer(S.FString)^, P^, M * SizeOf(WideChar));
   FLength := L;
 end;
 
@@ -889,7 +888,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S)^, P^, M * SizeOf(WideChar));
+  Move(Pointer(S)^, P^, M * SizeOf(WideChar));
   FLength := L;
 end;
 
@@ -921,7 +920,7 @@ begin
   Inc(P, N);
   for I := 1 to Count do
     begin
-      MoveMem(Pointer(S)^, P^, M * SizeOf(WideChar));
+      Move(Pointer(S)^, P^, M * SizeOf(WideChar));
       Inc(P, M);
     end;
   FLength := L;
@@ -974,7 +973,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S.FString)^, P^, M * SizeOf(WideChar));
+  Move(Pointer(S.FString)^, P^, M * SizeOf(WideChar));
   FLength := L;
 end;
 
@@ -1057,7 +1056,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S)^, P^, M * SizeOf(Char));
+  Move(Pointer(S)^, P^, M * SizeOf(Char));
   FLength := L;
 end;
 
@@ -1089,7 +1088,7 @@ begin
   Inc(P, N);
   for I := 1 to Count do
     begin
-      MoveMem(Pointer(S)^, P^, M * SizeOf(Char));
+      Move(Pointer(S)^, P^, M * SizeOf(Char));
       Inc(P, M);
     end;
   FLength := L;
@@ -1142,7 +1141,7 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  MoveMem(Pointer(S.FString)^, P^, M * SizeOf(Char));
+  Move(Pointer(S.FString)^, P^, M * SizeOf(Char));
   FLength := L;
 end;
 

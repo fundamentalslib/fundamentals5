@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherDH.pas                                          }
-{   File version:     5.07                                                     }
+{   File version:     5.08                                                     }
 {   Description:      Diffie-Hellman (DH) cipher routines                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -55,6 +55,7 @@
 {   2016/01/08  0.05  Secure random.                                           }
 {   2016/01/09  5.06  Revised for Fundamentals 5.                              }
 {   2015/01/29  5.07  Well known groups, tests and fixes.                      }
+{   2018/07/17  5.08  Types changes.                                           }
 {                                                                              }
 { Todo:                                                                        }
 {   - SHA256 Hash algorithm support                                            }
@@ -501,6 +502,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcStdTypes,
   flcHash,
   flcRandom,
   flcASN1,
@@ -588,7 +590,7 @@ var H : T160BitDigest;
 begin
   H := CalcSHA1(A.Data^, A.Used * HugeWordElementSize);
   HugeWordSetSize(B, SHA1DigestBits div HugeWordElementBits);
-  Move(H.Longs[0], B.Data^, SHA1DigestSize);
+  Move(H.Word32s[0], B.Data^, SHA1DigestSize);
 end;
 
 procedure DHRandomSeed(const Bits: Integer; var Seed: HugeWord);
@@ -1340,9 +1342,9 @@ begin
         #$01#$23#$45#$67#$89#$ab#$cd#$ef#$fe#$dc#$ba#$98#$76#$54#$32#$01 +
         #$01#$23#$45#$67#$89#$ab#$cd#$ef#$fe#$dc#$ba#$98#$76#$54#$32#$01);
     ZZ := #$00#$01#$02#$03#$04#$05#$06#$07#$08#$09#$0a#$0b#$0c#$0d#$0e#$0f#$10#$11#$12#$13;
-    HugeWordAssignBufStr(Da.ZZ, ZZ, False);
+    HugeWordAssignBufStrB(Da.ZZ, ZZ, False);
     DHGenerateKM(Da, OID_RC2_wrap, 128, 1, PaI, KM);
-    S := DigestToBufA(KM, 20);
+    S := DigestToBufB(KM, 20);
     Assert(S = #$48#$95#$0c#$46#$e0#$53#$00#$75#$40#$3c#$ce#$72#$88#$96#$04#$e0#$3e#$7b#$5d#$e9);
   finally
     DHStateFinalise(Da);
@@ -1381,8 +1383,8 @@ begin
     // A & B generate shared secret from remote public key
     DHGenerateSharedSecretZZ(Da, PC, Db.Y);
     DHGenerateSharedSecretZZ(Db, PC, Da.Y);
-    Za := HugeWordToStrA(Da.ZZ);
-    Zb := HugeWordToStrA(Db.ZZ);
+    Za := HugeWordToStrB(Da.ZZ);
+    Zb := HugeWordToStrB(Db.ZZ);
     Assert(Za = Zb);
 
     // A & B generate KEK
@@ -1412,17 +1414,17 @@ begin
       HugeWordInit(ValP);
       HugeWordInit(ValG);
       try
-        HexToHugeWordA(WK^.P_Hex, ValP);
-        Assert((HugeWordToHexA(ValP, False) = WK^.P_Hex) or
-               (HugeWordToHexA(ValP, True) = WK^.P_Hex));
+        HexToHugeWordB(WK^.P_Hex, ValP);
+        Assert((HugeWordToHexB(ValP, False) = WK^.P_Hex) or
+               (HugeWordToHexB(ValP, True) = WK^.P_Hex));
 
         Assert(HugeWordIsPrime(ValP) <> pNotPrime);
 
         if WK^.G_Hex <> '' then
           begin
-            HexToHugeWordA(WK^.G_Hex, ValG);
-            Assert((HugeWordToHexA(ValG, False) = WK^.G_Hex) or
-                   (HugeWordToHexA(ValG, True) = WK^.G_Hex));
+            HexToHugeWordB(WK^.G_Hex, ValG);
+            Assert((HugeWordToHexB(ValG, False) = WK^.G_Hex) or
+                   (HugeWordToHexB(ValG, True) = WK^.G_Hex));
           end;
 
         PC := WK^.PBitCount;
@@ -1474,8 +1476,8 @@ begin
           DHGenerateSharedSecretZZ(Da, PC, Db.Y);
           DHGenerateSharedSecretZZ(Db, PC, Da.Y);
 
-          Za := HugeWordToStrA(Da.ZZ);
-          Zb := HugeWordToStrA(Db.ZZ);
+          Za := HugeWordToStrB(Da.ZZ);
+          Zb := HugeWordToStrB(Db.ZZ);
           Assert(Za = Zb);
 
           DHGenerateKEK(Da, OID_RC2_wrap, QC, '');
@@ -1625,8 +1627,8 @@ begin
       HugeWordInit(ValP);
       HugeWordInit(ValG);
       try
-        HexToHugeWordA(WK^.P_Hex, ValP);
-        HexToHugeWordA(WK^.G_Hex, ValG);
+        HexToHugeWordB(WK^.P_Hex, ValP);
+        HexToHugeWordB(WK^.G_Hex, ValG);
 
         PC := WK^.PBitCount;
         QC := WK^.QBitCount;
@@ -1640,25 +1642,25 @@ begin
           HugeWordAssign(Da.G, ValG);
           Da.PrimePBitCount := PC;
           Da.PrimeQBitCount := QC;
-          HexToHugeWordA(Tst^.XA, Da.X);
-          HexToHugeWordA(Tst^.YA, Da.Y);
+          HexToHugeWordB(Tst^.XA, Da.X);
+          HexToHugeWordB(Tst^.YA, Da.Y);
 
           DHInitHashAlgorithm(Db, dhhSHA1);
           HugeWordAssign(Db.P, ValP);
           HugeWordAssign(Db.G, ValG);
           Db.PrimePBitCount := PC;
           Db.PrimeQBitCount := QC;
-          HexToHugeWordA(Tst^.XB, Db.X);
-          HexToHugeWordA(Tst^.YB, Db.Y);
+          HexToHugeWordB(Tst^.XB, Db.X);
+          HexToHugeWordB(Tst^.YB, Db.Y);
 
           DHGenerateSharedSecretZZ(Da, PC, Db.Y);
           DHGenerateSharedSecretZZ(Db, PC, Da.Y);
 
-          Za := HugeWordToStrA(Da.ZZ);
-          Zb := HugeWordToStrA(Db.ZZ);
+          Za := HugeWordToStrB(Da.ZZ);
+          Zb := HugeWordToStrB(Db.ZZ);
           Assert(Za = Zb);
 
-          Zz := HugeWordToHexA(Da.ZZ, False);
+          Zz := HugeWordToHexB(Da.ZZ, False);
           Assert(Zz = Tst^.Z);
 
           DHGenerateKEK(Da, OID_RC2_wrap, QC, '');

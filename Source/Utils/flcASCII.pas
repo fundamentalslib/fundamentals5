@@ -61,6 +61,7 @@ unit flcASCII;
 interface
 
 uses
+  { Fundamentals }
   flcStdTypes;
 
 
@@ -69,63 +70,63 @@ uses
 { ASCII constants                                                              }
 {                                                                              }
 const
-  AsciiNULL = AnsiChar(#0);
-  AsciiSOH  = AnsiChar(#1);
-  AsciiSTX  = AnsiChar(#2);
-  AsciiETX  = AnsiChar(#3);
-  AsciiEOT  = AnsiChar(#4);
-  AsciiENQ  = AnsiChar(#5);
-  AsciiACK  = AnsiChar(#6);
-  AsciiBEL  = AnsiChar(#7);
-  AsciiBS   = AnsiChar(#8);
-  AsciiHT   = AnsiChar(#9);
-  AsciiLF   = AnsiChar(#10);
-  AsciiVT   = AnsiChar(#11);
-  AsciiFF   = AnsiChar(#12);
-  AsciiCR   = AnsiChar(#13);
-  AsciiSO   = AnsiChar(#14);
-  AsciiSI   = AnsiChar(#15);
-  AsciiDLE  = AnsiChar(#16);
-  AsciiDC1  = AnsiChar(#17);
-  AsciiDC2  = AnsiChar(#18);
-  AsciiDC3  = AnsiChar(#19);
-  AsciiDC4  = AnsiChar(#20);
-  AsciiNAK  = AnsiChar(#21);
-  AsciiSYN  = AnsiChar(#22);
-  AsciiETB  = AnsiChar(#23);
-  AsciiCAN  = AnsiChar(#24);
-  AsciiEM   = AnsiChar(#25);
-  AsciiEOF  = AnsiChar(#26);
-  AsciiESC  = AnsiChar(#27);
-  AsciiFS   = AnsiChar(#28);
-  AsciiGS   = AnsiChar(#29);
-  AsciiRS   = AnsiChar(#30);
-  AsciiUS   = AnsiChar(#31);
-  AsciiSP   = AnsiChar(#32);
-  AsciiDEL  = AnsiChar(#127);
+  AsciiNULL = ByteChar(#0);
+  AsciiSOH  = ByteChar(#1);
+  AsciiSTX  = ByteChar(#2);
+  AsciiETX  = ByteChar(#3);
+  AsciiEOT  = ByteChar(#4);
+  AsciiENQ  = ByteChar(#5);
+  AsciiACK  = ByteChar(#6);
+  AsciiBEL  = ByteChar(#7);
+  AsciiBS   = ByteChar(#8);
+  AsciiHT   = ByteChar(#9);
+  AsciiLF   = ByteChar(#10);
+  AsciiVT   = ByteChar(#11);
+  AsciiFF   = ByteChar(#12);
+  AsciiCR   = ByteChar(#13);
+  AsciiSO   = ByteChar(#14);
+  AsciiSI   = ByteChar(#15);
+  AsciiDLE  = ByteChar(#16);
+  AsciiDC1  = ByteChar(#17);
+  AsciiDC2  = ByteChar(#18);
+  AsciiDC3  = ByteChar(#19);
+  AsciiDC4  = ByteChar(#20);
+  AsciiNAK  = ByteChar(#21);
+  AsciiSYN  = ByteChar(#22);
+  AsciiETB  = ByteChar(#23);
+  AsciiCAN  = ByteChar(#24);
+  AsciiEM   = ByteChar(#25);
+  AsciiEOF  = ByteChar(#26);
+  AsciiESC  = ByteChar(#27);
+  AsciiFS   = ByteChar(#28);
+  AsciiGS   = ByteChar(#29);
+  AsciiRS   = ByteChar(#30);
+  AsciiUS   = ByteChar(#31);
+  AsciiSP   = ByteChar(#32);
+  AsciiDEL  = ByteChar(#127);
   AsciiXON  = AsciiDC1;
   AsciiXOFF = AsciiDC3;
 
   AsciiCRLF = AsciiCR + AsciiLF;
 
-  AsciiDecimalPoint = AnsiChar(#46);
-  AsciiComma        = AnsiChar(#44);
-  AsciiBackSlash    = AnsiChar(#92);
-  AsciiForwardSlash = AnsiChar(#47);
-  AsciiPercent      = AnsiChar(#37);
-  AsciiAmpersand    = AnsiChar(#38);
-  AsciiPlus         = AnsiChar(#43);
-  AsciiMinus        = AnsiChar(#45);
-  AsciiEqualSign    = AnsiChar(#61);
-  AsciiSingleQuote  = AnsiChar(#39);
-  AsciiDoubleQuote  = AnsiChar(#34);
+  AsciiDecimalPoint = ByteChar(#46);
+  AsciiComma        = ByteChar(#44);
+  AsciiBackSlash    = ByteChar(#92);
+  AsciiForwardSlash = ByteChar(#47);
+  AsciiPercent      = ByteChar(#37);
+  AsciiAmpersand    = ByteChar(#38);
+  AsciiPlus         = ByteChar(#43);
+  AsciiMinus        = ByteChar(#45);
+  AsciiEqualSign    = ByteChar(#61);
+  AsciiSingleQuote  = ByteChar(#39);
+  AsciiDoubleQuote  = ByteChar(#34);
 
-  AsciiDigit0 = AnsiChar(#48);
-  AsciiDigit9 = AnsiChar(#57);
-  AsciiUpperA = AnsiChar(#65);
-  AsciiUpperZ = AnsiChar(#90);
-  AsciiLowerA = AnsiChar(#97);
-  AsciiLowerZ = AnsiChar(#122);
+  AsciiDigit0 = ByteChar(#48);
+  AsciiDigit9 = ByteChar(#57);
+  AsciiUpperA = ByteChar(#65);
+  AsciiUpperZ = ByteChar(#90);
+  AsciiLowerA = ByteChar(#97);
+  AsciiLowerZ = ByteChar(#122);
 
 
 
@@ -169,6 +170,16 @@ const
   WideDEL  = WideChar(#127);
   WideXON  = WideDC1;
   WideXOFF = WideDC3;
+
+  {$IFDEF DELPHI5}
+  WideCRLF = WideString(#13#10);
+  {$ELSE}
+  {$IFDEF DELPHI7_DOWN}
+  WideCRLF = WideString(WideCR) + WideString(WideLF);
+  {$ELSE}
+  WideCRLF = WideCR + WideLF;
+  {$ENDIF}
+  {$ENDIF}
 
 
 
@@ -215,35 +226,41 @@ const
 {                                                                              }
 { ASCII functions                                                              }
 {                                                                              }
-function  IsAsciiCharA(const C: AnsiChar): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  IsAsciiCharB(const C: ByteChar): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  IsAsciiCharW(const C: WideChar): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  IsAsciiChar(const C: Char): Boolean;      {$IFDEF UseInline}inline;{$ENDIF}
 
 function  IsAsciiBufB(const Buf: Pointer; const Len: Integer): Boolean;
 function  IsAsciiBufW(const Buf: Pointer; const Len: Integer): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  IsAsciiStringA(const S: AnsiString): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  IsAsciiStringB(const S: RawByteString): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportWideString}
 function  IsAsciiStringW(const S: WideString): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  IsAsciiStringU(const S: UnicodeString): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  IsAsciiString(const S: String): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
 
-function  AsciiHexCharValue(const C: AnsiChar): Integer;
+function  AsciiHexCharValueB(const C: ByteChar): Integer;
 function  AsciiHexCharValueW(const C: WideChar): Integer;
 
-function  AsciiIsHexChar(const C: AnsiChar): Boolean;
+function  AsciiIsHexCharB(const C: ByteChar): Boolean;
 function  AsciiIsHexCharW(const C: WideChar): Boolean;
 
-function  AsciiDecimalCharValue(const C: AnsiChar): Integer;
+function  AsciiDecimalCharValueB(const C: ByteChar): Integer;
 function  AsciiDecimalCharValueW(const C: WideChar): Integer;
 
-function  AsciiIsDecimalChar(const C: AnsiChar): Boolean;
+function  AsciiIsDecimalCharB(const C: ByteChar): Boolean;
 function  AsciiIsDecimalCharW(const C: WideChar): Boolean;
 
-function  AsciiOctalCharValue(const C: AnsiChar): Integer;
+function  AsciiOctalCharValueB(const C: ByteChar): Integer;
 function  AsciiOctalCharValueW(const C: WideChar): Integer;
 
-function  AsciiIsOctalChar(const C: AnsiChar): Boolean;
+function  AsciiIsOctalCharB(const C: ByteChar): Boolean;
 function  AsciiIsOctalCharW(const C: WideChar): Boolean;
 
 
@@ -255,22 +272,28 @@ function  AsciiIsOctalCharW(const C: WideChar): Boolean;
 {             0  if A = B                                                      }
 {             1  if A > B                                                      }
 {                                                                              }
-function  CharCompareNoAsciiCaseA(const A, B: AnsiChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompareNoAsciiCaseB(const A, B: ByteChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharCompareNoAsciiCaseW(const A, B: WideChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharCompareNoAsciiCase(const A, B: Char): Integer;      {$IFDEF UseInline}inline;{$ENDIF}
 
-function  CharEqualNoAsciiCaseA(const A, B: AnsiChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharEqualNoAsciiCaseB(const A, B: ByteChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
 function  CharEqualNoAsciiCaseW(const A, B: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
 function  CharEqualNoAsciiCase(const A, B: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
 
-function  StrPCompareNoAsciiCaseA(const A, B: PAnsiChar; const Len: Integer): Integer;
+function  StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: Integer): Integer;
 function  StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: Integer): Integer;
 function  StrPCompareNoAsciiCase(const A, B: PChar; const Len: Integer): Integer;
 
+{$IFDEF SupportAnsiString}
 function  StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
+{$ENDIF}
 function  StrCompareNoAsciiCaseB(const A, B: RawByteString): Integer;
+{$IFDEF SupportWideString}
 function  StrCompareNoAsciiCaseW(const A, B: WideString): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrCompareNoAsciiCaseU(const A, B: UnicodeString): Integer;
+{$ENDIF}
 function  StrCompareNoAsciiCase(const A, B: String): Integer;
 
 
@@ -278,50 +301,84 @@ function  StrCompareNoAsciiCase(const A, B: String): Integer;
 {                                                                              }
 { ASCII case conversion                                                        }
 {                                                                              }
-function  AsciiLowCaseA(const C: AnsiChar): AnsiChar;
+function  AsciiLowCaseB(const C: ByteChar): ByteChar;
 function  AsciiLowCaseW(const C: WideChar): WideChar;
 function  AsciiLowCase(const C: Char): Char;
 
-function  AsciiUpCaseA(const C: AnsiChar): AnsiChar;
+function  AsciiUpCaseB(const C: ByteChar): ByteChar;
 function  AsciiUpCaseW(const C: WideChar): WideChar;
 function  AsciiUpCase(const C: Char): Char;
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertUpperA(var S: AnsiString);
+{$ENDIF}
 procedure AsciiConvertUpperB(var S: RawByteString);
+{$IFDEF SupportWideString}
 procedure AsciiConvertUpperW(var S: WideString);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure AsciiConvertUpperU(var S: UnicodeString);
+{$ENDIF}
 procedure AsciiConvertUpper(var S: String);
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertLowerA(var S: AnsiString);
+{$ENDIF}
 procedure AsciiConvertLowerB(var S: RawByteString);
+{$IFDEF SupportWideString}
 procedure AsciiConvertLowerW(var S: WideString);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure AsciiConvertLowerU(var S: UnicodeString);
+{$ENDIF}
 procedure AsciiConvertLower(var S: String);
 
+{$IFDEF SupportAnsiString}
 function  AsciiUpperCaseA(const A: AnsiString): AnsiString;
+{$ENDIF}
 function  AsciiUpperCaseB(const A: RawByteString): RawByteString;
+{$IFDEF SupportWideString}
 function  AsciiUpperCaseW(const A: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  AsciiUpperCaseU(const A: UnicodeString): UnicodeString;
+{$ENDIF}
 function  AsciiUpperCase(const A: String): String;
 
+{$IFDEF SupportAnsiString}
 function  AsciiLowerCaseA(const A: AnsiString): AnsiString;
+{$ENDIF}
 function  AsciiLowerCaseB(const A: RawByteString): RawByteString;
+{$IFDEF SupportWideString}
 function  AsciiLowerCaseW(const A: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  AsciiLowerCaseU(const A: UnicodeString): UnicodeString;
+{$ENDIF}
 function  AsciiLowerCase(const A: String): String;
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertFirstUpA(var S: AnsiString);
+{$ENDIF}
 procedure AsciiConvertFirstUpB(var S: RawByteString);
+{$IFDEF SupportWideString}
 procedure AsciiConvertFirstUpW(var S: WideString);
+{$ENDIF}
 procedure AsciiConvertFirstUp(var S: String);
 
+{$IFDEF SupportAnsiString}
 function  AsciiFirstUpA(const S: AnsiString): AnsiString;
+{$ENDIF}
 function  AsciiFirstUpB(const S: RawByteString): RawByteString;
+{$IFDEF SupportWideString}
 function  AsciiFirstUpW(const S: WideString): WideString;
+{$ENDIF}
 function  AsciiFirstUp(const S: String): String;
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertArrayUpper(var S: AnsiStringArray);
 procedure AsciiConvertArrayLower(var S: AnsiStringArray);
+{$ENDIF}
 
 
 
@@ -336,18 +393,15 @@ procedure Test;
 
 implementation
 
-uses
-  { Fundamentals }
-  flcUtils;
 
 
 
 {                                                                              }
 { US-ASCII String functions                                                    }
 {                                                                              }
-function IsAsciiCharA(const C: AnsiChar): Boolean;
+function IsAsciiCharB(const C: ByteChar): Boolean;
 begin
-  Result := C in [AnsiChar(0)..AnsiChar(127)];
+  Result := C in [ByteChar(0)..ByteChar(127)];
 end;
 
 function IsAsciiCharW(const C: WideChar): Boolean;
@@ -392,25 +446,31 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportAnsiString}
 function IsAsciiStringA(const S: AnsiString): Boolean;
 begin
   Result := IsAsciiBufB(PAnsiChar(S), Length(S));
 end;
+{$ENDIF}
 
 function IsAsciiStringB(const S: RawByteString): Boolean;
 begin
-  Result := IsAsciiBufB(PAnsiChar(S), Length(S));
+  Result := IsAsciiBufB(Pointer(S), Length(S));
 end;
 
+{$IFDEF SupportWideString}
 function IsAsciiStringW(const S: WideString): Boolean;
 begin
   Result := IsAsciiBufW(PWideChar(S), Length(S));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function IsAsciiStringU(const S: UnicodeString): Boolean;
 begin
   Result := IsAsciiBufW(PWideChar(S), Length(S));
 end;
+{$ENDIF}
 
 function IsAsciiString(const S: String): Boolean;
 begin
@@ -426,7 +486,7 @@ end;
 {                                                                              }
 { ASCII functions                                                              }
 {                                                                              }
-function AsciiHexCharValue(const C: AnsiChar): Integer;
+function AsciiHexCharValueB(const C: ByteChar): Integer;
 begin
   case Ord(C) of
     Ord('0')..Ord('9') : Result := Ord(C) - Ord('0');
@@ -442,12 +502,12 @@ begin
   if Ord(C) >= $80 then
     Result := -1
   else
-    Result := AsciiHexCharValue(AnsiChar(Ord(C)));
+    Result := AsciiHexCharValueB(ByteChar(Ord(C)));
 end;
 
-function AsciiIsHexChar(const C: AnsiChar): Boolean;
+function AsciiIsHexCharB(const C: ByteChar): Boolean;
 begin
-  Result := AsciiHexCharValue(C) >= 0;
+  Result := AsciiHexCharValueB(C) >= 0;
 end;
 
 function AsciiIsHexCharW(const C: WideChar): Boolean;
@@ -455,7 +515,7 @@ begin
   Result := AsciiHexCharValueW(C) >= 0;
 end;
 
-function AsciiDecimalCharValue(const C: AnsiChar): Integer;
+function AsciiDecimalCharValueB(const C: ByteChar): Integer;
 begin
   case Ord(C) of
     Ord('0')..Ord('9') : Result := Ord(C) - Ord('0');
@@ -469,12 +529,12 @@ begin
   if Ord(C) >= $80 then
     Result := -1
   else
-    Result := AsciiDecimalCharValue(AnsiChar(Ord(C)));
+    Result := AsciiDecimalCharValueB(ByteChar(Ord(C)));
 end;
 
-function AsciiIsDecimalChar(const C: AnsiChar): Boolean;
+function AsciiIsDecimalCharB(const C: ByteChar): Boolean;
 begin
-  Result := AsciiDecimalCharValue(C) >= 0;
+  Result := AsciiDecimalCharValueB(C) >= 0;
 end;
 
 function AsciiIsDecimalCharW(const C: WideChar): Boolean;
@@ -482,7 +542,7 @@ begin
   Result := AsciiDecimalCharValueW(C) >= 0;
 end;
 
-function AsciiOctalCharValue(const C: AnsiChar): Integer;
+function AsciiOctalCharValueB(const C: ByteChar): Integer;
 begin
   case Ord(C) of
     Ord('0')..Ord('7') : Result := Ord(C) - Ord('0');
@@ -496,12 +556,12 @@ begin
   if Ord(C) >= $80 then
     Result := -1
   else
-    Result := AsciiOctalCharValue(AnsiChar(Ord(C)));
+    Result := AsciiOctalCharValueB(ByteChar(Ord(C)));
 end;
 
-function AsciiIsOctalChar(const C: AnsiChar): Boolean;
+function AsciiIsOctalCharB(const C: ByteChar): Boolean;
 begin
-  Result := AsciiOctalCharValue(C) >= 0;
+  Result := AsciiOctalCharValueB(C) >= 0;
 end;
 
 function AsciiIsOctalCharW(const C: WideChar): Boolean;
@@ -514,11 +574,11 @@ end;
 {                                                                              }
 { Compare                                                                      }
 {                                                                              }
-function CharCompareNoAsciiCaseA(const A, B: AnsiChar): Integer;
-var C, D : AnsiChar;
+function CharCompareNoAsciiCaseB(const A, B: ByteChar): Integer;
+var C, D : ByteChar;
 begin
-  C := AnsiChar(AsciiLowCaseLookup[Ord(A)]);
-  D := AnsiChar(AsciiLowCaseLookup[Ord(B)]);
+  C := ByteChar(AsciiLowCaseLookup[Ord(A)]);
+  D := ByteChar(AsciiLowCaseLookup[Ord(B)]);
   if C < D then
     Result := -1 else
     if C > D then
@@ -553,9 +613,9 @@ begin
       Result := 0;
 end;
 
-function CharEqualNoAsciiCaseA(const A, B: AnsiChar): Boolean;
+function CharEqualNoAsciiCaseB(const A, B: ByteChar): Boolean;
 begin
-  Result := AsciiUpCaseA(A) = AsciiUpCaseA(B);
+  Result := AsciiUpCaseB(A) = AsciiUpCaseB(B);
 end;
 
 function CharEqualNoAsciiCaseW(const A, B: WideChar): Boolean;
@@ -568,7 +628,7 @@ begin
   Result := AsciiUpCase(A) = AsciiUpCase(B);
 end;
 
-function StrPCompareNoAsciiCaseA(const A, B: PAnsiChar; const Len: Integer): Integer;
+function StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: Integer): Integer;
 var P, Q : PByte;
     C, D : Byte;
     I    : Integer;
@@ -663,6 +723,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
 var L, M, I: Integer;
 begin
@@ -672,7 +733,7 @@ begin
     I := L
   else
     I := M;
-  Result := StrPCompareNoAsciiCaseA(Pointer(A), Pointer(B), I);
+  Result := StrPCompareNoAsciiCaseB(PByteChar(A), PByteChar(B), I);
   if Result <> 0 then
     exit;
   if L = M then
@@ -682,6 +743,7 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
 function StrCompareNoAsciiCaseB(const A, B: RawByteString): Integer;
 var L, M, I: Integer;
@@ -692,7 +754,7 @@ begin
     I := L
   else
     I := M;
-  Result := StrPCompareNoAsciiCaseA(Pointer(A), Pointer(B), I);
+  Result := StrPCompareNoAsciiCaseB(PByteChar(A), PByteChar(B), I);
   if Result <> 0 then
     exit;
   if L = M then
@@ -703,6 +765,7 @@ begin
     Result := 1;
 end;
 
+{$IFDEF SupportWideString}
 function StrCompareNoAsciiCaseW(const A, B: WideString): Integer;
 var L, M, I: Integer;
 begin
@@ -722,7 +785,9 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCompareNoAsciiCaseU(const A, B: UnicodeString): Integer;
 var L, M, I: Integer;
 begin
@@ -742,6 +807,7 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
 function StrCompareNoAsciiCase(const A, B: String): Integer;
 var L, M, I: Integer;
@@ -771,7 +837,7 @@ const
   AsciiCaseDiff = Byte(AsciiLowerA) - Byte(AsciiUpperA);
 
 {$IFDEF ASM386_DELPHI}
-function AsciiLowCaseA(const C: AnsiChar): AnsiChar; register; assembler;
+function AsciiLowCaseB(const C: ByteChar): ByteChar; register; assembler;
 asm
       CMP     AL, AsciiUpperA
       JB      @@exit
@@ -781,10 +847,10 @@ asm
 @@exit:
 end;
 {$ELSE}
-function AsciiLowCaseA(const C: AnsiChar): AnsiChar;
+function AsciiLowCaseB(const C: ByteChar): ByteChar;
 begin
   if C in [AsciiUpperA..AsciiUpperZ] then
-    Result := AnsiChar(Byte(C) + AsciiCaseDiff)
+    Result := ByteChar(Byte(C) + AsciiCaseDiff)
   else
     Result := C;
 end;
@@ -809,7 +875,7 @@ begin
 end;
 
 {$IFDEF ASM386_DELPHI}
-function AsciiUpCaseA(const C: AnsiChar): AnsiChar; register; assembler;
+function AsciiUpCaseB(const C: ByteChar): ByteChar; register; assembler;
 asm
       CMP     AL, AsciiLowerA
       JB      @@exit
@@ -819,10 +885,10 @@ asm
 @@exit:
 end;
 {$ELSE}
-function AsciiUpCaseA(const C: AnsiChar): AnsiChar;
+function AsciiUpCaseB(const C: ByteChar): ByteChar;
 begin
   if C in [AsciiLowerA..AsciiLowerZ] then
-    Result := AnsiChar(Byte(C) - AsciiCaseDiff)
+    Result := ByteChar(Byte(C) - AsciiCaseDiff)
   else
     Result := C;
 end;
@@ -846,6 +912,7 @@ begin
   end;
 end;
 
+{$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
 procedure AsciiConvertUpperA(var S: AnsiString);
 asm
@@ -896,8 +963,9 @@ var F : Integer;
 begin
   for F := 1 to Length(S) do
     if S[F] in [AsciiLowerA..AsciiLowerZ] then
-      S[F] := AnsiChar(Ord(S[F]) - AsciiCaseDiff);
+      S[F] := ByteChar(Ord(S[F]) - AsciiCaseDiff);
 end;
+{$ENDIF}
 {$ENDIF}
 
 procedure AsciiConvertUpperB(var S: RawByteString);
@@ -908,10 +976,11 @@ begin
     begin
       B := Ord(S[F]);
       if (B >= Ord(AsciiLowerA)) and (B <= Ord(AsciiLowerZ)) then
-        S[F] := AnsiChar(B - AsciiCaseDiff);
+        S[F] := RawByteChar(B - AsciiCaseDiff);
     end;
 end;
 
+{$IFDEF SupportWideString}
 procedure AsciiConvertUpperW(var S: WideString);
 var F : Integer;
     C : WideChar;
@@ -920,11 +989,13 @@ begin
     begin
       C := S[F];
       if Ord(C) <= $FF then
-        if AnsiChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
+        if ByteChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
           S[F] := WideChar(Ord(C) - AsciiCaseDiff);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure AsciiConvertUpperU(var S: UnicodeString);
 var F : Integer;
     C : WideChar;
@@ -933,10 +1004,11 @@ begin
     begin
       C := S[F];
       if Ord(C) <= $FF then
-        if AnsiChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
+        if ByteChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
           S[F] := WideChar(Ord(C) - AsciiCaseDiff);
     end;
 end;
+{$ENDIF}
 
 procedure AsciiConvertUpper(var S: String);
 var F : Integer;
@@ -948,11 +1020,12 @@ begin
       {$IFDEF StringIsUnicode}
       if Ord(C) <= $FF then
       {$ENDIF}
-        if AnsiChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
+        if ByteChar(Ord(C)) in [AsciiLowerA..AsciiLowerZ] then
           S[F] := Char(Ord(C) - AsciiCaseDiff);
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
 procedure AsciiConvertLowerA(var S: AnsiString);
 asm
@@ -1003,8 +1076,9 @@ var F : Integer;
 begin
   for F := 1 to Length(S) do
     if S[F] in [AsciiUpperA..AsciiUpperZ] then
-      S[F] := AnsiChar(Ord(S[F]) + AsciiCaseDiff);
+      S[F] := ByteChar(Ord(S[F]) + AsciiCaseDiff);
 end;
+{$ENDIF}
 {$ENDIF}
 
 procedure AsciiConvertLowerB(var S: RawByteString);
@@ -1012,9 +1086,10 @@ var F : Integer;
 begin
   for F := 1 to Length(S) do
     if S[F] in [AsciiUpperA..AsciiUpperZ] then
-      S[F] := AnsiChar(Ord(S[F]) + AsciiCaseDiff);
+      S[F] := ByteChar(Ord(S[F]) + AsciiCaseDiff);
 end;
 
+{$IFDEF SupportWideString}
 procedure AsciiConvertLowerW(var S: WideString);
 var F : Integer;
     C : WideChar;
@@ -1023,11 +1098,13 @@ begin
     begin
       C := S[F];
       if Ord(C) <= $FF then
-        if AnsiChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
+        if ByteChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
           S[F] := WideChar(Ord(C) + AsciiCaseDiff);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure AsciiConvertLowerU(var S: UnicodeString);
 var F : Integer;
     C : WideChar;
@@ -1036,10 +1113,11 @@ begin
     begin
       C := S[F];
       if Ord(C) <= $FF then
-        if AnsiChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
+        if ByteChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
           S[F] := WideChar(Ord(C) + AsciiCaseDiff);
     end;
 end;
+{$ENDIF}
 
 procedure AsciiConvertLower(var S: String);
 var F : Integer;
@@ -1051,16 +1129,18 @@ begin
       {$IFDEF StringIsUnicode}
       if Ord(C) <= $FF then
       {$ENDIF}
-        if AnsiChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
+        if ByteChar(Ord(C)) in [AsciiUpperA..AsciiUpperZ] then
           S[F] := Char(Ord(C) + AsciiCaseDiff);
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function AsciiUpperCaseA(const A: AnsiString): AnsiString;
 begin
   Result := A;
   AsciiConvertUpperA(Result);
 end;
+{$ENDIF}
 
 function AsciiUpperCaseB(const A: RawByteString): RawByteString;
 begin
@@ -1068,17 +1148,21 @@ begin
   AsciiConvertUpperB(Result);
 end;
 
+{$IFDEF SupportWideString}
 function AsciiUpperCaseW(const A: WideString): WideString;
 begin
   Result := A;
   AsciiConvertUpperW(Result);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function AsciiUpperCaseU(const A: UnicodeString): UnicodeString;
 begin
   Result := A;
   AsciiConvertUpperU(Result);
 end;
+{$ENDIF}
 
 function AsciiUpperCase(const A: String): String;
 begin
@@ -1086,11 +1170,13 @@ begin
   AsciiConvertUpper(Result);
 end;
 
+{$IFDEF SupportAnsiString}
 function AsciiLowerCaseA(const A: AnsiString): AnsiString;
 begin
   Result := A;
   AsciiConvertLowerA(Result);
 end;
+{$ENDIF}
 
 function AsciiLowerCaseB(const A: RawByteString): RawByteString;
 begin
@@ -1098,17 +1184,21 @@ begin
   AsciiConvertLowerB(Result);
 end;
 
+{$IFDEF SupportWideString}
 function AsciiLowerCaseW(const A: WideString): WideString;
 begin
   Result := A;
   AsciiConvertLowerW(Result);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function AsciiLowerCaseU(const A: UnicodeString): UnicodeString;
 begin
   Result := A;
   AsciiConvertLowerU(Result);
 end;
+{$ENDIF}
 
 function AsciiLowerCase(const A: String): String;
 begin
@@ -1116,6 +1206,7 @@ begin
   AsciiConvertLower(Result);
 end;
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertFirstUpA(var S: AnsiString);
 var C : AnsiChar;
 begin
@@ -1123,21 +1214,23 @@ begin
     begin
       C := S[1];
       if C in [AsciiLowerA..AsciiLowerZ] then
-        S[1] := AsciiUpCaseA(C);
+        S[1] := AsciiUpCaseB(C);
     end;
 end;
+{$ENDIF}
 
 procedure AsciiConvertFirstUpB(var S: RawByteString);
-var C : AnsiChar;
+var C : ByteChar;
 begin
   if S <> '' then
     begin
       C := S[1];
       if C in [AsciiLowerA..AsciiLowerZ] then
-        S[1] := AsciiUpCaseA(C);
+        S[1] := AsciiUpCaseB(C);
     end;
 end;
 
+{$IFDEF SupportWideString}
 procedure AsciiConvertFirstUpW(var S: WideString);
 var C : WideChar;
 begin
@@ -1148,6 +1241,7 @@ begin
         S[1] := AsciiUpCaseW(C);
     end;
 end;
+{$ENDIF}
 
 procedure AsciiConvertFirstUp(var S: String);
 var C : Char;
@@ -1160,11 +1254,13 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function AsciiFirstUpA(const S: AnsiString): AnsiString;
 begin
   Result := S;
   AsciiConvertFirstUpA(Result);
 end;
+{$ENDIF}
 
 function AsciiFirstUpB(const S: RawByteString): RawByteString;
 begin
@@ -1172,11 +1268,13 @@ begin
   AsciiConvertFirstUpB(Result);
 end;
 
+{$IFDEF SupportWideString}
 function AsciiFirstUpW(const S: WideString): WideString;
 begin
   Result := S;
   AsciiConvertFirstUpW(Result);
 end;
+{$ENDIF}
 
 function AsciiFirstUp(const S: String): String;
 begin
@@ -1184,6 +1282,7 @@ begin
   AsciiConvertFirstUp(Result);
 end;
 
+{$IFDEF SupportAnsiString}
 procedure AsciiConvertArrayUpper(var S: AnsiStringArray);
 var I : Integer;
 begin
@@ -1197,6 +1296,7 @@ begin
   for I := 0 to Length(S) - 1 do
     AsciiConvertLowerA(S[I]);
 end;
+{$ENDIF}
 
 
 
@@ -1205,27 +1305,159 @@ end;
 procedure Test;
 var
   W : WideChar;
+  {$IFDEF SupportAnsiString}
+  S : AnsiString;
+  {$ENDIF}
+  {$IFDEF SupportWideString}
+  D : WideString;
+  {$ENDIF}
+  Y : String;
+  C : ByteChar;
+{$IFDEF SupportAnsiString}
+const
+  TestStrA1 : AnsiString = '012XYZabc{}_ ';
+  TestStrA2 : AnsiString = #$80;
+  TestStrA3 : AnsiString = '';
+{$ENDIF}
+{$IFDEF SupportWideString}
+const
+  TestStrW1 : WideString = '012XYZabc{}_ ';
+{$ENDIF}
 begin
-  Assert(IsAsciiStringA(ToAnsiString('012XYZabc{}_ ')), 'IsUSASCIIString');
-  Assert(not IsAsciiStringA(ToAnsiString(#$80)), 'IsUSASCIIString');
-  Assert(IsAsciiStringA(ToAnsiString('')), 'IsUSASCIIString');
-  Assert(IsAsciiStringW(ToWideString('012XYZabc{}_ ')), 'IsUSASCIIWideString');
+  {$IFDEF SupportAnsiString}
+  Assert(IsAsciiStringA(TestStrA1), 'IsUSASCIIString');
+  Assert(not IsAsciiStringA(TestStrA2), 'IsUSASCIIString');
+  Assert(IsAsciiStringA(TestStrA3), 'IsUSASCIIString');
+  {$ENDIF}
+
+  {$IFDEF SupportWideString}
+  Assert(IsAsciiStringW(TestStrW1), 'IsUSASCIIWideString');
   W := WideChar(#$0080);
   Assert(not IsAsciiStringW(W), 'IsUSASCIIWideString');
   W := WideChar($2262);
   Assert(not IsAsciiStringW(W), 'IsUSASCIIWideString');
   Assert(IsAsciiStringW(''), 'IsUSASCIIWideString');
+  {$ENDIF}
 
-  Assert(IsAsciiCharA(AnsiChar(32)));
+  Assert(IsAsciiCharB(ByteChar(32)));
   Assert(IsAsciiCharW(#32));
   Assert(IsAsciiChar(#32));
 
-  Assert(not IsAsciiCharA(AnsiChar(128)));
+  Assert(not IsAsciiCharB(ByteChar(128)));
   Assert(not IsAsciiCharW(#128));
   Assert(not IsAsciiChar(#128));
+
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiLowCaseB('A') = 'a');
+  {$ENDIF}
+  Assert(AsciiLowCaseW('A') = 'a');
+  Assert(AsciiLowCase('A') = 'a');
+
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiLowCaseB('a') = 'a');
+  {$ENDIF}
+  Assert(AsciiLowCaseW('a') = 'a');
+  Assert(AsciiLowCase('a') = 'a');
+
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiUpCaseB('A') = 'A');
+  {$ENDIF}
+  Assert(AsciiUpCaseW('A') = 'A');
+  Assert(AsciiUpCase('A') = 'A');
+
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiUpCaseB('a') = 'A');
+  {$ENDIF}
+  Assert(AsciiUpCaseW('a') = 'A');
+  Assert(AsciiUpCase('a') = 'A');
+
+  {$IFDEF SupportAnsiChar}
+  S := '012AbcdEF';
+  Assert(AsciiUpperCaseA(S) = '012ABCDEF');
+  AsciiConvertUpperA(S);
+  Assert(S = '012ABCDEF');
+  {$ENDIF}
+
+  {$IFDEF SupportWideString}
+  D := '012AbcdEF';
+  Assert(AsciiUpperCaseW(D) = '012ABCDEF');
+  AsciiConvertUpperW(D);
+  Assert(D = '012ABCDEF');
+  {$ENDIF}
+
+  Y := '012AbcdEF';
+  Assert(AsciiUpperCase(Y) = '012ABCDEF');
+  AsciiConvertUpper(Y);
+  Assert(Y = '012ABCDEF');
+
+  {$IFDEF SupportAnsiChar}
+  S := '012AbcdEF';
+  Assert(AsciiLowerCaseA(S) ='012abcdef');
+  AsciiConvertLowerA(S);
+  Assert(S = '012abcdef');
+  {$ENDIF}
+
+  {$IFDEF SupportWideString}
+  D := '012AbcdEF';
+  Assert(AsciiLowerCaseW(D) ='012abcdef');
+  AsciiConvertLowerW(D);
+  Assert(D = '012abcdef');
+  {$ENDIF}
+
+  Y := '012AbcdEF';
+  Assert(AsciiLowerCase(Y) ='012abcdef');
+  AsciiConvertLower(Y);
+  Assert(Y = '012abcdef');
+
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiLowCaseB('A') = 'a', 'LowCase');
+  {$ENDIF}
+  Assert(UpCase('a') = 'A', 'UpCase');
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiLowCaseB('-') = '-', 'LowCase');
+  {$ENDIF}
+
+  Assert(UpCase('}') = '}', 'UpCase');
+  {$IFDEF SupportAnsiChar}
+  Assert(AsciiFirstUpA('abra') = 'Abra', 'FirstUp');
+  Assert(AsciiFirstUpA('') = '', 'FirstUp');
+  {$ENDIF}
+
+  {$IFDEF DELPHI2007_DOWN}{$IFNDEF CLR}
+  for C := #0 to #255 do
+    Assert(AsciiLowCase(C) = LowerCase(C), 'LowCase = LowerCase');
+  {$ENDIF}{$ENDIF}
+
+  for C := AnsiChar('A') to AnsiChar('Z') do
+    Assert(AsciiLowCaseB(C) <> C, 'LowCase');
+  for C := AnsiChar('a') to AnsiChar('z') do
+    Assert(AsciiLowCaseB(C) = C, 'LowCase');
+
+  Assert(CharEqualNoAsciiCaseB(AnsiChar('a'), AnsiChar('a')));
+  Assert(CharEqualNoAsciiCaseB(AnsiChar('B'), AnsiChar('b')));
+  Assert(not CharEqualNoAsciiCaseB(AnsiChar('C'), AnsiChar('D')));
+
+  {$IFDEF SupportAnsiChar}
+  S := 'aBcDEfg-123';
+  AsciiConvertUpperA(S);
+  Assert(S = 'ABCDEFG-123', 'ConvertUpper');
+
+  S := 'aBcDEfg-123';
+  AsciiConvertLowerA(S);
+  Assert(S = 'abcdefg-123', 'ConvertLower');
+
+  S := '';
+  AsciiConvertLowerA(S);
+  Assert(S = '', 'ConvertLower');
+
+  S := 'abc';
+  AsciiConvertLowerA(S);
+  Assert(S = 'abc', 'ConvertLower');
+  {$ENDIF}
 end;
 {$ENDIF}
 
 
 
 end.
+

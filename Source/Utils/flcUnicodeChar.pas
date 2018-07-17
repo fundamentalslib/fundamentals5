@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeChar.pas                                       }
-{   File version:     5.65                                                     }
+{   File version:     5.03                                                     }
 {   Description:      Unicode char utility functions                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2017, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -36,10 +36,11 @@
 {                                                                              }
 {   2012/08/28  4.01  Add Unicode character functions from cUnicode.           }
 {   2017/10/24  5.02  Move from Strings unit.                                  }
+{   2017/07/17  5.03  Type changes.                                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.62  2016/01/09                       }
+{   Delphi 10 Win32                     5.02  2017/10/24                       }
 {                                                                              }
 { Notes:                                                                       }
 {   Unicode functions in this unit work from data in source code form.         }
@@ -66,7 +67,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -168,23 +169,45 @@ function  UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
 
 function  UnicodeGetCombiningClass(const Ch: WideChar): Byte;
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function  UnicodeUpCaseFoldingW(const Ch: WideChar): WideString;
+{$ENDIF}
 function  UnicodeUpCaseFoldingU(const Ch: WideChar): UnicodeString;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function  UnicodeLowCaseFoldingW(const Ch: WideChar): WideString;
+{$ENDIF}
 function  UnicodeLowCaseFoldingU(const Ch: WideChar): UnicodeString;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function  UnicodeTitleCaseFoldingW(const Ch: WideChar): WideString;
+{$ENDIF}
 function  UnicodeTitleCaseFoldingU(const Ch: WideChar): UnicodeString;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function  UnicodeGetCharacterDecompositionW(const Ch: WideChar): WideString; overload;
 function  UnicodeGetCharacterDecompositionW(const Ch: UCS4Char): WideString; overload;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function  UnicodeUpperCaseFoldingW(const S: WideString): WideString;
+{$ENDIF}
 function  UnicodeUpperCaseFoldingU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function  UnicodeLowerCaseFoldingW(const S: WideString): WideString;
+{$ENDIF}
 function  UnicodeLowerCaseFoldingU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 
 
 
@@ -842,7 +865,7 @@ begin
 end;
 
 function UnicodeDecimalDigitValue(const Ch: UCS4Char): Integer;
-var I : LongWord;
+var I : Word32;
 begin
   I := DecimalDigitBaseU(Ch);
   if I = 0 then
@@ -3501,7 +3524,8 @@ begin
   end;
 end;
 
-function UnicodeLocateFoldingUpperCase(const Ch: WideChar): WideString;
+{$IFDEF SupportUnicodeString}
+function UnicodeLocateFoldingUpperCase(const Ch: WideChar): UnicodeString;
 begin
   if Ord(Ch) < $00DF then
     Result := '' else
@@ -3629,7 +3653,10 @@ begin
   else
     Result := '';
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function UnicodeUpCaseFoldingW(const Ch: WideChar): WideString;
 var R : WideChar;
 begin
@@ -3643,7 +3670,10 @@ begin
   else
     Result := R;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeUpCaseFoldingU(const Ch: WideChar): UnicodeString;
 var R : WideChar;
 begin
@@ -3657,15 +3687,20 @@ begin
   else
     Result := R;
 end;
+{$ENDIF}
 
-function UnicodeLocateFoldingLowerCase(const Ch: WideChar): WideString;
+{$IFDEF SupportUnicodeString}
+function UnicodeLocateFoldingLowerCase(const Ch: WideChar): UnicodeString;
 begin
   if Ch = #$0130 then
     Result := #$0069#$0307
   else
     Result := '';
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function UnicodeLowCaseFoldingW(const Ch: WideChar): WideString;
 var R : WideChar;
 begin
@@ -3679,7 +3714,10 @@ begin
   else
     Result := R;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeLowCaseFoldingU(const Ch: WideChar): UnicodeString;
 var R : WideChar;
 begin
@@ -3693,8 +3731,10 @@ begin
   else
     Result := R;
 end;
+{$ENDIF}
 
-function UnicodeLocateFoldingTitleCase(const Ch: WideChar): WideString;
+{$IFDEF SupportUnicodeString}
+function UnicodeLocateFoldingTitleCase(const Ch: WideChar): UnicodeString;
 begin
   if Ord(Ch) < $00DF then
     Result := '' else
@@ -3768,20 +3808,27 @@ begin
   else
     Result := '';
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function UnicodeTitleCaseFoldingW(const Ch: WideChar): WideString;
 begin
   Result := UnicodeLocateFoldingTitleCase(Ch);
   if Result = '' then
     Result := Ch;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeTitleCaseFoldingU(const Ch: WideChar): UnicodeString;
 begin
   Result := UnicodeLocateFoldingTitleCase(Ch);
   if Result = '' then
     Result := Ch;
 end;
+{$ENDIF}
 
 type
   TUnicodeDecompositionAttr = (daNone, daNoBreak, daCompat, daSuper,
@@ -7313,7 +7360,7 @@ begin
 end;
 
 {$IFDEF CLR}
-function GetCharacterDecompositionU(const Ch: WideChar): WideString;
+function GetCharacterDecompositionU(const Ch: WideChar): UnicodeString;
 var I, J : Integer;
 begin
   I := LocateDecompositionInfoU(Ch);
@@ -7352,6 +7399,7 @@ begin
     end;
 end;
 {$ELSE}
+{$IFDEF SupportWideString}
 function UnicodeGetCharacterDecompositionW(const Ch: WideChar): WideString;
 var I, J : Integer;
     P, Q : PWideChar;
@@ -7389,6 +7437,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 {$ENDIF}
 
 type
@@ -8468,6 +8517,7 @@ begin
     end;
 end;
 {$ELSE}
+{$IFDEF SupportWideString}
 function UnicodeGetCharacterDecompositionW(const Ch: UCS4Char): WideString;
 var I : Integer;
     P : PUnicodeUCS4DecompositionInfo;
@@ -8512,7 +8562,10 @@ begin
     end;
 end;
 {$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function UnicodeUpperCaseFoldingW(const S: WideString): WideString;
 var I : Integer;
 begin
@@ -8520,7 +8573,10 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeUpCaseFoldingW(S[I]);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeUpperCaseFoldingU(const S: UnicodeString): UnicodeString;
 var I : Integer;
 begin
@@ -8528,7 +8584,10 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeUpCaseFoldingU(S[I]);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
 function UnicodeLowerCaseFoldingW(const S: WideString): WideString;
 var I : Integer;
 begin
@@ -8536,7 +8595,10 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeLowCaseFoldingW(S[I]);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeLowerCaseFoldingU(const S: UnicodeString): UnicodeString;
 var I : Integer;
 begin
@@ -8544,6 +8606,7 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeLowCaseFoldingU(S[I]);
 end;
+{$ENDIF}
 
 
 

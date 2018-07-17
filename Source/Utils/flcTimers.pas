@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTimers.pas                                            }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      Timer functions                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -44,6 +44,7 @@
 {   2011/05/04  4.08  Split from cDateTime unit.                               }
 {   2015/01/16  4.09  Added GetTickAccuracy.                                   }
 {   2015/01/17  5.10  Revised for Fundamentals 5.                              }
+{   2018/07/17  5.11  Word32 changes.                                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -77,7 +78,10 @@ interface
 
 uses
   { System }
-  SysUtils;
+  SysUtils,
+
+  { Fundamentals }
+  flcStdTypes;
 
 
 
@@ -100,12 +104,12 @@ type
 const
   TickFrequency = 1000;
 
-function  GetTick: LongWord;
+function  GetTick: Word32;
 
-function  TickDelta(const D1, D2: LongWord): Integer;
-function  TickDeltaW(const D1, D2: LongWord): LongWord;
+function  TickDelta(const D1, D2: Word32): Integer;
+function  TickDeltaW(const D1, D2: Word32): Word32;
 
-function  GetTickAccuracy(const ReTest: Boolean = False): LongWord;
+function  GetTickAccuracy(const ReTest: Boolean = False): Word32;
 
 
 
@@ -198,18 +202,18 @@ uses
 {$ENDIF}
 
 {$IFDEF GetTickWindows}
-function GetTick: LongWord;
+function GetTick: Word32;
 begin
   Result := GetTickCount;
 end;
 {$ELSE}
 {$IFDEF GetTickUnix}
-function GetTick: LongWord;
+function GetTick: Word32;
 begin
-  Result := LongWord(DateTimeToTimeStamp(Now).Time);
+  Result := Word32(DateTimeToTimeStamp(Now).Time);
 end;
 {$ELSE}
-function GetTick: LongWord;
+function GetTick: Word32;
 const MsPerDay = 24 * 60 * 60 * 1000;
 var N : Double;
     T : Int64;
@@ -217,37 +221,37 @@ begin
   N := Now;
   N := N * MsPerDay;
   T := Trunc(N);
-  Result := LongWord(T and $FFFFFFFF);
+  Result := Word32(T and $FFFFFFFF);
 end;
 {$ENDIF}
 {$ENDIF}
 
 {$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-function TickDelta(const D1, D2: LongWord): Integer;
+function TickDelta(const D1, D2: Word32): Integer;
 begin
   Result := Integer(D2 - D1);
 end;
 
-function TickDeltaW(const D1, D2: LongWord): LongWord;
+function TickDeltaW(const D1, D2: Word32): Word32;
 begin
-  Result := LongWord(D2 - D1);
+  Result := Word32(D2 - D1);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
 var
   TickAccuracyCached : Boolean = False;
-  TickAccuracy       : LongWord = 0;
+  TickAccuracy       : Word32 = 0;
 
-function GetTickAccuracy(const ReTest: Boolean): LongWord;
+function GetTickAccuracy(const ReTest: Boolean): Word32;
 const
   SecondAsDateTime = 1.0 / (24.0 * 60.0 * 60.0);
   MaxLoopCount = 1000000000;
   MaxWaitSeconds = 2;
 var
-  TickStart, TickStop : LongWord;
+  TickStart, TickStop : Word32;
   TimeStart, TimeStop : TDateTime;
-  LoopCount           : LongWord;
-  Accuracy            : LongWord;
+  LoopCount           : Word32;
+  Accuracy            : Word32;
 begin
   // return cached test result
   if not ReTest and TickAccuracyCached then
@@ -582,7 +586,7 @@ begin
 end;
 
 procedure Test_TickTimer;
-var A, B : LongWord;
+var A, B : Word32;
     I : Integer;
 begin
   // estimate tick accuracy
@@ -604,7 +608,7 @@ begin
 end;
 
 procedure Test_TickTimer2;
-var A, B : LongWord;
+var A, B : Word32;
     P, Q : TDateTime;
     I : Integer;
 begin
@@ -624,7 +628,7 @@ begin
 end;
 
 procedure Test_TickTimer3;
-var A, B : LongWord;
+var A, B : Word32;
     T : THPTimer;
 begin
   // test timer using WaitMicroseconds
@@ -657,7 +661,7 @@ end;
 
 procedure Test_HighPrecisionTimer2;
 var T : THPTimer;
-    A, B : LongWord;
+    A, B : Word32;
     I : Integer;
 begin
   // test timer using TickTimer

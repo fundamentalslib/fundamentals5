@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.20                                                     }
+{   File version:     5.21                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -56,14 +56,16 @@
 {   2013/01/27  4.18  Added RipeMD160 sponsored and donated by Stefan Westner. }
 {   2016/01/09  5.19  Revised for Fundamentals 5.                              }
 {   2016/01/29  5.20  Fix in SecureClear for constant string references.       }
+{   2018/07/11  5.21  Word32 type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
 {   Delphi 7 Win32                      5.19  2016/01/09                       }
 {   Delphi XE7 Win32                    5.19  2016/01/09                       }
-{   Delphi XE7 Win64                    5.19  2016/01/09                       }
 {   Delphi 10 Win32                     5.19  2016/01/09                       }
-{   Delphi 10 Win64                     5.19  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.21  2018/07/17                       }
+{   Delphi 10.2 Win64                   5.21  2018/07/17                       }
+{   Delphi 10.2 Linux64                 5.21  2018/07/17                       }
 {   FreePascal 2 Win32 i386                                                    }
 {   FreePascal 2 Linux i386                                                    }
 {                                                                              }
@@ -131,8 +133,9 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -142,47 +145,46 @@ uses
 type
   PByte = ^Byte;
   PWord = ^Word;
-  PLongWord = ^LongWord;
   Word64 = packed record
     case Integer of
-    0 : (Bytes     : array[0..7] of Byte);
-    1 : (Words     : array[0..3] of Word);
-    2 : (LongWords : array[0..1] of LongWord);
+    0 : (Bytes   : array[0..7] of Byte);
+    1 : (Words   : array[0..3] of Word);
+    2 : (Word32s : array[0..1] of Word32);
   end;
   PWord64 = ^Word64;
   T128BitDigest = record
     case integer of
-      0 : (Int64s : array[0..1] of Int64);
-      1 : (Longs  : array[0..3] of LongWord);
-      2 : (Words  : array[0..7] of Word);
-      3 : (Bytes  : array[0..15] of Byte);
+      0 : (Int64s  : array[0..1] of Int64);
+      1 : (Word32s : array[0..3] of Word32);
+      2 : (Words   : array[0..7] of Word);
+      3 : (Bytes   : array[0..15] of Byte);
     end;
   P128BitDigest = ^T128BitDigest;
   T160BitDigest = record
     case integer of
-      0 : (Longs : array[0..4] of LongWord);
-      1 : (Words : array[0..9] of Word);
-      2 : (Bytes : array[0..19] of Byte);
+      0 : (Word32s : array[0..4] of Word32);
+      1 : (Words   : array[0..9] of Word);
+      2 : (Bytes   : array[0..19] of Byte);
     end;
   P160BitDigest = ^T160BitDigest;
   T224BitDigest = record
     case integer of
-      0 : (Longs : array[0..6] of LongWord);
-      1 : (Words : array[0..13] of Word);
-      2 : (Bytes : array[0..27] of Byte);
+      0 : (Word32s : array[0..6] of Word32);
+      1 : (Words   : array[0..13] of Word);
+      2 : (Bytes   : array[0..27] of Byte);
     end;
   P224BitDigest = ^T224BitDigest;
   T256BitDigest = record
     case integer of
-      0 : (Longs : array[0..7] of LongWord);
-      1 : (Words : array[0..15] of Word);
-      2 : (Bytes : array[0..31] of Byte);
+      0 : (Word32s : array[0..7] of Word32);
+      1 : (Words   : array[0..15] of Word);
+      2 : (Bytes   : array[0..31] of Byte);
     end;
   P256BitDigest = ^T256BitDigest;
   T384BitDigest = record
     case integer of
       0 : (Word64s : array[0..5] of Word64);
-      1 : (Longs   : array[0..11] of LongWord);
+      1 : (Word32s : array[0..11] of Word32);
       2 : (Words   : array[0..23] of Word);
       3 : (Bytes   : array[0..47] of Byte);
     end;
@@ -190,7 +192,7 @@ type
   T512BitDigest = record
     case integer of
       0 : (Word64s : array[0..7] of Word64);
-      1 : (Longs   : array[0..15] of LongWord);
+      1 : (Word32s : array[0..15] of Word32);
       2 : (Words   : array[0..31] of Word);
       3 : (Bytes   : array[0..63] of Byte);
     end;
@@ -216,8 +218,8 @@ function  DigestToHexW(const Digest; const Size: Integer): WideString;
 function  DigestToHex(const Digest; const Size: Integer): String;
 {$ENDIF}
 
-{$IFDEF SupportAnsiString}
-function  DigestToBufA(const Digest; const Size: Integer): RawByteString;
+{$IFDEF SupportRawByteString}
+function  DigestToBufB(const Digest; const Size: Integer): RawByteString;
 {$ENDIF}
 
 function  Digest128Equal(const Digest1, Digest2: T128BitDigest): Boolean;
@@ -228,7 +230,7 @@ function  Digest384Equal(const Digest1, Digest2: T384BitDigest): Boolean;
 function  Digest512Equal(const Digest1, Digest2: T512BitDigest): Boolean;
 
 procedure Digest512XOR8(var Digest: T512BitDigest; const A: Byte);
-procedure Digest512XOR32(var Digest: T512BitDigest; const A: LongWord);
+procedure Digest512XOR32(var Digest: T512BitDigest; const A: Word32);
 
 
 
@@ -252,16 +254,16 @@ const
   hashInvalidHandle      = 13;
   hashMAX_ERROR          = 13;
 
-function  GetHashErrorMessage(const ErrorCode: LongWord): PChar;
+function  GetHashErrorMessage(const ErrorCode: Integer): PChar;
 
 type
   EHashError = class(Exception)
   protected
-    FErrorCode : LongWord;
+    FErrorCode : Integer;
 
   public
-    constructor Create(const ErrorCode: LongWord; const Msg: String = '');
-    property ErrorCode: LongWord read FErrorCode;
+    constructor Create(const ErrorCode: Integer; const Msg: String = '');
+    property ErrorCode: Integer read FErrorCode;
   end;
 
 
@@ -281,18 +283,20 @@ procedure SecureClearStrB(var S: RawByteString);
 {$IFDEF SupportWideString}
 procedure SecureClearStrW(var S: WideString);
 {$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure SecureClearStrU(var S: UnicodeString);
+{$ENDIF}
 
 
 
 {                                                                              }
 { Checksum hashing                                                             }
 {                                                                              }
-function  CalcChecksum32(const Buf; const BufSize: Integer): LongWord; overload;
+function  CalcChecksum32(const Buf; const BufSize: Integer): Word32; overload;
 {$IFDEF SupportRawByteString}
-function  CalcChecksum32B(const Buf: RawByteString): LongWord;
+function  CalcChecksum32B(const Buf: RawByteString): Word32;
 {$ENDIF}
-function  CalcChecksum32(const Buf: TBytes): LongWord; overload;
+function  CalcChecksum32(const Buf: TBytes): Word32; overload;
 
 
 
@@ -309,9 +313,9 @@ function  CalcXOR16(const Buf; const BufSize: Integer): Word; overload;
 function  CalcXOR16(const Buf: RawByteString): Word; overload;
 {$ENDIF}
 
-function  CalcXOR32(const Buf; const BufSize: Integer): LongWord; overload;
+function  CalcXOR32(const Buf; const BufSize: Integer): Word32; overload;
 {$IFDEF SupportRawByteString}
-function  CalcXOR32(const Buf: RawByteString): LongWord; overload;
+function  CalcXOR32(const Buf: RawByteString): Word32; overload;
 {$ENDIF}
 
 
@@ -364,16 +368,16 @@ function  CalcCRC16(const Buf: RawByteString): Word; overload;
 {                                                                              }
 { CRC 32 hashing                                                               }
 {                                                                              }
-procedure SetCRC32Poly(const Poly: LongWord);
+procedure SetCRC32Poly(const Poly: Word32);
 
-procedure CRC32Init(var CRC32: LongWord);
-function  CRC32Byte(const CRC32: LongWord; const Octet: Byte): LongWord;
-function  CRC32Buf(const CRC32: LongWord; const Buf; const BufSize: Integer): LongWord;
-function  CRC32BufNoCase(const CRC32: LongWord; const Buf; const BufSize: Integer): LongWord;
+procedure CRC32Init(var CRC32: Word32);
+function  CRC32Byte(const CRC32: Word32; const Octet: Byte): Word32;
+function  CRC32Buf(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
+function  CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
 
-function  CalcCRC32(const Buf; const BufSize: Integer): LongWord; overload;
+function  CalcCRC32(const Buf; const BufSize: Integer): Word32; overload;
 {$IFDEF SupportRawByteString}
-function  CalcCRC32(const Buf: RawByteString): LongWord; overload;
+function  CalcCRC32(const Buf: RawByteString): Word32; overload;
 {$ENDIF}
 
 
@@ -381,13 +385,13 @@ function  CalcCRC32(const Buf: RawByteString): LongWord; overload;
 {                                                                              }
 { Adler 32 hashing                                                             }
 {                                                                              }
-procedure Adler32Init(var Adler32: LongWord);
-function  Adler32Byte(const Adler32: LongWord; const Octet: Byte): LongWord;
-function  Adler32Buf(const Adler32: LongWord; const Buf; const BufSize: Integer): LongWord;
+procedure Adler32Init(var Adler32: Word32);
+function  Adler32Byte(const Adler32: Word32; const Octet: Byte): Word32;
+function  Adler32Buf(const Adler32: Word32; const Buf; const BufSize: Integer): Word32;
 
-function  CalcAdler32(const Buf; const BufSize: Integer): LongWord; overload;
+function  CalcAdler32(const Buf; const BufSize: Integer): Word32; overload;
 {$IFDEF SupportRawByteString}
-function  CalcAdler32(const Buf: RawByteString): LongWord; overload;
+function  CalcAdler32(const Buf: RawByteString): Word32; overload;
 {$ENDIF}
 
 
@@ -395,12 +399,12 @@ function  CalcAdler32(const Buf: RawByteString): LongWord; overload;
 {                                                                              }
 { ELF hashing                                                                  }
 {                                                                              }
-procedure ELFInit(var Digest: LongWord);
-function  ELFBuf(const Digest: LongWord; const Buf; const BufSize: Integer): LongWord;
+procedure ELFInit(var Digest: Word32);
+function  ELFBuf(const Digest: Word32; const Buf; const BufSize: Integer): Word32;
 
-function  CalcELF(const Buf; const BufSize: Integer): LongWord; overload;
+function  CalcELF(const Buf; const BufSize: Integer): Word32; overload;
 {$IFDEF SupportRawByteString}
-function  CalcELF(const Buf: RawByteString): LongWord; overload;
+function  CalcELF(const Buf: RawByteString): Word32; overload;
 {$ENDIF}
 
 
@@ -427,9 +431,9 @@ function  IsValidLUHN(const S: RawByteString): Boolean;
 { General purpose string hashing function proposed by Donald E Knuth in        }
 { 'The Art of Computer Programming Vol 3'.                                     }
 {                                                                              }
-function  KnuthHashA(const S: RawByteString): LongWord;
+function  KnuthHashA(const S: RawByteString): Word32;
 {$IFDEF SupportWideString}
-function  KnuthHashW(const S: WideString): LongWord;
+function  KnuthHashW(const S: WideString): Word32;
 {$ENDIF}
 
 
@@ -991,10 +995,10 @@ procedure CalculateHash(const HashType: THashType;
 {   value.                                                                     }
 {                                                                              }
 function  HashStringP(const StrBuf: Pointer; const StrLength: Integer;
-          const Slots: LongWord = 0; const CaseSensitive: Boolean = True): LongWord;
+          const Slots: Word32 = 0; const CaseSensitive: Boolean = True): Word32;
 {$IFDEF SupportRawByteString}
-function  HashStringB(const S: RawByteString; const Slots: LongWord = 0;
-          const CaseSensitive: Boolean = True): LongWord; overload;
+function  HashStringB(const S: RawByteString; const Slots: Word32 = 0;
+          const CaseSensitive: Boolean = True): Word32; overload;
 {$ENDIF}
 
 
@@ -1014,15 +1018,21 @@ implementation
 uses
   Windows;
 {$ENDIF}
+
 {$IFDEF UNIX}
+{$IFDEF FREEPASCAL}
 uses
-  {$IFDEF FREEPASCAL}
   BaseUnix,
-  Unix
-  {$ELSE}
-  libc,
-  BaseUnix
-  {$ENDIF};
+  Unix;
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
+uses
+  Posix.Errno,
+  Posix.Unistd;
+{$ENDIF}
 {$ENDIF}
 
 
@@ -1047,9 +1057,9 @@ const
       'Too many open handles',
       'Invalid handle');
 
-function GetHashErrorMessage(const ErrorCode: LongWord): PChar;
+function GetHashErrorMessage(const ErrorCode: Integer): PChar;
 begin
-  if (ErrorCode = hashNoError) or (ErrorCode > hashMAX_ERROR) then
+  if (ErrorCode <= hashNoError) or (ErrorCode > hashMAX_ERROR) then
     Result := nil
   else
     Result := PChar(hashErrorMessages[ErrorCode]);
@@ -1060,7 +1070,7 @@ end;
 {                                                                              }
 { EHashError                                                                   }
 {                                                                              }
-constructor EHashError.Create(const ErrorCode: LongWord; const Msg: String);
+constructor EHashError.Create(const ErrorCode: Integer; const Msg: String);
 begin
   FErrorCode := ErrorCode;
   if (Msg = '') and (ErrorCode <= hashMAX_ERROR) then
@@ -1154,10 +1164,8 @@ begin
   L := Length(S);
   if L = 0 then
     exit;
-  {$IFDEF SupportRawByteString}
   if StringRefCount(S) > 0 then
-    SecureClear(PAnsiChar(S)^, L);
-  {$ENDIF}
+    SecureClear(PByteChar(S)^, L);
   SetLength(S, 0);
 end;
 {$ENDIF}
@@ -1174,20 +1182,18 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure SecureClearStrU(var S: UnicodeString);
 var L : Integer;
 begin
   L := Length(S);
   if L = 0 then
     exit;
-  {$IFDEF SupportUnicodeString}
   if StringRefCount(S) > 0 then
     SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
-  {$ELSE}
-  SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
-  {$ENDIF}
   S := '';
 end;
+{$ENDIF}
 
 
 
@@ -1195,7 +1201,7 @@ end;
 { Checksum hashing                                                             }
 {                                                                              }
 {$IFDEF ASM386_DELPHI}
-function CalcChecksum32(const Buf; const BufSize: Integer): LongWord;
+function CalcChecksum32(const Buf; const BufSize: Integer): Word32;
 asm
       or eax, eax              // eax = Buf
       jz @fin
@@ -1219,7 +1225,7 @@ asm
       xor eax, eax
 end;
 {$ELSE}
-function CalcChecksum32(const Buf; const BufSize: Integer): LongWord;
+function CalcChecksum32(const Buf; const BufSize: Integer): Word32;
 var I : Integer;
     P : PByte;
 begin
@@ -1234,13 +1240,13 @@ end;
 {$ENDIF}
 
 {$IFDEF SupportRawByteString}
-function CalcChecksum32B(const Buf: RawByteString): LongWord;
+function CalcChecksum32B(const Buf: RawByteString): Word32;
 begin
   Result := CalcChecksum32(Pointer(Buf)^, Length(Buf));
 end;
 {$ENDIF}
 
-function CalcChecksum32(const Buf: TBytes): LongWord; overload;
+function CalcChecksum32(const Buf: TBytes): Word32; overload;
 begin
   Result := CalcChecksum32(Pointer(Buf)^, Length(Buf));
 end;
@@ -1251,7 +1257,7 @@ end;
 { XOR hashing                                                                  }
 {                                                                              }
 {$IFDEF ASM386_DELPHI}
-function XOR32Buf(const Buf; const BufSize: Integer): LongWord;
+function XOR32Buf(const Buf; const BufSize: Integer): Word32;
 Asm
       or eax, eax
       jz @fin
@@ -1296,10 +1302,10 @@ Asm
       ret
 end;
 {$ELSE}
-function XOR32Buf(const Buf; const BufSize: Integer): LongWord;
+function XOR32Buf(const Buf; const BufSize: Integer): Word32;
 var I : Integer;
     L : Byte;
-    P : PAnsiChar;
+    P : PByte;
 begin
   Result := 0;
   L := 0;
@@ -1316,7 +1322,7 @@ end;
 {$ENDIF}
 
 function CalcXOR8(const Buf; const BufSize: Integer): Byte;
-var L : LongWord;
+var L : Word32;
 begin
   L := XOR32Buf(Buf, BufSize);
   Result := Byte(L) xor
@@ -1331,7 +1337,7 @@ begin
 end;
 
 function CalcXOR16(const Buf; const BufSize: Integer): Word;
-var L : LongWord;
+var L : Word32;
 begin
   L := XOR32Buf(Buf, BufSize);
   Result := Word(L) xor
@@ -1343,12 +1349,12 @@ begin
   Result := CalcXOR16(Pointer(Buf)^, Length(Buf));
 end;
 
-function CalcXOR32(const Buf; const BufSize: Integer): LongWord;
+function CalcXOR32(const Buf; const BufSize: Integer): Word32;
 begin
   Result := XOR32Buf(Buf, BufSize);
 end;
 
-function CalcXOR32(const Buf: RawByteString): LongWord;
+function CalcXOR32(const Buf: RawByteString): Word32;
 begin
   Result := XOR32Buf(Pointer(Buf)^, Length(Buf));
 end;
@@ -1434,12 +1440,12 @@ end;
 {                                                                              }
 var
   CRC32TableInit : Boolean = False;
-  CRC32Table     : array[Byte] of LongWord;
-  CRC32Poly      : LongWord = $EDB88320;
+  CRC32Table     : array[Byte] of Word32;
+  CRC32Poly      : Word32 = $EDB88320;
 
 procedure InitCRC32Table;
 var I, J : Byte;
-    R    : LongWord;
+    R    : Word32;
 begin
   for I := $00 to $FF do
     begin
@@ -1453,25 +1459,25 @@ begin
   CRC32TableInit := True;
 end;
 
-procedure SetCRC32Poly(const Poly: LongWord);
+procedure SetCRC32Poly(const Poly: Word32);
 begin
   CRC32Poly := Poly;
   CRC32TableInit := False;
 end;
 
-function CalcCRC32Byte(const CRC32: LongWord; const Octet: Byte): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function CalcCRC32Byte(const CRC32: Word32; const Octet: Byte): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := CRC32Table[Byte(CRC32) xor Octet] xor ((CRC32 shr 8) and $00FFFFFF);
 end;
 
-function CRC32Byte(const CRC32: LongWord; const Octet: Byte): LongWord;
+function CRC32Byte(const CRC32: Word32; const Octet: Byte): Word32;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
   Result := CalcCRC32Byte(CRC32, Octet);
 end;
 
-function CRC32Buf(const CRC32: LongWord; const Buf; const BufSize: Integer): LongWord;
+function CRC32Buf(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
 var P : PByte;
     I : Integer;
 begin
@@ -1486,7 +1492,7 @@ begin
     end;
 end;
 
-function CRC32BufNoCase(const CRC32: LongWord; const Buf; const BufSize: Integer): LongWord;
+function CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
 var P : PByte;
     I : Integer;
     C : Byte;
@@ -1505,18 +1511,18 @@ begin
     end;
 end;
 
-procedure CRC32Init(var CRC32: LongWord);
+procedure CRC32Init(var CRC32: Word32);
 begin
   CRC32 := $FFFFFFFF;
 end;
 
-function CalcCRC32(const Buf; const BufSize: Integer): LongWord;
+function CalcCRC32(const Buf; const BufSize: Integer): Word32;
 begin
   CRC32Init(Result);
   Result := not CRC32Buf(Result, Buf, BufSize);
 end;
 
-function CalcCRC32(const Buf: RawByteString): LongWord;
+function CalcCRC32(const Buf: RawByteString): Word32;
 begin
   Result := CalcCRC32(Pointer(Buf)^, Length(Buf));
 end;
@@ -1526,7 +1532,7 @@ end;
 {                                                                              }
 { Adler 32 hashing                                                             }
 {                                                                              }
-procedure Adler32Init(var Adler32: LongWord);
+procedure Adler32Init(var Adler32: Word32);
 begin
   Adler32 := $00000001;
 end;
@@ -1534,8 +1540,8 @@ end;
 const
   Adler32Mod = 65521; // largest prime smaller than 65536
 
-function Adler32Byte(const Adler32: LongWord; const Octet: Byte): LongWord;
-var A, B : LongWord;
+function Adler32Byte(const Adler32: Word32; const Octet: Byte): Word32;
+var A, B : Word32;
 begin
   A := Adler32 and $0000FFFF;
   B := Adler32 shr 16;
@@ -1548,8 +1554,8 @@ begin
   Result := A or (B shl 16);
 end;
 
-function Adler32Buf(const Adler32: LongWord; const Buf; const BufSize: Integer): LongWord;
-var A, B : LongWord;
+function Adler32Buf(const Adler32: Word32; const Buf; const BufSize: Integer): Word32;
+var A, B : Word32;
     P    : PByte;
     I    : Integer;
 begin
@@ -1569,13 +1575,13 @@ begin
   Result := A or (B shl 16);
 end;
 
-function CalcAdler32(const Buf; const BufSize: Integer): LongWord;
+function CalcAdler32(const Buf; const BufSize: Integer): Word32;
 begin
   Adler32Init(Result);
   Result := Adler32Buf(Result, Buf, BufSize);
 end;
 
-function CalcAdler32(const Buf: RawByteString): LongWord;
+function CalcAdler32(const Buf: RawByteString): Word32;
 begin
   Result := CalcAdler32(Pointer(Buf)^, Length(Buf));
 end;
@@ -1585,15 +1591,15 @@ end;
 {                                                                              }
 { ELF hashing                                                                  }
 {                                                                              }
-procedure ELFInit(var Digest: LongWord);
+procedure ELFInit(var Digest: Word32);
 begin
   Digest := 0;
 end;
 
-function ELFBuf(const Digest: LongWord; const Buf; const BufSize: Integer): LongWord;
+function ELFBuf(const Digest: Word32; const Buf; const BufSize: Integer): Word32;
 var I : Integer;
     P : PByte;
-    X : LongWord;
+    X : Word32;
 begin
   Result := Digest;
   P := @Buf;
@@ -1608,12 +1614,12 @@ begin
     end;
 end;
 
-function CalcELF(const Buf; const BufSize: Integer): LongWord;
+function CalcELF(const Buf; const BufSize: Integer): Word32;
 begin
   Result := ELFBuf(0, Buf, BufSize);
 end;
 
-function CalcELF(const Buf: RawByteString): LongWord;
+function CalcELF(const Buf: RawByteString): Word32;
 begin
   Result := CalcELF(Pointer(Buf)^, Length(Buf));
 end;
@@ -1706,10 +1712,10 @@ end;
 {                                                                              }
 { Knuth Hash                                                                   }
 {                                                                              }
-function KnuthHashA(const S: RawByteString): LongWord;
+function KnuthHashA(const S: RawByteString): Word32;
 var
   I, L : Integer;
-  H : LongWord;
+  H : Word32;
 begin
   L := Length(S);
   H := L;
@@ -1719,10 +1725,10 @@ begin
 end;
 
 {$IFDEF SupportWideString}
-function KnuthHashW(const S: WideString): LongWord;
+function KnuthHashW(const S: WideString): Word32;
 var
   I, L : Integer;
-  H : LongWord;
+  H : Word32;
 begin
   L := Length(S);
   H := L;
@@ -1746,7 +1752,7 @@ const
 {$IFDEF SupportRawByteString}
 procedure DigestToHexBufA(const Digest; const Size: Integer; const Buf);
 var I : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     Q : PByte;
 begin
   P := @Buf;;
@@ -1808,7 +1814,7 @@ end;
 {$ENDIF}
 
 {$IFDEF SupportRawByteString}
-function DigestToBufA(const Digest; const Size: Integer): RawByteString;
+function DigestToBufB(const Digest; const Size: Integer): RawByteString;
 var S : RawByteString;
 begin
   SetLength(S, Size);
@@ -1822,7 +1828,7 @@ function Digest128Equal(const Digest1, Digest2: T128BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 3 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1834,7 +1840,7 @@ function Digest160Equal(const Digest1, Digest2: T160BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 4 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1846,7 +1852,7 @@ function Digest224Equal(const Digest1, Digest2: T224BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 6 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1858,7 +1864,7 @@ function Digest256Equal(const Digest1, Digest2: T256BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 7 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1870,7 +1876,7 @@ function Digest384Equal(const Digest1, Digest2: T384BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 11 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1882,7 +1888,7 @@ function Digest512Equal(const Digest1, Digest2: T512BitDigest): Boolean;
 var I : Integer;
 begin
   for I := 0 to 15 do
-    if Digest1.Longs[I] <> Digest2.Longs[I] then
+    if Digest1.Word32s[I] <> Digest2.Word32s[I] then
       begin
         Result := False;
         exit;
@@ -1897,11 +1903,11 @@ begin
     Digest.Bytes[I] := Digest.Bytes[I] xor A;
 end;
 
-procedure Digest512XOR32(var Digest: T512BitDigest; const A: LongWord);
+procedure Digest512XOR32(var Digest: T512BitDigest; const A: Word32);
 var I : Integer;
 begin
   for I := 0 to 15 do
-    Digest.Longs[I] := Digest.Longs[I] xor A;
+    Digest.Word32s[I] := Digest.Word32s[I] xor A;
 end;
 
 
@@ -2048,14 +2054,14 @@ end;
 { Used by SHA1 and SHA256.                                                     }
 {                                                                              }
 {$IFDEF ASM386}
-function SwapEndian(const Value: LongWord): LongWord; register; assembler;
+function SwapEndian(const Value: Word32): Word32; register; assembler;
 asm
       XCHG    AH, AL
       ROL     EAX, 16
       XCHG    AH, AL
 end;
 {$ELSE}
-function SwapEndian(const Value: LongWord): LongWord;
+function SwapEndian(const Value: Word32): Word32;
 begin
   Result := ((Value and $000000FF) shl 24)  or
             ((Value and $0000FF00) shl 8)   or
@@ -2065,7 +2071,7 @@ end;
 {$ENDIF}
 
 procedure SwapEndianBuf(var Buf; const Count: Integer);
-var P : PLongWord;
+var P : PWord32;
     I : Integer;
 begin
   P := @Buf;
@@ -2077,34 +2083,34 @@ begin
 end;
 
 {$IFDEF ASM386_DELPHI}
-function RotateLeftBits(const Value: LongWord; const Bits: Byte): LongWord;
+function RotateLeftBits(const Value: Word32; const Bits: Byte): Word32;
 asm
       MOV     CL, DL
       ROL     EAX, CL
 end;
 {$ELSE}
-function RotateLeftBits(const Value: LongWord; const Bits: Byte): LongWord;
+function RotateLeftBits(const Value: Word32; const Bits: Byte): Word32;
 var I : Integer;
-    R : LongWord;
+    R : Word32;
 begin
   R := Value;
   for I := 1 to Bits do
     if R and $80000000 = 0 then
-      R := LongWord(R shl 1)
+      R := Word32(R shl 1)
     else
-      R := LongWord(R shl 1) or 1;
+      R := Word32(R shl 1) or 1;
   Result := R;
 end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-function RotateRightBits(const Value: LongWord; const Bits: Byte): LongWord;
+function RotateRightBits(const Value: Word32; const Bits: Byte): Word32;
 asm
       MOV     CL, DL
       ROR     EAX, CL
 end;
 {$ELSE}
-function RotateRightBits(const Value: LongWord; const Bits: Byte): LongWord;
+function RotateRightBits(const Value: Word32; const Bits: Byte): Word32;
 var I, B : Integer;
 begin
   Result := Value;
@@ -2128,37 +2134,37 @@ end;
 {                                                                              }
 procedure Word64InitZero(var A: Word64);
 begin
-  A.LongWords[0] := 0;
-  A.LongWords[1] := 0;
+  A.Word32s[0] := 0;
+  A.Word32s[1] := 0;
 end;
 
 procedure Word64Not(var A: Word64);
 begin
-  A.LongWords[0] := not A.LongWords[0];
-  A.LongWords[1] := not A.LongWords[1];
+  A.Word32s[0] := not A.Word32s[0];
+  A.Word32s[1] := not A.Word32s[1];
 end;
 
 procedure Word64AndWord64(var A: Word64; const B: Word64);
 begin
-  A.LongWords[0] := A.LongWords[0] and B.LongWords[0];
-  A.LongWords[1] := A.LongWords[1] and B.LongWords[1];
+  A.Word32s[0] := A.Word32s[0] and B.Word32s[0];
+  A.Word32s[1] := A.Word32s[1] and B.Word32s[1];
 end;
 
 procedure Word64XorWord64(var A: Word64; const B: Word64);
 begin
-  A.LongWords[0] := A.LongWords[0] xor B.LongWords[0];
-  A.LongWords[1] := A.LongWords[1] xor B.LongWords[1];
+  A.Word32s[0] := A.Word32s[0] xor B.Word32s[0];
+  A.Word32s[1] := A.Word32s[1] xor B.Word32s[1];
 end;
 
 procedure Word64AddWord64(var A: Word64; const B: Word64);
 var C, D : Int64;
 begin
-  C := Int64(A.LongWords[0]) + B.LongWords[0];
-  D := Int64(A.LongWords[1]) + B.LongWords[1];
+  C := Int64(A.Word32s[0]) + B.Word32s[0];
+  D := Int64(A.Word32s[1]) + B.Word32s[1];
   if C >= $100000000 then
     Inc(D);
-  A.LongWords[0] := C and $FFFFFFFF;
-  A.LongWords[1] := D and $FFFFFFFF;
+  A.Word32s[0] := C and $FFFFFFFF;
+  A.Word32s[1] := D and $FFFFFFFF;
 end;
 
 procedure Word64Shr(var A: Word64; const B: Byte);
@@ -2171,20 +2177,20 @@ begin
   if B < 32 then
     begin
       C := 32 - B;
-      A.LongWords[0] := (A.LongWords[0] shr B) or (A.LongWords[1] shl C);
-      A.LongWords[1] := A.LongWords[1] shr B;
+      A.Word32s[0] := (A.Word32s[0] shr B) or (A.Word32s[1] shl C);
+      A.Word32s[1] := A.Word32s[1] shr B;
     end
   else
     begin
       C := B - 32;
-      A.LongWords[0] := A.LongWords[1] shr C;
-      A.LongWords[1] := 0;
+      A.Word32s[0] := A.Word32s[1] shr C;
+      A.Word32s[1] := 0;
     end;
 end;
 
 procedure Word64Ror(var A: Word64; const B: Byte);
 var C, D : Byte;
-    E, F : LongWord;
+    E, F : Word32;
 begin
   C := B mod 64;
   if C = 0 then
@@ -2192,18 +2198,18 @@ begin
   if C < 32 then
     begin
       D := 32 - C;
-      E := (A.LongWords[1] shr C) or (A.LongWords[0] shl D);
-      F := (A.LongWords[0] shr C) or (A.LongWords[1] shl D);
+      E := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
+      F := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
     end
   else
     begin
       Dec(C, 32);
       D := 32 - C;
-      E := (A.LongWords[0] shr C) or (A.LongWords[1] shl D);
-      F := (A.LongWords[1] shr C) or (A.LongWords[0] shl D);
+      E := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
+      F := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
     end;
-  A.LongWords[1] := E;
-  A.LongWords[0] := F;
+  A.Word32s[1] := E;
+  A.Word32s[0] := F;
 end;
 
 procedure Word64SwapEndian(var A: Word64);
@@ -2233,22 +2239,22 @@ end;
 { MD5 hashing                                                                  }
 {                                                                              }
 const
-  MD5Table_1 : array[0..15] of LongWord = (
+  MD5Table_1 : array[0..15] of Word32 = (
       $D76AA478, $E8C7B756, $242070DB, $C1BDCEEE,
       $F57C0FAF, $4787C62A, $A8304613, $FD469501,
       $698098D8, $8B44F7AF, $FFFF5BB1, $895CD7BE,
       $6B901122, $FD987193, $A679438E, $49B40821);
-  MD5Table_2 : array[0..15] of LongWord = (
+  MD5Table_2 : array[0..15] of Word32 = (
       $F61E2562, $C040B340, $265E5A51, $E9B6C7AA,
       $D62F105D, $02441453, $D8A1E681, $E7D3FBC8,
       $21E1CDE6, $C33707D6, $F4D50D87, $455A14ED,
       $A9E3E905, $FCEFA3F8, $676F02D9, $8D2A4C8A);
-  MD5Table_3 : array[0..15] of LongWord = (
+  MD5Table_3 : array[0..15] of Word32 = (
       $FFFA3942, $8771F681, $6D9D6122, $FDE5380C,
       $A4BEEA44, $4BDECFA9, $F6BB4B60, $BEBFBC70,
       $289B7EC6, $EAA127FA, $D4EF3085, $04881D05,
       $D9D4D039, $E6DB99E5, $1FA27CF8, $C4AC5665);
-  MD5Table_4 : array[0..15] of LongWord = (
+  MD5Table_4 : array[0..15] of Word32 = (
       $F4292244, $432AFF97, $AB9423A7, $FC93A039,
       $655B59C3, $8F0CCC92, $FFEFF47D, $85845DD1,
       $6FA87E4F, $FE2CE6E0, $A3014314, $4E0811A1,
@@ -2256,71 +2262,77 @@ const
 
 { Calculates a MD5 Digest (16 bytes) given a Buffer (64 bytes)                 }
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+type
+  TMD5Buffer = array[0..15] of Word32;
+  PMD5Buffer = ^TMD5Buffer;
+
 procedure TransformMD5Buffer(var Digest: T128BitDigest; const Buffer);
-var A, B, C, D : LongWord;
-    P          : PLongWord;
+var A, B, C, D : Word32;
+    P          : PWord32;
     I          : Integer;
     J          : Byte;
-    Buf        : array[0..15] of LongWord absolute Buffer;
+    Buf        : PMD5Buffer;
 begin
-  A := Digest.Longs[0];
-  B := Digest.Longs[1];
-  C := Digest.Longs[2];
-  D := Digest.Longs[3];
+  Buf := @Buffer;
+
+  A := Digest.Word32s[0];
+  B := Digest.Word32s[1];
+  C := Digest.Word32s[2];
+  D := Digest.Word32s[3];
 
   P := @MD5Table_1;
   for I := 0 to 3 do
     begin
       J := I * 4;
-      Inc(A, Buf[J]     + P^ + (D xor (B and (C xor D)))); A := A shl  7 or A shr 25 + B; Inc(P);
-      Inc(D, Buf[J + 1] + P^ + (C xor (A and (B xor C)))); D := D shl 12 or D shr 20 + A; Inc(P);
-      Inc(C, Buf[J + 2] + P^ + (B xor (D and (A xor B)))); C := C shl 17 or C shr 15 + D; Inc(P);
-      Inc(B, Buf[J + 3] + P^ + (A xor (C and (D xor A)))); B := B shl 22 or B shr 10 + C; Inc(P);
+      Inc(A, Buf^[J]     + P^ + (D xor (B and (C xor D)))); A := A shl  7 or A shr 25 + B; Inc(P);
+      Inc(D, Buf^[J + 1] + P^ + (C xor (A and (B xor C)))); D := D shl 12 or D shr 20 + A; Inc(P);
+      Inc(C, Buf^[J + 2] + P^ + (B xor (D and (A xor B)))); C := C shl 17 or C shr 15 + D; Inc(P);
+      Inc(B, Buf^[J + 3] + P^ + (A xor (C and (D xor A)))); B := B shl 22 or B shr 10 + C; Inc(P);
     end;
 
   P := @MD5Table_2;
   for I := 0 to 3 do
     begin
       J := I * 4;
-      Inc(A, Buf[J + 1]           + P^ + (C xor (D and (B xor C)))); A := A shl  5 or A shr 27 + B; Inc(P);
-      Inc(D, Buf[(J + 6) mod 16]  + P^ + (B xor (C and (A xor B)))); D := D shl  9 or D shr 23 + A; Inc(P);
-      Inc(C, Buf[(J + 11) mod 16] + P^ + (A xor (B and (D xor A)))); C := C shl 14 or C shr 18 + D; Inc(P);
-      Inc(B, Buf[J]               + P^ + (D xor (A and (C xor D)))); B := B shl 20 or B shr 12 + C; Inc(P);
+      Inc(A, Buf^[J + 1]           + P^ + (C xor (D and (B xor C)))); A := A shl  5 or A shr 27 + B; Inc(P);
+      Inc(D, Buf^[(J + 6) mod 16]  + P^ + (B xor (C and (A xor B)))); D := D shl  9 or D shr 23 + A; Inc(P);
+      Inc(C, Buf^[(J + 11) mod 16] + P^ + (A xor (B and (D xor A)))); C := C shl 14 or C shr 18 + D; Inc(P);
+      Inc(B, Buf^[J]               + P^ + (D xor (A and (C xor D)))); B := B shl 20 or B shr 12 + C; Inc(P);
     end;
 
   P := @MD5Table_3;
   for I := 0 to 3 do
     begin
       J := 16 - (I * 4);
-      Inc(A, Buf[(J + 5) mod 16]  + P^ + (B xor C xor D)); A := A shl  4 or A shr 28 + B; Inc(P);
-      Inc(D, Buf[(J + 8) mod 16]  + P^ + (A xor B xor C)); D := D shl 11 or D shr 21 + A; Inc(P);
-      Inc(C, Buf[(J + 11) mod 16] + P^ + (D xor A xor B)); C := C shl 16 or C shr 16 + D; Inc(P);
-      Inc(B, Buf[(J + 14) mod 16] + P^ + (C xor D xor A)); B := B shl 23 or B shr  9 + C; Inc(P);
+      Inc(A, Buf^[(J + 5) mod 16]  + P^ + (B xor C xor D)); A := A shl  4 or A shr 28 + B; Inc(P);
+      Inc(D, Buf^[(J + 8) mod 16]  + P^ + (A xor B xor C)); D := D shl 11 or D shr 21 + A; Inc(P);
+      Inc(C, Buf^[(J + 11) mod 16] + P^ + (D xor A xor B)); C := C shl 16 or C shr 16 + D; Inc(P);
+      Inc(B, Buf^[(J + 14) mod 16] + P^ + (C xor D xor A)); B := B shl 23 or B shr  9 + C; Inc(P);
     end;
 
   P := @MD5Table_4;
   for I := 0 to 3 do
     begin
       J := 16 - (I * 4);
-      Inc(A, Buf[J mod 16]        + P^ + (C xor (B or not D))); A := A shl  6 or A shr 26 + B; Inc(P);
-      Inc(D, Buf[(J + 7) mod 16]  + P^ + (B xor (A or not C))); D := D shl 10 or D shr 22 + A; Inc(P);
-      Inc(C, Buf[(J + 14) mod 16] + P^ + (A xor (D or not B))); C := C shl 15 or C shr 17 + D; Inc(P);
-      Inc(B, Buf[(J + 5) mod 16]  + P^ + (D xor (C or not A))); B := B shl 21 or B shr 11 + C; Inc(P);
+      Inc(A, Buf^[J mod 16]        + P^ + (C xor (B or not D))); A := A shl  6 or A shr 26 + B; Inc(P);
+      Inc(D, Buf^[(J + 7) mod 16]  + P^ + (B xor (A or not C))); D := D shl 10 or D shr 22 + A; Inc(P);
+      Inc(C, Buf^[(J + 14) mod 16] + P^ + (A xor (D or not B))); C := C shl 15 or C shr 17 + D; Inc(P);
+      Inc(B, Buf^[(J + 5) mod 16]  + P^ + (D xor (C or not A))); B := B shl 21 or B shr 11 + C; Inc(P);
     end;
 
-  Inc(Digest.Longs[0], A);
-  Inc(Digest.Longs[1], B);
-  Inc(Digest.Longs[2], C);
-  Inc(Digest.Longs[3], D);
+  Inc(Digest.Word32s[0], A);
+  Inc(Digest.Word32s[1], B);
+  Inc(Digest.Word32s[2], C);
+  Inc(Digest.Word32s[3], D);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
 procedure MD5InitDigest(var Digest: T128BitDigest);
 begin
-  Digest.Longs[0] := $67452301;  
-  Digest.Longs[1] := $EFCDAB89;
-  Digest.Longs[2] := $98BADCFE;
-  Digest.Longs[3] := $10325476;
+  Digest.Word32s[0] := $67452301;
+  Digest.Word32s[1] := $EFCDAB89;
+  Digest.Word32s[2] := $98BADCFE;
+  Digest.Word32s[3] := $10325476;
 end;
 
 procedure MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: Integer);
@@ -2387,7 +2399,9 @@ function MD5DigestToHexA(const Digest: T128BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function MD5DigestToHexW(const Digest: T128BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -2401,21 +2415,21 @@ end;
 {                                                                              }
 procedure SHA1InitDigest(var Digest: T160BitDigest);
 begin
-  Digest.Longs[0] := $67452301;
-  Digest.Longs[1] := $EFCDAB89;
-  Digest.Longs[2] := $98BADCFE;
-  Digest.Longs[3] := $10325476;
-  Digest.Longs[4] := $C3D2E1F0;
+  Digest.Word32s[0] := $67452301;
+  Digest.Word32s[1] := $EFCDAB89;
+  Digest.Word32s[2] := $98BADCFE;
+  Digest.Word32s[3] := $10325476;
+  Digest.Word32s[4] := $C3D2E1F0;
 end;
 
 { Calculates a SHA Digest (20 bytes) given a Buffer (64 bytes)                 }
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 procedure TransformSHABuffer(var Digest: T160BitDigest; const Buffer; const SHA1: Boolean);
-var A, B, C, D, E : LongWord;
-    W : array[0..79] of LongWord;
-    P, Q : PLongWord;
+var A, B, C, D, E : Word32;
+    W : array[0..79] of Word32;
+    P, Q : PWord32;
     I : Integer;
-    J : LongWord;
+    J : Word32;
 begin
   P := @Buffer;
   Q := @W;
@@ -2442,11 +2456,11 @@ begin
       Inc(Q);
     end;
 
-  A := Digest.Longs[0];
-  B := Digest.Longs[1];
-  C := Digest.Longs[2];
-  D := Digest.Longs[3];
-  E := Digest.Longs[4];
+  A := Digest.Word32s[0];
+  B := Digest.Word32s[1];
+  C := Digest.Word32s[2];
+  D := Digest.Word32s[3];
+  E := Digest.Word32s[4];
 
   P := @W;
   for I := 0 to 3 do
@@ -2485,11 +2499,11 @@ begin
       Inc(A, (B shl 5 or B shr 27) + (E xor C xor D) + P^ + $CA62C1D6); C := C shr 2 or C shl 30; Inc(P);
     end;
 
-  Inc(Digest.Longs[0], A);
-  Inc(Digest.Longs[1], B);
-  Inc(Digest.Longs[2], C);
-  Inc(Digest.Longs[3], D);
-  Inc(Digest.Longs[4], E);
+  Inc(Digest.Word32s[0], A);
+  Inc(Digest.Word32s[1], B);
+  Inc(Digest.Word32s[2], C);
+  Inc(Digest.Word32s[3], D);
+  Inc(Digest.Word32s[4], E);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
@@ -2517,7 +2531,7 @@ begin
   TransformSHABuffer(Digest, B1, True);
   if C > 1 then
     TransformSHABuffer(Digest, B2, True);
-  SwapEndianBuf(Digest, Sizeof(Digest) div Sizeof(LongWord));
+  SwapEndianBuf(Digest, Sizeof(Digest) div Sizeof(Word32));
   SecureClear512(B1);
   if C > 1 then
     SecureClear512(B2);
@@ -2558,7 +2572,9 @@ function SHA1DigestToHexA(const Digest: T160BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function SHA1DigestToHexW(const Digest: T160BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -2577,14 +2593,14 @@ end;
 procedure SHA224InitDigest(var Digest: T256BitDigest);
 begin
   // The second 32 bits of the fractional parts of the square roots of the 9th through 16th primes 23..53
-  Digest.Longs[0] := $c1059ed8;
-  Digest.Longs[1] := $367cd507;
-  Digest.Longs[2] := $3070dd17;
-  Digest.Longs[3] := $f70e5939;
-  Digest.Longs[4] := $ffc00b31;
-  Digest.Longs[5] := $68581511;
-  Digest.Longs[6] := $64f98fa7;
-  Digest.Longs[7] := $befa4fa4;
+  Digest.Word32s[0] := $c1059ed8;
+  Digest.Word32s[1] := $367cd507;
+  Digest.Word32s[2] := $3070dd17;
+  Digest.Word32s[3] := $f70e5939;
+  Digest.Word32s[4] := $ffc00b31;
+  Digest.Word32s[5] := $68581511;
+  Digest.Word32s[6] := $64f98fa7;
+  Digest.Word32s[7] := $befa4fa4;
 end;
 
 procedure SHA224Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
@@ -2596,7 +2612,7 @@ procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: In
           var OutDigest: T224BitDigest);
 begin
   SHA256FinalBuf(Digest, Buf, BufSize, TotalSize);
-  Move(Digest.Longs[0], OutDigest.Longs[0], SizeOf(T224BitDigest));
+  Move(Digest.Word32s[0], OutDigest.Word32s[0], SizeOf(T224BitDigest));
 end;
 
 function CalcSHA224(const Buf; const BufSize: Integer): T224BitDigest;
@@ -2635,7 +2651,9 @@ function SHA224DigestToHexA(const Digest: T224BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function  SHA224DigestToHexW(const Digest: T224BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -2649,39 +2667,39 @@ end;
 {                                                                              }
 procedure SHA256InitDigest(var Digest: T256BitDigest);
 begin
-  Digest.Longs[0] := $6a09e667;
-  Digest.Longs[1] := $bb67ae85;
-  Digest.Longs[2] := $3c6ef372;
-  Digest.Longs[3] := $a54ff53a;
-  Digest.Longs[4] := $510e527f;
-  Digest.Longs[5] := $9b05688c;
-  Digest.Longs[6] := $1f83d9ab;
-  Digest.Longs[7] := $5be0cd19;
+  Digest.Word32s[0] := $6a09e667;
+  Digest.Word32s[1] := $bb67ae85;
+  Digest.Word32s[2] := $3c6ef372;
+  Digest.Word32s[3] := $a54ff53a;
+  Digest.Word32s[4] := $510e527f;
+  Digest.Word32s[5] := $9b05688c;
+  Digest.Word32s[6] := $1f83d9ab;
+  Digest.Word32s[7] := $5be0cd19;
 end;
 
-function SHA256Transform1(const A: LongWord): LongWord;
+function SHA256Transform1(const A: Word32): Word32;
 begin
   Result := RotateRightBits(A, 7) xor RotateRightBits(A, 18) xor (A shr 3);
 end;
 
-function SHA256Transform2(const A: LongWord): LongWord;
+function SHA256Transform2(const A: Word32): Word32;
 begin
   Result := RotateRightBits(A, 17) xor RotateRightBits(A, 19) xor (A shr 10);
 end;
 
-function SHA256Transform3(const A: LongWord): LongWord;
+function SHA256Transform3(const A: Word32): Word32;
 begin
   Result := RotateRightBits(A, 2) xor RotateRightBits(A, 13) xor RotateRightBits(A, 22);
 end;
 
-function SHA256Transform4(const A: LongWord): LongWord;
+function SHA256Transform4(const A: Word32): Word32;
 begin
   Result := RotateRightBits(A, 6) xor RotateRightBits(A, 11) xor RotateRightBits(A, 25);
 end;
 
 const
   // first 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311
-  SHA256K: array[0..63] of LongWord = (
+  SHA256K: array[0..63] of Word32 = (
     $428a2f98, $71374491, $b5c0fbcf, $e9b5dba5, $3956c25b, $59f111f1, $923f82a4, $ab1c5ed5,
     $d807aa98, $12835b01, $243185be, $550c7dc3, $72be5d74, $80deb1fe, $9bdc06a7, $c19bf174,
     $e49b69c1, $efbe4786, $0fc19dc6, $240ca1cc, $2de92c6f, $4a7484aa, $5cb0a9dc, $76f988da,
@@ -2696,10 +2714,10 @@ const
 procedure TransformSHA256Buffer(var Digest: T256BitDigest; const Buf);
 var
   I : Integer;
-  W : array[0..63] of LongWord;
-  P : PLongWord;
-  S0, S1, Maj, T1, T2, Ch : LongWord;
-  H : array[0..7] of LongWord;
+  W : array[0..63] of Word32;
+  P : PWord32;
+  S0, S1, Maj, T1, T2, Ch : Word32;
+  H : array[0..7] of Word32;
 begin
   P := @Buf;
   for I := 0 to 15 do
@@ -2714,7 +2732,7 @@ begin
       W[I] := W[I - 16] + S0 + W[I - 7] + S1;
     end;
   for I := 0 to 7 do
-    H[I] := Digest.Longs[I];
+    H[I] := Digest.Word32s[I];
   for I := 0 to 63 do
     begin
       S0 := SHA256Transform3(H[0]);
@@ -2733,7 +2751,7 @@ begin
       H[0] := T1 + T2;
     end;
   for I := 0 to 7 do
-    Inc(Digest.Longs[I], H[I]);
+    Inc(Digest.Word32s[I], H[I]);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
@@ -2761,7 +2779,7 @@ begin
   TransformSHA256Buffer(Digest, B1);
   if C > 1 then
     TransformSHA256Buffer(Digest, B2);
-  SwapEndianBuf(Digest, Sizeof(Digest) div Sizeof(LongWord));
+  SwapEndianBuf(Digest, Sizeof(Digest) div Sizeof(Word32));
   SecureClear512(B1);
   if C > 1 then
     SecureClear512(B2);
@@ -2802,7 +2820,9 @@ function SHA256DigestToHexA(const Digest: T256BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function SHA256DigestToHexW(const Digest: T256BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -2816,22 +2836,22 @@ end;
 {                                                                              }
 procedure SHA384InitDigest(var Digest: T512BitDigest);
 begin
-  Digest.Word64s[0].LongWords[0] := $c1059ed8;
-  Digest.Word64s[0].LongWords[1] := $cbbb9d5d;
-  Digest.Word64s[1].LongWords[0] := $367cd507;
-  Digest.Word64s[1].LongWords[1] := $629a292a;
-  Digest.Word64s[2].LongWords[0] := $3070dd17;
-  Digest.Word64s[2].LongWords[1] := $9159015a;
-  Digest.Word64s[3].LongWords[0] := $f70e5939;
-  Digest.Word64s[3].LongWords[1] := $152fecd8;
-  Digest.Word64s[4].LongWords[0] := $ffc00b31;
-  Digest.Word64s[4].LongWords[1] := $67332667;
-  Digest.Word64s[5].LongWords[0] := $68581511;
-  Digest.Word64s[5].LongWords[1] := $8eb44a87;
-  Digest.Word64s[6].LongWords[0] := $64f98fa7;
-  Digest.Word64s[6].LongWords[1] := $db0c2e0d;
-  Digest.Word64s[7].LongWords[0] := $befa4fa4;
-  Digest.Word64s[7].LongWords[1] := $47b5481d;
+  Digest.Word64s[0].Word32s[0] := $c1059ed8;
+  Digest.Word64s[0].Word32s[1] := $cbbb9d5d;
+  Digest.Word64s[1].Word32s[0] := $367cd507;
+  Digest.Word64s[1].Word32s[1] := $629a292a;
+  Digest.Word64s[2].Word32s[0] := $3070dd17;
+  Digest.Word64s[2].Word32s[1] := $9159015a;
+  Digest.Word64s[3].Word32s[0] := $f70e5939;
+  Digest.Word64s[3].Word32s[1] := $152fecd8;
+  Digest.Word64s[4].Word32s[0] := $ffc00b31;
+  Digest.Word64s[4].Word32s[1] := $67332667;
+  Digest.Word64s[5].Word32s[0] := $68581511;
+  Digest.Word64s[5].Word32s[1] := $8eb44a87;
+  Digest.Word64s[6].Word32s[0] := $64f98fa7;
+  Digest.Word64s[6].Word32s[1] := $db0c2e0d;
+  Digest.Word64s[7].Word32s[0] := $befa4fa4;
+  Digest.Word64s[7].Word32s[1] := $47b5481d;
 end;
 
 procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
@@ -2881,7 +2901,9 @@ function SHA384DigestToHexA(const Digest: T384BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function SHA384DigestToHexW(const Digest: T384BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -2895,22 +2917,22 @@ end;
 {                                                                              }
 procedure SHA512InitDigest(var Digest: T512BitDigest);
 begin
-  Digest.Word64s[0].LongWords[0] := $f3bcc908;
-  Digest.Word64s[0].LongWords[1] := $6a09e667;
-  Digest.Word64s[1].LongWords[0] := $84caa73b;
-  Digest.Word64s[1].LongWords[1] := $bb67ae85;
-  Digest.Word64s[2].LongWords[0] := $fe94f82b;
-  Digest.Word64s[2].LongWords[1] := $3c6ef372;
-  Digest.Word64s[3].LongWords[0] := $5f1d36f1;
-  Digest.Word64s[3].LongWords[1] := $a54ff53a;
-  Digest.Word64s[4].LongWords[0] := $ade682d1;
-  Digest.Word64s[4].LongWords[1] := $510e527f;
-  Digest.Word64s[5].LongWords[0] := $2b3e6c1f;
-  Digest.Word64s[5].LongWords[1] := $9b05688c;
-  Digest.Word64s[6].LongWords[0] := $fb41bd6b;
-  Digest.Word64s[6].LongWords[1] := $1f83d9ab;
-  Digest.Word64s[7].LongWords[0] := $137e2179;
-  Digest.Word64s[7].LongWords[1] := $5be0cd19;
+  Digest.Word64s[0].Word32s[0] := $f3bcc908;
+  Digest.Word64s[0].Word32s[1] := $6a09e667;
+  Digest.Word64s[1].Word32s[0] := $84caa73b;
+  Digest.Word64s[1].Word32s[1] := $bb67ae85;
+  Digest.Word64s[2].Word32s[0] := $fe94f82b;
+  Digest.Word64s[2].Word32s[1] := $3c6ef372;
+  Digest.Word64s[3].Word32s[0] := $5f1d36f1;
+  Digest.Word64s[3].Word32s[1] := $a54ff53a;
+  Digest.Word64s[4].Word32s[0] := $ade682d1;
+  Digest.Word64s[4].Word32s[1] := $510e527f;
+  Digest.Word64s[5].Word32s[0] := $2b3e6c1f;
+  Digest.Word64s[5].Word32s[1] := $9b05688c;
+  Digest.Word64s[6].Word32s[0] := $fb41bd6b;
+  Digest.Word64s[6].Word32s[1] := $1f83d9ab;
+  Digest.Word64s[7].Word32s[0] := $137e2179;
+  Digest.Word64s[7].Word32s[1] := $5be0cd19;
 end;
 
 // BSIG0(x) = ROTR^28(x) XOR ROTR^34(x) XOR ROTR^39(x)
@@ -3003,8 +3025,8 @@ end;
 
 const
   // first 64 bits of the fractional parts of the cube roots of the first eighty prime numbers
-  // (stored High LongWord first then Low LongWord)
-  SHA512K: array[0..159] of LongWord = (
+  // (stored High Word32 first then Low Word32)
+  SHA512K: array[0..159] of Word32 = (
     $428a2f98, $d728ae22, $71374491, $23ef65cd, $b5c0fbcf, $ec4d3b2f, $e9b5dba5, $8189dbbc,
     $3956c25b, $f348b538, $59f111f1, $b605d019, $923f82a4, $af194f9b, $ab1c5ed5, $da6d8118,
     $d807aa98, $a3030242, $12835b01, $45706fbe, $243185be, $4ee4b28c, $550c7dc3, $d5ffb4e2,
@@ -3062,8 +3084,8 @@ begin
       T1 := H[7];
       Word64AddWord64(T1, SHA512Transform2(H[4]));
       Word64AddWord64(T1, SHA512Transform5(H[4], H[5], H[6]));
-      K.LongWords[0] := SHA512K[I * 2 + 1];
-      K.LongWords[1] := SHA512K[I * 2];
+      K.Word32s[0] := SHA512K[I * 2 + 1];
+      K.Word32s[1] := SHA512K[I * 2];
       Word64AddWord64(T1, K);
       Word64AddWord64(T1, W[I]);
       // T2 = BSIG0(a) + MAJ(a,b,c)
@@ -3154,7 +3176,9 @@ function SHA512DigestToHexA(const Digest: T512BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function SHA512DigestToHexW(const Digest: T512BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -3169,37 +3193,37 @@ end;
 {                                                                              }
 
 // f(j, x, y, z) = x XOR y XOR z                (0 <= j <= 15)
-function RipeMD_F1(const X, Y, Z: LongWord): LongWord;
+function RipeMD_F1(const X, Y, Z: Word32): Word32;
 begin
   Result := X xor Y xor Z;
 end;
 
 // f(j, x, y, z) = (x AND y) OR (NOT(x) AND z)  (16 <= j <= 31)
-function RipeMD_F2(const X, Y, Z: LongWord): LongWord;
+function RipeMD_F2(const X, Y, Z: Word32): Word32;
 begin
   Result := (X and Y) or ((not X) and Z);
 end;
 
 // f(j, x, y, z) = (x OR NOT(y)) XOR z          (32 <= j <= 47)
-function RipeMD_F3(const X, Y, Z: LongWord): LongWord;
+function RipeMD_F3(const X, Y, Z: Word32): Word32;
 begin
   Result := (X or (not Y)) xor Z;
 end;
 
 // f(j, x, y, z) = (x AND z) OR (y AND NOT(z))  (48 <= j <= 63)
-function RipeMD_F4(const X, Y, Z: LongWord): LongWord;
+function RipeMD_F4(const X, Y, Z: Word32): Word32;
 begin
   Result := (X and Z) or (Y and (not Z));
 end;
 
 // f(j, x, y, z) = x XOR (y OR NOT(z))          (64 <= j <= 79)
-function RipeMD_F5(const X, Y, Z: LongWord): LongWord;
+function RipeMD_F5(const X, Y, Z: Word32): Word32;
 begin
   Result := X xor (Y or (not Z));
 end;
 
 // f(j, x, y, z)
-function RipeMD_F(const J: Byte; const X, Y, Z: LongWord): LongWord;
+function RipeMD_F(const J: Byte; const X, Y, Z: Word32): Word32;
 begin
   case J of
     0..15  : Result := RipeMD_F1(X, Y, Z);
@@ -3218,7 +3242,7 @@ const
   // K(j) = 0x6ED9EBA1     (32 <= j <= 47)      int(2**30 x sqrt(3))
   // K(j) = 0x8F1BBCDC     (48 <= j <= 63)      int(2**30 x sqrt(5))
   // K(j) = 0xA953FD4E     (64 <= j <= 79)      int(2**30 x sqrt(7))
-  RipeMD_K : array[0..4] of LongWord = (
+  RipeMD_K : array[0..4] of Word32 = (
       $00000000,
       $5A827999,
       $6ED9EBA1,
@@ -3230,7 +3254,7 @@ const
   // K'(j) = 0x6D703EF3    (32 <= j <= 47)      int(2**30 x cbrt(5))
   // K'(j) = 0x7A6D76E9    (48 <= j <= 63)      int(2**30 x cbrt(7))
   // K'(j) = 0x00000000    (64 <= j <= 79)
-  RipeMD_KP : array[0..4] of LongWord = (
+  RipeMD_KP : array[0..4] of Word32 = (
       $50A28BE6,
       $5C4DD124,
       $6D703EF3,
@@ -3286,7 +3310,7 @@ const
        8,  5, 12,  9, 12,  5, 14,  6,  8, 13,  6,  5, 15, 13, 11, 11 );
 
 // Pascal version of:
-// function Word32Add(const A, B: LongWord): LongWord; assembler;
+// function Word32Add(const A, B: Word32): Word32; assembler;
 // asm
 //       ADD     EAX, EDX
 // end;
@@ -3294,16 +3318,16 @@ const
 // Temporary turn Q off as an optimisation since Word32Add is frequently used
 // and it can never overflow in any case
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
-function Word32Add(const A, B: LongWord): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
+function Word32Add(const A, B: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var R : Int64;
 begin
   R := Int64(A) + Int64(B);
-  Result := LongWord(R and $FFFFFFFF);
+  Result := Word32(R and $FFFFFFFF);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 
 type
-  TRipeMD160Block = array[0..15] of LongWord;
+  TRipeMD160Block = array[0..15] of Word32;
   PRipeMD160Block = ^TRipeMD160Block;
 
 (*
@@ -3324,17 +3348,17 @@ type
 *)
 procedure RipeMD160Block(var Digest: T160BitDigest; const Block: TRipeMD160Block);
 var
-  H0, H1, H2, H3, H4 : LongWord;
-  A, B, C, D, E : LongWord;
-  AP, BP, CP, DP, EP : LongWord;
+  H0, H1, H2, H3, H4 : Word32;
+  A, B, C, D, E : Word32;
+  AP, BP, CP, DP, EP : Word32;
   J, J16 : Byte;
-  T : LongWord;
+  T : Word32;
 begin
-  H0 := Digest.Longs[0];
-  H1 := Digest.Longs[1];
-  H2 := Digest.Longs[2];
-  H3 := Digest.Longs[3];
-  H4 := Digest.Longs[4];
+  H0 := Digest.Word32s[0];
+  H1 := Digest.Word32s[1];
+  H2 := Digest.Word32s[2];
+  H3 := Digest.Word32s[3];
+  H4 := Digest.Word32s[4];
 
   // A := h0; B := h1; C := h2; D = h3; E = h4;
   A := H0;
@@ -3397,22 +3421,22 @@ begin
   // h0 := T;
   H0 := T;
 
-  Digest.Longs[0] := H0;
-  Digest.Longs[1] := H1;
-  Digest.Longs[2] := H2;
-  Digest.Longs[3] := H3;
-  Digest.Longs[4] := H4;
+  Digest.Word32s[0] := H0;
+  Digest.Word32s[1] := H1;
+  Digest.Word32s[2] := H2;
+  Digest.Word32s[3] := H3;
+  Digest.Word32s[4] := H4;
 end;
 
 // initial value (hexadecimal)
 // h0 = 0x67452301; h1 = 0xEFCDAB89; h2 = 0x98BADCFE; h3 = 0x10325476; h4 = 0xC3D2E1F0;
 procedure RipeMD160InitDigest(var Digest: T160BitDigest);
 begin
-  Digest.Longs[0] := $67452301;
-  Digest.Longs[1] := $EFCDAB89;
-  Digest.Longs[2] := $98BADCFE;
-  Digest.Longs[3] := $10325476;
-  Digest.Longs[4] := $C3D2E1F0;
+  Digest.Word32s[0] := $67452301;
+  Digest.Word32s[1] := $EFCDAB89;
+  Digest.Word32s[2] := $98BADCFE;
+  Digest.Word32s[3] := $10325476;
+  Digest.Word32s[4] := $C3D2E1F0;
 end;
 
 procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
@@ -3479,7 +3503,9 @@ function RipeMD160DigestToHexA(const Digest: T160BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function RipeMD160DigestToHexW(const Digest: T160BitDigest): WideString;
 begin
   Result := DigestToHexW(Digest, Sizeof(Digest));
@@ -3492,7 +3518,7 @@ end;
 { HMAC utility functions                                                       }
 {                                                                              }
 procedure HMAC_KeyBlock512(const Key; const KeySize: Integer; var Buf: T512BitBuf);
-var P : PAnsiChar;
+var P : PByte;
 begin
   Assert(KeySize <= 64);
   P := @Buf;
@@ -3505,7 +3531,7 @@ begin
 end;
 
 procedure HMAC_KeyBlock1024(const Key; const KeySize: Integer; var Buf: T1024BitBuf);
-var P : PAnsiChar;
+var P : PByte;
 begin
   Assert(KeySize <= 128);
   P := @Buf;
@@ -3872,7 +3898,7 @@ begin
   Assert(KeySize >= 0);
   Assert(IterationIdx <= 15);
   // xor digest with key size, complexity value, iteration idx and key data
-  Digest.Longs[0] := LongWord(KeySize);
+  Digest.Longs[0] := Word32(KeySize);
   Digest.Bytes[5] := Complexity;
   Digest.Bytes[6] := Byte(IterationIdx and $FF);
   Q := Key;
@@ -3987,12 +4013,12 @@ begin
     end
   else
     case HashType of
-      hashChecksum32  : PLongWord(Digest)^     := CalcChecksum32(Buf, BufSize);
+      hashChecksum32  : PWord32(Digest)^       := CalcChecksum32(Buf, BufSize);
       hashXOR8        : PByte(Digest)^         := CalcXOR8(Buf, BufSize);
       hashXOR16       : PWord(Digest)^         := CalcXOR16(Buf, BufSize);
-      hashXOR32       : PLongWord(Digest)^     := CalcXOR32(Buf, BufSize);
+      hashXOR32       : PWord32(Digest)^       := CalcXOR32(Buf, BufSize);
       hashCRC16       : PWord(Digest)^         := CalcCRC16(Buf, BufSize);
-      hashCRC32       : PLongWord(Digest)^     := CalcCRC32(Buf, BufSize);
+      hashCRC32       : PWord32(Digest)^       := CalcCRC32(Buf, BufSize);
       hashMD5         : P128BitDigest(Digest)^ := CalcMD5(Buf, BufSize);
       hashSHA1        : P160BitDigest(Digest)^ := CalcSHA1(Buf, BufSize);
       hashSHA256      : P256BitDigest(Digest)^ := CalcSHA256(Buf, BufSize);
@@ -4031,7 +4057,7 @@ function GetLastOSErrorMessage: String;
 const MAX_ERRORMESSAGE_LENGTH = 256;
 var Err: LongWord;
     Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Word;
-    Len: LongWord;
+    Len: Word32;
 begin
   Err := Windows.GetLastError;
   FillChar(Buf, Sizeof(Buf), #0);
@@ -4047,7 +4073,7 @@ function GetLastOSErrorMessage: String;
 const MAX_ERRORMESSAGE_LENGTH = 256;
 var Err: LongWord;
     Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Byte;
-    Len: LongWord;
+    Len: Word32;
 begin
   Err := Windows.GetLastError;
   FillChar(Buf, Sizeof(Buf), #0);
@@ -4059,33 +4085,28 @@ begin
     Result := StrPas(PAnsiChar(@Buf));
 end;
 {$ENDIF}
-{$ELSE}
+{$ENDIF}
+
 {$IFDEF UNIX}
 {$IFDEF FREEPASCAL}
 function GetLastOSErrorMessage: String;
 begin
   Result := SysErrorMessage(GetLastOSError);
 end;
-{$ELSE}
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
 function GetLastOSErrorMessage: String;
-var Err: LongWord;
-    Buf: array[0..1023] of AnsiChar;
+var Err : LongInt;
 begin
-  Err := BaseUnix.fpgeterrno;
-  FillChar(Buf, Sizeof(Buf), #0);
-  libc.strerror_r(Err, @Buf, SizeOf(Buf));
-  if Buf[0] = #0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(@Buf);
-end;
-{$ENDIF}{$ENDIF}{$ENDIF}
-{$IFDEF ANDROID}
-function GetLastOSErrorMessage: String;
-begin
-  Result := 'Not implemented';
+  Err := errno;
+  Result := Format(SSystemError, [IntToStr(Err)])
 end;
 {$ENDIF}
+{$ENDIF}
+
 
 
 
@@ -4117,7 +4138,7 @@ end;
 
 procedure AHash.HashBuf(const Buf; const BufSize: Integer; const FinalBuf: Boolean);
 var I, D : Integer;
-    P : PAnsiChar;
+    P : PByte;
 begin
   Inc(FTotalSize, BufSize);
 
@@ -4199,12 +4220,12 @@ end;
 {                                                                              }
 procedure TChecksum32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
 begin
-  PLongWord(Digest)^ := 0;
+  PWord32(Digest)^ := 0;
 end;
 
 procedure TChecksum32Hash.ProcessBuf(const Buf; const BufSize: Integer);
 begin
-  PLongWord(FDigest)^ := PLongWord(FDigest)^ + CalcChecksum32(Buf, BufSize);
+  PWord32(FDigest)^ := PWord32(FDigest)^ + CalcChecksum32(Buf, BufSize);
 end;
 
 class function TChecksum32Hash.DigestSize: Integer;
@@ -4259,12 +4280,12 @@ end;
 {                                                                              }
 procedure TXOR32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
 begin
-  PLongWord(Digest)^ := 0;
+  PWord32(Digest)^ := 0;
 end;
 
 procedure TXOR32Hash.ProcessBuf(const Buf; const BufSize: Integer);
 begin
-  PLongWord(FDigest)^ := PLongWord(FDigest)^ xor CalcXOR32(Buf, BufSize);
+  PWord32(FDigest)^ := PWord32(FDigest)^ xor CalcXOR32(Buf, BufSize);
 end;
 
 class function TXOR32Hash.DigestSize: Integer;
@@ -4299,12 +4320,12 @@ end;
 {                                                                              }
 procedure TCRC32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
 begin
-  CRC32Init(PLongWord(Digest)^);
+  CRC32Init(PWord32(Digest)^);
 end;
 
 procedure TCRC32Hash.ProcessBuf(const Buf; const BufSize: Integer);
 begin
-  PLongWord(FDigest)^ := CRC32Buf(PLongWord(FDigest)^, Buf, BufSize);
+  PWord32(FDigest)^ := CRC32Buf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
 class function TCRC32Hash.DigestSize: Integer;
@@ -4318,12 +4339,12 @@ end;
 {                                                                              }
 procedure TAdler32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
 begin
-  Adler32Init(PLongWord(Digest)^);
+  Adler32Init(PWord32(Digest)^);
 end;
 
 procedure TAdler32Hash.ProcessBuf(const Buf; const BufSize: Integer);
 begin
-  PLongWord(FDigest)^ := Adler32Buf(PLongWord(FDigest)^, Buf, BufSize);
+  PWord32(FDigest)^ := Adler32Buf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
 class function TAdler32Hash.DigestSize: Integer;
@@ -4338,12 +4359,12 @@ end;
 {                                                                              }
 procedure TELFHash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
 begin
-  ELFInit(PLongWord(Digest)^);
+  ELFInit(PWord32(Digest)^);
 end;
 
 procedure TELFHash.ProcessBuf(const Buf; const BufSize: Integer);
 begin
-  PLongWord(FDigest)^ := ELFBuf(PLongWord(FDigest)^, Buf, BufSize);
+  PWord32(FDigest)^ := ELFBuf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
 class function TELFHash.DigestSize: Integer;
@@ -4650,8 +4671,8 @@ end;
 {                                                                              }
 { HashString                                                                   }
 {                                                                              }
-function HashStringP(const StrBuf: Pointer; const StrLength: Integer; const Slots: LongWord; const CaseSensitive: Boolean): LongWord;
-var P    : PAnsiChar;
+function HashStringP(const StrBuf: Pointer; const StrLength: Integer; const Slots: Word32; const CaseSensitive: Boolean): Word32;
+var P    : PByte;
     I, J : Integer;
 
   procedure CRC32StrBuf(const Size: Integer);
@@ -4696,11 +4717,11 @@ begin
     end;
 
   // Mod into slots
-  if (Slots <> 0) and (Slots <> High(LongWord)) then
+  if (Slots <> 0) and (Slots <> High(Word32)) then
     Result := Result mod Slots;
 end;
 
-function HashStringB(const S: RawByteString; const Slots: LongWord; const CaseSensitive: Boolean): LongWord;
+function HashStringB(const S: RawByteString; const Slots: Word32; const CaseSensitive: Boolean): Word32;
 begin
   Result := HashStringP(Pointer(S), Length(S), Slots, CaseSensitive);
 end;
@@ -4737,6 +4758,18 @@ end;
 {$IFDEF HASH_TEST}
 {$ASSERTIONS ON}
 procedure Test;
+
+  function DupChar(const Count: Integer; const Ch: Byte): RawByteString;
+  var
+    A : RawByteString;
+    I : Integer;
+  begin
+    A := '';
+    for I := 1 to Count do
+      A := A + AnsiChar(Ch);
+    Result := A;
+  end;
+
 const
   QuickBrownFoxStr = 'The quick brown fox jumps over the lazy dog';
 var
@@ -4807,36 +4840,48 @@ begin
 
   Assert(HashStringB('Fundamentals', 0, False) = HashStringB('fundamentalS', 0, False));
 
+  {$IFDEF SupportWideString}
   Assert(WideString(MD5DigestToHexA(CalcMD5(''))) = MD5DigestToHexW(CalcMD5('')));
+  {$ENDIF}
   Assert(MD5DigestToHexA(CalcMD5(''))                    = 'd41d8cd98f00b204e9800998ecf8427e');
   Assert(MD5DigestToHexA(CalcMD5('Delphi Fundamentals')) = 'ea98b65da23d19756d46a36faa481dd8');
 
+  {$IFDEF SupportWideString}
   Assert(WideString(SHA1DigestToHexA(CalcSHA1(''))) = SHA1DigestToHexW(CalcSHA1('')));
+  {$ENDIF}
   Assert(SHA1DigestToHexA(CalcSHA1(''))               = 'da39a3ee5e6b4b0d3255bfef95601890afd80709');
   Assert(SHA1DigestToHexA(CalcSHA1('Fundamentals'))   = '052d8ad81d99f33b2eb06e6d194282b8675fb201');
   Assert(SHA1DigestToHexA(CalcSHA1(QuickBrownFoxStr)) = '2fd4e1c67a2d28fced849ee1bb76e7391b93eb12');
   Assert(SHA1DigestToHexA(CalcSHA1(TenThousandA))     = 'a080cbda64850abb7b7f67ee875ba068074ff6fe');
 
+  {$IFDEF SupportWideString}
   Assert(WideString(SHA224DigestToHexA(CalcSHA224(''))) = SHA224DigestToHexW(CalcSHA224('')));
+  {$ENDIF}
   Assert(SHA224DigestToHexA(CalcSHA224(''))               = 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f');
   Assert(SHA224DigestToHexA(CalcSHA224('Fundamentals'))   = '1cccba6b3c6b08494733efb3a77fe8baef5bf6eeae89ec303ef4660e');
   Assert(SHA224DigestToHexA(CalcSHA224(QuickBrownFoxStr)) = '730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525');
   Assert(SHA224DigestToHexA(CalcSHA224(TenThousandA))     = '00568fba93e8718c2f7dcd82fa94501d59bb1bbcba2c7dc2ba5882db');
 
+  {$IFDEF SupportWideString}
   Assert(WideString(SHA256DigestToHexA(CalcSHA256(''))) = SHA256DigestToHexW(CalcSHA256('')));
+  {$ENDIF}
   Assert(SHA256DigestToHexA(CalcSHA256(''))               = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
   Assert(SHA256DigestToHexA(CalcSHA256('Fundamentals'))   = '915ff7435daeac2f66aa866e59bf293f101b79403dbdde2b631fd37fa524f26b');
   Assert(SHA256DigestToHexA(CalcSHA256(QuickBrownFoxStr)) = 'd7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592');
   Assert(SHA256DigestToHexA(CalcSHA256(TenThousandA))     = '27dd1f61b867b6a0f6e9d8a41c43231de52107e53ae424de8f847b821db4b711');
   Assert(SHA256DigestToHexA(CalcSHA256(MillionA))         = 'cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0');
 
+  {$IFDEF SupportWideString}
   Assert(WideString(SHA384DigestToHexA(CalcSHA384(''))) = SHA384DigestToHexW(CalcSHA384('')));
+  {$ENDIF}
   Assert(SHA384DigestToHexA(CalcSHA384(''))               = '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b');
   Assert(SHA384DigestToHexA(CalcSHA384('Fundamentals'))   = 'cf9380b7d2e0237296093a0f5f09066f0cea0742ba752a1e6c60aed92998eda2c86c1549879007a94e9d75a4a7bdb6e8');
   Assert(SHA384DigestToHexA(CalcSHA384(QuickBrownFoxStr)) = 'ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1');
   Assert(SHA384DigestToHexA(CalcSHA384(TenThousandA))     = '2bca3b131bb7e922bcd1de98c44786d32e6b6b2993e69c4987edf9dd49711eb501f0e98ad248d839f6bf9e116e25a97c');
 
+  {$IFDEF SupportWideString}
   Assert(WideString(SHA512DigestToHexA(CalcSHA512(''))) = SHA512DigestToHexW(CalcSHA512('')));
+  {$ENDIF}
   Assert(SHA512DigestToHexA(CalcSHA512(''))               = 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e');
   Assert(SHA512DigestToHexA(CalcSHA512('Fundamentals'))   = 'f430fed95ff285843bc68a5e2a1ad8275d7c242a504a5d0b23deb7f8252774a132c3672aeeffa9bf5c25449e8905cdb6f89097a3c88f20a6e0d8945bf4310dd6');
   Assert(SHA512DigestToHexA(CalcSHA512(QuickBrownFoxStr)) = '07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6');
@@ -4870,30 +4915,30 @@ begin
 
   // Test cases from RFC 2202
   Assert(MD5DigestToHexA(CalcHMAC_MD5('Jefe', 'what do ya want for nothing?')) = '750c783e6ab0b503eaa86e310a5db738');
-  SetLength(S, 16); FillChar(Pointer(S)^, 16, #$0B);
+  S := DupChar(16, $0B);
   Assert(MD5DigestToHexA(CalcHMAC_MD5(S, 'Hi There')) = '9294727a3638bb1c13f48ef8158bfc9d');
-  SetLength(S, 16); FillChar(Pointer(S)^, 16, #$AA);
-  SetLength(T, 50); FillChar(Pointer(T)^, 50, #$DD);
+  S := DupChar(16, $AA);
+  T := DupChar(50, $DD);
   Assert(MD5DigestToHexA(CalcHMAC_MD5(S, T)) = '56be34521d144c88dbb8c733f0e8b3f6');
-  SetLength(S, 80); FillChar(Pointer(S)^, 80, #$AA);
+  S := DupChar(80, $AA);
   Assert(MD5DigestToHexA(CalcHMAC_MD5(S, 'Test Using Larger Than Block-Size Key and Larger Than One Block-Size Data')) = '6f630fad67cda0ee1fb1f562db3aa53e');
 
   Assert(SHA1DigestToHexA(CalcHMAC_SHA1('Jefe', 'what do ya want for nothing?')) = 'effcdf6ae5eb2fa2d27416d5f184df9c259a7c79');
-  SetLength(S, 20); FillChar(Pointer(S)^, 20, #$0B);
+  S := DupChar(20, $0B);
   Assert(SHA1DigestToHexA(CalcHMAC_SHA1(S, 'Hi There')) = 'b617318655057264e28bc0b6fb378c8ef146be00');
-  SetLength(S, 80); FillChar(Pointer(S)^, 80, #$AA);
+  S := DupChar(80, $AA);
   Assert(SHA1DigestToHexA(CalcHMAC_SHA1(S, 'Test Using Larger Than Block-Size Key - Hash Key First')) = 'aa4ae5e15272d00e95705637ce8a3b55ed402112');
 
   // Test cases from RFC 4231
   Assert(SHA256DigestToHexA(CalcHMAC_SHA256(#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b, 'Hi There')) = 'b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7');
   Assert(SHA256DigestToHexA(CalcHMAC_SHA256('Jefe', 'what do ya want for nothing?')) = '5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843');
-  SetLength(S, 131); FillChar(Pointer(S)^, 131, #$aa);
+  S := DupChar(131, $aa);
   Assert(SHA256DigestToHexA(CalcHMAC_SHA256(S, 'This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.')) = '9b09ffa71b942fcb27635fbcd5b0e944bfdc63644f0713938a7f51535c3a35e2');
   // see RFC 4231 truncated case --> Assert(SHA256DigestToHex(CalcHMAC_SHA256(#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c#$0c, 'Test With Truncation')) = 'a3b6167473100ee06e0c796c2955552b', 'CalcHMAC_SHA256');
 
   Assert(SHA512DigestToHexA(CalcHMAC_SHA512(#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b#$0b, 'Hi There')) = '87aa7cdea5ef619d4ff0b4241a1d6cb02379f4e2ce4ec2787ad0b30545e17cdedaa833b7d6b8a702038b274eaea3f4e4be9d914eeb61f1702e696c203a126854');
   Assert(SHA512DigestToHexA(CalcHMAC_SHA512('Jefe', 'what do ya want for nothing?')) = '164b7a7bfcf819e2e395fbe73b56e0a387bd64222e831fd610270cd7ea2505549758bf75c05a994a6d034f65f8f0e6fdcaeab1a34d4a6b4b636e070a38bce737');
-  SetLength(S, 131); FillChar(Pointer(S)^, 131, #$aa);
+  S := DupChar(131, $aa);
   Assert(SHA512DigestToHexA(CalcHMAC_SHA512(S, 'This is a test using a larger than block-size key and a larger than block-size data. The key needs to be hashed before being used by the HMAC algorithm.')) = 'e37b6a775dc87dbaa4dfa9f96e5e3ffddebd71f8867289865df5a32d20cdc944b6022cac3c4982b10d5eeb55c3e4de15134676fb6de0446065c97440fa8c6a58');
 
   // RipeMD160

@@ -71,7 +71,6 @@ uses
   SyncObjs,
   Classes,
   { Fundamentals }
-  flcUtils,
   flcSocketLib,
   flcSocket,
   flcTCPBuffer,
@@ -238,7 +237,7 @@ type
   TTCPServerAcceptEvent = procedure (Sender: TF5TCPServer; Address: TSocketAddr;
       var AcceptClient: Boolean) of object;
   TTCPServerNameLookupEvent = procedure (Sender: TF5TCPServer; Address: TSocketAddr;
-      HostName: AnsiString; var AcceptClient: Boolean) of object;
+      HostName: RawByteString; var AcceptClient: Boolean) of object;
   TTCPServerClientWorkerExecuteEvent = procedure (Sender: TTCPServerClient;
       Connection: TTCPBlockingConnection; var CloseOnExit: Boolean) of object;
 
@@ -246,7 +245,7 @@ type
   private
     // parameters
     FAddressFamily      : TIPAddressFamily;
-    FBindAddressStr     : AnsiString;
+    FBindAddressStr     : RawByteString;
     FServerPort         : Integer;
     FMaxBacklog         : Integer;
     FMaxClients         : Integer;
@@ -321,7 +320,7 @@ type
     procedure Loaded; override;
 
     procedure SetAddressFamily(const AddressFamily: TIPAddressFamily);
-    procedure SetBindAddress(const BindAddressStr: AnsiString);
+    procedure SetBindAddress(const BindAddressStr: RawByteString);
     procedure SetServerPort(const ServerPort: Integer);
     procedure SetMaxBacklog(const MaxBacklog: Integer);
     procedure SetMaxClients(const MaxClients: Integer);
@@ -345,7 +344,7 @@ type
     procedure ClientLog(const Client: TTCPServerClient; const LogType: TTCPLogType; const LogMsg: String; const LogLevel: Integer);
 
     procedure TriggerClientAccept(const Address: TSocketAddr; var AcceptClient: Boolean); virtual;
-    procedure TriggerClientNameLookup(const Address: TSocketAddr; const HostName: AnsiString; var AcceptClient: Boolean); virtual;
+    procedure TriggerClientNameLookup(const Address: TSocketAddr; const HostName: RawByteString; var AcceptClient: Boolean); virtual;
     procedure TriggerClientCreate(const Client: TTCPServerClient); virtual;
     procedure TriggerClientAdd(const Client: TTCPServerClient); virtual;
     procedure TriggerClientRemove(const Client: TTCPServerClient); virtual;
@@ -404,7 +403,7 @@ type
 
     // Parameters
     property  AddressFamily: TIPAddressFamily read FAddressFamily write SetAddressFamily default iaIP4;
-    property  BindAddress: AnsiString read FBindAddressStr write SetBindAddress;
+    property  BindAddress: RawByteString read FBindAddressStr write SetBindAddress;
     property  ServerPort: Integer read FServerPort write SetServerPort;
     property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default TCP_SERVER_DEFAULT_MaxBacklog;
     property  MaxClients: Integer read FMaxClients write SetMaxClients default TCP_SERVER_DEFAULT_MaxClients;
@@ -1156,7 +1155,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5TCPServer.SetBindAddress(const BindAddressStr: AnsiString);
+procedure TF5TCPServer.SetBindAddress(const BindAddressStr: RawByteString);
 begin
   if BindAddressStr = FBindAddressStr then
     exit;
@@ -1287,7 +1286,7 @@ begin
     FOnClientAccept(self, Address, AcceptClient);
 end;
 
-procedure TF5TCPServer.TriggerClientNameLookup(const Address: TSocketAddr; const HostName: AnsiString; var AcceptClient: Boolean);
+procedure TF5TCPServer.TriggerClientNameLookup(const Address: TSocketAddr; const HostName: RawByteString; var AcceptClient: Boolean);
 begin
   if Assigned(FOnClientNameLookup) then
     FOnClientNameLookup(self, Address, HostName, AcceptClient);
@@ -1442,6 +1441,16 @@ end;
 
 procedure TF5TCPServer.StopThreads;
 begin
+  if Assigned(FProcessThread) then
+    begin
+      FProcessThread.Terminate;
+      FProcessThread.WaitFor;
+    end;
+  if Assigned(FControlThread) then
+    begin
+      FControlThread.Terminate;
+      FControlThread.WaitFor;
+    end;
   FreeAndNil(FProcessThread);
   FreeAndNil(FControlThread);
 end;

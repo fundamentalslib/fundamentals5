@@ -57,6 +57,10 @@ unit flcCipherDES;
 
 interface
 
+uses
+  { Fundamentals }
+  flcStdTypes;
+
 
 
 {                                                                              }
@@ -68,10 +72,10 @@ type
   TDESKey = array[0..7] of Byte;
   PDESKey = ^TDESKey;
 
-  TDESLongWordPair = array[0..1] of LongWord;
-  PDESLongWordPair = ^TDESLongWordPair;
+  TDESWord32Pair = array[0..1] of Word32;
+  PDESWord32Pair = ^TDESWord32Pair;
 
-  TDESContext = array[1..16] of TDESLongWordPair;
+  TDESContext = array[1..16] of TDESWord32Pair;
   PDESContext = ^TDESContext;
 
   TDESBlock = array[0..7] of Byte;
@@ -238,7 +242,7 @@ const
       33,   1,  41,   9,  49,  17,  57,  25);
 
 // 28 bit ROL operation
-function DESROL28(const Value: LongWord; const Bits: Byte): LongWord;
+function DESROL28(const Value: Word32; const Bits: Byte): Word32;
 var I : Integer;
 begin
   Result := Value;
@@ -251,14 +255,14 @@ end;
 
 // 32 bit swap endian
 {$IFDEF ASM386}
-function DESSwapEndian32(const Value: LongWord): LongWord;
+function DESSwapEndian32(const Value: Word32): Word32;
 asm
       XCHG    AH, AL
       ROL     EAX, 16
       XCHG    AH, AL
 end;
 {$ELSE}
-function DESSwapEndian32(const Value: LongWord): LongWord;
+function DESSwapEndian32(const Value: Word32): Word32;
 begin
   Result := ((Value and $000000FF) shl 24)  or
             ((Value and $0000FF00) shl 8)   or
@@ -268,7 +272,7 @@ end;
 {$ENDIF}
 
 // PC-1 permutation from K (64 bits) to K+ (56 bits)
-function DESPC1Permutation(const K: TDESLongWordPair): TDESLongWordPair;
+function DESPC1Permutation(const K: TDESWord32Pair): TDESWord32Pair;
 var I : Integer;
     N : Byte;
 begin
@@ -283,7 +287,7 @@ begin
 end;
 
 // PC-2 permutation from CnDn (56 bits) to Kn (48 bits)
-function DESPC2Permutation(const K: TDESLongWordPair): TDESLongWordPair;
+function DESPC2Permutation(const K: TDESWord32Pair): TDESWord32Pair;
 var I : Integer;
     N : Byte;
 begin
@@ -299,11 +303,11 @@ end;
 
 // DES initialization
 procedure DESInit(const Encrypt: Boolean; const Key: TDESKey; var Context: TDESContext);
-var K    : TDESLongWordPair;
-    C, D : array[0..16] of LongWord;
+var K    : TDESWord32Pair;
+    C, D : array[0..16] of Word32;
     I, J : Integer;
     N    : Byte;
-    E    : TDESLongWordPair;
+    E    : TDESWord32Pair;
 begin
   // Move key into K and swap endian
   Move(Key, K, Sizeof(K));
@@ -339,12 +343,12 @@ begin
 end;
 
 // DES E-function
-function DESEFunc(const R: LongWord; const K: TDESLongWordPair): LongWord;
-var E      : TDESLongWordPair;
+function DESEFunc(const R: Word32; const K: TDESWord32Pair): Word32;
+var E      : TDESWord32Pair;
     I      : Integer;
     BI, SI : Byte;
     X, Y   : Byte;
-    S      : LongWord;
+    S      : Word32;
 begin
   // Expand R (32 bits) to E (48 bits) using E bit-selection table
   E[0] := 0;
@@ -383,8 +387,8 @@ procedure DESBuffer(const Context: TDESContext; var Block: TDESBlock);
 var IP   : TDESBlock;
     I    : Integer;
     N    : Byte;
-    L, R : array[0..16] of LongWord;
-    P    : array[0..1] of LongWord;
+    L, R : array[0..16] of Word32;
+    P    : array[0..1] of Word32;
 begin
   // Apply initial permuation on M (64 bits) to get IP (64 bits)
   FillChar(IP, Sizeof(TDESBlock), 0);

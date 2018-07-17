@@ -59,14 +59,14 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
 { SInt32 / SInt64 }
 
-function  pbSInt32ToUInt32(const A: LongInt): LongWord;
-function  pbUInt32ToSInt32(const A: LongWord): LongInt;
+function  pbSInt32ToUInt32(const A: Int32): Word32;
+function  pbUInt32ToSInt32(const A: Word32): Int32;
 function  pbSInt64ToUInt64(const A: Int64): UInt64;
 function  pbUInt64ToSInt64(const A: UInt64): Int64;
 
@@ -93,16 +93,16 @@ procedure pbVarIntInitVarInt(var A: TpbVarInt; const B: TpbVarInt);
 
 function  pbVarIntInitEncBuf(var A: TpbVarInt; const Buf; const BufSize: Integer): Integer;
 procedure pbVarIntInitBinBuf(var A: TpbVarInt; const Buf; const BufSize: Integer);
-procedure pbVarIntInitUInt32(var A: TpbVarInt; const B: LongWord);
-procedure pbVarIntInitSInt32(var A: TpbVarInt; const B: LongInt);
+procedure pbVarIntInitUInt32(var A: TpbVarInt; const B: Word32);
+procedure pbVarIntInitSInt32(var A: TpbVarInt; const B: Int32);
 procedure pbVarIntInitUInt64(var A: TpbVarInt; const B: UInt64);
 procedure pbVarIntInitInt64(var A: TpbVarInt; const B: Int64);
 procedure pbVarIntInitSInt64(var A: TpbVarInt; const B: Int64);
 
 function  pbVarIntToEncBuf(const A: TpbVarInt; var Buf; const BufSize: Integer): Integer;
 procedure pbVarIntToBinBuf(const A: TpbVarInt; var Buf; const BufSize: Integer);
-function  pbVarIntToUInt32(const A: TpbVarInt): LongWord;
-function  pbVarIntToSInt32(const A: TpbVarInt): LongInt;
+function  pbVarIntToUInt32(const A: TpbVarInt): Word32;
+function  pbVarIntToSInt32(const A: TpbVarInt): Int32;
 function  pbVarIntToUInt64(const A: TpbVarInt): UInt64;
 function  pbVarIntToInt64(const A: TpbVarInt): Int64;
 function  pbVarIntToSInt64(const A: TpbVarInt): Int64;
@@ -127,8 +127,8 @@ type
 
 { Field key }
 
-function  pbFieldKeyToUInt32(const FieldNumber: LongInt; const WireType: TpbWireType): LongWord;
-procedure pbUInt32ToFieldKey(const A: LongWord; var FieldNumber: LongInt; var WireType: TpbWireType);
+function  pbFieldKeyToUInt32(const FieldNumber: Int32; const WireType: TpbWireType): Word32;
+procedure pbUInt32ToFieldKey(const A: Word32; var FieldNumber: Int32; var WireType: TpbWireType);
 
 
 
@@ -138,41 +138,41 @@ type
   EpbEncodeError = class(Exception);
 
 function  pbEncodeValueVarInt(var Buf; const BufSize: Integer; const Value: TpbVarInt): Integer;
-function  pbEncodeValueInt32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function  pbEncodeValueInt32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 function  pbEncodeValueInt64(var Buf; const BufSize: Integer; const Value: Int64): Integer;
-function  pbEncodeValueUInt32(var Buf; const BufSize: Integer; const Value: LongWord): Integer;
+function  pbEncodeValueUInt32(var Buf; const BufSize: Integer; const Value: Word32): Integer;
 function  pbEncodeValueUInt64(var Buf; const BufSize: Integer; const Value: UInt64): Integer;
-function  pbEncodeValueSInt32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function  pbEncodeValueSInt32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 function  pbEncodeValueSInt64(var Buf; const BufSize: Integer; const Value: Int64): Integer;
 function  pbEncodeValueBool(var Buf; const BufSize: Integer; const Value: Boolean): Integer;
 function  pbEncodeValueDouble(var Buf; const BufSize: Integer; const Value: Double): Integer;
 function  pbEncodeValueFloat(var Buf; const BufSize: Integer; const Value: Single): Integer;
-function  pbEncodeValueFixed32(var Buf; const BufSize: Integer; const Value: LongWord): Integer;
+function  pbEncodeValueFixed32(var Buf; const BufSize: Integer; const Value: Word32): Integer;
 function  pbEncodeValueFixed64(var Buf; const BufSize: Integer; const Value: UInt64): Integer;
-function  pbEncodeValueSFixed32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function  pbEncodeValueSFixed32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 function  pbEncodeValueSFixed64(var Buf; const BufSize: Integer; const Value: Int64): Integer;
 function  pbEncodeValueString(var Buf; const BufSize: Integer; const Value: RawByteString): Integer;
 function  pbEncodeValueBytes(var Buf; const BufSize: Integer; const ValueBuf; const ValueBufSize: Integer): Integer;
 
-function  pbEncodeFieldKey(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const WireType: TpbWireType): Integer;
-function  pbEncodeFieldVarBytesHdr(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const VarBytesSize: Integer): Integer;
+function  pbEncodeFieldKey(var Buf; const BufSize: Integer; const FieldNumber: Int32; const WireType: TpbWireType): Integer;
+function  pbEncodeFieldVarBytesHdr(var Buf; const BufSize: Integer; const FieldNumber: Int32; const VarBytesSize: Integer): Integer;
 
-function  pbEncodeFieldVarInt(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: TpbVarInt): Integer;
-function  pbEncodeFieldInt32(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: LongInt): Integer;
-function  pbEncodeFieldInt64(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Int64): Integer;
-function  pbEncodeFieldUInt32(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: LongWord): Integer;
-function  pbEncodeFieldUInt64(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: UInt64): Integer;
-function  pbEncodeFieldSInt32(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: LongInt): Integer;
-function  pbEncodeFieldSInt64(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Int64): Integer;
-function  pbEncodeFieldBool(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Boolean): Integer;
-function  pbEncodeFieldDouble(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Double): Integer;
-function  pbEncodeFieldFloat(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Single): Integer;
-function  pbEncodeFieldFixed32(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: LongWord): Integer;
-function  pbEncodeFieldFixed64(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: UInt64): Integer;
-function  pbEncodeFieldSFixed32(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: LongInt): Integer;
-function  pbEncodeFieldSFixed64(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: Int64): Integer;
-function  pbEncodeFieldString(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const Value: RawByteString): Integer;
-function  pbEncodeFieldBytes(var Buf; const BufSize: Integer; const FieldNumber: LongInt; const ValueBuf; const ValueBufSize: Integer): Integer;
+function  pbEncodeFieldVarInt(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: TpbVarInt): Integer;
+function  pbEncodeFieldInt32(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int32): Integer;
+function  pbEncodeFieldInt64(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int64): Integer;
+function  pbEncodeFieldUInt32(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Word32): Integer;
+function  pbEncodeFieldUInt64(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: UInt64): Integer;
+function  pbEncodeFieldSInt32(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int32): Integer;
+function  pbEncodeFieldSInt64(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int64): Integer;
+function  pbEncodeFieldBool(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Boolean): Integer;
+function  pbEncodeFieldDouble(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Double): Integer;
+function  pbEncodeFieldFloat(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Single): Integer;
+function  pbEncodeFieldFixed32(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Word32): Integer;
+function  pbEncodeFieldFixed64(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: UInt64): Integer;
+function  pbEncodeFieldSFixed32(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int32): Integer;
+function  pbEncodeFieldSFixed64(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: Int64): Integer;
+function  pbEncodeFieldString(var Buf; const BufSize: Integer; const FieldNumber: Int32; const Value: RawByteString): Integer;
+function  pbEncodeFieldBytes(var Buf; const BufSize: Integer; const FieldNumber: Int32; const ValueBuf; const ValueBufSize: Integer): Integer;
 
 
 
@@ -181,17 +181,17 @@ function  pbEncodeFieldBytes(var Buf; const BufSize: Integer; const FieldNumber:
 type
   EpbDecodeError = class(Exception);
 
-function  pbDecodeValueInt32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function  pbDecodeValueInt32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 function  pbDecodeValueInt64(const Buf; const BufSize: Integer; var Value: Int64): Integer;
-function  pbDecodeValueUInt32(const Buf; const BufSize: Integer; var Value: LongWord): Integer;
+function  pbDecodeValueUInt32(const Buf; const BufSize: Integer; var Value: Word32): Integer;
 function  pbDecodeValueUInt64(const Buf; const BufSize: Integer; var Value: UInt64): Integer;
-function  pbDecodeValueSInt32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function  pbDecodeValueSInt32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 function  pbDecodeValueSInt64(const Buf; const BufSize: Integer; var Value: Int64): Integer;
 function  pbDecodeValueDouble(const Buf; const BufSize: Integer; var Value: Double): Integer;
 function  pbDecodeValueFloat(const Buf; const BufSize: Integer; var Value: Single): Integer;
-function  pbDecodeValueFixed32(const Buf; const BufSize: Integer; var Value: LongWord): Integer;
+function  pbDecodeValueFixed32(const Buf; const BufSize: Integer; var Value: Word32): Integer;
 function  pbDecodeValueFixed64(const Buf; const BufSize: Integer; var Value: UInt64): Integer;
-function  pbDecodeValueSFixed32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function  pbDecodeValueSFixed32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 function  pbDecodeValueSFixed64(const Buf; const BufSize: Integer; var Value: Int64): Integer;
 function  pbDecodeValueBool(const Buf; const BufSize: Integer; var Value: Boolean): Integer;
 function  pbDecodeValueString(const Buf; const BufSize: Integer; var Value: RawByteString): Integer;
@@ -199,13 +199,13 @@ function  pbDecodeValueBytes(const Buf; const BufSize: Integer; var ValueBuf; co
 
 type
   TpbProtoBufDecodeField = record
-    FieldNum         : LongInt;
+    FieldNum         : Int32;
     WireType         : TpbWireType;
     WireDataPtr      : Pointer;
-    WireDataSize     : LongInt;
+    WireDataSize     : Int32;
     ValueVarInt      : TpbVarInt;
     ValueVarBytesPtr : Pointer;
-    ValueVarBytesLen : LongInt;
+    ValueVarBytesLen : Int32;
   end;
   PpbProtoBufDecodeField = ^TpbProtoBufDecodeField;
 
@@ -218,17 +218,17 @@ procedure pbDecodeProtoBuf(
           const CallbackProc: TpbProtoBufDecodeFieldCallbackProc;
           const CallbackData: Pointer);
 
-procedure pbDecodeFieldInt32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldInt32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 procedure pbDecodeFieldInt64(const Field: TpbProtoBufDecodeField; var Value: Int64);
-procedure pbDecodeFieldUInt32(const Field: TpbProtoBufDecodeField; var Value: LongWord);
+procedure pbDecodeFieldUInt32(const Field: TpbProtoBufDecodeField; var Value: Word32);
 procedure pbDecodeFieldUInt64(const Field: TpbProtoBufDecodeField; var Value: UInt64);
-procedure pbDecodeFieldSInt32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldSInt32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 procedure pbDecodeFieldSInt64(const Field: TpbProtoBufDecodeField; var Value: Int64);
 procedure pbDecodeFieldDouble(const Field: TpbProtoBufDecodeField; var Value: Double);
 procedure pbDecodeFieldFloat(const Field: TpbProtoBufDecodeField; var Value: Single);
-procedure pbDecodeFieldFixed32(const Field: TpbProtoBufDecodeField; var Value: LongWord);
+procedure pbDecodeFieldFixed32(const Field: TpbProtoBufDecodeField; var Value: Word32);
 procedure pbDecodeFieldFixed64(const Field: TpbProtoBufDecodeField; var Value: UInt64);
-procedure pbDecodeFieldSFixed32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldSFixed32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 procedure pbDecodeFieldSFixed64(const Field: TpbProtoBufDecodeField; var Value: Int64);
 procedure pbDecodeFieldBool(const Field: TpbProtoBufDecodeField; var Value: Boolean);
 function  pbDecodeFieldString(const Field: TpbProtoBufDecodeField; var Value: RawByteString): Integer;
@@ -262,8 +262,8 @@ const
 
 { SInt32 }
 
-// returns SInt32 encoded to LongWord using 'ZigZag' encoding
-function pbSInt32ToUInt32(const A: LongInt): LongWord;
+// returns SInt32 encoded to Word32 using 'ZigZag' encoding
+function pbSInt32ToUInt32(const A: Int32): Word32;
 var I : Int64;
 begin
   if A < 0 then
@@ -272,14 +272,14 @@ begin
       I := A;
       I := -I;
       // encode ZigZag
-      Result := (LongWord(I) - 1) * 2 + 1
+      Result := (Word32(I) - 1) * 2 + 1
     end
   else
-    Result := LongWord(A) * 2;
+    Result := Word32(A) * 2;
 end;
 
-// returns SInt32 decoded from LongWord using 'ZigZag' encoding
-function pbUInt32ToSInt32(const A: LongWord): LongInt;
+// returns SInt32 decoded from Word32 using 'ZigZag' encoding
+function pbUInt32ToSInt32(const A: Word32): Int32;
 begin
   if A and 1 <> 0 then
     Result := -(A div 2) - 1
@@ -487,8 +487,8 @@ begin
     end;
 end;
 
-// initialises VarInt from LongWord
-procedure pbVarIntInitUInt32(var A: TpbVarInt; const B: LongWord);
+// initialises VarInt from Word32
+procedure pbVarIntInitUInt32(var A: TpbVarInt; const B: Word32);
 begin
   if B < $80 then
     begin
@@ -530,7 +530,7 @@ begin
     end;
 end;
 
-procedure pbVarIntInitSInt32(var A: TpbVarInt; const B: LongInt);
+procedure pbVarIntInitSInt32(var A: TpbVarInt; const B: Int32);
 begin
   pbVarIntInitUInt32(A, pbSInt32ToUInt32(B));
 end;
@@ -622,9 +622,9 @@ begin
     end;
 end;
 
-// returns VarInt value as LongWord
-function pbVarIntToUInt32(const A: TpbVarInt): LongWord;
-var B : LongWord;
+// returns VarInt value as Word32
+function pbVarIntToUInt32(const A: TpbVarInt): Word32;
+var B : Word32;
     I : Byte;
     EncByte : Byte;
 begin
@@ -639,7 +639,7 @@ begin
       if I = 4 then
         if EncByte and $F0 <> 0 then
           raise EpbVarIntError.Create(SErr_Overflow);
-      B := B or (LongWord(EncByte and $7F) shl (I * 7));
+      B := B or (Word32(EncByte and $7F) shl (I * 7));
       Inc(I);
       if EncByte and $80 = 0 then // final byte marker
         begin
@@ -654,7 +654,7 @@ begin
   raise EpbVarIntError.Create(SErr_InvalidVarInt);
 end;
 
-function pbVarIntToSInt32(const A: TpbVarInt): LongInt;
+function pbVarIntToSInt32(const A: TpbVarInt): Int32;
 begin
   Result := pbUInt32ToSInt32(pbVarIntToUInt32(A));
 end;
@@ -678,12 +678,12 @@ end;
 
 { Field key }
 
-function pbFieldKeyToUInt32(const FieldNumber: LongInt; const WireType: TpbWireType): LongWord;
+function pbFieldKeyToUInt32(const FieldNumber: Int32; const WireType: TpbWireType): Word32;
 begin
   Result := Ord(WireType) or (FieldNumber shl 3);
 end;
 
-procedure pbUInt32ToFieldKey(const A: LongWord; var FieldNumber: LongInt; var WireType: TpbWireType);
+procedure pbUInt32ToFieldKey(const A: Word32; var FieldNumber: Int32; var WireType: TpbWireType);
 begin
   WireType := TpbWireType(A and 7);
   FieldNumber := A shr 3;
@@ -698,11 +698,11 @@ begin
   Result := pbVarIntToEncBuf(Value, Buf, BufSize);
 end;
 
-function pbEncodeValueInt32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function pbEncodeValueInt32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
-  pbVarIntInitUInt32(A, LongWord(Value));
+  pbVarIntInitUInt32(A, Word32(Value));
   Result := pbVarIntToEncBuf(A, Buf, BufSize);
 end;
 
@@ -714,7 +714,7 @@ begin
   Result := pbVarIntToEncBuf(A, Buf, BufSize);
 end;
 
-function pbEncodeValueUInt32(var Buf; const BufSize: Integer; const Value: LongWord): Integer;
+function pbEncodeValueUInt32(var Buf; const BufSize: Integer; const Value: Word32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -730,7 +730,7 @@ begin
   Result := pbVarIntToEncBuf(A, Buf, BufSize);
 end;
 
-function pbEncodeValueSInt32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function pbEncodeValueSInt32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -768,10 +768,10 @@ begin
   Result := SizeOf(Value);
 end;
 
-function pbEncodeValueFixed32(var Buf; const BufSize: Integer; const Value: LongWord): Integer;
+function pbEncodeValueFixed32(var Buf; const BufSize: Integer; const Value: Word32): Integer;
 begin
   if BufSize >= SizeOf(Value) then
-    PLongWord(@Buf)^ := Value;
+    PWord32(@Buf)^ := Value;
   Result := SizeOf(Value);
 end;
 
@@ -782,10 +782,10 @@ begin
   Result := SizeOf(Value);
 end;
 
-function pbEncodeValueSFixed32(var Buf; const BufSize: Integer; const Value: LongInt): Integer;
+function pbEncodeValueSFixed32(var Buf; const BufSize: Integer; const Value: Int32): Integer;
 begin
   if BufSize >= SizeOf(Value) then
-    PLongInt(@Buf)^ := Value;
+    PInt32(@Buf)^ := Value;
   Result := SizeOf(Value);
 end;
 
@@ -806,7 +806,7 @@ begin
   L := BufSize;
   // string length as VarInt
   N := Length(Value);
-  pbVarIntInitUInt32(A, LongWord(N));
+  pbVarIntInitUInt32(A, Word32(N));
   J := pbVarIntToEncBuf(A, P^, L);
   Inc(P, J);
   Dec(L, J);
@@ -830,7 +830,7 @@ begin
   L := BufSize;
   // buffer size as VarInt
   N := ValueBufSize;
-  pbVarIntInitUInt32(A, LongWord(N));
+  pbVarIntInitUInt32(A, Word32(N));
   J := pbVarIntToEncBuf(A, P^, L);
   Inc(P, J);
   Dec(L, J);
@@ -845,9 +845,9 @@ begin
 end;
 
 function pbEncodeFieldKey(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const WireType: TpbWireType): Integer;
+         const FieldNumber: Int32; const WireType: TpbWireType): Integer;
 var
-  FieldKey : LongWord;
+  FieldKey : Word32;
   A : TpbVarInt;
 begin
   FieldKey := pbFieldKeyToUInt32(FieldNumber, WireType);
@@ -856,7 +856,7 @@ begin
 end;
 
 function pbEncodeFieldVarBytesHdr(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const VarBytesSize: Integer): Integer;
+         const FieldNumber: Int32; const VarBytesSize: Integer): Integer;
 var
   P : PByte;
   L : Integer;
@@ -870,14 +870,14 @@ begin
   I := pbEncodeFieldKey(P^, L, FieldNumber, pwtVarBytes);
   Dec(L, I);
   Inc(P, I);
-  pbVarIntInitUInt32(A, LongWord(VarBytesSize));
+  pbVarIntInitUInt32(A, Word32(VarBytesSize));
   I := pbVarIntToEncBuf(A, P^, L);
   Dec(L, I);
   Result := BufSize - L;
 end;
 
 function pbEncodeFieldVarInt(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: TpbVarInt): Integer;
+         const FieldNumber: Int32; const Value: TpbVarInt): Integer;
 var
   P : PByte;
   L : Integer;
@@ -894,16 +894,16 @@ begin
 end;
 
 function pbEncodeFieldInt32(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: LongInt): Integer;
+         const FieldNumber: Int32; const Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
-  pbVarIntInitUInt32(A, LongWord(Value));
+  pbVarIntInitUInt32(A, Word32(Value));
   Result := pbEncodeFieldVarInt(Buf, BufSize, FieldNumber, A);
 end;
 
 function pbEncodeFieldInt64(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Int64): Integer;
+         const FieldNumber: Int32; const Value: Int64): Integer;
 var
   A : TpbVarInt;
 begin
@@ -912,7 +912,7 @@ begin
 end;
 
 function pbEncodeFieldUInt32(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: LongWord): Integer;
+         const FieldNumber: Int32; const Value: Word32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -921,7 +921,7 @@ begin
 end;
 
 function pbEncodeFieldUInt64(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: UInt64): Integer;
+         const FieldNumber: Int32; const Value: UInt64): Integer;
 var
   A : TpbVarInt;
 begin
@@ -930,7 +930,7 @@ begin
 end;
 
 function pbEncodeFieldSInt32(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: LongInt): Integer;
+         const FieldNumber: Int32; const Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -939,7 +939,7 @@ begin
 end;
 
 function pbEncodeFieldSInt64(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Int64): Integer;
+         const FieldNumber: Int32; const Value: Int64): Integer;
 var
   A : TpbVarInt;
 begin
@@ -948,7 +948,7 @@ begin
 end;
 
 function pbEncodeFieldBool(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Boolean): Integer;
+         const FieldNumber: Int32; const Value: Boolean): Integer;
 var
   A : TpbVarInt;
 begin
@@ -957,7 +957,7 @@ begin
 end;
 
 function pbEncodeFieldDouble(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Double): Integer;
+         const FieldNumber: Int32; const Value: Double): Integer;
 var
   P : PByte;
   L : Integer;
@@ -974,7 +974,7 @@ begin
 end;
 
 function pbEncodeFieldFloat(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Single): Integer;
+         const FieldNumber: Int32; const Value: Single): Integer;
 var
   P : PByte;
   L : Integer;
@@ -991,7 +991,7 @@ begin
 end;
 
 function pbEncodeFieldFixed32(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: LongWord): Integer;
+         const FieldNumber: Int32; const Value: Word32): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1008,7 +1008,7 @@ begin
 end;
 
 function pbEncodeFieldFixed64(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: UInt64): Integer;
+         const FieldNumber: Int32; const Value: UInt64): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1025,7 +1025,7 @@ begin
 end;
 
 function pbEncodeFieldSFixed32(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: LongInt): Integer;
+         const FieldNumber: Int32; const Value: Int32): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1042,7 +1042,7 @@ begin
 end;
 
 function pbEncodeFieldSFixed64(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: Int64): Integer;
+         const FieldNumber: Int32; const Value: Int64): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1059,7 +1059,7 @@ begin
 end;
 
 function pbEncodeFieldString(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const Value: RawByteString): Integer;
+         const FieldNumber: Int32; const Value: RawByteString): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1076,7 +1076,7 @@ begin
 end;
 
 function pbEncodeFieldBytes(var Buf; const BufSize: Integer;
-         const FieldNumber: LongInt; const ValueBuf; const ValueBufSize: Integer): Integer;
+         const FieldNumber: Int32; const ValueBuf; const ValueBufSize: Integer): Integer;
 var
   P : PByte;
   L : Integer;
@@ -1098,7 +1098,7 @@ end;
 
 { Decode }
 
-function pbDecodeValueInt32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function pbDecodeValueInt32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -1114,7 +1114,7 @@ begin
   pbVarIntToBinBuf(A, Value, SizeOf(Value));
 end;
 
-function pbDecodeValueUInt32(const Buf; const BufSize: Integer; var Value: LongWord): Integer;
+function pbDecodeValueUInt32(const Buf; const BufSize: Integer; var Value: Word32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -1130,7 +1130,7 @@ begin
   pbVarIntToBinBuf(A, Value, SizeOf(Value));
 end;
 
-function pbDecodeValueSInt32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function pbDecodeValueSInt32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 var
   A : TpbVarInt;
 begin
@@ -1162,11 +1162,11 @@ begin
   Result := SizeOf(Value);
 end;
 
-function pbDecodeValueFixed32(const Buf; const BufSize: Integer; var Value: LongWord): Integer;
+function pbDecodeValueFixed32(const Buf; const BufSize: Integer; var Value: Word32): Integer;
 begin
   if BufSize < SizeOf(Value) then
     raise EpbDecodeError.Create(SErr_InvalidBuffer);
-  Value := PLongWord(@Buf)^;
+  Value := PWord32(@Buf)^;
   Result := SizeOf(Value);
 end;
 
@@ -1178,11 +1178,11 @@ begin
   Result := SizeOf(Value);
 end;
 
-function pbDecodeValueSFixed32(const Buf; const BufSize: Integer; var Value: LongInt): Integer;
+function pbDecodeValueSFixed32(const Buf; const BufSize: Integer; var Value: Int32): Integer;
 begin
   if BufSize < SizeOf(Value) then
     raise EpbDecodeError.Create(SErr_InvalidBuffer);
-  Value := PLongInt(@Buf)^;
+  Value := PInt32(@Buf)^;
   Result := SizeOf(Value);
 end;
 
@@ -1258,7 +1258,7 @@ var
   A : TpbVarInt;
   Q : PByte;
   WireSize : Integer;
-  Key32 : LongWord;
+  Key32 : Word32;
   Field : TpbProtoBufDecodeField;
 begin
   P := @Buf;
@@ -1304,10 +1304,10 @@ begin
     end;
 end;
 
-procedure pbDecodeFieldInt32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldInt32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
     pwtVarInt : pbVarIntToBinBuf(Field.ValueVarInt, Value, SizeOf(Value));
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
@@ -1317,7 +1317,7 @@ end;
 procedure pbDecodeFieldInt64(const Field: TpbProtoBufDecodeField; var Value: Int64);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
     pwt64Bit  : Value := PInt64(Field.WireDataPtr)^;
     pwtVarInt : pbVarIntToBinBuf(Field.ValueVarInt, Value, SizeOf(Value));
   else
@@ -1325,10 +1325,10 @@ begin
   end;
 end;
 
-procedure pbDecodeFieldUInt32(const Field: TpbProtoBufDecodeField; var Value: LongWord);
+procedure pbDecodeFieldUInt32(const Field: TpbProtoBufDecodeField; var Value: Word32);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongWord(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PWord32(Field.WireDataPtr)^;
     pwtVarInt : Value := pbVarIntToUInt32(Field.ValueVarInt);
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
@@ -1338,7 +1338,7 @@ end;
 procedure pbDecodeFieldUInt64(const Field: TpbProtoBufDecodeField; var Value: UInt64);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongWord(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PWord32(Field.WireDataPtr)^;
     pwt64Bit  : Value := PUInt64(Field.WireDataPtr)^;
     pwtVarInt : pbVarIntToBinBuf(Field.ValueVarInt, Value, SizeOf(Value));
   else
@@ -1346,10 +1346,10 @@ begin
   end;
 end;
 
-procedure pbDecodeFieldSInt32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldSInt32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
     pwtVarInt : Value := pbVarIntToSInt32(Field.ValueVarInt);
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
@@ -1359,7 +1359,7 @@ end;
 procedure pbDecodeFieldSInt64(const Field: TpbProtoBufDecodeField; var Value: Int64);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
     pwt64Bit  : Value := PInt64(Field.WireDataPtr)^;
     pwtVarInt : Value := pbVarIntToSInt64(Field.ValueVarInt);
   else
@@ -1386,10 +1386,10 @@ begin
   end;
 end;
 
-procedure pbDecodeFieldFixed32(const Field: TpbProtoBufDecodeField; var Value: LongWord);
+procedure pbDecodeFieldFixed32(const Field: TpbProtoBufDecodeField; var Value: Word32);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongWord(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PWord32(Field.WireDataPtr)^;
     pwtVarInt : Value := pbVarIntToUInt32(Field.ValueVarInt);
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
@@ -1399,17 +1399,17 @@ end;
 procedure pbDecodeFieldFixed64(const Field: TpbProtoBufDecodeField; var Value: UInt64);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongWord(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PWord32(Field.WireDataPtr)^;
     pwt64Bit  : Value := PUInt64(Field.WireDataPtr)^;
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
   end;
 end;
 
-procedure pbDecodeFieldSFixed32(const Field: TpbProtoBufDecodeField; var Value: LongInt);
+procedure pbDecodeFieldSFixed32(const Field: TpbProtoBufDecodeField; var Value: Int32);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
   end;
@@ -1418,7 +1418,7 @@ end;
 procedure pbDecodeFieldSFixed64(const Field: TpbProtoBufDecodeField; var Value: Int64);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^;
     pwt64Bit  : Value := PInt64(Field.WireDataPtr)^;
   else
     raise EpbDecodeError.Create(SErr_InvalidWireType);
@@ -1428,7 +1428,7 @@ end;
 procedure pbDecodeFieldBool(const Field: TpbProtoBufDecodeField; var Value: Boolean);
 begin
   case Field.WireType of
-    pwt32Bit  : Value := PLongInt(Field.WireDataPtr)^ <> 0;
+    pwt32Bit  : Value := PInt32(Field.WireDataPtr)^ <> 0;
     pwt64Bit  : Value := PInt64(Field.WireDataPtr)^ <> 0;
     pwtVarInt : Value := pbVarIntToUInt32(Field.ValueVarInt) <> 0;
   else
@@ -1485,7 +1485,7 @@ end;
 {$IFNDEF SupportsUInt64}{$WARNINGS OFF}{$ENDIF}
 procedure Test_VarInt;
 var I, J : TpbVarInt;
-    A : LongWord;
+    A : Word32;
 begin
   // InitZero
   pbVarIntInitZero(I);
@@ -1502,7 +1502,7 @@ begin
   pbVarIntInitUInt32(J, 1);
   Assert(not pbVarIntEquals(I, J));
 
-  // pbVarIntInitLongWord
+  // pbVarIntInitWord32
   pbVarIntInitUInt32(I, 0);
   Assert(I.EncSize = 1);
   Assert(I.EncData[0] = 0);
@@ -1925,7 +1925,7 @@ end;
 
 procedure Test_Decode_CallbackProc(const Field: TpbProtoBufDecodeField; const Data: Pointer);
 var
-  A : LongWord;
+  A : Word32;
   B : Int64;
   C : RawByteString;
 begin

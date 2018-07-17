@@ -52,7 +52,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -64,7 +64,7 @@ function  SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = T
 function  SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
 function  SecureRandomHexStrU(const Digits: Integer; const UpperCase: Boolean = True): UnicodeString;
 
-function  SecureRandomLongWord: LongWord;
+function  SecureRandomWord32: Word32;
 
 
 
@@ -72,6 +72,7 @@ implementation
 
 uses
   { Fundamentals }
+  flcUtils,
   flcRandom,
   flcHash;
 
@@ -90,7 +91,7 @@ procedure SecureRandomBlockGenerator(var Block: TSecureRandomBlock);
 const
   RandomSeedDataLen = 512 div 32;
 var I : Integer;
-    R512 : array[0..RandomSeedDataLen - 1] of LongWord;
+    R512 : array[0..RandomSeedDataLen - 1] of Word32;
     H512 : T512BitDigest;
     H256 : T256BitDigest;
     H128 : T128BitDigest;
@@ -156,7 +157,7 @@ function SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = Tr
 var B    : TSecureRandomBlock;
     S, T : String;
     L, N : Integer;
-    P    : PLongWord;
+    P    : PWord32;
     Q    : PChar;
 begin
   if Digits <= 0 then
@@ -174,7 +175,7 @@ begin
       N := SecureRandomBlockSize div 4;
       while (L >= 8) and (N > 0) do
         begin
-          T := LongWordToHex(P^, 8, UpperCase);
+          T := Word32ToHex(P^, 8, UpperCase);
           Move(PChar(T)^, Q^, 8 * SizeOf(Char));
           SecureClearStr(T);
           Inc(Q, 8);
@@ -187,7 +188,7 @@ begin
     begin
       SecureRandomBlockGenerator(B);
       P := @B;
-      T := LongWordToHex(P^, L, UpperCase);
+      T := Word32ToHex(P^, L, UpperCase);
       Move(PChar(T)^, Q^, L * SizeOf(Char));
       SecureClearStr(T);
     end;
@@ -199,8 +200,8 @@ function SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean): R
 var B    : TSecureRandomBlock;
     S, T : RawByteString;
     L, N : Integer;
-    P    : PLongWord;
-    Q    : PAnsiChar;
+    P    : PWord32;
+    Q    : PByte;
 begin
   if Digits <= 0 then
     begin
@@ -208,7 +209,7 @@ begin
       exit;
     end;
   SetLength(S, Digits);
-  Q := PAnsiChar(S);
+  Q := PByte(S);
   L := Digits;
   while L >= 8 do
     begin
@@ -217,8 +218,8 @@ begin
       N := SecureRandomBlockSize div 4;
       while (L >= 8) and (N > 0) do
         begin
-          T := LongWordToHexB(P^, 8, UpperCase);
-          Move(PAnsiChar(T)^, Q^, 8);
+          T := Word32ToHexB(P^, 8, UpperCase);
+          Move(PByte(T)^, Q^, 8);
           SecureClearStrB(T);
           Inc(Q, 8);
           Dec(N);
@@ -230,8 +231,8 @@ begin
     begin
       SecureRandomBlockGenerator(B);
       P := @B;
-      T := LongWordToHexA(P^, L, UpperCase);
-      Move(PAnsiChar(T)^, Q^, L);
+      T := Word32ToHexB(P^, L, UpperCase);
+      Move(PByte(T)^, Q^, L);
       SecureClearStrB(T);
     end;
   SecureClear(B, SecureRandomBlockSize);
@@ -242,7 +243,7 @@ function SecureRandomHexStrU(const Digits: Integer; const UpperCase: Boolean): U
 var B    : TSecureRandomBlock;
     S, T : UnicodeString;
     L, N : Integer;
-    P    : PLongWord;
+    P    : PWord32;
     Q    : PWideChar;
 begin
   if Digits <= 0 then
@@ -260,7 +261,7 @@ begin
       N := SecureRandomBlockSize div 4;
       while (L >= 8) and (N > 0) do
         begin
-          T := LongWordToHexU(P^, 8, UpperCase);
+          T := Word32ToHexU(P^, 8, UpperCase);
           Move(PWideChar(T)^, Q^, 8 * SizeOf(WideChar));
           SecureClear(T[1], 8 * SizeOf(WideChar));
           Inc(Q, 8);
@@ -273,7 +274,7 @@ begin
     begin
       SecureRandomBlockGenerator(B);
       P := @B;
-      T := LongWordToHexU(P^, L, UpperCase);
+      T := Word32ToHexU(P^, L, UpperCase);
       Move(PWideChar(T)^, Q^, L * SizeOf(WideChar));
       SecureClear(T[1], 8 * SizeOf(WideChar));
     end;
@@ -281,12 +282,12 @@ begin
   Result := S;
 end;
 
-function SecureRandomLongWord: LongWord;
-var L : LongWord;
+function SecureRandomWord32: Word32;
+var L : Word32;
 begin
-  SecureRandomBuf(L, SizeOf(LongWord));
+  SecureRandomBuf(L, SizeOf(Word32));
   Result := L;
-  SecureClear(L, SizeOf(LongWord));
+  SecureClear(L, SizeOf(Word32));
 end;
 
 

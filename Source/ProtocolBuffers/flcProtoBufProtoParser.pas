@@ -166,14 +166,14 @@ type
     function  EndOfText: Boolean;
 
     function  SkipChar: Boolean;
-    function  SkipCh(const C: AnsiCharSet): Boolean;
+    function  SkipCh(const C: ByteCharSet): Boolean;
     function  ExtractChar(var C: AnsiChar): Boolean;
-    function  SkipAllCh(const C: AnsiCharSet): Boolean;
+    function  SkipAllCh(const C: ByteCharSet): Boolean;
     function  SkipWhiteSpace: Boolean;
     function  SkipToStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
 
-    function  ExtractAllCh(const C: AnsiCharSet): RawByteString;
-    function  ExtractTo(const C: AnsiCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
+    function  ExtractAllCh(const C: ByteCharSet): RawByteString;
+    function  ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
 
     function  GetNextToken_IdentifierOrKeword: TpbProtoParserToken;
     function  GetNextToken_Number: TpbProtoParserToken;
@@ -458,7 +458,7 @@ begin
   Result := True;
 end;
 
-function TpbProtoParser.SkipCh(const C: AnsiCharSet): Boolean;
+function TpbProtoParser.SkipCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
     P : PAnsiChar;
 begin
@@ -499,7 +499,7 @@ begin
   Result := True;
 end;
 
-function TpbProtoParser.SkipAllCh(const C: AnsiCharSet): Boolean;
+function TpbProtoParser.SkipAllCh(const C: ByteCharSet): Boolean;
 var N, L, F : Integer;
     P : PAnsiChar;
 begin
@@ -561,7 +561,7 @@ begin
       if CaseSensitive then
         T := SysUtils.CompareMem(PAnsiChar(S), P, L)
       else
-        T := StrPMatchNoAsciiCaseA(PAnsiChar(S), P, L);
+        T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if T then
         break;
       Dec(N);
@@ -573,7 +573,7 @@ begin
   Result := R;
 end;
 
-function TpbProtoParser.ExtractAllCh(const C: AnsiCharSet): RawByteString;
+function TpbProtoParser.ExtractAllCh(const C: ByteCharSet): RawByteString;
 var N, L : Integer;
     P, Q : PAnsiChar;
     D : AnsiChar;
@@ -603,7 +603,7 @@ begin
   Result := S;
 end;
 
-function TpbProtoParser.ExtractTo(const C: AnsiCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
+function TpbProtoParser.ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
 var N, L : Integer;
     P, Q : PAnsiChar;
     D : AnsiChar;

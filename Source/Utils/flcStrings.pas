@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStrings.pas                                           }
-{   File version:     5.66                                                     }
+{   File version:     5.67                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2017, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -109,6 +109,7 @@
 {   2016/04/16  5.64  Changes to compile with FreePascal 3.0.0.                }
 {   2017/10/07  5.65  Created units flcStringPatternMatcher, flcStringBuilder  }
 {   2017/10/24  5.66  Created units flcUnicodeChar, flcZeroTerminatedString    }
+{   2018/07/17  5.67  Type changes.                                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -125,6 +126,9 @@
 {   Delphi XE7 Win64                    5.62  2016/01/09                       }
 {   Delphi 10 Win32                     5.62  2016/01/09                       }
 {   Delphi 10 Win64                     5.62  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.67  2018/07/17                       }
+{   Delphi 10.2 Win64                   5.67  2018/07/17                       }
+{   Delphi 10.2 Linux64                 5.67  2018/07/17                       }
 {   FreePascal 2.0.4 Linux i386         4.45  2009/06/06                       }
 {   FreePascal 2.4.0 OSX x86-64         4.47  2010/06/27                       }
 {   FreePascal 2.6.0 Win32              4.57  2012/08/30                       }
@@ -171,7 +175,7 @@ type
 
 
 {                                                                              }
-{ AnsiChar constants                                                           }
+{ ByteChar constants                                                           }
 {                                                                              }
 const
   { Common characters }
@@ -242,24 +246,6 @@ const
 
 
 {                                                                              }
-{ WideString constants                                                         }
-{                                                                              }
-{$IFDEF DELPHI5}
-const
-  WideCRLF = WideString(#13#10);
-{$ELSE}
-{$IFDEF DELPHI7_DOWN}
-const
-  WideCRLF = WideString(WideCR) + WideString(WideLF);
-{$ELSE}
-const
-  WideCRLF = WideCR + WideLF;
-{$ENDIF}
-{$ENDIF}
-
-
-
-{                                                                              }
 { UCS4 constants                                                               }
 {                                                                              }
 const
@@ -274,35 +260,59 @@ const
 {                                                                              }
 { Unicode functions                                                            }
 {                                                                              }
+{$IFDEF SupportWideString}
 function  UnicodeUpperCaseW(const S: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UnicodeUpperCaseU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function  UnicodeLowerCaseW(const S: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  UnicodeLowerCaseU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 
 function  CharCompareNoUnicodeCaseW(const A, B: WideChar): Integer;
 function  StrPCompareNoUnicodeCaseW(const A, B: PWideChar; const Len: Integer): Integer;
 
+{$IFDEF SupportWideString}
 function  StrCompareNoUnicodeCaseW(const A, B: WideString): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrCompareNoUnicodeCaseU(const A, B: UnicodeString): Integer;
+{$ENDIF}
 
 
 
 {                                                                              }
 { String functions                                                             }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 procedure SetLengthAndZeroA(var S: AnsiString; const NewLength: Integer);
+{$ENDIF}
 procedure SetLengthAndZeroB(var S: RawByteString; const NewLength: Integer);
+{$IFDEF SupportWideString}
 procedure SetLengthAndZeroW(var S: WideString; const NewLength: Integer);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure SetLengthAndZeroU(var S: UnicodeString; const NewLength: Integer);
+{$ENDIF}
 
 function  ToStringChA(const A: AnsiChar): String; {$IFDEF UseInline}inline;{$ENDIF}
 function  ToStringChW(const A: WideChar): String; {$IFDEF UseInline}inline;{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  ToStringA(const A: AnsiString): String; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  ToStringB(const A: RawByteString): String; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFDEF SupportWideString}
 function  ToStringW(const A: WideString): String; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  ToStringU(const A: UnicodeString): String; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 
 
 
@@ -321,108 +331,172 @@ function  CharMatchAW(const A: AnsiChar; const B: WideChar; const AsciiCaseSensi
 function  CharMatchAS(const A: AnsiChar; const B: Char; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  CharMatch(const A, B: Char; const AsciiCaseSensitive: Boolean = True): Boolean;
 
-function  CharSetMatchCharA(const A: CharSet; const B: AnsiChar; const AsciiCaseSensitive: Boolean = True): Boolean;
-function  CharSetMatchCharW(const A: CharSet; const B: WideChar; const AsciiCaseSensitive: Boolean = True): Boolean;
-function  CharSetMatchChar(const A: CharSet; const B: Char; const AsciiCaseSensitive: Boolean = True): Boolean;
+function  CharSetMatchCharA(const A: ByteCharSet; const B: AnsiChar; const AsciiCaseSensitive: Boolean = True): Boolean;
+function  CharSetMatchCharW(const A: ByteCharSet; const B: WideChar; const AsciiCaseSensitive: Boolean = True): Boolean;
+function  CharSetMatchChar(const A: ByteCharSet; const B: Char; const AsciiCaseSensitive: Boolean = True): Boolean;
 
 {$IFNDEF ManagedCode}
-function  StrPMatchA(const A, B: PAnsiChar; const Len: Integer): Boolean; overload;
+function  StrPMatchA(const A, B: PByteChar; const Len: Integer): Boolean; overload;
 function  StrPMatchW(const A, B: PWideChar; const Len: Integer): Boolean; overload;
-function  StrPMatchAW(const A: PWideChar; B: PAnsiChar; const Len: Integer): Boolean; overload;
-function  StrPMatchAS(const A: PChar; B: PAnsiChar; const Len: Integer): Boolean; overload;
+function  StrPMatchAW(const A: PWideChar; B: PByteChar; const Len: Integer): Boolean; overload;
+function  StrPMatchAS(const A: PChar; B: PByteChar; const Len: Integer): Boolean; overload;
 function  StrPMatch(const A, B: PChar; const Len: Integer): Boolean; overload;
 
-function  StrPMatchA(const S, M: PAnsiChar; const LenS, LenM: Integer): Boolean; overload;
+function  StrPMatchA(const S, M: PByteChar; const LenS, LenM: Integer): Boolean; overload;
 function  StrPMatchW(const S, M: PWideChar; const LenS, LenM: Integer): Boolean; overload;
-function  StrPMatchAW(const S: PWideChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean; overload;
-function  StrPMatchAS(const S: PChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean; overload;
+function  StrPMatchAW(const S: PWideChar; const M: PByteChar; const LenS, LenM: Integer): Boolean; overload;
+function  StrPMatchAS(const S: PChar; const M: PByteChar; const LenS, LenM: Integer): Boolean; overload;
 function  StrPMatch(const S, M: PChar; const LenS, LenM: Integer): Boolean; overload;
-function  StrPMatchStrPA(const S: PChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean;
+function  StrPMatchStrPA(const S: PChar; const M: PByteChar; const LenS, LenM: Integer): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrPMatchStrA(const S: PAnsiChar; const Len: Integer; const M: AnsiString): Boolean;
-function  StrPMatchStrB(const S: PAnsiChar; const Len: Integer; const M: RawByteString): Boolean;
+{$ENDIF}
+function  StrPMatchStrB(const S: PByteChar; const Len: Integer; const M: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrPMatchStrW(const S: PWideChar; const Len: Integer; const M: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
 function  StrPMatchStrAW(const S: PWideChar; const Len: Integer; const M: AnsiString): Boolean;
 function  StrPMatchStrAS(const S: PChar; const Len: Integer; const M: AnsiString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrPMatchStrU(const S: PWideChar; const Len: Integer; const M: UnicodeString): Boolean;
+{$ENDIF}
 function  StrPMatchStr(const S: PChar; const Len: Integer; const M: String): Boolean;
 
-function  StrPMatchNoAsciiCaseA(const A, B: PAnsiChar; const Len: Integer): Boolean;
+function  StrPMatchNoAsciiCaseA(const A, B: PByteChar; const Len: Integer): Boolean;
 function  StrPMatchNoAsciiCaseW(const A, B: PWideChar; const Len: Integer): Boolean;
-function  StrPMatchNoAsciiCaseAW(const A: PWideChar; const B: PAnsiChar; const Len: Integer): Boolean;
-function  StrPMatchNoAsciiCaseAS(const A: PChar; const B: PAnsiChar; const Len: Integer): Boolean;
+function  StrPMatchNoAsciiCaseAW(const A: PWideChar; const B: PByteChar; const Len: Integer): Boolean;
+function  StrPMatchNoAsciiCaseAS(const A: PChar; const B: PByteChar; const Len: Integer): Boolean;
 function  StrPMatchNoAsciiCase(const A, B: PChar; const Len: Integer): Boolean;
 
 function  StrPMatchNoUnicodeCaseW(const A, B: PWideChar; const Len: Integer): Boolean;
 
-function  StrPMatchLenA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Integer;
-function  StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: CharSet): Integer; overload;
+function  StrPMatchLenA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Integer;
+function  StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer; overload;
 function  StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: TWideCharMatchFunction): Integer; overload;
-function  StrPMatchLen(const P: PChar; const Len: Integer; const M: CharSet): Integer;
+function  StrPMatchLen(const P: PChar; const Len: Integer; const M: ByteCharSet): Integer;
 
-function  StrPMatchCountA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Integer;
-function  StrPMatchCountW(const P: PWideChar; const Len: Integer; const M: CharSet): Integer; overload;
+function  StrPMatchCountA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Integer;
+function  StrPMatchCountW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer; overload;
 function  StrPMatchCountW(const P: PWideChar; const Len: Integer; const M: TWideCharMatchFunction): Integer; overload;
 
-function  StrPMatchCharA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Boolean;
-function  StrPMatchCharW(const P: PWideChar; const Len: Integer; const M: CharSet): Boolean; overload;
+function  StrPMatchCharA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Boolean;
+function  StrPMatchCharW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Boolean; overload;
 function  StrPMatchCharW(const P: PWideChar; const Len: Integer; const M: TWideCharMatchFunction): Boolean; overload;
-function  StrPMatchChar(const P: PChar; const Len: Integer; const M: CharSet): Boolean;
+function  StrPMatchChar(const P: PChar; const Len: Integer; const M: ByteCharSet): Boolean;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  StrMatchA(const S, M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatchB(const S, M: RawByteString; const Index: Integer = 1): Boolean;
+{$IFDEF SupportWideString}
 function  StrMatchW(const S, M: WideString; const Index: Integer = 1): Boolean;
 function  StrMatchAW(const S: WideString; const M: AnsiString; const Index: Integer = 1): Boolean;
 function  StrMatchBW(const S: WideString; const M: RawByteString; const Index: Integer): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrMatchU(const S, M: UnicodeString; const Index: Integer = 1): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrMatchAU(const S: UnicodeString; const M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatchAS(const S: String; const M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatch(const S, M: String; const Index: Integer = 1): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrMatchNoAsciiCaseA(const S, M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatchNoAsciiCaseB(const S, M: RawByteString; const Index: Integer = 1): Boolean;
+{$IFDEF SupportWideString}
 function  StrMatchNoAsciiCaseW(const S, M: WideString; const Index: Integer = 1): Boolean;
 function  StrMatchNoAsciiCaseAW(const S: WideString; const M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrMatchNoAsciiCaseU(const S, M: UnicodeString; const Index: Integer = 1): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrMatchNoAsciiCaseAU(const S: UnicodeString; const M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatchNoAsciiCaseAS(const S: String; const M: AnsiString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 function  StrMatchNoAsciiCase(const S, M: String; const Index: Integer = 1): Boolean;
 
+{$IFDEF SupportWideString}
 function  StrMatchNoUnicodeCaseW(const S, M: WideString; const Index: Integer = 1): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer = 1): Boolean;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  StrMatchLeftA(const S, M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
 function  StrMatchLeftB(const S, M: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$IFDEF SupportWideString}
 function  StrMatchLeftW(const S, M: WideString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrMatchLeftAW(const S: WideString; const M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrMatchLeftU(const S, M: UnicodeString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrMatchLeftAU(const S: UnicodeString; const M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$ENDIF}
 function  StrMatchLeft(const S, M: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrMatchRightA(const S, M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
 function  StrMatchRightB(const S, M: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$IFDEF SupportWideString}
 function  StrMatchRightW(const S, M: WideString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrMatchRightAW(const S: WideString; const M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrMatchRightU(const S, M: UnicodeString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrMatchRightAU(const S: UnicodeString; const M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$ENDIF}
 function  StrMatchRight(const S, M: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
-function  StrMatchLenA(const S: AnsiString; const M: CharSet; const Index: Integer = 1): Integer;
-function  StrMatchLenB(const S: RawByteString; const M: CharSet; const Index: Integer = 1): Integer;
-function  StrMatchLenW(const S: WideString; const M: CharSet; const Index: Integer = 1): Integer; overload;
+{$IFDEF SupportAnsiString}
+function  StrMatchLenA(const S: AnsiString; const M: ByteCharSet; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  StrMatchLenB(const S: RawByteString; const M: ByteCharSet; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
+function  StrMatchLenW(const S: WideString; const M: ByteCharSet; const Index: Integer = 1): Integer; overload;
 function  StrMatchLenW(const S: WideString; const M: TWideCharMatchFunction; const Index: Integer = 1): Integer; overload;
-function  StrMatchLenU(const S: UnicodeString; const M: CharSet; const Index: Integer = 1): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrMatchLenU(const S: UnicodeString; const M: ByteCharSet; const Index: Integer = 1): Integer; overload;
 function  StrMatchLenU(const S: UnicodeString; const M: TWideCharMatchFunction; const Index: Integer = 1): Integer; overload;
-function  StrMatchLen(const S: String; const M: CharSet; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  StrMatchLen(const S: String; const M: ByteCharSet; const Index: Integer = 1): Integer;
 
-function  StrMatchCharA(const S: AnsiString; const M: CharSet): Boolean;
-function  StrMatchCharB(const S: RawByteString; const M: CharSet): Boolean;
-function  StrMatchCharW(const S: WideString; const M: CharSet): Boolean; overload;
+{$IFDEF SupportAnsiString}
+function  StrMatchCharA(const S: AnsiString; const M: ByteCharSet): Boolean;
+{$ENDIF}
+function  StrMatchCharB(const S: RawByteString; const M: ByteCharSet): Boolean;
+{$IFDEF SupportWideString}
+function  StrMatchCharW(const S: WideString; const M: ByteCharSet): Boolean; overload;
 function  StrMatchCharW(const S: WideString; const M: TWideCharMatchFunction): Boolean; overload;
-function  StrMatchCharU(const S: UnicodeString; const M: CharSet): Boolean; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrMatchCharU(const S: UnicodeString; const M: ByteCharSet): Boolean; overload;
 function  StrMatchCharU(const S: UnicodeString; const M: TWideCharMatchFunction): Boolean; overload;
-function  StrMatchChar(const S: String; const M: CharSet): Boolean;
+{$ENDIF}
+function  StrMatchChar(const S: String; const M: ByteCharSet): Boolean;
 
 
 
@@ -430,61 +504,111 @@ function  StrMatchChar(const S: String; const M: CharSet): Boolean;
 { Equal                                                                        }
 {                                                                              }
 {$IFNDEF ManagedCode}
-function  StrPEqual(const P1, P2: PAnsiChar; const Len1, Len2: Integer; const AsciiCaseSensitive: Boolean = True): Boolean;
+function  StrPEqual(const P1, P2: PByteChar; const Len1, Len2: Integer; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$IFDEF SupportAnsiString}
 function  StrPEqualStr(const P: PAnsiChar; const Len: Integer; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
 {$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  StrEqualA(const A, B: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
 function  StrEqualB(const A, B: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$IFDEF SupportWideString}
 function  StrEqualW(const A, B: WideString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrEqualAW(const A: WideString; const B: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrEqualBW(const A: WideString; const B: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrEqualU(const A, B: UnicodeString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrEqualAU(const A: UnicodeString; const B: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
+{$ENDIF}
+{$ENDIF}
 function  StrEqual(const A, B: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrEqualNoAsciiCaseA(const A, B: AnsiString): Boolean;
+{$ENDIF}
 function  StrEqualNoAsciiCaseB(const A, B: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrEqualNoAsciiCaseW(const A, B: WideString): Boolean;
 function  StrEqualNoAsciiCaseAW(const A: WideString; const B: AnsiString): Boolean;
 function  StrEqualNoAsciiCaseBW(const A: WideString; const B: RawByteString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrEqualNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  StrEqualNoAsciiCaseAU(const A: UnicodeString; const B: AnsiString): Boolean;
+{$ENDIF}
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrEqualNoAsciiCaseBU(const A: UnicodeString; const B: RawByteString): Boolean;
+{$ENDIF}
 function  StrEqualNoAsciiCase(const A, B: String): Boolean;
 
+{$IFDEF SupportWideString}
 function  StrEqualNoUnicodeCaseW(const A, B: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Validation                                                                   }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  StrIsNumericA(const S: AnsiString): Boolean;
+{$ENDIF}
 function  StrIsNumericB(const S: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrIsNumericW(const S: WideString): Boolean;
+{$ENDIF}
 function  StrIsNumeric(const S: String): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrIsHexA(const S: AnsiString): Boolean;
+{$ENDIF}
 function  StrIsHexB(const S: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrIsHexW(const S: WideString): Boolean;
+{$ENDIF}
 function  StrIsHex(const S: String): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrIsAlphaA(const S: AnsiString): Boolean;
+{$ENDIF}
 function  StrIsAlphaB(const S: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrIsAlphaW(const S: WideString): Boolean;
+{$ENDIF}
 function  StrIsAlpha(const S: String): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrIsAlphaNumericA(const S: AnsiString): Boolean;
+{$ENDIF}
 function  StrIsAlphaNumericB(const S: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrIsAlphaNumericW(const S: WideString): Boolean;
+{$ENDIF}
 function  StrIsAlphaNumeric(const S: String): Boolean;
 
+{$IFDEF SupportAnsiString}
 function  StrIsIntegerA(const S: AnsiString): Boolean;
+{$ENDIF}
 function  StrIsIntegerB(const S: RawByteString): Boolean;
+{$IFDEF SupportWideString}
 function  StrIsIntegerW(const S: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrIsIntegerU(const S: UnicodeString): Boolean;
+{$ENDIF}
 function  StrIsInteger(const S: String): Boolean;
 
 
@@ -493,85 +617,153 @@ function  StrIsInteger(const S: String): Boolean;
 { Pos                                                                          }
 {                                                                              }
 {$IFNDEF ManagedCode}
-function  StrPPosCharA(const F: AnsiChar; const S: PAnsiChar; const Len: Integer): Integer;
+function  StrPPosCharA(const F: AnsiChar; const S: PByteChar; const Len: Integer): Integer;
 function  StrPPosCharW(const F: WideChar; const S: PWideChar; const Len: Integer): Integer;
 
-function  StrPPosCharSetA(const F: CharSet; const S: PAnsiChar; const Len: Integer): Integer;
-function  StrPPosCharSetW(const F: CharSet; const S: PWideChar; const Len: Integer): Integer;
+function  StrPPosCharSetA(const F: ByteCharSet; const S: PByteChar; const Len: Integer): Integer;
+function  StrPPosCharSetW(const F: ByteCharSet; const S: PWideChar; const Len: Integer): Integer;
 
-function  StrPPosA(const F, S: PAnsiChar; const LenF, LenS: Integer): Integer;
+function  StrPPosA(const F, S: PByteChar; const LenF, LenS: Integer): Integer;
 function  StrPPosW(const F, S: PWideChar; const LenF, LenS: Integer): Integer;
 
+{$IFDEF SupportAnsiString}
 function  StrPPosStrA(const F: AnsiString; const S: PAnsiChar; const Len: Integer): Integer;
-function  StrPPosStrB(const F: RawByteString; const S: PAnsiChar; const Len: Integer): Integer;
+{$ENDIF}
+function  StrPPosStrB(const F: RawByteString; const S: PByteChar; const Len: Integer): Integer;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  PosCharA(const F: AnsiChar; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosCharB(const F: AnsiChar; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
 function  PosCharW(const F: WideChar; const S: WideString; const Index: Integer = 1): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosCharU(const F: WideChar; const S: UnicodeString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosChar(const F: Char; const S: String; const Index: Integer = 1): Integer;
 
-function  PosCharSetA(const F: CharSet; const S: AnsiString; const Index: Integer = 1): Integer;
-function  PosCharSetB(const F: CharSet; const S: RawByteString; const Index: Integer = 1): Integer;
-function  PosCharSetW(const F: CharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
+{$IFDEF SupportAnsiString}
+function  PosCharSetA(const F: ByteCharSet; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosCharSetB(const F: ByteCharSet; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
+function  PosCharSetW(const F: ByteCharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportWideString}
 function  PosCharSetW(const F: TWideCharMatchFunction; const S: WideString; const Index: Integer = 1): Integer; overload;
-function  PosCharSetU(const F: CharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  PosCharSetU(const F: ByteCharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
 function  PosCharSetU(const F: TWideCharMatchFunction; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
-function  PosCharSet(const F: CharSet; const S: String; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosCharSet(const F: ByteCharSet; const S: String; const Index: Integer = 1): Integer;
 
-function  PosNotCharA(const F: AnsiChar; const S: AnsiString; const Index: Integer = 1): Integer; 
+{$IFDEF SupportAnsiString}
+function  PosNotCharA(const F: AnsiChar; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosNotCharB(const F: AnsiChar; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
 function  PosNotCharW(const F: WideChar; const S: WideString; const Index: Integer = 1): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosNotCharU(const F: WideChar; const S: UnicodeString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosNotChar(const F: Char; const S: String; const Index: Integer = 1): Integer;
 
-function  PosNotCharSetA(const F: CharSet; const S: AnsiString; const Index: Integer = 1): Integer;
-function  PosNotCharSetB(const F: CharSet; const S: RawByteString; const Index: Integer = 1): Integer;
-function  PosNotCharSetW(const F: CharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
+{$IFDEF SupportAnsiString}
+function  PosNotCharSetA(const F: ByteCharSet; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosNotCharSetB(const F: ByteCharSet; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
+function  PosNotCharSetW(const F: ByteCharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
 function  PosNotCharSetW(const F: TWideCharMatchFunction; const S: WideString; const Index: Integer = 1): Integer; overload;
-function  PosNotCharSetU(const F: CharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  PosNotCharSetU(const F: ByteCharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
 function  PosNotCharSetU(const F: TWideCharMatchFunction; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
-function  PosNotCharSet(const F: CharSet; const S: String; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosNotCharSet(const F: ByteCharSet; const S: String; const Index: Integer = 1): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosCharRevA(const F: AnsiChar; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosCharRevB(const F: AnsiChar; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
 function  PosCharRevW(const F: WideChar; const S: WideString; const Index: Integer = 1): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosCharRevU(const F: WideChar; const S: UnicodeString; const Index: Integer = 1): Integer;
+{$ENDIF}
 function  PosCharRev(const F: Char; const S: String; const Index: Integer = 1): Integer;
 
-function  PosCharSetRevA(const F: CharSet; const S: AnsiString; const Index: Integer = 1): Integer;
-function  PosCharSetRevB(const F: CharSet; const S: RawByteString; const Index: Integer = 1): Integer;
-function  PosCharSetRevW(const F: CharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
+{$IFDEF SupportAnsiString}
+function  PosCharSetRevA(const F: ByteCharSet; const S: AnsiString; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosCharSetRevB(const F: ByteCharSet; const S: RawByteString; const Index: Integer = 1): Integer;
+{$IFDEF SupportWideString}
+function  PosCharSetRevW(const F: ByteCharSet; const S: WideString; const Index: Integer = 1): Integer; overload;
 function  PosCharSetRevW(const F: TWideCharMatchFunction; const S: WideString; const Index: Integer = 1): Integer; overload;
-function  PosCharSetRevU(const F: CharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  PosCharSetRevU(const F: ByteCharSet; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
 function  PosCharSetRevU(const F: TWideCharMatchFunction; const S: UnicodeString; const Index: Integer = 1): Integer; overload;
-function  PosCharSetRev(const F: CharSet; const S: String; const Index: Integer = 1): Integer;
+{$ENDIF}
+function  PosCharSetRev(const F: ByteCharSet; const S: String; const Index: Integer = 1): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosStrA(const F, S: AnsiString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosStrB(const F, S: RawByteString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$IFDEF SupportWideString}
 function  PosStrW(const F, S: WideString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
 function  PosStrAW(const F: AnsiString; const S: WideString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosStrU(const F, S: UnicodeString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function  PosStrAU(const F: AnsiString; const S: UnicodeString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$ENDIF}
 function  PosStr(const F, S: String; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosStrRevA(const F, S: AnsiString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosStrRevB(const F, S: RawByteString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$IFDEF SupportWideString}
 function  PosStrRevW(const F, S: WideString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosStrRevU(const F, S: UnicodeString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosStrRev(const F, S: String; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosStrRevIdxA(const F, S: AnsiString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosStrRevIdxB(const F, S: RawByteString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$IFDEF SupportWideString}
 function  PosStrRevIdxW(const F, S: WideString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosStrRevIdxU(const F, S: UnicodeString; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosStrRevIdx(const F, S: String; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosNStrA(const F, S: AnsiString; const N: Integer; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosNStrB(const F, S: RawByteString; const N: Integer; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$IFDEF SupportWideString}
 function  PosNStrW(const F, S: WideString; const N: Integer; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  PosNStrU(const F, S: UnicodeString; const N: Integer; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
+{$ENDIF}
 function  PosNStr(const F, S: String; const N: Integer; const Index: Integer = 1; const AsciiCaseSensitive: Boolean = True): Integer;
 
 
@@ -584,40 +776,58 @@ function  PosNStr(const F, S: String; const N: Integer; const Index: Integer = 1
 {                                                                              }
 {$IFDEF SupportAnsiString}
 function  CopyRangeA(const S: AnsiString; const StartIndex, StopIndex: Integer): AnsiString;
-function  CopyRangeB(const S: RawByteString; const StartIndex, StopIndex: Integer): RawByteString;
 {$ENDIF}
+function  CopyRangeB(const S: RawByteString; const StartIndex, StopIndex: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  CopyRangeW(const S: WideString; const StartIndex, StopIndex: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyRangeU(const S: UnicodeString; const StartIndex, StopIndex: Integer): UnicodeString;
+{$ENDIF}
 function  CopyRange(const S: String; const StartIndex, StopIndex: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyFromA(const S: AnsiString; const Index: Integer): AnsiString;
-function  CopyFromB(const S: RawByteString; const Index: Integer): RawByteString;
 {$ENDIF}
+function  CopyFromB(const S: RawByteString; const Index: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  CopyFromW(const S: WideString; const Index: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyFromU(const S: UnicodeString; const Index: Integer): UnicodeString;
+{$ENDIF}
 function  CopyFrom(const S: String; const Index: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyLeftA(const S: AnsiString; const Count: Integer): AnsiString;
 function  CopyLeftB(const S: RawByteString; const Count: Integer): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  CopyLeftW(const S: WideString; const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyLeftU(const S: UnicodeString; const Count: Integer): UnicodeString;
+{$ENDIF}
 function  CopyLeft(const S: String; const Count: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyRightA(const S: AnsiString; const Count: Integer): AnsiString;
 function  CopyRightB(const S: RawByteString; const Count: Integer): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  CopyRightW(const S: WideString; const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyRightU(const S: UnicodeString; const Count: Integer): UnicodeString;
+{$ENDIF}
 function  CopyRight(const S: String; const Count: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyLeftEllipsedA(const S: AnsiString; const Count: Integer): AnsiString;
 {$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyLeftEllipsedU(const S: UnicodeString; const Count: Integer): UnicodeString;
+{$ENDIF}
 
 
 
@@ -633,23 +843,33 @@ function  CopyExA(const S: AnsiString; const Start, Count: Integer): AnsiString;
 function  CopyExB(const S: RawByteString; const Start, Count: Integer): RawByteString;
 {$ENDIF}
 function  CopyExW(const S: String; const Start, Count: Integer): String;
+{$IFDEF SupportUnicodeString}
 function  CopyExU(const S: UnicodeString; const Start, Count: Integer): UnicodeString;
+{$ENDIF}
 function  CopyEx(const S: String; const Start, Count: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyRangeExA(const S: AnsiString; const Start, Stop: Integer): AnsiString;
 function  CopyRangeExB(const S: RawByteString; const Start, Stop: Integer): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  CopyRangeExW(const S: WideString; const Start, Stop: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyRangeExU(const S: UnicodeString; const Start, Stop: Integer): UnicodeString;
+{$ENDIF}
 function  CopyRangeEx(const S: String; const Start, Stop: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyFromExA(const S: AnsiString; const Start: Integer): AnsiString;
 function  CopyFromExB(const S: RawByteString; const Start: Integer): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  CopyFromExW(const S: WideString; const Start: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  CopyFromExU(const S: UnicodeString; const Start: Integer): UnicodeString;
+{$ENDIF}
 function  CopyFromEx(const S: String; const Start: Integer): String;
 
 
@@ -658,87 +878,125 @@ function  CopyFromEx(const S: String; const Start: Integer): String;
 { Trim                                                                         }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function  StrTrimLeftA(const S: AnsiString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
-function  StrTrimLeftB(const S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
+function  StrTrimLeftA(const S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
 {$ENDIF}
-function  StrTrimLeftW(const S: WideString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
+function  StrTrimLeftB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
+{$IFDEF SupportWideString}
+function  StrTrimLeftW(const S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
 function  StrTrimLeftW(const S: WideString;    const C: TWideCharMatchFunction): WideString; overload;
-function  StrTrimLeftU(const S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrTrimLeftU(const S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
 function  StrTrimLeftU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString; overload;
-function  StrTrimLeft(const S: String;         const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): String;
+{$ENDIF}
+function  StrTrimLeft(const S: String;         const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): String;
 
 {$IFDEF SupportAnsiString}
-procedure StrTrimLeftInPlaceA(var S: AnsiString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
-procedure StrTrimLeftInPlaceB(var S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+procedure StrTrimLeftInPlaceA(var S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 {$ENDIF}
-procedure StrTrimLeftInPlaceW(var S: WideString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+procedure StrTrimLeftInPlaceB(var S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$IFDEF SupportWideString}
+procedure StrTrimLeftInPlaceW(var S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimLeftInPlaceW(var S: WideString;    const C: TWideCharMatchFunction); overload;
-procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction); overload;
-procedure StrTrimLeftInPlace(var S: String;         const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$ENDIF}
+procedure StrTrimLeftInPlace(var S: String;         const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 
 {$IFDEF SupportAnsiString}
 function  StrTrimLeftStrNoCaseA(const S: AnsiString; const TrimStr: AnsiString): AnsiString;
 function  StrTrimLeftStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrTrimLeftStrNoCaseW(const S: WideString; const TrimStr: WideString): WideString;
-function  StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: WideString): UnicodeString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
+{$ENDIF}
 function  StrTrimLeftStrNoCase(const S: String; const TrimStr: String): String;
 
 {$IFDEF SupportAnsiString}
-function  StrTrimRightA(const S: AnsiString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
-function  StrTrimRightB(const S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
+function  StrTrimRightA(const S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
+function  StrTrimRightB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$ENDIF}
-function  StrTrimRightW(const S: WideString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
+{$IFDEF SupportWideString}
+function  StrTrimRightW(const S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
 function  StrTrimRightW(const S: WideString;    const C: TWideCharMatchFunction): WideString; overload;
-function  StrTrimRightU(const S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrTrimRightU(const S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
 function  StrTrimRightU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString; overload;
-function  StrTrimRight(const S: String;         const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): String;
+{$ENDIF}
+function  StrTrimRight(const S: String;         const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): String;
 
 {$IFDEF SupportAnsiString}
-procedure StrTrimRightInPlaceA(var S: AnsiString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
-procedure StrTrimRightInPlaceB(var S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+procedure StrTrimRightInPlaceA(var S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 {$ENDIF}
-procedure StrTrimRightInPlaceW(var S: WideString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+procedure StrTrimRightInPlaceB(var S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$IFDEF SupportWideString}
+procedure StrTrimRightInPlaceW(var S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimRightInPlaceW(var S: WideString;    const C: TWideCharMatchFunction); overload;
-procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction); overload;
-procedure StrTrimRightInPlace(var S: String;         const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$ENDIF}
+procedure StrTrimRightInPlace(var S: String;         const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 
 {$IFDEF SupportAnsiString}
 function  StrTrimRightStrNoCaseA(const S: AnsiString; const TrimStr: AnsiString): AnsiString;
 function  StrTrimRightStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrTrimRightStrNoCaseW(const S: WideString; const TrimStr: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrTrimRightStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
+{$ENDIF}
 function  StrTrimRightStrNoCase(const S: String; const TrimStr: String): String;
 
 {$IFDEF SupportAnsiString}
-function  StrTrimA(const S: AnsiString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
-function  StrTrimB(const S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
+function  StrTrimA(const S: AnsiString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
+function  StrTrimB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$ENDIF}
-function  StrTrimW(const S: WideString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
+{$IFDEF SupportWideString}
+function  StrTrimW(const S: WideString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
 function  StrTrimW(const S: WideString; const C: TWideCharMatchFunction): WideString; overload;
-function  StrTrimU(const S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrTrimU(const S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): UnicodeString; overload;
 function  StrTrimU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString; overload;
-function  StrTrim(const S: String; const C: CharSet): String; overload;
+{$ENDIF}
+function  StrTrim(const S: String; const C: ByteCharSet): String; overload;
 
 {$IFDEF SupportAnsiString}
-procedure StrTrimInPlaceA(var S: AnsiString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
-procedure StrTrimInPlaceB(var S: RawByteString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+procedure StrTrimInPlaceA(var S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 {$ENDIF}
-procedure StrTrimInPlaceW(var S: WideString;    const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+procedure StrTrimInPlaceB(var S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$IFDEF SupportWideString}
+procedure StrTrimInPlaceW(var S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimInPlaceW(var S: WideString;    const C: TWideCharMatchFunction); overload;
-procedure StrTrimInPlaceU(var S: UnicodeString; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+procedure StrTrimInPlaceU(var S: UnicodeString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 procedure StrTrimInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction); overload;
-procedure StrTrimInPlace(var S: String;         const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
+{$ENDIF}
+procedure StrTrimInPlace(var S: String;         const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF});
 
 {$IFDEF SupportAnsiString}
-procedure TrimStringsA(var S: AnsiStringArray; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
-procedure TrimStringsB(var S: RawByteStringArray; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+procedure TrimStringsA(var S: AnsiStringArray; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
 {$ENDIF}
-procedure TrimStringsW(var S: WideStringArray; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
-procedure TrimStringsU(var S: UnicodeStringArray; const C: CharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$IFDEF SupportRawByteString}
+procedure TrimStringsB(var S: RawByteStringArray; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
+{$IFDEF SupportWideString}
+procedure TrimStringsW(var S: WideStringArray; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+procedure TrimStringsU(var S: UnicodeStringArray; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}); overload;
+{$ENDIF}
 
 
 
@@ -746,35 +1004,65 @@ procedure TrimStringsU(var S: UnicodeStringArray; const C: CharSet{$IFNDEF CLR} 
 { Duplicate                                                                    }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function  BufToStrA(const Buf; const BufSize: Integer): AnsiString;
+{$ENDIF}
 function  BufToStrB(const Buf; const BufSize: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  BufToStrW(const Buf; const BufSize: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  BufToStrU(const Buf; const BufSize: Integer): UnicodeString;
+{$ENDIF}
 function  BufToStr(const Buf; const BufSize: Integer): String;
 
+{$IFDEF SupportAnsiString}
 function  DupBufA(const Buf; const BufSize: Integer; const Count: Integer): AnsiString;
+{$ENDIF}
 function  DupBufB(const Buf; const BufSize: Integer; const Count: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  DupBufW(const Buf; const BufSize: Integer; const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  DupBufU(const Buf; const BufSize: Integer; const Count: Integer): UnicodeString;
+{$ENDIF}
 function  DupBuf(const Buf; const BufSize: Integer; const Count: Integer): String;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function  DupStrA(const S: AnsiString; const Count: Integer): AnsiString;
+{$ENDIF}
 function  DupStrB(const S: RawByteString; const Count: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  DupStrW(const S: WideString; const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  DupStrU(const S: UnicodeString; const Count: Integer): UnicodeString;
+{$ENDIF}
 function  DupStr(const S: String; const Count: Integer): String;
 
+{$IFDEF SupportAnsiString}
 function  DupCharA(const Ch: AnsiChar; const Count: Integer): AnsiString;
+{$ENDIF}
 function  DupCharB(const Ch: AnsiChar; const Count: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  DupCharW(const Ch: WideChar; const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  DupCharU(const Ch: WideChar; const Count: Integer): UnicodeString;
+{$ENDIF}
 function  DupChar(const Ch: Char; const Count: Integer): String;
 
+{$IFDEF SupportAnsiString}
 function  DupSpaceA(const Count: Integer): AnsiString;
+{$ENDIF}
 function  DupSpaceB(const Count: Integer): RawByteString;
+{$IFDEF SupportWideString}
 function  DupSpaceW(const Count: Integer): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  DupSpaceU(const Count: Integer): UnicodeString;
+{$ENDIF}
 function  DupSpace(const Count: Integer): String;
 
 
@@ -782,36 +1070,54 @@ function  DupSpace(const Count: Integer): String;
 {                                                                              }
 { Pad                                                                          }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  StrPadA(const S: AnsiString; const PadChar: AnsiChar; const Len: Integer;
           const Cut: Boolean = False): AnsiString;
+{$ENDIF}
 function  StrPadB(const S: RawByteString; const PadChar: AnsiChar; const Len: Integer;
           const Cut: Boolean = False): RawByteString;
+{$IFDEF SupportWideString}
 function  StrPadW(const S: WideString; const PadChar: WideChar; const Len: Integer;
           const Cut: Boolean = False): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrPadU(const S: UnicodeString; const PadChar: WideChar; const Len: Integer;
           const Cut: Boolean = False): UnicodeString;
+{$ENDIF}
 function  StrPad(const S: String; const PadChar: Char; const Len: Integer;
           const Cut: Boolean = False): String;
 
+{$IFDEF SupportAnsiString}
 function  StrPadLeftA(const S: AnsiString; const PadChar: AnsiChar;
           const Len: Integer; const Cut: Boolean = False): AnsiString;
+{$ENDIF}
 function  StrPadLeftB(const S: RawByteString; const PadChar: AnsiChar;
           const Len: Integer; const Cut: Boolean = False): RawByteString;
+{$IFDEF SupportWideString}
 function  StrPadLeftW(const S: WideString; const PadChar: WideChar;
           const Len: Integer; const Cut: Boolean = False): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrPadLeftU(const S: UnicodeString; const PadChar: WideChar;
           const Len: Integer; const Cut: Boolean = False): UnicodeString;
+{$ENDIF}
 function  StrPadLeft(const S: String; const PadChar: Char;
           const Len: Integer; const Cut: Boolean = False): String;
 
+{$IFDEF SupportAnsiString}
 function  StrPadRightA(const S: AnsiString; const PadChar: AnsiChar;
           const Len: Integer; const Cut: Boolean = False): AnsiString;
+{$ENDIF}
 function  StrPadRightB(const S: RawByteString; const PadChar: AnsiChar;
           const Len: Integer; const Cut: Boolean = False): RawByteString;
+{$IFDEF SupportWideString}
 function  StrPadRightW(const S: WideString; const PadChar: WideChar;
           const Len: Integer; const Cut: Boolean = False): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrPadRightU(const S: UnicodeString; const PadChar: WideChar;
           const Len: Integer; const Cut: Boolean = False): UnicodeString;
+{$ENDIF}
 function  StrPadRight(const S: String; const PadChar: Char;
           const Len: Integer; const Cut: Boolean = False): String;
 
@@ -826,7 +1132,7 @@ function  StrBetweenCharA(const S: AnsiString;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): AnsiString; overload;
 function  StrBetweenCharA(const S: AnsiString;
-          const FirstDelim, SecondDelim: CharSet;
+          const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): AnsiString; overload;
 
@@ -835,41 +1141,45 @@ function  StrBetweenCharB(const S: RawByteString;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): RawByteString; overload;
 function  StrBetweenCharB(const S: RawByteString;
-          const FirstDelim, SecondDelim: CharSet;
+          const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): RawByteString; overload;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrBetweenCharW(const S: WideString;
           const FirstDelim, SecondDelim: WideChar;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): WideString; overload;
 function  StrBetweenCharW(const S: WideString;
-          const FirstDelim, SecondDelim: CharSet;
+          const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): WideString; overload;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function  StrBetweenCharU(const S: UnicodeString;
           const FirstDelim, SecondDelim: WideChar;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): UnicodeString; overload;
 function  StrBetweenCharU(const S: UnicodeString;
-          const FirstDelim, SecondDelim: CharSet;
+          const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): UnicodeString; overload;
+{$ENDIF}
 
 function  StrBetweenChar(const S: String;
           const FirstDelim, SecondDelim: Char;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): String; overload;
 function  StrBetweenChar(const S: String;
-          const FirstDelim, SecondDelim: CharSet;
+          const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): String; overload;
 
 {$IFDEF SupportAnsiString}
 function  StrBetweenA(const S: AnsiString;
-          const FirstDelim: AnsiString; const SecondDelim: CharSet;
+          const FirstDelim: AnsiString; const SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True): AnsiString; overload;
@@ -881,7 +1191,7 @@ function  StrBetweenA(const S: AnsiString;
           const SecondDelimAsciiCaseSensitive: Boolean = True): AnsiString; overload;
 
 function  StrBetweenB(const S: RawByteString;
-          const FirstDelim: RawByteString; const SecondDelim: CharSet;
+          const FirstDelim: RawByteString; const SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True): RawByteString; overload;
@@ -893,8 +1203,9 @@ function  StrBetweenB(const S: RawByteString;
           const SecondDelimAsciiCaseSensitive: Boolean = True): RawByteString; overload;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrBetweenW(const S: WideString;
-          const FirstDelim: WideString; const SecondDelim: CharSet;
+          const FirstDelim: WideString; const SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True): WideString; overload;
@@ -904,9 +1215,11 @@ function  StrBetweenW(const S: WideString;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True;
           const SecondDelimAsciiCaseSensitive: Boolean = True): WideString; overload;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function  StrBetweenU(const S: UnicodeString;
-          const FirstDelim: UnicodeString; const SecondDelim: CharSet;
+          const FirstDelim: UnicodeString; const SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True): UnicodeString; overload;
@@ -916,9 +1229,10 @@ function  StrBetweenU(const S: UnicodeString;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True;
           const SecondDelimAsciiCaseSensitive: Boolean = True): UnicodeString; overload;
+{$ENDIF}
 
 function  StrBetween(const S: String;
-          const FirstDelim: String; const SecondDelim: CharSet;
+          const FirstDelim: String; const SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True): String; overload;
@@ -945,19 +1259,23 @@ function  StrBeforeRevB(const S, D: RawByteString;
           const AsciiCaseSensitive: Boolean = True): RawByteString;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrBeforeW(const S, D: WideString;
           const Optional: Boolean = True;
           const AsciiCaseSensitive: Boolean = True): WideString;
 function  StrBeforeRevW(const S, D: WideString;
           const Optional: Boolean = True;
           const AsciiCaseSensitive: Boolean = True): WideString;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function  StrBeforeU(const S, D: UnicodeString;
           const Optional: Boolean = True;
           const AsciiCaseSensitive: Boolean = True): UnicodeString;
 function  StrBeforeRevU(const S, D: UnicodeString;
           const Optional: Boolean = True;
           const AsciiCaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
 
 function  StrBefore(const S, D: String;
           const Optional: Boolean = True;
@@ -968,21 +1286,23 @@ function  StrBeforeRev(const S, D: String;
 
 {$IFDEF SupportAnsiString}
 function  StrBeforeCharA(const S: AnsiString; const D: AnsiChar; const Optional: Boolean = True): AnsiString; overload;
-function  StrBeforeCharA(const S: AnsiString; const D: CharSet; const Optional: Boolean = True): AnsiString; overload;
-function  StrBeforeCharRevA(const S: AnsiString; const D: CharSet; const Optional: Boolean = True): AnsiString;
+function  StrBeforeCharA(const S: AnsiString; const D: ByteCharSet; const Optional: Boolean = True): AnsiString; overload;
+function  StrBeforeCharRevA(const S: AnsiString; const D: ByteCharSet; const Optional: Boolean = True): AnsiString;
 
 function  StrBeforeCharB(const S: RawByteString; const D: AnsiChar; const Optional: Boolean = True): RawByteString; overload;
-function  StrBeforeCharB(const S: RawByteString; const D: CharSet; const Optional: Boolean = True): RawByteString; overload;
-function  StrBeforeCharRevB(const S: RawByteString; const D: CharSet; const Optional: Boolean = True): RawByteString;
+function  StrBeforeCharB(const S: RawByteString; const D: ByteCharSet; const Optional: Boolean = True): RawByteString; overload;
+function  StrBeforeCharRevB(const S: RawByteString; const D: ByteCharSet; const Optional: Boolean = True): RawByteString;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrBeforeCharW(const S: WideString; const D: WideChar; const Optional: Boolean = True): WideString; overload;
-function  StrBeforeCharW(const S: WideString; const D: CharSet; const Optional: Boolean = True): WideString; overload;
-function  StrBeforeCharRevW(const S: WideString; const D: CharSet; const Optional: Boolean = True): WideString;
+function  StrBeforeCharW(const S: WideString; const D: ByteCharSet; const Optional: Boolean = True): WideString; overload;
+function  StrBeforeCharRevW(const S: WideString; const D: ByteCharSet; const Optional: Boolean = True): WideString;
+{$ENDIF}
 
 function  StrBeforeChar(const S: String; const D: Char; const Optional: Boolean = True): String; overload;
-function  StrBeforeChar(const S: String; const D: CharSet; const Optional: Boolean = True): String; overload;
-function  StrBeforeCharRev(const S: String; const D: CharSet; const Optional: Boolean = True): String;
+function  StrBeforeChar(const S: String; const D: ByteCharSet; const Optional: Boolean = True): String; overload;
+function  StrBeforeCharRev(const S: String; const D: ByteCharSet; const Optional: Boolean = True): String;
 
 {$IFDEF SupportAnsiString}
 function  StrAfterA(const S, D: AnsiString; const Optional: Boolean = False): AnsiString;
@@ -992,69 +1312,83 @@ function  StrAfterB(const S, D: RawByteString; const Optional: Boolean = False):
 function  StrAfterRevB(const S, D: RawByteString; const Optional: Boolean = False): RawByteString;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function  StrAfterW(const S, D: WideString; const Optional: Boolean = False): WideString;
 function  StrAfterRevW(const S, D: WideString; const Optional: Boolean = False): WideString;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function  StrAfterU(const S, D: UnicodeString; const Optional: Boolean = False): UnicodeString;
 function  StrAfterRevU(const S, D: UnicodeString; const Optional: Boolean = False): UnicodeString;
+{$ENDIF}
 
 function  StrAfter(const S, D: String; const Optional: Boolean = False): String;
 function  StrAfterRev(const S, D: String; const Optional: Boolean = False): String;
 
 {$IFDEF SupportAnsiString}
-function  StrAfterCharA(const S: AnsiString; const D: CharSet): AnsiString; overload;
+function  StrAfterCharA(const S: AnsiString; const D: ByteCharSet): AnsiString; overload;
 function  StrAfterCharA(const S: AnsiString; const D: AnsiChar): AnsiString; overload;
 
-function  StrAfterCharB(const S: RawByteString; const D: CharSet): RawByteString; overload;
+function  StrAfterCharB(const S: RawByteString; const D: ByteCharSet): RawByteString; overload;
 function  StrAfterCharB(const S: RawByteString; const D: AnsiChar): RawByteString; overload;
 {$ENDIF}
 
-function  StrAfterCharW(const S: WideString; const D: CharSet): WideString; overload;
+{$IFDEF SupportWideString}
+function  StrAfterCharW(const S: WideString; const D: ByteCharSet): WideString; overload;
 function  StrAfterCharW(const S: WideString; const D: WideChar): WideString; overload;
+{$ENDIF}
 
-function  StrAfterCharU(const S: UnicodeString; const D: CharSet): UnicodeString; overload;
+{$IFDEF SupportUnicodeString}
+function  StrAfterCharU(const S: UnicodeString; const D: ByteCharSet): UnicodeString; overload;
 function  StrAfterCharU(const S: UnicodeString; const D: WideChar): UnicodeString; overload;
+{$ENDIF}
 
-function  StrAfterChar(const S: String; const D: CharSet): String; overload;
+function  StrAfterChar(const S: String; const D: ByteCharSet): String; overload;
 function  StrAfterChar(const S: String; const D: Char): String; overload;
 
 {$IFDEF SupportAnsiString}
-function  StrCopyToCharA(const S: AnsiString; const D: CharSet;
+function  StrCopyToCharA(const S: AnsiString; const D: ByteCharSet;
           const Optional: Boolean = True): AnsiString; overload;
 function  StrCopyToCharA(const S: AnsiString; const D: AnsiChar;
           const Optional: Boolean = True): AnsiString; overload;
 
-function  StrCopyToCharB(const S: RawByteString; const D: CharSet;
+function  StrCopyToCharB(const S: RawByteString; const D: ByteCharSet;
           const Optional: Boolean = True): RawByteString; overload;
 function  StrCopyToCharB(const S: RawByteString; const D: AnsiChar;
           const Optional: Boolean = True): RawByteString; overload;
 {$ENDIF}
 
-function  StrCopyToCharW(const S: WideString; const D: CharSet;
+{$IFDEF SupportWideString}
+function  StrCopyToCharW(const S: WideString; const D: ByteCharSet;
           const Optional: Boolean = True): WideString; overload;
 function  StrCopyToCharW(const S: WideString; const D: WideChar;
           const Optional: Boolean = True): WideString; overload;
+{$ENDIF}
 
-function  StrCopyToChar(const S: String; const D: CharSet;
+function  StrCopyToChar(const S: String; const D: ByteCharSet;
           const Optional: Boolean = True): String; overload;
 function  StrCopyToChar(const S: String; const D: Char;
           const Optional: Boolean = True): String; overload;
 
 {$IFDEF SupportAnsiString}
-function  StrCopyFromCharA(const S: AnsiString; const D: CharSet): AnsiString; overload;
+function  StrCopyFromCharA(const S: AnsiString; const D: ByteCharSet): AnsiString; overload;
 function  StrCopyFromCharA(const S: AnsiString; const D: AnsiChar): AnsiString; overload;
 
-function  StrCopyFromCharB(const S: RawByteString; const D: CharSet): RawByteString; overload;
+function  StrCopyFromCharB(const S: RawByteString; const D: ByteCharSet): RawByteString; overload;
 function  StrCopyFromCharB(const S: RawByteString; const D: AnsiChar): RawByteString; overload;
 {$ENDIF}
 
-function  StrCopyFromCharW(const S: WideString; const D: CharSet): WideString; overload;
+{$IFDEF SupportWideString}
+function  StrCopyFromCharW(const S: WideString; const D: ByteCharSet): WideString; overload;
 function  StrCopyFromCharW(const S: WideString; const D: WideChar): WideString; overload;
+{$ENDIF}
 
-function  StrCopyFromCharU(const S: UnicodeString; const D: CharSet): UnicodeString; overload;
+{$IFDEF SupportUnicodeString}
+function  StrCopyFromCharU(const S: UnicodeString; const D: ByteCharSet): UnicodeString; overload;
 function  StrCopyFromCharU(const S: UnicodeString; const D: WideChar): UnicodeString; overload;
+{$ENDIF}
 
-function  StrCopyFromChar(const S: String; const D: CharSet): String; overload;
+function  StrCopyFromChar(const S: String; const D: ByteCharSet): String; overload;
 function  StrCopyFromChar(const S: String; const D: Char): String; overload;
 
 {$IFDEF SupportAnsiString}
@@ -1063,10 +1397,12 @@ function  StrRemoveCharDelimitedA(var S: AnsiString;
 function  StrRemoveCharDelimitedB(var S: RawByteString;
           const FirstDelim, SecondDelim: AnsiChar): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrRemoveCharDelimitedW(var S: WideString;
           const FirstDelim, SecondDelim: WideChar): WideString;
 function  StrRemoveCharDelimited(var S: String;
           const FirstDelim, SecondDelim: Char): String;
+{$ENDIF}
 
 
 
@@ -1077,17 +1413,25 @@ function  StrRemoveCharDelimited(var S: String;
 function  StrCountCharA(const S: AnsiString; const C: AnsiChar): Integer; overload;
 function  StrCountCharB(const S: RawByteString; const C: AnsiChar): Integer; overload;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrCountCharW(const S: WideString; const C: WideChar): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrCountCharU(const S: UnicodeString; const C: WideChar): Integer; overload;
+{$ENDIF}
 function  StrCountChar(const S: String; const C: Char): Integer; overload;
 
 {$IFDEF SupportAnsiString}
-function  StrCountCharA(const S: AnsiString; const C: CharSet): Integer; overload;
-function  StrCountCharB(const S: RawByteString; const C: CharSet): Integer; overload;
+function  StrCountCharA(const S: AnsiString; const C: ByteCharSet): Integer; overload;
+function  StrCountCharB(const S: RawByteString; const C: ByteCharSet): Integer; overload;
 {$ENDIF}
-function  StrCountCharW(const S: WideString; const C: CharSet): Integer; overload;
-function  StrCountCharU(const S: UnicodeString; const C: CharSet): Integer; overload;
-function  StrCountChar(const S: String; const C: CharSet): Integer; overload;
+{$IFDEF SupportWideString}
+function  StrCountCharW(const S: WideString; const C: ByteCharSet): Integer; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrCountCharU(const S: UnicodeString; const C: ByteCharSet): Integer; overload;
+{$ENDIF}
+function  StrCountChar(const S: String; const C: ByteCharSet): Integer; overload;
 
 
 
@@ -1098,64 +1442,96 @@ function  StrCountChar(const S: String; const C: CharSet): Integer; overload;
 function  StrReplaceCharA(const Find, Replace: AnsiChar; const S: AnsiString): AnsiString; overload;
 function  StrReplaceCharB(const Find, Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrReplaceCharW(const Find, Replace: WideChar; const S: WideString): WideString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrReplaceCharU(const Find, Replace: WideChar; const S: UnicodeString): UnicodeString; overload;
+{$ENDIF}
 function  StrReplaceChar(const Find, Replace: Char; const S: String): String; overload;
 
 {$IFDEF SupportAnsiString}
-function  StrReplaceCharA(const Find: CharSet; const Replace: AnsiChar; const S: AnsiString): AnsiString; overload;
-function  StrReplaceCharB(const Find: CharSet; const Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
+function  StrReplaceCharA(const Find: ByteCharSet; const Replace: AnsiChar; const S: AnsiString): AnsiString; overload;
+function  StrReplaceCharB(const Find: ByteCharSet; const Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$ENDIF}
-function  StrReplaceCharW(const Find: CharSet; const Replace: WideChar; const S: WideString): WideString; overload;
-function  StrReplaceCharU(const Find: CharSet; const Replace: WideChar; const S: UnicodeString): UnicodeString; overload;
-function  StrReplaceChar(const Find: CharSet; const Replace: Char; const S: String): String; overload;
+{$IFDEF SupportWideString}
+function  StrReplaceCharW(const Find: ByteCharSet; const Replace: WideChar; const S: WideString): WideString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrReplaceCharU(const Find: ByteCharSet; const Replace: WideChar; const S: UnicodeString): UnicodeString; overload;
+{$ENDIF}
+function  StrReplaceChar(const Find: ByteCharSet; const Replace: Char; const S: String): String; overload;
 
 {$IFDEF SupportAnsiString}
 function  StrReplaceA(const Find, Replace, S: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString; overload;
 function  StrReplaceB(const Find, Replace, S: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString; overload;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrReplaceW(const Find, Replace, S: WideString; const AsciiCaseSensitive: Boolean = True): WideString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrReplaceU(const Find, Replace, S: UnicodeString; const AsciiCaseSensitive: Boolean = True): UnicodeString; overload;
+{$ENDIF}
 function  StrReplace(const Find, Replace, S: String; const AsciiCaseSensitive: Boolean = True): String; overload;
 
 {$IFNDEF CLR}
 {$IFDEF SupportAnsiString}
-function  StrReplaceA(const Find: CharSet; const Replace, S: AnsiString): AnsiString; overload;
-function  StrReplaceB(const Find: CharSet; const Replace, S: RawByteString): RawByteString; overload;
+function  StrReplaceA(const Find: ByteCharSet; const Replace, S: AnsiString): AnsiString; overload;
+function  StrReplaceB(const Find: ByteCharSet; const Replace, S: RawByteString): RawByteString; overload;
 {$ENDIF}
-function  StrReplaceW(const Find: CharSet; const Replace, S: WideString): WideString; overload;
-function  StrReplaceU(const Find: CharSet; const Replace, S: UnicodeString): UnicodeString; overload;
-function  StrReplace(const Find: CharSet; const Replace, S: String): String; overload;
+{$IFDEF SupportWideString}
+function  StrReplaceW(const Find: ByteCharSet; const Replace, S: WideString): WideString; overload;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrReplaceU(const Find: ByteCharSet; const Replace, S: UnicodeString): UnicodeString; overload;
+{$ENDIF}
+function  StrReplace(const Find: ByteCharSet; const Replace, S: String): String; overload;
 
 {$IFDEF SupportAnsiString}
 function  StrReplaceCharStrA(const Find: AnsiChar; const Replace, S: AnsiString): AnsiString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrReplaceCharStrW(const Find: WideChar; const Replace, S: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrReplaceCharStrU(const Find: WideChar; const Replace, S: UnicodeString): UnicodeString;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  StrRemoveDupA(const S: AnsiString; const C: AnsiChar): AnsiString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrRemoveDupW(const S: WideString; const C: WideChar): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrRemoveDupU(const S: UnicodeString; const C: WideChar): UnicodeString;
+{$ENDIF}
 function  StrRemoveDup(const S: String; const C: Char): String;
 
 {$IFDEF SupportAnsiString}
 function  StrRemoveCharA(const S: AnsiString; const C: AnsiChar): AnsiString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrRemoveCharW(const S: WideString; const C: WideChar): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrRemoveCharU(const S: UnicodeString; const C: WideChar): UnicodeString;
+{$ENDIF}
 function  StrRemoveChar(const S: String; const C: Char): String;
 
 {$IFNDEF CLR}
 {$IFDEF SupportAnsiString}
-function  StrRemoveCharSetA(const S: AnsiString; const C: CharSet): AnsiString;
-function  StrRemoveCharSetB(const S: RawByteString; const C: CharSet): RawByteString;
+function  StrRemoveCharSetA(const S: AnsiString; const C: ByteCharSet): AnsiString;
+function  StrRemoveCharSetB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 {$ENDIF}
-function  StrRemoveCharSetW(const S: WideString; const C: CharSet): WideString;
-function  StrRemoveCharSetU(const S: UnicodeString; const C: CharSet): UnicodeString;
-function  StrRemoveCharSet(const S: String; const C: CharSet): String;
+{$IFDEF SupportWideString}
+function  StrRemoveCharSetW(const S: WideString; const C: ByteCharSet): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrRemoveCharSetU(const S: UnicodeString; const C: ByteCharSet): UnicodeString;
+{$ENDIF}
+function  StrRemoveCharSet(const S: String; const C: ByteCharSet): String;
 {$ENDIF}
 
 
@@ -1173,10 +1549,13 @@ function  StrSplitAtB(const S: RawByteString; const C: RawByteString;
           const AsciiCaseSensitive: Boolean = True;
           const Optional: Boolean = True): Boolean;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrSplitAtW(const S: WideString; const C: WideString;
           var Left, Right: WideString;
           const AsciiCaseSensitive: Boolean = True;
           const Optional: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrSplitAtU(const S: UnicodeString; const C: UnicodeString;
           var Left, Right: UnicodeString;
           const AsciiCaseSensitive: Boolean = True;
@@ -1185,6 +1564,7 @@ function  StrSplitAt(const S: String; const C: String;
           var Left, Right: String;
           const AsciiCaseSensitive: Boolean = True;
           const Optional: Boolean = True): Boolean;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  StrSplitAtCharA(const S: AnsiString; const C: AnsiChar;
@@ -1194,64 +1574,100 @@ function  StrSplitAtCharB(const S: RawByteString; const C: AnsiChar;
           var Left, Right: RawByteString;
           const Optional: Boolean = True): Boolean;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrSplitAtCharW(const S: WideString; const C: WideChar;
           var Left, Right: WideString;
           const Optional: Boolean = True): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrSplitAtCharU(const S: UnicodeString; const C: WideChar;
           var Left, Right: UnicodeString;
           const Optional: Boolean = True): Boolean;
+{$ENDIF}
 function  StrSplitAtChar(const S: String; const C: Char;
           var Left, Right: String;
           const Optional: Boolean = True): Boolean;
 
 {$IFDEF SupportAnsiString}
-function  StrSplitAtCharSetA(const S: AnsiString; const C: CharSet;
+function  StrSplitAtCharSetA(const S: AnsiString; const C: ByteCharSet;
           var Left, Right: AnsiString;
           const Optional: Boolean = True): Boolean;
 {$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  StrSplitA(const S, D: AnsiString): AnsiStringArray;
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 function  StrSplitB(const S, D: RawByteString): RawByteStringArray;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrSplitW(const S, D: WideString): WideStringArray;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrSplitU(const S, D: UnicodeString): UnicodeStringArray;
+{$ENDIF}
 function  StrSplit(const S, D: String): StringArray;
 
 {$IFDEF SupportAnsiString}
 function  StrSplitCharA(const S: AnsiString; const D: AnsiChar): AnsiStringArray;
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 function  StrSplitCharB(const S: RawByteString; const D: AnsiChar): RawByteStringArray;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrSplitCharW(const S: WideString; const D: WideChar): WideStringArray;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrSplitCharU(const S: UnicodeString; const D: WideChar): UnicodeStringArray;
+{$ENDIF}
 function  StrSplitChar(const S: String; const D: Char): StringArray;
 
 {$IFDEF SupportAnsiString}
-function  StrSplitCharSetA(const S: AnsiString; const D: CharSet): AnsiStringArray;
-function  StrSplitCharSetB(const S: RawByteString; const D: CharSet): RawByteStringArray;
+function  StrSplitCharSetA(const S: AnsiString; const D: ByteCharSet): AnsiStringArray;
 {$ENDIF}
-function  StrSplitCharSetW(const S: WideString; const D: CharSet): WideStringArray;
-function  StrSplitCharSetU(const S: UnicodeString; const D: CharSet): UnicodeStringArray;
-function  StrSplitCharSet(const S: String; const D: CharSet): StringArray;
+{$IFDEF SupportRawByteString}
+function  StrSplitCharSetB(const S: RawByteString; const D: ByteCharSet): RawByteStringArray;
+{$ENDIF}
+{$IFDEF SupportWideString}
+function  StrSplitCharSetW(const S: WideString; const D: ByteCharSet): WideStringArray;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
+function  StrSplitCharSetU(const S: UnicodeString; const D: ByteCharSet): UnicodeStringArray;
+{$ENDIF}
+function  StrSplitCharSet(const S: String; const D: ByteCharSet): StringArray;
 
 {$IFNDEF CLR}
-function  StrSplitWords(const S: AnsiString; const C: CharSet): AnsiStringArray;
+{$IFDEF SupportAnsiString}
+function  StrSplitWords(const S: AnsiString; const C: ByteCharSet): AnsiStringArray;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  StrJoinA(const S: array of AnsiString; const D: AnsiString): AnsiString;
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 function  StrJoinB(const S: array of RawByteString; const D: RawByteString): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrJoinW(const S: array of WideString; const D: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrJoinU(const S: array of UnicodeString; const D: UnicodeString): UnicodeString;
+{$ENDIF}
 function  StrJoin(const S: array of String; const D: String): String;
 
 {$IFDEF SupportAnsiString}
 function  StrJoinCharA(const S: array of AnsiString; const D: AnsiChar): AnsiString;
+{$ENDIF}
+{$IFDEF SupportRawByteString}
 function  StrJoinCharB(const S: array of RawByteString; const D: AnsiChar): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrJoinCharW(const S: array of WideString; const D: WideChar): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrJoinCharU(const S: array of UnicodeString; const D: WideChar): UnicodeString;
+{$ENDIF}
 function  StrJoinChar(const S: array of String; const D: Char): String;
 
 
@@ -1270,53 +1686,69 @@ function  StrJoinChar(const S: array of String; const D: Char): String;
 {                                                                              }
 {$IFDEF SupportAnsiString}
 function  StrHasSurroundingQuotesA(const S: AnsiString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
 function  StrHasSurroundingQuotesB(const S: RawByteString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrHasSurroundingQuotesW(const S: WideString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrHasSurroundingQuotesU(const S: UnicodeString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+{$ENDIF}
 function  StrHasSurroundingQuotes(const S: String;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
 
 {$IFDEF SupportAnsiString}
 function  StrRemoveSurroundingQuotesA(const S: AnsiString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): AnsiString;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): AnsiString;
 function  StrRemoveSurroundingQuotesB(const S: RawByteString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): RawByteString;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrRemoveSurroundingQuotesW(const S: WideString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): WideString;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrRemoveSurroundingQuotesU(const S: UnicodeString;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): UnicodeString;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): UnicodeString;
+{$ENDIF}
 function  StrRemoveSurroundingQuotes(const S: String;
-          const Quotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): String;
+          const Quotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): String;
 
 {$IFDEF SupportAnsiString}
 function  StrQuoteA(const S: AnsiString; const Quote: AnsiChar = AnsiChar('"')): AnsiString;
 function  StrQuoteB(const S: RawByteString; const Quote: AnsiChar = AnsiChar('"')): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrQuoteW(const S: WideString; const Quote: WideChar = WideChar('"')): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrQuoteU(const S: UnicodeString; const Quote: WideChar = WideChar('"')): UnicodeString;
+{$ENDIF}
 function  StrQuote(const S: String; const Quote: Char = '"'): String;
 
 {$IFDEF SupportAnsiString}
 function  StrUnquoteA(const S: AnsiString): AnsiString;
 function  StrUnquoteB(const S: RawByteString): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrUnquoteW(const S: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrUnquoteU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 function  StrUnquote(const S: String): String;
 
 {$IFDEF SupportAnsiString}
 function  StrMatchQuotedStrA(const S: AnsiString;
-          const ValidQuotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF};
+          const ValidQuotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF};
           const Index: Integer = 1): Integer;
 
 function  StrIsQuotedStrA(const S: AnsiString;
-          const ValidQuotes: CharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
+          const ValidQuotes: ByteCharSet{$IFNDEF CLR} = csQuotes{$ENDIF}): Boolean;
 
 function  StrFindClosingQuoteA(const S: AnsiString;
           const OpenQuotePos: Integer): Integer;
@@ -1338,7 +1770,7 @@ function  StrFindClosingBracketA(const S: AnsiString;
 { Escaping                                                                     }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function  StrHexEscapeB(const S: RawByteString; const C: CharSet;
+function  StrHexEscapeB(const S: RawByteString; const C: ByteCharSet;
           const EscPrefix: RawByteString = '\x';
           const EscSuffix: RawByteString = '';
           const UpperHex: Boolean = True;
@@ -1357,10 +1789,12 @@ function  StrCharUnescapeA(const S: AnsiString; const EscPrefix: AnsiString;
           const PrefixAsciiCaseSensitive: Boolean = True;
           const AlwaysDropPrefix: Boolean = True): AnsiString;
 
+{$IFDEF SupportUnicodeString}
 function  StrCharUnescapeU(const S: UnicodeString; const EscPrefix: UnicodeString;
           const C: array of WideChar; const Replace: array of UnicodeString;
           const PrefixAsciiCaseSensitive: Boolean = True;
           const AlwaysDropPrefix: Boolean = True): UnicodeString;
+{$ENDIF}
 
 function  StrCStyleEscapeA(const S: AnsiString): AnsiString;
 function  StrCStyleUnescapeA(const S: AnsiString): AnsiString;
@@ -1375,64 +1809,96 @@ function  StrCStyleUnescapeA(const S: AnsiString): AnsiString;
 function  StrInclPrefixA(const S: AnsiString; const Prefix: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString;
 function  StrInclPrefixB(const S: RawByteString; const Prefix: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrInclPrefixW(const S: WideString; const Prefix: WideString; const AsciiCaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrInclPrefixU(const S: UnicodeString; const Prefix: UnicodeString; const AsciiCaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
 function  StrInclPrefix(const S: String; const Prefix: String; const AsciiCaseSensitive: Boolean = True): String;
 
 {$IFDEF SupportAnsiString}
 function  StrInclSuffixA(const S: AnsiString; const Suffix: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString;
 function  StrInclSuffixB(const S: RawByteString; const Suffix: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrInclSuffixW(const S: WideString; const Suffix: WideString; const AsciiCaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrInclSuffixU(const S: UnicodeString; const Suffix: UnicodeString; const AsciiCaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
 function  StrInclSuffix(const S: String; const Suffix: String; const AsciiCaseSensitive: Boolean = True): String;
 
 {$IFDEF SupportAnsiString}
 function  StrExclPrefixA(const S: AnsiString; const Prefix: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString;
 function  StrExclPrefixB(const S: RawByteString; const Prefix: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrExclPrefixW(const S: WideString; const Prefix: WideString; const AsciiCaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrExclPrefixU(const S: UnicodeString; const Prefix: UnicodeString; const AsciiCaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
 function  StrExclPrefix(const S: String; const Prefix: String; const AsciiCaseSensitive: Boolean = True): String;
 
 {$IFDEF SupportAnsiString}
 function  StrExclSuffixA(const S: AnsiString; const Suffix: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString;
 function  StrExclSuffixB(const S: RawByteString; const Suffix: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrExclSuffixW(const S: WideString; const Suffix: WideString; const AsciiCaseSensitive: Boolean = True): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrExclSuffixU(const S: UnicodeString; const Suffix: UnicodeString; const AsciiCaseSensitive: Boolean = True): UnicodeString;
+{$ENDIF}
 function  StrExclSuffix(const S: String; const Suffix: String; const AsciiCaseSensitive: Boolean = True): String;
 
 {$IFDEF SupportAnsiString}
 procedure StrEnsurePrefixA(var S: AnsiString; const Prefix: AnsiString; const AsciiCaseSensitive: Boolean = True);
 procedure StrEnsurePrefixB(var S: RawByteString; const Prefix: RawByteString; const AsciiCaseSensitive: Boolean = True);
 {$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrEnsurePrefixW(var S: WideString; const Prefix: WideString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure StrEnsurePrefixU(var S: UnicodeString; const Prefix: UnicodeString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
 procedure StrEnsurePrefix(var S: String; const Prefix: String; const AsciiCaseSensitive: Boolean = True);
 
 {$IFDEF SupportAnsiString}
 procedure StrEnsureSuffixA(var S: AnsiString; const Suffix: AnsiString; const AsciiCaseSensitive: Boolean = True);
 procedure StrEnsureSuffixB(var S: RawByteString; const Suffix: RawByteString; const AsciiCaseSensitive: Boolean = True);
 {$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrEnsureSuffixW(var S: WideString; const Suffix: WideString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureSuffixU(var S: UnicodeString; const Suffix: UnicodeString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
 procedure StrEnsureSuffix(var S: String; const Suffix: String; const AsciiCaseSensitive: Boolean = True);
 
 {$IFDEF SupportAnsiString}
 procedure StrEnsureNoPrefixA(var S: AnsiString; const Prefix: AnsiString; const AsciiCaseSensitive: Boolean = True);
 procedure StrEnsureNoPrefixB(var S: RawByteString; const Prefix: RawByteString; const AsciiCaseSensitive: Boolean = True);
 {$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrEnsureNoPrefixW(var S: WideString; const Prefix: WideString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureNoPrefixU(var S: UnicodeString; const Prefix: UnicodeString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
 procedure StrEnsureNoPrefix(var S: String; const Prefix: String; const AsciiCaseSensitive: Boolean = True);
 
 {$IFDEF SupportAnsiString}
 procedure StrEnsureNoSuffixA(var S: AnsiString; const Suffix: AnsiString; const AsciiCaseSensitive: Boolean = True);
 procedure StrEnsureNoSuffixB(var S: RawByteString; const Suffix: RawByteString; const AsciiCaseSensitive: Boolean = True);
 {$ENDIF}
+{$IFDEF SupportWideString}
 procedure StrEnsureNoSuffixW(var S: WideString; const Suffix: WideString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureNoSuffixU(var S: UnicodeString; const Suffix: UnicodeString; const AsciiCaseSensitive: Boolean = True);
+{$ENDIF}
 procedure StrEnsureNoSuffix(var S: String; const Suffix: String; const AsciiCaseSensitive: Boolean = True);
 
 
@@ -1444,8 +1910,12 @@ procedure StrEnsureNoSuffix(var S: String; const Suffix: String; const AsciiCase
 function  StrReverseA(const S: AnsiString): AnsiString;
 function  StrReverseB(const S: RawByteString): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrReverseW(const S: WideString): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrReverseU(const S: UnicodeString): UnicodeString;
+{$ENDIF}
 function  StrReverse(const S: String): String;
 
 
@@ -1453,12 +1923,14 @@ function  StrReverse(const S: String): String;
 {                                                                              }
 { Base conversion                                                              }
 {                                                                              }
-function  BinToLongWord(const S: AnsiString): LongWord;
-function  OctToLongWord(const S: AnsiString): LongWord;
-function  StrToLongWord(const S: AnsiString): LongWord;
-function  StrToLongWordDef(const S: AnsiString; const Default: LongWord): LongWord;
-function  HexToLongWord(const S: AnsiString): LongWord;
-function  HexToLongWordDef(const S: AnsiString; const Default: LongWord): LongWord;
+{$IFDEF SupportAnsiString}
+function  BinToWord32(const S: AnsiString): Word32;
+function  OctToWord32(const S: AnsiString): Word32;
+function  StrToWord32(const S: AnsiString): Word32;
+function  StrToWord32Def(const S: AnsiString; const Default: Word32): Word32;
+function  HexToWord32(const S: AnsiString): Word32;
+function  HexToWord32Def(const S: AnsiString; const Default: Word32): Word32;
+{$ENDIF}
 
 
 
@@ -1471,16 +1943,24 @@ function  StrToFloatDef(const S: String; const Default: Extended): Extended;
 function  BooleanToStrA(const B: Boolean): AnsiString;
 function  BooleanToStrB(const B: Boolean): RawByteString;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  BooleanToStrW(const B: Boolean): WideString;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  BooleanToStrU(const B: Boolean): UnicodeString;
+{$ENDIF}
 function  BooleanToStr(const B: Boolean): String;
 
 {$IFDEF SupportAnsiString}
 function  StrToBooleanA(const S: AnsiString): Boolean;
 function  StrToBooleanB(const S: RawByteString): Boolean;
 {$ENDIF}
+{$IFDEF SupportWideString}
 function  StrToBooleanW(const S: WideString): Boolean;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StrToBooleanU(const S: UnicodeString): Boolean;
+{$ENDIF}
 function  StrToBoolean(const S: String): Boolean;
 
 
@@ -1494,7 +1974,7 @@ function  StrToBoolean(const S: String): Boolean;
 {   complete sets have special representations; '[]' and '.' respectively.     }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function  CharSetToCharClassStr(const C: CharSet): AnsiString;
+function  CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
 {$ENDIF}
 {$IFNDEF CLR}
 // function  CharClassStrToCharSet(const S: AnsiString): CharSet;
@@ -1505,21 +1985,31 @@ function  CharSetToCharClassStr(const C: CharSet): AnsiString;
 {                                                                              }
 { Dynamic array functions                                                      }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  StringsTotalLengthA(const S: array of AnsiString): Integer;
+{$ENDIF}
 function  StringsTotalLengthB(const S: array of RawByteString): Integer;
+{$IFDEF SupportWideString}
 function  StringsTotalLengthW(const S: array of WideString): Integer;
+{$ENDIF}
+{$IFDEF SupportUnicodeString}
 function  StringsTotalLengthU(const S: array of UnicodeString): Integer;
+{$ENDIF}
 function  StringsTotalLength(const S: array of String): Integer;
 
+{$IFDEF SupportAnsiString}
 function  PosNextNoCaseA(const Find: AnsiString; const V: array of AnsiString;
           const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer;
+{$ENDIF}
 function  PosNextNoCaseB(const Find: RawByteString; const V: array of RawByteString;
           const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer;
+{$IFDEF SupportUnicodeString}
 function  PosNextNoCaseU(const Find: UnicodeString; const V: array of UnicodeString;
           const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer;
+{$ENDIF}
 
 
 
@@ -1545,6 +2035,7 @@ procedure Test;
 implementation
 
 uses
+  { Fundamentals }
   flcUtils,
   flcCharSet,
   flcUnicodeChar;
@@ -1593,6 +2084,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function StrCompareNoUnicodeCaseW(const A, B: WideString): Integer;
 var L, M, I: Integer;
 begin
@@ -1612,7 +2104,9 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCompareNoUnicodeCaseU(const A, B: UnicodeString): Integer;
 var L, M, I: Integer;
 begin
@@ -1632,12 +2126,14 @@ begin
   else
     Result := 1;
 end;
+{$ENDIF}
 
 
 
 {                                                                              }
 { Unicode functions                                                            }
 {                                                                              }
+{$IFDEF SupportWideString}
 function UnicodeUpperCaseW(const S: WideString): WideString;
 var L, I : Integer;
 begin
@@ -1646,7 +2142,9 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeUpCase(S[I]);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeUpperCaseU(const S: UnicodeString): UnicodeString;
 var L, I : Integer;
 begin
@@ -1655,7 +2153,9 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeUpCase(S[I]);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function UnicodeLowerCaseW(const S: WideString): WideString;
 var L, I : Integer;
 begin
@@ -1664,7 +2164,9 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeLowCase(S[I]);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function UnicodeLowerCaseU(const S: UnicodeString): UnicodeString;
 var L, I : Integer;
 begin
@@ -1673,12 +2175,14 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeLowCase(S[I]);
 end;
+{$ENDIF}
 
 
 
 {                                                                              }
 { String functions                                                             }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 {$IFDEF ManagedCode}
 procedure SetLengthAndZeroA(var S: AnsiString; const NewLength: Integer);
 var L, I : Integer;
@@ -1708,6 +2212,7 @@ begin
   ZeroMem(P^, NewLength - L);
 end;
 {$ENDIF}
+{$ENDIF}
 
 {$IFDEF ManagedCode}
 procedure SetLengthAndZeroB(var S: RawByteString; const NewLength: Integer);
@@ -1725,7 +2230,7 @@ end;
 {$ELSE}
 procedure SetLengthAndZeroB(var S: RawByteString; const NewLength: Integer);
 var L : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   L := Length(S);
   if L = NewLength then
@@ -1739,6 +2244,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure SetLengthAndZeroW(var S: WideString; const NewLength: Integer);
 var L : Integer;
     P : PWideChar;
@@ -1753,7 +2259,9 @@ begin
   Inc(P, L);
   ZeroMem(P^, (NewLength - L) * SizeOf(WideChar));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure SetLengthAndZeroU(var S: UnicodeString; const NewLength: Integer);
 var L : Integer;
     P : PWideChar;
@@ -1768,6 +2276,7 @@ begin
   Inc(P, L);
   ZeroMem(P^, (NewLength - L) * SizeOf(WideChar));
 end;
+{$ENDIF}
 
 function ToStringChA(const A: AnsiChar): String;
 begin
@@ -1790,6 +2299,7 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF SupportAnsiString}
 function ToStringA(const A: AnsiString): String;
 begin
   {$IFDEF StringIsUnicode}
@@ -1798,6 +2308,7 @@ begin
   Result := A;
   {$ENDIF}
 end;
+{$ENDIF}
 
 function ToStringB(const A: RawByteString): String;
 begin
@@ -1808,6 +2319,7 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF SupportWideString}
 function ToStringW(const A: WideString): String;
 begin
   {$IFDEF StringIsUnicode}
@@ -1816,7 +2328,9 @@ begin
   Result := AnsiString(A);
   {$ENDIF}
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function ToStringU(const A: UnicodeString): String;
 begin
   {$IFDEF StringIsUnicode}
@@ -1825,6 +2339,7 @@ begin
   Result := AnsiString(A);
   {$ENDIF}
 end;
+{$ENDIF}
 
 
 
@@ -1941,15 +2456,15 @@ begin
       Result := A = B;
 end;
 
-function CharSetMatchCharA(const A: CharSet; const B: AnsiChar; const AsciiCaseSensitive: Boolean): Boolean;
+function CharSetMatchCharA(const A: ByteCharSet; const B: AnsiChar; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
     Result := B in A
   else
-    Result := (AsciiUpCaseA(B) in A) or (AsciiLowCaseA(B) in A);
+    Result := (AsciiUpCaseB(B) in A) or (AsciiLowCaseB(B) in A);
 end;
 
-function CharSetMatchCharW(const A: CharSet; const B: WideChar; const AsciiCaseSensitive: Boolean): Boolean;
+function CharSetMatchCharW(const A: ByteCharSet; const B: WideChar; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if Ord(B) > $FF then
     Result := False
@@ -1957,11 +2472,11 @@ begin
     if AsciiCaseSensitive then
       Result := AnsiChar(Ord(B)) in A
     else
-      Result := (AsciiUpCaseA(AnsiChar(Ord(B))) in A) or
-                (AsciiLowCaseA(AnsiChar(Ord(B))) in A);
+      Result := (AsciiUpCaseB(AnsiChar(Ord(B))) in A) or
+                (AsciiLowCaseB(AnsiChar(Ord(B))) in A);
 end;
 
-function CharSetMatchChar(const A: CharSet; const B: Char; const AsciiCaseSensitive: Boolean): Boolean;
+function CharSetMatchChar(const A: ByteCharSet; const B: Char; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   {$IFDEF StringIsUnicode}
   if Ord(B) > $FF then
@@ -1971,8 +2486,8 @@ begin
     if AsciiCaseSensitive then
       Result := AnsiChar(Ord(B)) in A
     else
-      Result := (AsciiUpCaseA(AnsiChar(Ord(B))) in A) or
-                (AsciiLowCaseA(AnsiChar(Ord(B))) in A);
+      Result := (AsciiUpCaseB(AnsiChar(Ord(B))) in A) or
+                (AsciiLowCaseB(AnsiChar(Ord(B))) in A);
 end;
 
 {$IFDEF ManagedCode}
@@ -1988,8 +2503,8 @@ begin
   Result := True;
 end;
 {$ELSE}
-function StrPMatchA(const A, B: PAnsiChar; const Len: Integer): Boolean;
-var P, Q : PAnsiChar;
+function StrPMatchA(const A, B: PByteChar; const Len: Integer): Boolean;
+var P, Q : PByteChar;
     I    : Integer;
 begin
   P := A;
@@ -2028,9 +2543,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchAW(const A: PWideChar; B: PAnsiChar; const Len: Integer): Boolean;
+function StrPMatchAW(const A: PWideChar; B: PByteChar; const Len: Integer): Boolean;
 var P : PWideChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   P := A;
@@ -2048,9 +2563,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchAS(const A: PChar; B: PAnsiChar; const Len: Integer): Boolean;
+function StrPMatchAS(const A: PChar; B: PByteChar; const Len: Integer): Boolean;
 var P : PChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   P := A;
@@ -2090,8 +2605,8 @@ end;
 {$ENDIF}
 
 {$IFNDEF ManagedCode}
-function StrPMatchA(const S, M: PAnsiChar; const LenS, LenM: Integer): Boolean;
-var P, Q : PAnsiChar;
+function StrPMatchA(const S, M: PByteChar; const LenS, LenM: Integer): Boolean;
+var P, Q : PByteChar;
     I    : Integer;
 begin
   if LenM = 0 then
@@ -2158,9 +2673,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchAW(const S: PWideChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean;
+function StrPMatchAW(const S: PWideChar; const M: PByteChar; const LenS, LenM: Integer): Boolean;
 var P : PWideChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   if LenM = 0 then
@@ -2188,9 +2703,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchAS(const S: PChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean;
+function StrPMatchAS(const S: PChar; const M: PByteChar; const LenS, LenM: Integer): Boolean;
 var P : PChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   if LenM = 0 then
@@ -2252,9 +2767,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchStrPA(const S: PChar; const M: PAnsiChar; const LenS, LenM: Integer): Boolean;
+function StrPMatchStrPA(const S: PChar; const M: PByteChar; const LenS, LenM: Integer): Boolean;
 var P : PChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   if LenM = 0 then
@@ -2282,42 +2797,52 @@ begin
   Result := True;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrPMatchStrA(const S: PAnsiChar; const Len: Integer; const M: AnsiString): Boolean;
 begin
-  Result := StrPMatchA(S, Pointer(M), Len, Length(M));
+  Result := StrPMatchA(Pointer(S), Pointer(M), Len, Length(M));
 end;
+{$ENDIF}
 
-function StrPMatchStrB(const S: PAnsiChar; const Len: Integer; const M: RawByteString): Boolean;
+function StrPMatchStrB(const S: PByteChar; const Len: Integer; const M: RawByteString): Boolean;
 begin
   Result := StrPMatchA(S, Pointer(M), Len, Length(M));
 end;
 
+{$IFDEF SupportWideString}
 function StrPMatchStrW(const S: PWideChar; const Len: Integer; const M: WideString): Boolean;
 begin
   Result := StrPMatchW(S, Pointer(M), Len, Length(M));
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrPMatchStrAW(const S: PWideChar; const Len: Integer; const M: AnsiString): Boolean;
 begin
   Result := StrPMatchAW(S, Pointer(M), Len, Length(M));
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrPMatchStrAS(const S: PChar; const Len: Integer; const M: AnsiString): Boolean;
 begin
   Result := StrPMatchAS(S, Pointer(M), Len, Length(M));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrPMatchStrU(const S: PWideChar; const Len: Integer; const M: UnicodeString): Boolean;
 begin
   Result := StrPMatchW(S, Pointer(M), Len, Length(M));
 end;
+{$ENDIF}
 
 function StrPMatchStr(const S: PChar; const Len: Integer; const M: String): Boolean;
 begin
   Result := StrPMatch(S, Pointer(M), Len, Length(M));
 end;
 
-function StrPMatchNoAsciiCaseA(const A, B: PAnsiChar; const Len: Integer): Boolean;
+function StrPMatchNoAsciiCaseA(const A, B: PByteChar; const Len: Integer): Boolean;
 var P, Q : PByte;
     C, D : Byte;
     I    : Integer;
@@ -2366,9 +2891,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchNoAsciiCaseAW(const A: PWideChar; const B: PAnsiChar; const Len: Integer): Boolean;
+function StrPMatchNoAsciiCaseAW(const A: PWideChar; const B: PByteChar; const Len: Integer): Boolean;
 var P : PWideChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   P := A;
@@ -2389,9 +2914,9 @@ begin
   Result := True;
 end;
 
-function StrPMatchNoAsciiCaseAS(const A: PChar; const B: PAnsiChar; const Len: Integer): Boolean;
+function StrPMatchNoAsciiCaseAS(const A: PChar; const B: PByteChar; const Len: Integer): Boolean;
 var P : PChar;
-    Q : PAnsiChar;
+    Q : PByteChar;
     I : Integer;
 begin
   P := A;
@@ -2459,8 +2984,8 @@ end;
 {$ENDIF}
 
 {$IFNDEF CLR}
-function StrPMatchLenA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Integer;
-var Q : PAnsiChar;
+function StrPMatchLenA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Integer;
+var Q : PByteChar;
     L : Integer;
 begin
   Q := P;
@@ -2479,7 +3004,7 @@ begin
       exit;
 end;
 
-function StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: CharSet): Integer;
+function StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer;
 var Q : PWideChar;
     L : Integer;
 begin
@@ -2519,7 +3044,7 @@ begin
       exit;
 end;
 
-function StrPMatchLen(const P: PChar; const Len: Integer; const M: CharSet): Integer;
+function StrPMatchLen(const P: PChar; const Len: Integer; const M: ByteCharSet): Integer;
 var Q : PChar;
     C : Char;
     L : Integer;
@@ -2547,8 +3072,8 @@ begin
     end;
 end;
 
-function StrPMatchCountA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Integer;
-var Q : PAnsiChar;
+function StrPMatchCountA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Integer;
+var Q : PByteChar;
     L : Integer;
 begin
   Q := P;
@@ -2565,7 +3090,7 @@ begin
     end;
 end;
 
-function StrPMatchCountW(const P: PWideChar; const Len: Integer; const M: CharSet): Integer;
+function StrPMatchCountW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer;
 var Q : PWideChar;
     L : Integer;
 begin
@@ -2601,12 +3126,12 @@ begin
     end;
 end;
 
-function StrPMatchCharA(const P: PAnsiChar; const Len: Integer; const M: CharSet): Boolean;
+function StrPMatchCharA(const P: PByteChar; const Len: Integer; const M: ByteCharSet): Boolean;
 begin
   Result := StrPMatchLenA(P, Len, M) = Len;
 end;
 
-function StrPMatchCharW(const P: PWideChar; const Len: Integer; const M: CharSet): Boolean;
+function StrPMatchCharW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Boolean;
 begin
   Result := StrPMatchLenW(P, Len, M) = Len;
 end;
@@ -2616,12 +3141,13 @@ begin
   Result := StrPMatchLenW(P, Len, M) = Len;
 end;
 
-function StrPMatchChar(const P: PChar; const Len: Integer; const M: CharSet): Boolean;
+function StrPMatchChar(const P: PChar; const Len: Integer; const M: ByteCharSet): Boolean;
 begin
   Result := StrPMatchLen(P, Len, M) = Len;
 end;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 {$IFDEF CLR}
 function StrMatchA(const S, M: AnsiString; const Index: Integer): Boolean;
 var N, T, I : Integer;
@@ -2644,7 +3170,7 @@ end;
 {$ELSE}
 function StrMatchA(const S, M: AnsiString; const Index: Integer): Boolean;
 var N, T : Integer;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
 begin
   N := Length(M);
   T := Length(S);
@@ -2658,10 +3184,11 @@ begin
   Result := StrPMatchA(Pointer(M), Q, N);
 end;
 {$ENDIF}
+{$ENDIF}
 
 function StrMatchB(const S, M: RawByteString; const Index: Integer): Boolean;
 var N, T : Integer;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
 begin
   N := Length(M);
   T := Length(S);
@@ -2675,6 +3202,7 @@ begin
   Result := StrPMatchA(Pointer(M), Q, N);
 end;
 
+{$IFDEF SupportWideString}
 function StrMatchW(const S, M: WideString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2693,7 +3221,10 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrMatchAW(const S: WideString; const M: AnsiString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2712,7 +3243,10 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrMatchBW(const S: WideString; const M: RawByteString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2731,7 +3265,9 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchU(const S, M: UnicodeString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2750,7 +3286,10 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrMatchAU(const S: UnicodeString; const M: AnsiString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2769,7 +3308,10 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrMatchAS(const S: String; const M: AnsiString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2788,6 +3330,7 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 
 function StrMatch(const S, M: String; const Index: Integer): Boolean;
 var N, T, I : Integer;
@@ -2809,6 +3352,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrMatchNoCase(const S, M: AnsiString; const Index: Integer): Boolean;
 var N, T, I : Integer;
 begin
@@ -2827,7 +3371,9 @@ begin
       end;
   Result := True;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrMatchNoAsciiCaseA(const S, M: AnsiString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PAnsiChar;
@@ -2841,12 +3387,13 @@ begin
     end;
   Q := Pointer(S);
   Inc(Q, Index - 1);
-  Result := StrPMatchNoAsciiCaseA(Pointer(M), Q, N);
+  Result := StrPMatchNoAsciiCaseA(Pointer(M), Pointer(Q), N);
 end;
+{$ENDIF}
 
 function StrMatchNoAsciiCaseB(const S, M: RawByteString; const Index: Integer): Boolean;
 var N, T : Integer;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
 begin
   N := Length(M);
   T := Length(S);
@@ -2860,6 +3407,7 @@ begin
   Result := StrPMatchNoAsciiCaseA(Pointer(M), Q, N);
 end;
 
+{$IFDEF SupportWideString}
 function StrMatchNoAsciiCaseW(const S, M: WideString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
@@ -2875,7 +3423,10 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoAsciiCaseW(Pointer(M), Q, N);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrMatchNoAsciiCaseAW(const S: WideString; const M: AnsiString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
@@ -2891,7 +3442,10 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoAsciiCaseAW(Q, Pointer(M), N);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchNoAsciiCaseU(const S, M: UnicodeString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
@@ -2907,7 +3461,10 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoAsciiCaseW(Pointer(M), Q, N);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrMatchNoAsciiCaseAU(const S: UnicodeString; const M: AnsiString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
@@ -2923,7 +3480,10 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoAsciiCaseAW(Q, Pointer(M), N);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrMatchNoAsciiCaseAS(const S: String; const M: AnsiString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PChar;
@@ -2939,6 +3499,7 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoAsciiCaseAS(Q, Pointer(M), N);
 end;
+{$ENDIF}
 
 function StrMatchNoAsciiCase(const S, M: String; const Index: Integer = 1): Boolean;
 var N, T : Integer;
@@ -2956,23 +3517,8 @@ begin
   Result := StrPMatchNoAsciiCase(Pointer(M), Q, N);
 end;
 
+{$IFDEF SupportWideString}
 function StrMatchNoUnicodeCaseW(const S, M: WideString; const Index: Integer): Boolean;
-var N, T : Integer;
-    Q    : PWideChar;
-begin
-  N := Length(M);
-  T := Length(S);
-  if (N = 0) or (T = 0) or (Index < 1) or (Index + N - 1 > T) then
-    begin
-      Result := False;
-      exit;
-    end;
-  Q := Pointer(S);
-  Inc(Q, Index - 1);
-  Result := StrPMatchNoUnicodeCaseW(Pointer(M), Q, N);
-end;
-
-function StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
 begin
@@ -2989,6 +3535,26 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+function StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer): Boolean;
+var N, T : Integer;
+    Q    : PWideChar;
+begin
+  N := Length(M);
+  T := Length(S);
+  if (N = 0) or (T = 0) or (Index < 1) or (Index + N - 1 > T) then
+    begin
+      Result := False;
+      exit;
+    end;
+  Q := Pointer(S);
+  Inc(Q, Index - 1);
+  Result := StrPMatchNoUnicodeCaseW(Pointer(M), Q, N);
+end;
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF SupportAnsiString}
 function StrMatchLeftA(const S, M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -2996,6 +3562,7 @@ begin
   else
     Result := StrMatchNoAsciiCaseA(S, M, 1);
 end;
+{$ENDIF}
 
 function StrMatchLeftB(const S, M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -3005,6 +3572,7 @@ begin
     Result := StrMatchNoAsciiCaseB(S, M, 1);
 end;
 
+{$IFDEF SupportWideString}
 function StrMatchLeftW(const S, M: WideString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -3012,7 +3580,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseW(S, M, 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrMatchLeftAW(const S: WideString; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -3020,7 +3591,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseAW(S, M, 1);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchLeftU(const S, M: UnicodeString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -3028,7 +3602,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseU(S, M, 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrMatchLeftAU(const S: UnicodeString; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   if AsciiCaseSensitive then
@@ -3036,6 +3613,8 @@ begin
   else
     Result := StrMatchNoAsciiCaseAU(S, M, 1);
 end;
+{$ENDIF}
+{$ENDIF}
 
 function StrMatchLeft(const S, M: String; const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -3045,6 +3624,7 @@ begin
     Result := StrMatchNoAsciiCase(S, M, 1);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrMatchRightA(const S, M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
 begin
@@ -3054,6 +3634,7 @@ begin
   else
     Result := StrMatchNoAsciiCaseA(S, M, I);
 end;
+{$ENDIF}
 
 function StrMatchRightB(const S, M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
@@ -3065,6 +3646,7 @@ begin
     Result := StrMatchNoAsciiCaseB(S, M, I);
 end;
 
+{$IFDEF SupportWideString}
 function StrMatchRightW(const S, M: WideString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
 begin
@@ -3074,7 +3656,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseW(S, M, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrMatchRightAW(const S: WideString; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
 begin
@@ -3084,7 +3669,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseAW(S, M, I);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchRightU(const S, M: UnicodeString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
 begin
@@ -3094,7 +3682,10 @@ begin
   else
     Result := StrMatchNoAsciiCaseU(S, M, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrMatchRightAU(const S: UnicodeString; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
 begin
@@ -3104,6 +3695,8 @@ begin
   else
     Result := StrMatchNoAsciiCaseAU(S, M, I);
 end;
+{$ENDIF}
+{$ENDIF}
 
 function StrMatchRight(const S, M: String; const AsciiCaseSensitive: Boolean): Boolean;
 var I: Integer;
@@ -3116,6 +3709,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrMatchLen(const S: AnsiString; const M: CharSet;
     const Index: Integer): Integer;
 var L, I : Integer;
@@ -3137,9 +3731,31 @@ begin
           exit;
     end;
 end;
+{$ENDIF}
 {$ELSE}
-function StrMatchLenA(const S: AnsiString; const M: CharSet; const Index: Integer): Integer;
+{$IFDEF SupportAnsiString}
+function StrMatchLenA(const S: AnsiString; const M: ByteCharSet; const Index: Integer): Integer;
 var P    : PAnsiChar;
+    L, I : Integer;
+begin
+  I := Index;
+  if I <= 0 then
+    I := 1;
+  L := Length(S);
+  if I > L then
+    Result := 0
+  else
+    begin
+      P := Pointer(S);
+      Dec(I);
+      Inc(P, I);
+      Result := StrPMatchLenA(Pointer(P), L - I, M);
+    end;
+end;
+{$ENDIF}
+
+function StrMatchLenB(const S: RawByteString; const M: ByteCharSet; const Index: Integer): Integer;
+var P    : PByteChar;
     L, I : Integer;
 begin
   I := Index;
@@ -3157,26 +3773,8 @@ begin
     end;
 end;
 
-function StrMatchLenB(const S: RawByteString; const M: CharSet; const Index: Integer): Integer;
-var P    : PAnsiChar;
-    L, I : Integer;
-begin
-  I := Index;
-  if I <= 0 then
-    I := 1;
-  L := Length(S);
-  if I > L then
-    Result := 0
-  else
-    begin
-      P := Pointer(S);
-      Dec(I);
-      Inc(P, I);
-      Result := StrPMatchLenA(P, L - I, M);
-    end;
-end;
-
-function StrMatchLenW(const S: WideString; const M: CharSet; const Index: Integer): Integer;
+{$IFDEF SupportWideString}
+function StrMatchLenW(const S: WideString; const M: ByteCharSet; const Index: Integer): Integer;
 var P    : PWideChar;
     L, I : Integer;
 begin
@@ -3194,7 +3792,9 @@ begin
       Result := StrPMatchLenW(P, L - I, M);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrMatchLenW(const S: WideString; const M: TWideCharMatchFunction; const Index: Integer): Integer;
 var P    : PWideChar;
     L, I : Integer;
@@ -3213,8 +3813,10 @@ begin
       Result := StrPMatchLenW(P, L - I, M);
     end;
 end;
+{$ENDIF}
 
-function StrMatchLenU(const S: UnicodeString; const M: CharSet; const Index: Integer): Integer;
+{$IFDEF SupportUnicodeString}
+function StrMatchLenU(const S: UnicodeString; const M: ByteCharSet; const Index: Integer): Integer;
 var P    : PWideChar;
     L, I : Integer;
 begin
@@ -3232,7 +3834,9 @@ begin
       Result := StrPMatchLenW(P, L - I, M);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchLenU(const S: UnicodeString; const M: TWideCharMatchFunction; const Index: Integer = 1): Integer;
 var P    : PWideChar;
     L, I : Integer;
@@ -3251,8 +3855,9 @@ begin
       Result := StrPMatchLenW(P, L - I, M);
     end;
 end;
+{$ENDIF}
 
-function StrMatchLen(const S: String; const M: CharSet; const Index: Integer): Integer;
+function StrMatchLen(const S: String; const M: ByteCharSet; const Index: Integer): Integer;
 var P    : PChar;
     L, I : Integer;
 begin
@@ -3273,56 +3878,68 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrMatchCharA(const S: AnsiString; const M: CharSet): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrMatchLen(S, M, 1) = L);
 end;
+{$ENDIF}
 {$ELSE}
-function StrMatchCharA(const S: AnsiString; const M: CharSet): Boolean;
+{$IFDEF SupportAnsiString}
+function StrMatchCharA(const S: AnsiString; const M: ByteCharSet): Boolean;
+var L: Integer;
+begin
+  L := Length(S);
+  Result := (L > 0) and (StrPMatchLenA(Pointer(S), L, M) = L);
+end;
+{$ENDIF}
+
+function StrMatchCharB(const S: RawByteString; const M: ByteCharSet): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrPMatchLenA(Pointer(S), L, M) = L);
 end;
 
-function StrMatchCharB(const S: RawByteString; const M: CharSet): Boolean;
-var L: Integer;
-begin
-  L := Length(S);
-  Result := (L > 0) and (StrPMatchLenA(Pointer(S), L, M) = L);
-end;
-
-function StrMatchCharW(const S: WideString; const M: CharSet): Boolean;
+{$IFDEF SupportWideString}
+function StrMatchCharW(const S: WideString; const M: ByteCharSet): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrPMatchLenW(Pointer(S), L, M) = L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrMatchCharW(const S: WideString; const M: TWideCharMatchFunction): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrPMatchLenW(Pointer(S), L, M) = L);
 end;
+{$ENDIF}
 
-function StrMatchCharU(const S: UnicodeString; const M: CharSet): Boolean;
+{$IFDEF SupportUnicodeString}
+function StrMatchCharU(const S: UnicodeString; const M: ByteCharSet): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrPMatchLenW(Pointer(S), L, M) = L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrMatchCharU(const S: UnicodeString; const M: TWideCharMatchFunction): Boolean;
 var L: Integer;
 begin
   L := Length(S);
   Result := (L > 0) and (StrPMatchLenW(Pointer(S), L, M) = L);
 end;
+{$ENDIF}
 
-function StrMatchChar(const S: String; const M: CharSet): Boolean;
+function StrMatchChar(const S: String; const M: ByteCharSet): Boolean;
 var L: Integer;
 begin
   L := Length(S);
@@ -3331,6 +3948,7 @@ end;
 {$ENDIF}
 
 {$IFNDEF ManagedCode}
+{$IFDEF SupportWideString}
 function StrZMatchStrNoUnicodeCaseW(const P: PWideChar; const M: WideString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -3363,7 +3981,9 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -3396,6 +4016,7 @@ begin
     end;
   Result := True;
 end;
+{$ENDIF}
 
 {$ENDIF}
 
@@ -3405,7 +4026,7 @@ end;
 { Equal                                                                        }
 {                                                                              }
 {$IFNDEF CLR}
-function StrPEqual(const P1, P2: PAnsiChar; const Len1, Len2: Integer;
+function StrPEqual(const P1, P2: PByteChar; const Len1, Len2: Integer;
          const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := Len1 = Len2;
@@ -3417,6 +4038,7 @@ begin
     Result := StrPMatchNoAsciiCaseA(P1, P2, Len1);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrPEqualStr(const P: PAnsiChar; const Len: Integer; const S: AnsiString;
          const AsciiCaseSensitive: Boolean): Boolean;
 begin
@@ -3424,13 +4046,15 @@ begin
   if not Result or (Len = 0) then
     exit;
   if AsciiCaseSensitive then
-    Result := StrPMatchA(P, Pointer(S), Len)
+    Result := StrPMatchA(Pointer(P), Pointer(S), Len)
   else
-    Result := StrPMatchNoAsciiCaseA(P, Pointer(S), Len);
+    Result := StrPMatchNoAsciiCaseA(Pointer(P), Pointer(S), Len);
 end;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrEqual(const A, B: AnsiString; const CaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3444,7 +4068,9 @@ begin
   else
     Result := StrPMatchNoAsciiCaseA(A, B, L1);
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrEqualA(const A, B: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3458,6 +4084,7 @@ begin
   else
     Result := StrPMatchNoAsciiCaseA(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
 
 function StrEqualB(const A, B: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
@@ -3473,6 +4100,7 @@ begin
     Result := StrPMatchNoAsciiCaseA(Pointer(A), Pointer(B), L1);
 end;
 
+{$IFDEF SupportWideString}
 function StrEqualW(const A, B: WideString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3486,7 +4114,10 @@ begin
   else
     Result := StrPMatchNoAsciiCaseW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrEqualAW(const A: WideString; const B: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3500,7 +4131,10 @@ begin
   else
     Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrEqualBW(const A: WideString; const B: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3514,7 +4148,9 @@ begin
   else
     Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrEqualU(const A, B: UnicodeString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3528,7 +4164,10 @@ begin
   else
     Result := StrPMatchNoAsciiCaseW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrEqualAU(const A: UnicodeString; const B: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
 begin
@@ -3542,6 +4181,8 @@ begin
   else
     Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
+{$ENDIF}
 
 function StrEqual(const A, B: String; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
@@ -3559,6 +4200,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrEqualNoAsciiCaseA(const A, B: AnsiString): Boolean;
 var L : Integer;
 begin
@@ -3568,7 +4210,9 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseA(A, B, L);
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrEqualNoAsciiCaseA(const A, B: AnsiString): Boolean;
 var L, M : Integer;
 begin
@@ -3579,6 +4223,7 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseA(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
 
 function StrEqualNoAsciiCaseB(const A, B: RawByteString): Boolean;
 var L, M : Integer;
@@ -3591,6 +4236,7 @@ begin
   Result := StrPMatchNoAsciiCaseA(Pointer(A), Pointer(B), L);
 end;
 
+{$IFDEF SupportWideString}
 function StrEqualNoAsciiCaseW(const A, B: WideString): Boolean;
 var L, M : Integer;
 begin
@@ -3601,7 +4247,10 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function StrEqualNoAsciiCaseAW(const A: WideString; const B: AnsiString): Boolean;
 var L, M : Integer;
 begin
@@ -3612,7 +4261,10 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrEqualNoAsciiCaseBW(const A: WideString; const B: RawByteString): Boolean;
 var L, M : Integer;
 begin
@@ -3623,7 +4275,9 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrEqualNoAsciiCaseU(const A, B: UnicodeString): Boolean;
 var L, M : Integer;
 begin
@@ -3634,7 +4288,10 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function StrEqualNoAsciiCaseAU(const A: UnicodeString; const B: AnsiString): Boolean;
 var L, M : Integer;
 begin
@@ -3645,7 +4302,10 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrEqualNoAsciiCaseBU(const A: UnicodeString; const B: RawByteString): Boolean;
 var L, M : Integer;
 begin
@@ -3656,6 +4316,7 @@ begin
     exit;
   Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L);
 end;
+{$ENDIF}
 
 function StrEqualNoAsciiCase(const A, B: String): Boolean;
 var L, M : Integer;
@@ -3668,18 +4329,8 @@ begin
   Result := StrPMatchNoAsciiCase(Pointer(A), Pointer(B), L);
 end;
 
+{$IFDEF SupportWideString}
 function StrEqualNoUnicodeCaseW(const A, B: WideString): Boolean;
-var L, M : Integer;
-begin
-  L := Length(A);
-  M := Length(B);
-  Result := L = M;
-  if not Result or (L = 0) then
-    exit;
-  Result := StrPMatchNoUnicodeCaseW(Pointer(A), Pointer(B), L);
-end;
-
-function StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
 var L, M : Integer;
 begin
   L := Length(A);
@@ -3691,85 +4342,115 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
+function StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
+var L, M : Integer;
+begin
+  L := Length(A);
+  M := Length(B);
+  Result := L = M;
+  if not Result or (L = 0) then
+    exit;
+  Result := StrPMatchNoUnicodeCaseW(Pointer(A), Pointer(B), L);
+end;
+{$ENDIF}
+{$ENDIF}
+
 
 
 {                                                                              }
 { Validation                                                                   }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function StrIsNumericA(const S: AnsiString): Boolean;
 begin
   Result := StrMatchCharA(S, csNumeric);
 end;
+{$ENDIF}
 
 function StrIsNumericB(const S: RawByteString): Boolean;
 begin
   Result := StrMatchCharB(S, csNumeric);
 end;
 
+{$IFDEF SupportWideString}
 function StrIsNumericW(const S: WideString): Boolean;
 begin
   Result := StrMatchCharW(S, csNumeric);
 end;
+{$ENDIF}
 
 function StrIsNumeric(const S: String): Boolean;
 begin
   Result := StrMatchChar(S, csNumeric);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrIsHexA(const S: AnsiString): Boolean;
 begin
   Result := StrMatchCharA(S, csHexDigit);
 end;
+{$ENDIF}
 
 function StrIsHexB(const S: RawByteString): Boolean;
 begin
   Result := StrMatchCharB(S, csHexDigit);
 end;
 
+{$IFDEF SupportWideString}
 function StrIsHexW(const S: WideString): Boolean;
 begin
   Result := StrMatchCharW(S, csHexDigit);
 end;
+{$ENDIF}
 
 function StrIsHex(const S: String): Boolean;
 begin
   Result := StrMatchChar(S, csHexDigit);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrIsAlphaA(const S: AnsiString): Boolean;
 begin
   Result := StrMatchCharA(S, csAlpha);
 end;
+{$ENDIF}
 
 function StrIsAlphaB(const S: RawByteString): Boolean;
 begin
   Result := StrMatchCharB(S, csAlpha);
 end;
 
+{$IFDEF SupportWideString}
 function StrIsAlphaW(const S: WideString): Boolean;
 begin
   Result := StrMatchCharW(S, csAlpha);
 end;
+{$ENDIF}
 
 function StrIsAlpha(const S: String): Boolean;
 begin
   Result := StrMatchChar(S, csAlpha);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrIsAlphaNumericA(const S: AnsiString): Boolean;
 begin
   Result := StrMatchCharA(S, csAlphaNumeric);
 end;
+{$ENDIF}
 
 function StrIsAlphaNumericB(const S: RawByteString): Boolean;
 begin
   Result := StrMatchCharB(S, csAlphaNumeric);
 end;
 
+{$IFDEF SupportWideString}
 function StrIsAlphaNumericW(const S: WideString): Boolean;
 begin
   Result := StrMatchCharW(S, csAlphaNumeric);
 end;
+{$ENDIF}
 
 function StrIsAlphaNumeric(const S: String): Boolean;
 begin
@@ -3777,6 +4458,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrIsInteger(const S: AnsiString): Boolean;
 var L : Integer;
     P : Integer;
@@ -3793,7 +4475,9 @@ begin
     end;
   Result := (L > 0) and (StrMatchLen(S, csNumeric, P) = L);
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrIsIntegerA(const S: AnsiString): Boolean;
 var L: Integer;
     P: PAnsiChar;
@@ -3808,12 +4492,13 @@ begin
       Inc(P);
       Dec(L);
     end;
-  Result := (L > 0) and (StrPMatchLenA(P, L, csNumeric) = L);
+  Result := (L > 0) and (StrPMatchLenA(Pointer(P), L, csNumeric) = L);
 end;
+{$ENDIF}
 
 function StrIsIntegerB(const S: RawByteString): Boolean;
 var L: Integer;
-    P: PAnsiChar;
+    P: PByteChar;
 begin
   L := Length(S);
   Result := L > 0;
@@ -3828,6 +4513,7 @@ begin
   Result := (L > 0) and (StrPMatchLenA(P, L, csNumeric) = L);
 end;
 
+{$IFDEF SupportWideString}
 function StrIsIntegerW(const S: WideString): Boolean;
 var L: Integer;
     P: PWideChar;
@@ -3846,7 +4532,9 @@ begin
   end;
   Result := (L > 0) and (StrPMatchLenW(P, L, csNumeric) = L);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrIsIntegerU(const S: UnicodeString): Boolean;
 var L: Integer;
     P: PWideChar;
@@ -3865,6 +4553,7 @@ begin
   end;
   Result := (L > 0) and (StrPMatchLenW(P, L, csNumeric) = L);
 end;
+{$ENDIF}
 
 function StrIsInteger(const S: String): Boolean;
 var L: Integer;
@@ -3893,9 +4582,9 @@ end;
 {                                                                              }
 
 {$IFNDEF ManagedCode}
-function StrPPosCharA(const F: AnsiChar; const S: PAnsiChar; const Len: Integer): Integer;
+function StrPPosCharA(const F: AnsiChar; const S: PByteChar; const Len: Integer): Integer;
 var I : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if Len <= 0 then
     begin
@@ -3935,9 +4624,9 @@ begin
   Result := -1;
 end;
 
-function StrPPosCharSetA(const F: CharSet; const S: PAnsiChar; const Len: Integer): Integer;
+function StrPPosCharSetA(const F: ByteCharSet; const S: PByteChar; const Len: Integer): Integer;
 var I : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if Len <= 0 then
     begin
@@ -3956,7 +4645,7 @@ begin
   Result := -1;
 end;
 
-function StrPPosCharSetW(const F: CharSet; const S: PWideChar; const Len: Integer): Integer;
+function StrPPosCharSetW(const F: ByteCharSet; const S: PWideChar; const Len: Integer): Integer;
 var I : Integer;
     P : PWideChar;
 begin
@@ -3977,9 +4666,9 @@ begin
   Result := -1;
 end;
 
-function StrPPosA(const F, S: PAnsiChar; const LenF, LenS: Integer): Integer;
+function StrPPosA(const F, S: PByteChar; const LenF, LenS: Integer): Integer;
 var I : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if (LenF <= 0) or (LenS <= 0) or (LenF > LenS) then
     begin
@@ -4019,6 +4708,7 @@ begin
   Result := -1;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrPPosStrA(const F: AnsiString; const S: PAnsiChar; const Len: Integer): Integer;
 var LenF : Integer;
     I : Integer;
@@ -4041,11 +4731,12 @@ begin
       Inc(P);
   Result := -1;
 end;
+{$ENDIF}
 
-function StrPPosStrB(const F: RawByteString; const S: PAnsiChar; const Len: Integer): Integer;
+function StrPPosStrB(const F: RawByteString; const S: PByteChar; const Len: Integer): Integer;
 var LenF : Integer;
     I : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   LenF := Length(F);
   if (LenF <= 0) or (Len <= 0) or (LenF > Len) then
@@ -4067,6 +4758,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosCharA(const F: AnsiChar; const S: AnsiString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4090,7 +4782,9 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosCharA(const F: AnsiChar; const S: AnsiString; const Index: Integer): Integer;
 var P    : PAnsiChar;
     L, I : Integer;
@@ -4120,9 +4814,10 @@ begin
   Result := 0;
 end;
 {$ENDIF}
+{$ENDIF}
 
 function PosCharB(const F: AnsiChar; const S: RawByteString; const Index: Integer): Integer;
-var P    : PAnsiChar;
+var P    : PByteChar;
     L, I : Integer;
 begin
   L := Length(S);
@@ -4150,6 +4845,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosCharW(const F: WideChar; const S: WideString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4173,7 +4869,9 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosCharU(const F: WideChar; const S: UnicodeString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4197,6 +4895,7 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 
 function PosChar(const F: Char; const S: String; const Index: Integer): Integer;
 var L, I : Integer;
@@ -4223,6 +4922,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosCharSetA(const F: CharSet; const S: AnsiString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4246,8 +4946,10 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
-function PosCharSetA(const F: CharSet; const S: AnsiString; const Index: Integer): Integer;
+{$IFDEF SupportAnsiString}
+function PosCharSetA(const F: ByteCharSet; const S: AnsiString; const Index: Integer): Integer;
 var P    : PAnsiChar;
     L, I : Integer;
 begin
@@ -4275,9 +4977,10 @@ begin
       end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSetB(const F: CharSet; const S: RawByteString; const Index: Integer): Integer;
-var P    : PAnsiChar;
+function PosCharSetB(const F: ByteCharSet; const S: RawByteString; const Index: Integer): Integer;
+var P    : PByteChar;
     L, I : Integer;
 begin
   L := Length(S);
@@ -4305,7 +5008,8 @@ begin
   Result := 0;
 end;
 
-function PosCharSetW(const F: CharSet; const S: WideString;
+{$IFDEF SupportWideString}
+function PosCharSetW(const F: ByteCharSet; const S: WideString;
     const Index: Integer): Integer;
 var P    : PWideChar;
     C    : WideChar;
@@ -4339,7 +5043,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function PosCharSetW(const F: TWideCharMatchFunction; const S: WideString;
     const Index: Integer): Integer;
 var P    : PWideChar;
@@ -4373,8 +5079,10 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSetU(const F: CharSet; const S: UnicodeString;
+{$IFDEF SupportUnicodeString}
+function PosCharSetU(const F: ByteCharSet; const S: UnicodeString;
     const Index: Integer): Integer;
 var P    : PWideChar;
     C    : WideChar;
@@ -4408,7 +5116,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosCharSetU(const F: TWideCharMatchFunction; const S: UnicodeString;
     const Index: Integer): Integer;
 var P    : PWideChar;
@@ -4442,8 +5152,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSet(const F: CharSet; const S: String;
+function PosCharSet(const F: ByteCharSet; const S: String;
     const Index: Integer): Integer;
 var P    : PChar;
     C    : Char;
@@ -4482,6 +5193,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosNotCharA(const F: AnsiChar; const S: AnsiString;
     const Index: Integer): Integer;
 var L, I : Integer;
@@ -4506,7 +5218,9 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosNotCharA(const F: AnsiChar; const S: AnsiString;
     const Index: Integer): Integer;
 var P    : PAnsiChar;
@@ -4537,10 +5251,11 @@ begin
   Result := 0;
 end;
 {$ENDIF}
+{$ENDIF}
 
 function PosNotCharB(const F: AnsiChar; const S: RawByteString;
     const Index: Integer): Integer;
-var P    : PAnsiChar;
+var P    : PByteChar;
     L, I : Integer;
 begin
   L := Length(S);
@@ -4568,6 +5283,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosNotCharW(const F: WideChar; const S: WideString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4591,7 +5307,9 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosNotCharU(const F: WideChar; const S: UnicodeString; const Index: Integer): Integer;
 var L, I : Integer;
 begin
@@ -4615,6 +5333,7 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 
 function PosNotChar(const F: Char; const S: String; const Index: Integer): Integer;
 var L, I : Integer;
@@ -4641,6 +5360,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosNotCharSetA(const F: CharSet; const S: AnsiString;
     const Index: Integer): Integer;
 var L, I : Integer;
@@ -4665,8 +5385,10 @@ begin
       Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
-function PosNotCharSetA(const F: CharSet; const S: AnsiString;
+{$IFDEF SupportAnsiString}
+function PosNotCharSetA(const F: ByteCharSet; const S: AnsiString;
     const Index: Integer): Integer;
 var P    : PAnsiChar;
     L, I : Integer;
@@ -4695,10 +5417,11 @@ begin
       end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosNotCharSetB(const F: CharSet; const S: RawByteString;
+function PosNotCharSetB(const F: ByteCharSet; const S: RawByteString;
     const Index: Integer): Integer;
-var P    : PAnsiChar;
+var P    : PByteChar;
     L, I : Integer;
 begin
   L := Length(S);
@@ -4726,7 +5449,8 @@ begin
   Result := 0;
 end;
 
-function PosNotCharSetW(const F: CharSet; const S: WideString;
+{$IFDEF SupportWideString}
+function PosNotCharSetW(const F: ByteCharSet; const S: WideString;
     const Index: Integer): Integer;
 var P    : PWideChar;
     C    : WideChar;
@@ -4763,7 +5487,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function PosNotCharSetW(const F: TWideCharMatchFunction; const S: WideString;
     const Index: Integer): Integer;
 var P    : PWideChar;
@@ -4799,8 +5525,10 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosNotCharSetU(const F: CharSet; const S: UnicodeString;
+{$IFDEF SupportUnicodeString}
+function PosNotCharSetU(const F: ByteCharSet; const S: UnicodeString;
     const Index: Integer): Integer;
 var P    : PWideChar;
     C    : WideChar;
@@ -4837,7 +5565,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosNotCharSetU(const F: TWideCharMatchFunction; const S: UnicodeString;
     const Index: Integer): Integer;
 var P    : PWideChar;
@@ -4873,8 +5603,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosNotCharSet(const F: CharSet; const S: String;
+function PosNotCharSet(const F: ByteCharSet; const S: String;
     const Index: Integer): Integer;
 var P    : PChar;
     C    : Char;
@@ -4916,6 +5647,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosCharRev(const F: AnsiChar; const S: AnsiString;
     const Index: Integer): Integer;
 var L, I, J : Integer;
@@ -4941,7 +5673,9 @@ begin
       Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosCharRevA(const F: AnsiChar; const S: AnsiString;
     const Index: Integer): Integer;
 var P       : PAnsiChar;
@@ -4973,10 +5707,11 @@ begin
   Result := 0;
 end;
 {$ENDIF}
+{$ENDIF}
 
 function PosCharRevB(const F: AnsiChar; const S: RawByteString;
     const Index: Integer): Integer;
-var P       : PAnsiChar;
+var P       : PByteChar;
     L, I, J : Integer;
 begin
   L := Length(S);
@@ -5005,6 +5740,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosCharRevW(const F: WideChar; const S: WideString; const Index: Integer): Integer;
 var L, I, J : Integer;
 begin
@@ -5029,7 +5765,9 @@ begin
       Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosCharRevU(const F: WideChar; const S: UnicodeString; const Index: Integer): Integer;
 var L, I, J : Integer;
 begin
@@ -5054,6 +5792,7 @@ begin
       Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 
 function PosCharRev(const F: Char; const S: String; const Index: Integer): Integer;
 var L, I, J : Integer;
@@ -5081,6 +5820,7 @@ begin
 end;
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosCharSetRevA(const F: CharSet; const S: AnsiString;
     const Index: Integer): Integer;
 var L, I, J : Integer;
@@ -5106,8 +5846,10 @@ begin
       Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
-function PosCharSetRevA(const F: CharSet; const S: AnsiString; const Index: Integer): Integer;
+{$IFDEF SupportAnsiString}
+function PosCharSetRevA(const F: ByteCharSet; const S: AnsiString; const Index: Integer): Integer;
 var P       : PAnsiChar;
     L, I, J : Integer;
 begin
@@ -5137,9 +5879,10 @@ begin
       end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSetRevB(const F: CharSet; const S: RawByteString; const Index: Integer): Integer;
-var P       : PAnsiChar;
+function PosCharSetRevB(const F: ByteCharSet; const S: RawByteString; const Index: Integer): Integer;
+var P       : PByteChar;
     L, I, J : Integer;
 begin
   L := Length(S);
@@ -5169,7 +5912,8 @@ begin
   Result := 0;
 end;
 
-function PosCharSetRevW(const F: CharSet; const S: WideString; const Index: Integer): Integer;
+{$IFDEF SupportWideString}
+function PosCharSetRevW(const F: ByteCharSet; const S: WideString; const Index: Integer): Integer;
 var P       : PWideChar;
     L, I, J : Integer;
     C       : WideChar;
@@ -5204,7 +5948,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function PosCharSetRevW(const F: TWideCharMatchFunction; const S: WideString; const Index: Integer): Integer;
 var P       : PWideChar;
     L, I, J : Integer;
@@ -5239,8 +5985,10 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSetRevU(const F: CharSet; const S: UnicodeString; const Index: Integer): Integer;
+{$IFDEF SupportUnicodeString}
+function PosCharSetRevU(const F: ByteCharSet; const S: UnicodeString; const Index: Integer): Integer;
 var P       : PWideChar;
     L, I, J : Integer;
     C       : WideChar;
@@ -5275,7 +6023,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosCharSetRevU(const F: TWideCharMatchFunction; const S: UnicodeString; const Index: Integer): Integer;
 var P       : PWideChar;
     L, I, J : Integer;
@@ -5310,8 +6060,9 @@ begin
     end;
   Result := 0;
 end;
+{$ENDIF}
 
-function PosCharSetRev(const F: CharSet; const S: String; const Index: Integer): Integer;
+function PosCharSetRev(const F: ByteCharSet; const S: String; const Index: Integer): Integer;
 var P       : PChar;
     L, I, J : Integer;
     C       : Char;
@@ -5351,6 +6102,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosStrA(const F, S: AnsiString; const Index: Integer;
     const CaseSensitive: Boolean): Integer;
 var L, M, I : Integer;
@@ -5387,7 +6139,9 @@ begin
         Inc(I);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosStrA(const F, S: AnsiString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q    : PAnsiChar;
@@ -5410,7 +6164,7 @@ begin
   Dec(L, M - 1);
   if AsciiCaseSensitive then
     while I <= L do
-      if StrPMatchA(P, Q, M) then
+      if StrPMatchA(Pointer(P), Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5421,7 +6175,7 @@ begin
         end
   else
     while I <= L do
-      if StrPMatchNoAsciiCaseA(P, Q, M) then
+      if StrPMatchNoAsciiCaseA(Pointer(P), Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5432,10 +6186,11 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
 function PosStrB(const F, S: RawByteString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
-var P, Q    : PAnsiChar;
+var P, Q    : PByteChar;
     L, M, I : Integer;
 begin
   L := Length(S);
@@ -5478,6 +6233,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosStrW(const F, S: WideString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q    : PWideChar;
@@ -5522,7 +6278,10 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
+{$IFDEF SupportAnsiString}
 function PosStrAW(const F: AnsiString; const S: WideString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P       : PWideChar;
@@ -5546,7 +6305,7 @@ begin
   Dec(L, M - 1);
   if AsciiCaseSensitive then
     while I <= L do
-      if StrPMatchAW(P, Q, M) then
+      if StrPMatchAW(P, Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5557,7 +6316,7 @@ begin
         end
   else
     while I <= L do
-      if StrPMatchNoAsciiCaseAW(P, Q, M) then
+      if StrPMatchNoAsciiCaseAW(P, Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5568,7 +6327,10 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosStrU(const F, S: UnicodeString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q    : PWideChar;
@@ -5613,7 +6375,10 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportAnsiString}
+{$IFDEF SupportUnicodeString}
 function PosStrAU(const F: AnsiString; const S: UnicodeString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P       : PWideChar;
@@ -5637,7 +6402,7 @@ begin
   Dec(L, M - 1);
   if AsciiCaseSensitive then
     while I <= L do
-      if StrPMatchAW(P, Q, M) then
+      if StrPMatchAW(P, Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5648,7 +6413,7 @@ begin
         end
   else
     while I <= L do
-      if StrPMatchNoAsciiCaseAW(P, Q, M) then
+      if StrPMatchNoAsciiCaseAW(P, Pointer(Q), M) then
         begin
           Result := I;
           exit;
@@ -5659,6 +6424,8 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
+{$ENDIF}
 
 function PosStr(const F, S: String; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
@@ -5707,6 +6474,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosStrRev(const F, S: AnsiString; const Index: Integer;
     const CaseSensitive: Boolean): Integer;
 var L, M, I, J : Integer;
@@ -5744,7 +6512,9 @@ begin
         Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosStrRevA(const F, S: AnsiString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PAnsiChar;
@@ -5768,7 +6538,7 @@ begin
   J := L;
   if AsciiCaseSensitive then
     while J >= I do
-      if StrPMatchA(P, Q, M) then
+      if StrPMatchA(Pointer(P), Pointer(Q), M) then
         begin
           Result := J;
           exit;
@@ -5779,7 +6549,7 @@ begin
         end
   else
     while J >= I do
-      if StrPMatchNoAsciiCaseA(P, Q, M) then
+      if StrPMatchNoAsciiCaseA(Pointer(P), Pointer(Q), M) then
         begin
           Result := J;
           exit;
@@ -5790,10 +6560,11 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
 function PosStrRevB(const F, S: RawByteString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
-var P, Q       : PAnsiChar;
+var P, Q       : PByteChar;
     L, M, I, J : Integer;
 begin
   L := Length(S);
@@ -5837,6 +6608,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosStrRevW(const F, S: WideString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PWideChar;
@@ -5882,7 +6654,9 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosStrRevU(const F, S: UnicodeString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PWideChar;
@@ -5928,6 +6702,7 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
 function PosStrRev(const F, S: String; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
@@ -5977,6 +6752,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function PosStrRevIdx(const F, S: AnsiString; const Index: Integer;
     const CaseSensitive: Boolean): Integer;
 var L, M, I, J : Integer;
@@ -6013,7 +6789,9 @@ begin
         Dec(J);
   Result := 0;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function PosStrRevIdxA(const F, S: AnsiString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PAnsiChar;
@@ -6036,7 +6814,7 @@ begin
   J := I;
   if AsciiCaseSensitive then
     while J >= 1 do
-      if StrPMatchA(P, Q, M) then
+      if StrPMatchA(Pointer(P), Pointer(Q), M) then
         begin
           Result := J;
           exit;
@@ -6047,7 +6825,7 @@ begin
         end
   else
     while J >= 1 do
-      if StrPMatchNoAsciiCaseA(P, Q, M) then
+      if StrPMatchNoAsciiCaseA(Pointer(P), Pointer(Q), M) then
         begin
           Result := J;
           exit;
@@ -6058,10 +6836,11 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
 function PosStrRevIdxB(const F, S: RawByteString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
-var P, Q       : PAnsiChar;
+var P, Q       : PByteChar;
     L, M, I, J : Integer;
 begin
   L := Length(S);
@@ -6104,6 +6883,7 @@ begin
   Result := 0;
 end;
 
+{$IFDEF SupportWideString}
 function PosStrRevIdxW(const F, S: WideString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PWideChar;
@@ -6148,7 +6928,9 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosStrRevIdxU(const F, S: UnicodeString; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
 var P, Q       : PWideChar;
@@ -6193,6 +6975,7 @@ begin
         end;
   Result := 0;
 end;
+{$ENDIF}
 
 function PosStrRevIdx(const F, S: String; const Index: Integer;
     const AsciiCaseSensitive: Boolean): Integer;
@@ -6240,6 +7023,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function PosNStrA(const F, S: AnsiString; const N: Integer;
     const Index: Integer; const AsciiCaseSensitive: Boolean): Integer;
 var I, J, M: Integer;
@@ -6259,6 +7043,7 @@ begin
       J := Result + M;
     end;
 end;
+{$ENDIF}
 
 function PosNStrB(const F, S: RawByteString; const N: Integer;
     const Index: Integer; const AsciiCaseSensitive: Boolean): Integer;
@@ -6280,6 +7065,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function PosNStrW(const F, S: WideString; const N: Integer;
     const Index: Integer; const AsciiCaseSensitive: Boolean): Integer;
 var I, J, M: Integer;
@@ -6299,7 +7085,9 @@ begin
       J := Result + M;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function PosNStrU(const F, S: UnicodeString; const N: Integer;
     const Index: Integer; const AsciiCaseSensitive: Boolean): Integer;
 var I, J, M: Integer;
@@ -6319,6 +7107,7 @@ begin
       J := Result + M;
     end;
 end;
+{$ENDIF}
 
 function PosNStr(const F, S: String; const N: Integer;
     const Index: Integer; const AsciiCaseSensitive: Boolean): Integer;
@@ -6367,6 +7156,7 @@ begin
       Result := Copy(S, I, StopIndex - I + 1);
     end;
 end;
+{$ENDIF}
 
 function CopyRangeB(const S: RawByteString; const StartIndex, StopIndex: Integer): RawByteString;
 var L, I : Integer;
@@ -6389,8 +7179,8 @@ begin
       Result := Copy(S, I, StopIndex - I + 1);
     end;
 end;
-{$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyRangeW(const S: WideString; const StartIndex, StopIndex: Integer): WideString;
 var L, I : Integer;
 begin
@@ -6412,7 +7202,9 @@ begin
       Result := Copy(S, I, StopIndex - I + 1);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyRangeU(const S: UnicodeString; const StartIndex, StopIndex: Integer): UnicodeString;
 var L, I : Integer;
 begin
@@ -6434,6 +7226,7 @@ begin
       Result := Copy(S, I, StopIndex - I + 1);
     end;
 end;
+{$ENDIF}
 
 function CopyRange(const S: String; const StartIndex, StopIndex: Integer): String;
 var L, I : Integer;
@@ -6472,6 +7265,7 @@ begin
         Result := Copy(S, Index, L - Index + 1);
     end;
 end;
+{$ENDIF}
 
 function CopyFromB(const S: RawByteString; const Index: Integer): RawByteString;
 var L : Integer;
@@ -6487,8 +7281,8 @@ begin
         Result := Copy(S, Index, L - Index + 1);
     end;
 end;
-{$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyFromW(const S: WideString; const Index: Integer): WideString;
 var L : Integer;
 begin
@@ -6503,7 +7297,9 @@ begin
         Result := Copy(S, Index, L - Index + 1);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyFromU(const S: UnicodeString; const Index: Integer): UnicodeString;
 var L : Integer;
 begin
@@ -6518,6 +7314,7 @@ begin
         Result := Copy(S, Index, L - Index + 1);
     end;
 end;
+{$ENDIF}
 
 function CopyFrom(const S: String; const Index: Integer): String;
 var L : Integer;
@@ -6560,6 +7357,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyLeftW(const S: WideString; const Count: Integer): WideString;
 var L : Integer;
 begin
@@ -6571,7 +7369,9 @@ begin
     else
       Result := Copy(S, 1, Count);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyLeftU(const S: UnicodeString; const Count: Integer): UnicodeString;
 var L : Integer;
 begin
@@ -6583,6 +7383,7 @@ begin
     else
       Result := Copy(S, 1, Count);
 end;
+{$ENDIF}
 
 function CopyLeft(const S: String; const Count: Integer): String;
 var L : Integer;
@@ -6622,6 +7423,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyRightW(const S: WideString; const Count: Integer): WideString;
 var L : Integer;
 begin
@@ -6633,7 +7435,9 @@ begin
     else
       Result := Copy(S, L - Count + 1, Count);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyRightU(const S: UnicodeString; const Count: Integer): UnicodeString;
 var L : Integer;
 begin
@@ -6645,6 +7449,7 @@ begin
     else
       Result := Copy(S, L - Count + 1, Count);
 end;
+{$ENDIF}
 
 function CopyRight(const S: String; const Count: Integer): String;
 var L : Integer;
@@ -6687,6 +7492,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyLeftEllipsedU(const S: UnicodeString; const Count: Integer): UnicodeString;
 var L: Integer;
 begin
@@ -6713,6 +7519,8 @@ begin
     end;
   Result := Copy(S, 1, Count - 3) + '...';
 end;
+{$ENDIF}
+
 
 
 {                                                                              }
@@ -6805,6 +7613,7 @@ begin
       Result := Copy(S, I, Count);
 end;
 
+{$IFDEF SupportUnicodeString}
 function CopyExU(const S: UnicodeString; const Start, Count: Integer): UnicodeString;
 var I, L : Integer;
 begin
@@ -6816,6 +7625,7 @@ begin
     else
       Result := Copy(S, I, Count);
 end;
+{$ENDIF}
 
 function CopyEx(const S: String; const Start, Count: Integer): String;
 var I, L : Integer;
@@ -6855,6 +7665,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyRangeExW(const S: WideString; const Start, Stop: Integer): WideString;
 var I, J, L : Integer;
 begin
@@ -6866,7 +7677,9 @@ begin
     else
       Result := Copy(S, I, J - I + 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyRangeExU(const S: UnicodeString; const Start, Stop: Integer): UnicodeString;
 var I, J, L : Integer;
 begin
@@ -6878,6 +7691,7 @@ begin
     else
       Result := Copy(S, I, J - I + 1);
 end;
+{$ENDIF}
 
 function CopyRangeEx(const S: String; const Start, Stop: Integer): String;
 var I, J, L : Integer;
@@ -6917,6 +7731,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function CopyFromExW(const S: WideString; const Start: Integer): WideString;
 var I, L : Integer;
 begin
@@ -6928,7 +7743,9 @@ begin
     else
       Result := Copy(S, I, L - I + 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function CopyFromExU(const S: UnicodeString; const Start: Integer): UnicodeString;
 var I, L : Integer;
 begin
@@ -6940,6 +7757,7 @@ begin
     else
       Result := Copy(S, I, L - I + 1);
 end;
+{$ENDIF}
 
 function CopyFromEx(const S: String; const Start: Integer): String;
 var I, L : Integer;
@@ -6959,7 +7777,7 @@ end;
 { Trim                                                                         }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function StrTrimLeftA(const S: AnsiString; const C: CharSet): AnsiString;
+function StrTrimLeftA(const S: AnsiString; const C: ByteCharSet): AnsiString;
 var F, L : Integer;
 begin
   L := Length(S);
@@ -6968,8 +7786,9 @@ begin
     Inc(F);
   Result := CopyFromA(S, F);
 end;
+{$ENDIF}
 
-function StrTrimLeftB(const S: RawByteString; const C: CharSet): RawByteString;
+function StrTrimLeftB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 var F, L : Integer;
 begin
   L := Length(S);
@@ -6978,9 +7797,9 @@ begin
     Inc(F);
   Result := CopyFromB(S, F);
 end;
-{$ENDIF}
 
-function StrTrimLeftW(const S: WideString; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrTrimLeftW(const S: WideString; const C: ByteCharSet): WideString;
 var F, L : Integer;
 begin
   L := Length(S);
@@ -6989,7 +7808,9 @@ begin
     Inc(F);
   Result := CopyFromW(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrTrimLeftW(const S: WideString; const C: TWideCharMatchFunction): WideString;
 var F, L : Integer;
 begin
@@ -6999,8 +7820,10 @@ begin
     Inc(F);
   Result := CopyFromW(S, F);
 end;
+{$ENDIF}
 
-function StrTrimLeftU(const S: UnicodeString; const C: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrTrimLeftU(const S: UnicodeString; const C: ByteCharSet): UnicodeString;
 var F, L : Integer;
 begin
   L := Length(S);
@@ -7009,7 +7832,9 @@ begin
     Inc(F);
   Result := CopyFromU(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrTrimLeftU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString;
 var F, L : Integer;
 begin
@@ -7019,9 +7844,9 @@ begin
     Inc(F);
   Result := CopyFromU(S, F);
 end;
+{$ENDIF}
 
-
-function StrTrimLeft(const S: String; const C: CharSet): String;
+function StrTrimLeft(const S: String; const C: ByteCharSet): String;
 begin
   {$IFDEF StringIsUnicode}
   Result := StrTrimLeftU(S, C);
@@ -7051,30 +7876,7 @@ begin
 end;
 {$ELSE}
 {$IFDEF SupportAnsiString}
-procedure StrTrimLeftInPlaceA(var S: AnsiString; const C: CharSet);
-var F, L : Integer;
-    P    : PAnsiChar;
-begin
-  L := Length(S);
-  F := 1;
-  while (F <= L) and (S[F] in C) do
-    Inc(F);
-  if F > L then
-    S := '' else
-    if F > 1 then
-      begin
-        L := L - F + 1;
-        if L > 0 then
-          begin
-            P := Pointer(S);
-            Inc(P, F - 1);
-            MoveMem(P^, Pointer(S)^, L);
-          end;
-        SetLength(S, L);
-      end;
-end;
-
-procedure StrTrimLeftInPlaceB(var S: RawByteString; const C: CharSet);
+procedure StrTrimLeftInPlaceA(var S: AnsiString; const C: ByteCharSet);
 var F, L : Integer;
     P    : PAnsiChar;
 begin
@@ -7098,7 +7900,31 @@ begin
 end;
 {$ENDIF}
 
-procedure StrTrimLeftInPlaceW(var S: WideString; const C: CharSet);
+procedure StrTrimLeftInPlaceB(var S: RawByteString; const C: ByteCharSet);
+var F, L : Integer;
+    P    : PByteChar;
+begin
+  L := Length(S);
+  F := 1;
+  while (F <= L) and (S[F] in C) do
+    Inc(F);
+  if F > L then
+    S := '' else
+    if F > 1 then
+      begin
+        L := L - F + 1;
+        if L > 0 then
+          begin
+            P := Pointer(S);
+            Inc(P, F - 1);
+            MoveMem(P^, Pointer(S)^, L);
+          end;
+        SetLength(S, L);
+      end;
+end;
+
+{$IFDEF SupportWideString}
+procedure StrTrimLeftInPlaceW(var S: WideString; const C: ByteCharSet);
 var F, L : Integer;
     P    : PWideChar;
 begin
@@ -7143,8 +7969,10 @@ begin
         SetLength(S, L);
       end;
 end;
+{$ENDIF}
 
-procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: CharSet);
+{$IFDEF SupportUnicodeString}
+procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: ByteCharSet);
 var F, L : Integer;
     P    : PWideChar;
 begin
@@ -7166,7 +7994,9 @@ begin
         SetLength(S, L);
       end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrTrimLeftInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction);
 var F, L : Integer;
     P    : PWideChar;
@@ -7189,8 +8019,9 @@ begin
         SetLength(S, L);
       end;
 end;
+{$ENDIF}
 
-procedure StrTrimLeftInPlace(var S: String; const C: CharSet);
+procedure StrTrimLeftInPlace(var S: String; const C: ByteCharSet);
 var F, L : Integer;
     P    : PChar;
 begin
@@ -7238,6 +8069,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrTrimLeftStrNoCaseW(const S: WideString; const TrimStr: WideString): WideString;
 var F, L, M : Integer;
 begin
@@ -7248,8 +8080,10 @@ begin
     Inc(F, L);
   Result := CopyFromW(S, F);
 end;
+{$ENDIF}
 
-function StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: WideString): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 var F, L, M : Integer;
 begin
   L := Length(TrimStr);
@@ -7259,6 +8093,7 @@ begin
     Inc(F, L);
   Result := CopyFromU(S, F);
 end;
+{$ENDIF}
 
 function StrTrimLeftStrNoCase(const S: String; const TrimStr: String): String;
 var F, L, M : Integer;
@@ -7272,7 +8107,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrTrimRightA(const S: AnsiString; const C: CharSet): AnsiString;
+function StrTrimRightA(const S: AnsiString; const C: ByteCharSet): AnsiString;
 var F : Integer;
 begin
   F := Length(S);
@@ -7281,7 +8116,7 @@ begin
   Result := CopyLeftA(S, F);
 end;
 
-function StrTrimRightB(const S: RawByteString; const C: CharSet): RawByteString;
+function StrTrimRightB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 var F : Integer;
 begin
   F := Length(S);
@@ -7291,7 +8126,8 @@ begin
 end;
 {$ENDIF}
 
-function StrTrimRightW(const S: WideString; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrTrimRightW(const S: WideString; const C: ByteCharSet): WideString;
 var F : Integer;
 begin
   F := Length(S);
@@ -7299,7 +8135,9 @@ begin
     Dec(F);
   Result := CopyLeftW(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrTrimRightW(const S: WideString;    const C: TWideCharMatchFunction): WideString;
 var F : Integer;
 begin
@@ -7308,8 +8146,10 @@ begin
     Dec(F);
   Result := CopyLeftW(S, F);
 end;
+{$ENDIF}
 
-function StrTrimRightU(const S: UnicodeString; const C: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrTrimRightU(const S: UnicodeString; const C: ByteCharSet): UnicodeString;
 var F : Integer;
 begin
   F := Length(S);
@@ -7317,7 +8157,9 @@ begin
     Dec(F);
   Result := CopyLeftU(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrTrimRightU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString;
 var F : Integer;
 begin
@@ -7326,8 +8168,9 @@ begin
     Dec(F);
   Result := CopyLeftU(S, F);
 end;
+{$ENDIF}
 
-function StrTrimRight(const S: String; const C: CharSet): String;
+function StrTrimRight(const S: String; const C: ByteCharSet): String;
 begin
   {$IFDEF StringIsUnicode}
   Result := StrTrimRightU(S, C);
@@ -7337,19 +8180,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-procedure StrTrimRightInPlaceA(var S: AnsiString; const C: CharSet);
-var F : Integer;
-begin
-  F := Length(S);
-  while (F >= 1) and (S[F] in C) do
-    Dec(F);
-  if F = 0 then
-    S := ''
-  else
-    SetLength(S, F);
-end;
-
-procedure StrTrimRightInPlaceB(var S: RawByteString; const C: CharSet);
+procedure StrTrimRightInPlaceA(var S: AnsiString; const C: ByteCharSet);
 var F : Integer;
 begin
   F := Length(S);
@@ -7362,7 +8193,20 @@ begin
 end;
 {$ENDIF}
 
-procedure StrTrimRightInPlaceW(var S: WideString; const C: CharSet);
+procedure StrTrimRightInPlaceB(var S: RawByteString; const C: ByteCharSet);
+var F : Integer;
+begin
+  F := Length(S);
+  while (F >= 1) and (S[F] in C) do
+    Dec(F);
+  if F = 0 then
+    S := ''
+  else
+    SetLength(S, F);
+end;
+
+{$IFDEF SupportWideString}
+procedure StrTrimRightInPlaceW(var S: WideString; const C: ByteCharSet);
 var F : Integer;
 begin
   F := Length(S);
@@ -7373,7 +8217,9 @@ begin
   else
     SetLength(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure StrTrimRightInPlaceW(var S: WideString; const C: TWideCharMatchFunction);
 var F : Integer;
 begin
@@ -7385,8 +8231,10 @@ begin
   else
     SetLength(S, F);
 end;
+{$ENDIF}
 
-procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: CharSet);
+{$IFDEF SupportUnicodeString}
+procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: ByteCharSet);
 var F : Integer;
 begin
   F := Length(S);
@@ -7397,7 +8245,9 @@ begin
   else
     SetLength(S, F);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrTrimRightInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction);
 var F : Integer;
 begin
@@ -7409,8 +8259,9 @@ begin
   else
     SetLength(S, F);
 end;
+{$ENDIF}
 
-procedure StrTrimRightInPlace(var S: String; const C: CharSet);
+procedure StrTrimRightInPlace(var S: String; const C: ByteCharSet);
 var F : Integer;
 begin
   F := Length(S);
@@ -7444,6 +8295,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrTrimRightStrNoCaseW(const S: WideString; const TrimStr: WideString): WideString;
 var F, L : Integer;
 begin
@@ -7453,7 +8305,9 @@ begin
     Dec(F, L);
   Result := CopyLeftW(S, F + L - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrTrimRightStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 var F, L : Integer;
 begin
@@ -7463,6 +8317,7 @@ begin
     Dec(F, L);
   Result := CopyLeftU(S, F + L - 1);
 end;
+{$ENDIF}
 
 function StrTrimRightStrNoCase(const S: String; const TrimStr: String): String;
 var F, L : Integer;
@@ -7475,7 +8330,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrTrimA(const S: AnsiString; const C: CharSet): AnsiString;
+function StrTrimA(const S: AnsiString; const C: ByteCharSet): AnsiString;
 var F, G, L : Integer;
 begin
   L := Length(S);
@@ -7488,7 +8343,7 @@ begin
   Result := CopyRangeA(S, F, G);
 end;
 
-function StrTrimB(const S: RawByteString; const C: CharSet): RawByteString;
+function StrTrimB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 var F, G, L : Integer;
 begin
   L := Length(S);
@@ -7502,7 +8357,8 @@ begin
 end;
 {$ENDIF}
 
-function StrTrimW(const S: WideString; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrTrimW(const S: WideString; const C: ByteCharSet): WideString;
 var F, G, L : Integer;
 begin
   L := Length(S);
@@ -7514,7 +8370,9 @@ begin
     Dec(G);
   Result := CopyRangeW(S, F, G);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrTrimW(const S: WideString; const C: TWideCharMatchFunction): WideString;
 var F, G, L : Integer;
 begin
@@ -7527,8 +8385,10 @@ begin
     Dec(G);
   Result := CopyRangeW(S, F, G);
 end;
+{$ENDIF}
 
-function StrTrimU(const S: UnicodeString; const C: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrTrimU(const S: UnicodeString; const C: ByteCharSet): UnicodeString;
 var F, G, L : Integer;
 begin
   L := Length(S);
@@ -7540,7 +8400,9 @@ begin
     Dec(G);
   Result := CopyRangeU(S, F, G);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrTrimU(const S: UnicodeString; const C: TWideCharMatchFunction): UnicodeString;
 var F, G, L : Integer;
 begin
@@ -7553,31 +8415,33 @@ begin
     Dec(G);
   Result := CopyRangeU(S, F, G);
 end;
+{$ENDIF}
 
-function StrTrim(const S: String; const C: CharSet): String;
+function StrTrim(const S: String; const C: ByteCharSet): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := StrTrimW(S, C);
+  Result := StrTrimU(S, C);
   {$ELSE}
   Result := StrTrimA(S, C);
   {$ENDIF}
 end;
 
 {$IFDEF SupportAnsiString}
-procedure StrTrimInPlaceA(var S: AnsiString; const C: CharSet);
+procedure StrTrimInPlaceA(var S: AnsiString; const C: ByteCharSet);
 begin
   StrTrimLeftInPlaceA(S, C);
   StrTrimRightInPlaceA(S, C);
 end;
+{$ENDIF}
 
-procedure StrTrimInPlaceB(var S: RawByteString; const C: CharSet);
+procedure StrTrimInPlaceB(var S: RawByteString; const C: ByteCharSet);
 begin
   StrTrimLeftInPlaceB(S, C);
   StrTrimRightInPlaceB(S, C);
 end;
-{$ENDIF}
 
-procedure StrTrimInPlaceW(var S: WideString; const C: CharSet);
+{$IFDEF SupportWideString}
+procedure StrTrimInPlaceW(var S: WideString; const C: ByteCharSet);
 begin
   StrTrimLeftInPlaceW(S, C);
   StrTrimRightInPlaceW(S, C);
@@ -7588,34 +8452,41 @@ begin
   StrTrimLeftInPlaceW(S, C);
   StrTrimRightInPlaceW(S, C);
 end;
+{$ENDIF}
 
-procedure StrTrimInPlaceU(var S : UnicodeString; const C: CharSet);
+{$IFDEF SupportUnicodeString}
+procedure StrTrimInPlaceU(var S : UnicodeString; const C: ByteCharSet);
 begin
   StrTrimLeftInPlaceU(S, C);
   StrTrimRightInPlaceU(S, C);
 end;
+{$ENDIF}
 
-procedure StrTrimInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction); 
+{$IFDEF SupportUnicodeString}
+procedure StrTrimInPlaceU(var S: UnicodeString; const C: TWideCharMatchFunction);
 begin
   StrTrimLeftInPlaceU(S, C);
   StrTrimRightInPlaceU(S, C);
 end;
+{$ENDIF}
 
-procedure StrTrimInPlace(var S : String; const C: CharSet);
+procedure StrTrimInPlace(var S : String; const C: ByteCharSet);
 begin
   StrTrimLeftInPlace(S, C);
   StrTrimRightInPlace(S, C);
 end;
 
 {$IFDEF SupportAnsiString}
-procedure TrimStringsA(var S : AnsiStringArray; const C: CharSet);
+procedure TrimStringsA(var S : AnsiStringArray; const C: ByteCharSet);
 var I : Integer;
 begin
   for I := 0 to Length(S) - 1 do
     StrTrimInPlaceA(S[I], C);
 end;
+{$ENDIF}
 
-procedure TrimStringsB(var S : RawByteStringArray; const C: CharSet);
+{$IFDEF SupportRawByteString}
+procedure TrimStringsB(var S : RawByteStringArray; const C: ByteCharSet);
 var I : Integer;
 begin
   for I := 0 to Length(S) - 1 do
@@ -7623,19 +8494,23 @@ begin
 end;
 {$ENDIF}
 
-procedure TrimStringsW(var S : WideStringArray; const C: CharSet);
+{$IFDEF SupportWideString}
+procedure TrimStringsW(var S : WideStringArray; const C: ByteCharSet);
 var I : Integer;
 begin
   for I := 0 to Length(S) - 1 do
     StrTrimInPlaceW(S[I], C);
 end;
+{$ENDIF}
 
-procedure TrimStringsU(var S : UnicodeStringArray; const C: CharSet);
+{$IFDEF SupportUnicodeString}
+procedure TrimStringsU(var S : UnicodeStringArray; const C: ByteCharSet);
 var I : Integer;
 begin
   for I := 0 to Length(S) - 1 do
     StrTrimInPlaceU(S[I], C);
 end;
+{$ENDIF}
 
 
 
@@ -7643,6 +8518,7 @@ end;
 { Dup                                                                          }
 {                                                                              }
 {$IFNDEF ManagedCode}
+{$IFDEF SupportAnsiString}
 function BufToStrA(const Buf; const BufSize: Integer): AnsiString;
 begin
   if BufSize <= 0 then
@@ -7653,6 +8529,7 @@ begin
       MoveMem(Buf, Pointer(Result)^, BufSize);
     end;
 end;
+{$ENDIF}
 
 function BufToStrB(const Buf; const BufSize: Integer): RawByteString;
 begin
@@ -7665,6 +8542,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function BufToStrW(const Buf; const BufSize: Integer): WideString;
 var L : Integer;
 begin
@@ -7677,7 +8555,9 @@ begin
       MoveMem(Buf, Pointer(Result)^, BufSize);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function BufToStrU(const Buf; const BufSize: Integer): UnicodeString;
 var L : Integer;
 begin
@@ -7690,6 +8570,7 @@ begin
       MoveMem(Buf, Pointer(Result)^, BufSize);
     end;
 end;
+{$ENDIF}
 
 function BufToStr(const Buf; const BufSize: Integer): String;
 var L : Integer;
@@ -7708,6 +8589,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportAnsiString}
 function DupBufA(const Buf; const BufSize: Integer; const Count: Integer): AnsiString;
 var P : PAnsiChar;
     I : Integer;
@@ -7725,9 +8607,10 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function DupBufB(const Buf; const BufSize: Integer; const Count: Integer): RawByteString;
-var P : PAnsiChar;
+var P : PByteChar;
     I : Integer;
 begin
   if (Count <= 0) or (BufSize <= 0) then
@@ -7744,6 +8627,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function DupBufW(const Buf; const BufSize: Integer; const Count: Integer): WideString;
 var P : PWideChar;
     I, L : Integer;
@@ -7763,7 +8647,9 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function DupBufU(const Buf; const BufSize: Integer; const Count: Integer): UnicodeString;
 var P : PWideChar;
     I, L : Integer;
@@ -7783,6 +8669,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function DupBuf(const Buf; const BufSize: Integer; const Count: Integer): String;
 var P : PChar;
@@ -7810,6 +8697,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function DupStrA(const S: AnsiString; const Count: Integer): AnsiString;
 var L, I, J : Integer;
 begin
@@ -7824,7 +8712,9 @@ begin
           Result[I * L + J] := S[J];
     end;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function DupStrA(const S: AnsiString; const Count: Integer): AnsiString;
 var L : Integer;
 begin
@@ -7834,6 +8724,7 @@ begin
   else
     Result := DupBufA(Pointer(S)^, L, Count);
 end;
+{$ENDIF}
 
 function DupStrB(const S: RawByteString; const Count: Integer): RawByteString;
 var L : Integer;
@@ -7845,6 +8736,7 @@ begin
     Result := DupBufB(Pointer(S)^, L, Count);
 end;
 
+{$IFDEF SupportWideString}
 function DupStrW(const S: WideString; const Count: Integer): WideString;
 var L : Integer;
 begin
@@ -7854,7 +8746,9 @@ begin
   else
     Result := DupBufW(Pointer(S)^, L * SizeOf(WideChar), Count);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function DupStrU(const S: UnicodeString; const Count: Integer): UnicodeString;
 var L : Integer;
 begin
@@ -7864,6 +8758,7 @@ begin
   else
     Result := DupBufU(Pointer(S)^, L * SizeOf(WideChar), Count);
 end;
+{$ENDIF}
 
 function DupStr(const S: String; const Count: Integer): String;
 var L : Integer;
@@ -7877,6 +8772,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function DupChar(const Ch: AnsiChar; const Count: Integer): AnsiString;
 var I : Integer;
 begin
@@ -7889,7 +8785,9 @@ begin
   for I := 1 to Count do
     Result[I] := Ch;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function DupCharA(const Ch: AnsiChar; const Count: Integer): AnsiString;
 begin
   if Count <= 0 then
@@ -7900,6 +8798,7 @@ begin
   SetLength(Result, Count);
   FillMem(Pointer(Result)^, Count, Ord(Ch));
 end;
+{$ENDIF}
 {$ENDIF}
 
 function DupCharB(const Ch: AnsiChar; const Count: Integer): RawByteString;
@@ -7913,6 +8812,7 @@ begin
   FillMem(Pointer(Result)^, Count, Ord(Ch));
 end;
 
+{$IFDEF SupportWideString}
 function DupCharW(const Ch: WideChar; const Count: Integer): WideString;
 var I : Integer;
 begin
@@ -7925,7 +8825,9 @@ begin
   for I := 1 to Count do
     Result[I] := Ch;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function DupCharU(const Ch: WideChar; const Count: Integer): UnicodeString;
 var I : Integer;
 begin
@@ -7938,6 +8840,7 @@ begin
   for I := 1 to Count do
     Result[I] := Ch;
 end;
+{$ENDIF}
 
 function DupChar(const Ch: Char; const Count: Integer): String;
 var I : Integer;
@@ -7952,25 +8855,31 @@ begin
     Result[I] := Ch;
 end;
 
+{$IFDEF SupportAnsiString}
 function DupSpaceA(const Count: Integer): AnsiString;
 begin
   Result := DupCharA(AsciiSP, Count);
 end;
+{$ENDIF}
 
 function DupSpaceB(const Count: Integer): RawByteString;
 begin
   Result := DupCharB(AsciiSP, Count);
 end;
 
+{$IFDEF SupportWideString}
 function DupSpaceW(const Count: Integer): WideString;
 begin
   Result := DupCharW(WideSP, Count);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function DupSpaceU(const Count: Integer): UnicodeString;
 begin
   Result := DupCharU(WideSP, Count);
 end;
+{$ENDIF}
 
 function DupSpace(const Count: Integer): String;
 begin
@@ -7983,6 +8892,7 @@ end;
 { Pad                                                                          }
 {                                                                              }
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrPadLeftA(const S: AnsiString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): AnsiString;
 var L, P, M, I : Integer;
@@ -8015,7 +8925,9 @@ begin
     for I := 1 to L - P do
       Result[P + I] := S[I];
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrPadLeftA(const S: AnsiString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): AnsiString;
 var F, L, P, M : Integer;
@@ -8058,11 +8970,12 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function StrPadLeftB(const S: RawByteString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): RawByteString;
 var F, L, P, M : Integer;
-    I, J       : PAnsiChar;
+    I, J       : PByteChar;
 begin
   if Len = 0 then
     begin
@@ -8102,6 +9015,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function StrPadLeftW(const S: WideString; const PadChar: WideChar;
     const Len: Integer; const Cut: Boolean): WideString;
 var F, L, P, M : Integer;
@@ -8144,7 +9058,9 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrPadLeftU(const S: UnicodeString; const PadChar: WideChar;
     const Len: Integer; const Cut: Boolean): UnicodeString;
 var F, L, P, M : Integer;
@@ -8187,6 +9103,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function StrPadLeft(const S: String; const PadChar: Char;
     const Len: Integer; const Cut: Boolean): String;
@@ -8233,6 +9150,7 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrPadRightA(const S: AnsiString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): AnsiString;
 var L, P, M, I : Integer;
@@ -8266,7 +9184,9 @@ begin
     for I := 1 to P do
       Result[L - P + I] := PadChar;
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrPadRightA(const S: AnsiString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): AnsiString;
 var F, L, P, M : Integer;
@@ -8308,11 +9228,12 @@ begin
   if P > 0 then
     FillMem(Result[L - P + 1], P, Ord(PadChar));
 end;
+{$ENDIF}
 
 function StrPadRightB(const S: RawByteString; const PadChar: AnsiChar;
     const Len: Integer; const Cut: Boolean): RawByteString;
 var F, L, P, M : Integer;
-    I, J       : PAnsiChar;
+    I, J       : PByteChar;
 begin
   if Len = 0 then
     begin
@@ -8351,6 +9272,7 @@ begin
     FillMem(Result[L - P + 1], P, Ord(PadChar));
 end;
 
+{$IFDEF SupportWideString}
 function StrPadRightW(const S: WideString; const PadChar: WideChar;
     const Len: Integer; const Cut: Boolean): WideString;
 var F, L, P, M : Integer;
@@ -8392,7 +9314,9 @@ begin
   for F := L - P + 1 to L do
     Result[F] := PadChar;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrPadRightU(const S: UnicodeString; const PadChar: WideChar;
     const Len: Integer; const Cut: Boolean): UnicodeString;
 var F, L, P, M : Integer;
@@ -8434,6 +9358,7 @@ begin
   for F := L - P + 1 to L do
     Result[F] := PadChar;
 end;
+{$ENDIF}
 
 function StrPadRight(const S: String; const PadChar: Char;
     const Len: Integer; const Cut: Boolean): String;
@@ -8478,6 +9403,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 function StrPadA(const S: AnsiString; const PadChar: AnsiChar; const Len: Integer;
     const Cut: Boolean): AnsiString;
 var I : Integer;
@@ -8487,6 +9413,7 @@ begin
   if Cut then
     SetLength(Result, Len);
 end;
+{$ENDIF}
 
 function StrPadB(const S: RawByteString; const PadChar: AnsiChar; const Len: Integer;
     const Cut: Boolean): RawByteString;
@@ -8498,6 +9425,7 @@ begin
     SetLength(Result, Len);
 end;
 
+{$IFDEF SupportWideString}
 function StrPadW(const S: WideString; const PadChar: WideChar; const Len: Integer;
     const Cut: Boolean): WideString;
 var I : Integer;
@@ -8507,7 +9435,9 @@ begin
   if Cut then
     SetLength(Result, Len);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrPadU(const S: UnicodeString; const PadChar: WideChar; const Len: Integer;
     const Cut: Boolean): UnicodeString;
 var I : Integer;
@@ -8517,6 +9447,7 @@ begin
   if Cut then
     SetLength(Result, Len);
 end;
+{$ENDIF}
 
 function StrPad(const S: String; const PadChar: Char; const Len: Integer;
     const Cut: Boolean): String;
@@ -8553,7 +9484,7 @@ begin
 end;
 
 function StrBetweenCharA(const S: AnsiString;
-    const FirstDelim, SecondDelim: CharSet;
+    const FirstDelim, SecondDelim: ByteCharSet;
     const FirstOptional: Boolean; const SecondOptional: Boolean): AnsiString;
 var I, J : Integer;
 begin
@@ -8589,7 +9520,7 @@ begin
 end;
 
 function StrBetweenCharB(const S: RawByteString;
-    const FirstDelim, SecondDelim: CharSet;
+    const FirstDelim, SecondDelim: ByteCharSet;
     const FirstOptional: Boolean; const SecondOptional: Boolean): RawByteString;
 var I, J : Integer;
 begin
@@ -8607,6 +9538,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBetweenCharW(const S: WideString;
     const FirstDelim, SecondDelim: WideChar;
     const FirstOptional: Boolean; const SecondOptional: Boolean): WideString;
@@ -8624,9 +9556,11 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeW(S, I + 1, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBetweenCharW(const S: WideString;
-    const FirstDelim, SecondDelim: CharSet;
+    const FirstDelim, SecondDelim: ByteCharSet;
     const FirstOptional: Boolean; const SecondOptional: Boolean): WideString;
 var I, J : Integer;
 begin
@@ -8642,7 +9576,9 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeW(S, I + 1, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBetweenCharU(const S: UnicodeString;
     const FirstDelim, SecondDelim: WideChar;
     const FirstOptional: Boolean; const SecondOptional: Boolean): UnicodeString;
@@ -8660,9 +9596,11 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeU(S, I + 1, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBetweenCharU(const S: UnicodeString;
-    const FirstDelim, SecondDelim: CharSet;
+    const FirstDelim, SecondDelim: ByteCharSet;
     const FirstOptional: Boolean; const SecondOptional: Boolean): UnicodeString;
 var I, J : Integer;
 begin
@@ -8678,6 +9616,7 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeU(S, I + 1, J - 1);
 end;
+{$ENDIF}
 
 function StrBetweenChar(const S: String;
     const FirstDelim, SecondDelim: Char;
@@ -8698,7 +9637,7 @@ begin
 end;
 
 function StrBetweenChar(const S: String;
-    const FirstDelim, SecondDelim: CharSet;
+    const FirstDelim, SecondDelim: ByteCharSet;
     const FirstOptional: Boolean; const SecondOptional: Boolean): String;
 var I, J : Integer;
 begin
@@ -8717,7 +9656,7 @@ end;
 
 {$IFDEF SupportAnsiString}
 function StrBetweenA(const S: AnsiString; const FirstDelim: AnsiString;
-    const SecondDelim: CharSet; const FirstOptional: Boolean;
+    const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
     const SecondOptional: Boolean;
     const FirstDelimAsciiCaseSensitive: Boolean): AnsiString;
 var I, J : Integer;
@@ -8757,7 +9696,7 @@ begin
 end;
 
 function StrBetweenB(const S: RawByteString; const FirstDelim: RawByteString;
-    const SecondDelim: CharSet; const FirstOptional: Boolean;
+    const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
     const SecondOptional: Boolean;
     const FirstDelimAsciiCaseSensitive: Boolean): RawByteString;
 var I, J : Integer;
@@ -8797,8 +9736,9 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBetweenW(const S: WideString; const FirstDelim: WideString;
-    const SecondDelim: CharSet; const FirstOptional: Boolean;
+    const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
     const SecondOptional: Boolean;
     const FirstDelimAsciiCaseSensitive: Boolean): WideString;
 var I, J : Integer;
@@ -8816,7 +9756,9 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeW(S, I, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBetweenW(const S: WideString;
     const FirstDelim, SecondDelim: WideString; const FirstOptional: Boolean;
     const SecondOptional: Boolean ; const FirstDelimAsciiCaseSensitive: Boolean;
@@ -8836,9 +9778,11 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeW(S, I, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBetweenU(const S: UnicodeString; const FirstDelim: UnicodeString;
-    const SecondDelim: CharSet; const FirstOptional: Boolean;
+    const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
     const SecondOptional: Boolean;
     const FirstDelimAsciiCaseSensitive: Boolean): UnicodeString;
 var I, J : Integer;
@@ -8856,7 +9800,9 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeU(S, I, J - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBetweenU(const S: UnicodeString;
     const FirstDelim, SecondDelim: UnicodeString; const FirstOptional: Boolean;
     const SecondOptional: Boolean ; const FirstDelimAsciiCaseSensitive: Boolean;
@@ -8876,9 +9822,10 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeU(S, I, J - 1);
 end;
+{$ENDIF}
 
 function StrBetween(const S: String; const FirstDelim: String;
-    const SecondDelim: CharSet; const FirstOptional: Boolean;
+    const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
     const SecondOptional: Boolean;
     const FirstDelimAsciiCaseSensitive: Boolean): String;
 var I, J : Integer;
@@ -8975,6 +9922,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBeforeW(const S, D: WideString; const Optional: Boolean;
     const AsciiCaseSensitive: Boolean): WideString;
 var I : Integer;
@@ -8988,7 +9936,9 @@ begin
   else
     Result := CopyLeftW(S, I - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBeforeRevW(const S, D: WideString; const Optional: Boolean;
     const AsciiCaseSensitive: Boolean): WideString;
 var I : Integer;
@@ -9002,7 +9952,9 @@ begin
   else
     Result := CopyLeftW(S, I - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBeforeU(const S, D: UnicodeString; const Optional: Boolean;
     const AsciiCaseSensitive: Boolean): UnicodeString;
 var I : Integer;
@@ -9016,7 +9968,9 @@ begin
   else
     Result := CopyLeftU(S, I - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrBeforeRevU(const S, D: UnicodeString; const Optional: Boolean;
     const AsciiCaseSensitive: Boolean): UnicodeString;
 var I : Integer;
@@ -9030,6 +9984,7 @@ begin
   else
     Result := CopyLeftU(S, I - 1);
 end;
+{$ENDIF}
 
 function StrBefore(const S, D: String; const Optional: Boolean;
     const AsciiCaseSensitive: Boolean): String;
@@ -9060,7 +10015,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrBeforeCharA(const S: AnsiString; const D: CharSet;
+function StrBeforeCharA(const S: AnsiString; const D: ByteCharSet;
     const Optional: Boolean): AnsiString;
 var I : Integer;
 begin
@@ -9088,7 +10043,7 @@ begin
     Result := CopyLeftA(S, I - 1);
 end;
 
-function StrBeforeCharRevA(const S: AnsiString; const D: CharSet;
+function StrBeforeCharRevA(const S: AnsiString; const D: ByteCharSet;
     const Optional: Boolean): AnsiString;
 var I : Integer;
 begin
@@ -9102,7 +10057,7 @@ begin
     Result := CopyLeftA(S, I - 1);
 end;
 
-function StrBeforeCharB(const S: RawByteString; const D: CharSet;
+function StrBeforeCharB(const S: RawByteString; const D: ByteCharSet;
     const Optional: Boolean): RawByteString;
 var I : Integer;
 begin
@@ -9130,7 +10085,7 @@ begin
     Result := CopyLeftB(S, I - 1);
 end;
 
-function StrBeforeCharRevB(const S: RawByteString; const D: CharSet;
+function StrBeforeCharRevB(const S: RawByteString; const D: ByteCharSet;
     const Optional: Boolean): RawByteString;
 var I : Integer;
 begin
@@ -9145,7 +10100,8 @@ begin
 end;
 {$ENDIF}
 
-function StrBeforeCharW(const S: WideString; const D: CharSet;
+{$IFDEF SupportWideString}
+function StrBeforeCharW(const S: WideString; const D: ByteCharSet;
     const Optional: Boolean): WideString;
 var I : Integer;
 begin
@@ -9158,7 +10114,9 @@ begin
   else
     Result := CopyLeftW(S, I - 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrBeforeCharW(const S: WideString; const D: WideChar;
     const Optional: Boolean): WideString;
 var I : Integer;
@@ -9172,8 +10130,10 @@ begin
   else
     Result := CopyLeftW(S, I - 1);
 end;
+{$ENDIF}
 
-function StrBeforeCharRevW(const S: WideString; const D: CharSet;
+{$IFDEF SupportWideString}
+function StrBeforeCharRevW(const S: WideString; const D: ByteCharSet;
     const Optional: Boolean): WideString;
 var I : Integer;
 begin
@@ -9186,8 +10146,9 @@ begin
   else
     Result := CopyLeftW(S, I - 1);
 end;
+{$ENDIF}
 
-function StrBeforeChar(const S: String; const D: CharSet;
+function StrBeforeChar(const S: String; const D: ByteCharSet;
     const Optional: Boolean): String;
 var I : Integer;
 begin
@@ -9215,7 +10176,7 @@ begin
     Result := CopyLeft(S, I - 1);
 end;
 
-function StrBeforeCharRev(const S: String; const D: CharSet;
+function StrBeforeCharRev(const S: String; const D: ByteCharSet;
     const Optional: Boolean): String;
 var I : Integer;
 begin
@@ -9283,6 +10244,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrAfterW(const S, D: WideString; const Optional: Boolean): WideString;
 var I : Integer;
 begin
@@ -9295,7 +10257,9 @@ begin
   else
     Result := CopyFromW(S, I + Length(D));
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrAfterRevW(const S, D: WideString; const Optional: Boolean): WideString;
 var I : Integer;
 begin
@@ -9308,7 +10272,9 @@ begin
   else
     Result := CopyFromW(S, I + Length(D));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrAfterU(const S, D: UnicodeString; const Optional: Boolean): UnicodeString;
 var I : Integer;
 begin
@@ -9321,7 +10287,9 @@ begin
   else
     Result := CopyFromU(S, I + Length(D));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrAfterRevU(const S, D: UnicodeString; const Optional: Boolean): UnicodeString;
 var I : Integer;
 begin
@@ -9334,6 +10302,7 @@ begin
   else
     Result := CopyFromU(S, I + Length(D));
 end;
+{$ENDIF}
 
 function StrAfter(const S, D: String; const Optional: Boolean): String;
 var I : Integer;
@@ -9362,7 +10331,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrAfterCharA(const S: AnsiString; const D: CharSet): AnsiString;
+function StrAfterCharA(const S: AnsiString; const D: ByteCharSet): AnsiString;
 var I : Integer;
 begin
   I := PosCharSetA(D, S);
@@ -9382,7 +10351,7 @@ begin
     Result := CopyFromA(S, I + 1);
 end;
 
-function StrAfterCharB(const S: RawByteString; const D: CharSet): RawByteString;
+function StrAfterCharB(const S: RawByteString; const D: ByteCharSet): RawByteString;
 var I : Integer;
 begin
   I := PosCharSetB(D, S);
@@ -9403,7 +10372,8 @@ begin
 end;
 {$ENDIF}
 
-function StrAfterCharW(const S: WideString; const D: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrAfterCharW(const S: WideString; const D: ByteCharSet): WideString;
 var I : Integer;
 begin
   I := PosCharSetW(D, S);
@@ -9412,7 +10382,9 @@ begin
   else
     Result := CopyFromW(S, I + 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrAfterCharW(const S: WideString; const D: WideChar): WideString;
 var I : Integer;
 begin
@@ -9422,8 +10394,10 @@ begin
   else
     Result := CopyFromW(S, I + 1);
 end;
+{$ENDIF}
 
-function StrAfterCharU(const S: UnicodeString; const D: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrAfterCharU(const S: UnicodeString; const D: ByteCharSet): UnicodeString;
 var I : Integer;
 begin
   I := PosCharSetU(D, S);
@@ -9432,7 +10406,9 @@ begin
   else
     Result := CopyFromU(S, I + 1);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrAfterCharU(const S: UnicodeString; const D: WideChar): UnicodeString;
 var I : Integer;
 begin
@@ -9442,8 +10418,9 @@ begin
   else
     Result := CopyFromU(S, I + 1);
 end;
+{$ENDIF}
 
-function StrAfterChar(const S: String; const D: CharSet): String;
+function StrAfterChar(const S: String; const D: ByteCharSet): String;
 var I : Integer;
 begin
   I := PosCharSet(D, S);
@@ -9464,7 +10441,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrCopyToCharA(const S: AnsiString; const D: CharSet;
+function StrCopyToCharA(const S: AnsiString; const D: ByteCharSet;
     const Optional: Boolean): AnsiString;
 var I : Integer;
 begin
@@ -9492,7 +10469,7 @@ begin
     Result := CopyLeftA(S, I);
 end;
 
-function StrCopyToCharB(const S: RawByteString; const D: CharSet;
+function StrCopyToCharB(const S: RawByteString; const D: ByteCharSet;
     const Optional: Boolean): RawByteString;
 var I : Integer;
 begin
@@ -9521,7 +10498,8 @@ begin
 end;
 {$ENDIF}
 
-function StrCopyToCharW(const S: WideString; const D: CharSet;
+{$IFDEF SupportWideString}
+function StrCopyToCharW(const S: WideString; const D: ByteCharSet;
     const Optional: Boolean): WideString;
 var I : Integer;
 begin
@@ -9534,7 +10512,9 @@ begin
   else
     Result := CopyLeftW(S, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrCopyToCharW(const S: WideString; const D: WideChar;
     const Optional: Boolean): WideString;
 var I : Integer;
@@ -9548,8 +10528,9 @@ begin
   else
     Result := CopyLeftW(S, I);
 end;
+{$ENDIF}
 
-function StrCopyToChar(const S: String; const D: CharSet;
+function StrCopyToChar(const S: String; const D: ByteCharSet;
     const Optional: Boolean): String;
 var I : Integer;
 begin
@@ -9578,7 +10559,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrCopyFromCharA(const S: AnsiString; const D: CharSet): AnsiString;
+function StrCopyFromCharA(const S: AnsiString; const D: ByteCharSet): AnsiString;
 var I : Integer;
 begin
   I := PosCharSetA(D, S);
@@ -9598,7 +10579,7 @@ begin
     Result := CopyFromB(S, I);
 end;
 
-function StrCopyFromCharB(const S: RawByteString; const D: CharSet): RawByteString;
+function StrCopyFromCharB(const S: RawByteString; const D: ByteCharSet): RawByteString;
 var I : Integer;
 begin
   I := PosCharSetB(D, S);
@@ -9619,7 +10600,8 @@ begin
 end;
 {$ENDIF}
 
-function StrCopyFromCharW(const S: WideString; const D: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrCopyFromCharW(const S: WideString; const D: ByteCharSet): WideString;
 var I : Integer;
 begin
   I := PosCharSetW(D, S);
@@ -9628,7 +10610,9 @@ begin
   else
     Result := CopyFromW(S, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrCopyFromCharW(const S: WideString; const D: WideChar): WideString;
 var I : Integer;
 begin
@@ -9638,8 +10622,10 @@ begin
   else
     Result := CopyFromW(S, I);
 end;
+{$ENDIF}
 
-function StrCopyFromCharU(const S: UnicodeString; const D: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrCopyFromCharU(const S: UnicodeString; const D: ByteCharSet): UnicodeString;
 var I : Integer;
 begin
   I := PosCharSetU(D, S);
@@ -9648,7 +10634,9 @@ begin
   else
     Result := CopyFromU(S, I);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCopyFromCharU(const S: UnicodeString; const D: WideChar): UnicodeString;
 var I : Integer;
 begin
@@ -9658,8 +10646,9 @@ begin
   else
     Result := CopyFromU(S, I);
 end;
+{$ENDIF}
 
-function StrCopyFromChar(const S: String; const D: CharSet): String;
+function StrCopyFromChar(const S: String; const D: ByteCharSet): String;
 var I : Integer;
 begin
   I := PosCharSet(D, S);
@@ -9711,6 +10700,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrRemoveCharDelimitedW(var S: WideString;
     const FirstDelim, SecondDelim: WideChar): WideString;
 var I, J : Integer;
@@ -9725,6 +10715,7 @@ begin
   Result := CopyRangeW(S, I + 1, J - 1);
   Delete(S, I, J - I + 1);
 end;
+{$ENDIF}
 
 function StrRemoveCharDelimited(var S: String;
     const FirstDelim, SecondDelim: Char): String;
@@ -9747,6 +10738,7 @@ end;
 { Count                                                                        }
 {                                                                              }
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrCountChar(const S: AnsiString; const C: AnsiChar): Integer;
 var I : Integer;
 begin
@@ -9755,7 +10747,9 @@ begin
     if S[I] = C then
       Inc(Result);
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 function StrCountCharA(const S: AnsiString; const C: AnsiChar): Integer;
 var P : PAnsiChar;
     I : Integer;
@@ -9769,9 +10763,10 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
 function StrCountCharB(const S: RawByteString; const C: AnsiChar): Integer;
-var P : PAnsiChar;
+var P : PByteChar;
     I : Integer;
 begin
   Result := 0;
@@ -9784,6 +10779,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportWideString}
 function StrCountCharW(const S: WideString; const C: WideChar): Integer;
 var P : PWideChar;
     I : Integer;
@@ -9797,7 +10793,9 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCountCharU(const S: UnicodeString; const C: WideChar): Integer;
 var P : PWideChar;
     I : Integer;
@@ -9811,6 +10809,7 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
 function StrCountChar(const S: String; const C: Char): Integer;
 var P : PChar;
@@ -9838,7 +10837,7 @@ begin
 end;
 {$ELSE}
 {$IFDEF SupportAnsiString}
-function StrCountCharA(const S: AnsiString; const C: CharSet): Integer;
+function StrCountCharA(const S: AnsiString; const C: ByteCharSet): Integer;
 var P : PAnsiChar;
     I : Integer;
 begin
@@ -9852,8 +10851,8 @@ begin
     end;
 end;
 
-function StrCountCharB(const S: RawByteString; const C: CharSet): Integer;
-var P : PAnsiChar;
+function StrCountCharB(const S: RawByteString; const C: ByteCharSet): Integer;
+var P : PByteChar;
     I : Integer;
 begin
   Result := 0;
@@ -9867,7 +10866,8 @@ begin
 end;
 {$ENDIF}
 
-function StrCountCharW(const S: WideString; const C: CharSet): Integer;
+{$IFDEF SupportWideString}
+function StrCountCharW(const S: WideString; const C: ByteCharSet): Integer;
 var P : PWideChar;
     D : WideChar;
     I : Integer;
@@ -9882,8 +10882,10 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
-function StrCountCharU(const S: UnicodeString; const C: CharSet): Integer;
+{$IFDEF SupportUnicodeString}
+function StrCountCharU(const S: UnicodeString; const C: ByteCharSet): Integer;
 var P : PWideChar;
     D : WideChar;
     I : Integer;
@@ -9898,8 +10900,9 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
-function StrCountChar(const S: String; const C: CharSet): Integer;
+function StrCountChar(const S: String; const C: ByteCharSet): Integer;
 var P : PChar;
     D : Char;
     I : Integer;
@@ -9977,6 +10980,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrReplaceCharW(const Find, Replace: WideChar; const S: WideString): WideString;
 var I, J : Integer;
 begin
@@ -9988,7 +10992,9 @@ begin
     if S[J] = Find then
       Result[J] := Replace;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrReplaceCharU(const Find, Replace: WideChar; const S: UnicodeString): UnicodeString;
 var I, J : Integer;
 begin
@@ -10000,6 +11006,7 @@ begin
     if S[J] = Find then
       Result[J] := Replace;
 end;
+{$ENDIF}
 
 function StrReplaceChar(const Find, Replace: Char; const S: String): String;
 var I, J : Integer;
@@ -10028,7 +11035,7 @@ begin
 end;
 {$ELSE}
 {$IFDEF SupportAnsiString}
-function StrReplaceCharA(const Find: CharSet; const Replace: AnsiChar;
+function StrReplaceCharA(const Find: ByteCharSet; const Replace: AnsiChar;
     const S: AnsiString): AnsiString;
 var P, Q : PAnsiChar;
     I, J : Integer;
@@ -10051,7 +11058,7 @@ begin
     end;
 end;
 
-function StrReplaceCharB(const Find: CharSet; const Replace: AnsiChar;
+function StrReplaceCharB(const Find: ByteCharSet; const Replace: AnsiChar;
     const S: RawByteString): RawByteString;
 var I, J : Integer;
 begin
@@ -10065,7 +11072,8 @@ begin
 end;
 {$ENDIF}
 
-function StrReplaceCharW(const Find: CharSet; const Replace: WideChar;
+{$IFDEF SupportWideString}
+function StrReplaceCharW(const Find: ByteCharSet; const Replace: WideChar;
     const S: WideString): WideString;
 var P, Q : PWideChar;
     I, J : Integer;
@@ -10092,8 +11100,10 @@ begin
       Inc(Q);
     end;
 end;
+{$ENDIF}
 
-function StrReplaceCharU(const Find: CharSet; const Replace: WideChar;
+{$IFDEF SupportUnicodeString}
+function StrReplaceCharU(const Find: ByteCharSet; const Replace: WideChar;
     const S: UnicodeString): UnicodeString;
 var P, Q : PWideChar;
     I, J : Integer;
@@ -10120,8 +11130,9 @@ begin
       Inc(Q);
     end;
 end;
+{$ENDIF}
 
-function StrReplaceChar(const Find: CharSet; const Replace: Char;
+function StrReplaceChar(const Find: ByteCharSet; const Replace: Char;
     const S: String): String;
 var P, Q : PChar;
     I, J : Integer;
@@ -10216,7 +11227,7 @@ var StrLen     : Integer;
     ReplaceLen : Integer;
     NewLen     : Integer;
     I, J, F, G : Integer;
-    P, Q       : PAnsiChar;
+    P, Q       : PByteChar;
 begin
   ReplaceLen := Length(Replace);
   StrLen := StopIndex - StartIndex + 1;
@@ -10227,8 +11238,8 @@ begin
       exit;
     end;
   SetLength(Result, NewLen); // FPC 3.0 has issue with SetString(Result, nil, NewLen) here
-  P := PAnsiChar(Result);
-  Q := PAnsiChar(S);
+  P := PByteChar(Result);
+  Q := PByteChar(S);
   F := StartIndex;
   Inc(Q, F - 1);
   for I := 0 to MatchCount - 1 do
@@ -10246,7 +11257,7 @@ begin
       Inc(F, FindLen);
       if ReplaceLen > 0 then
         begin
-          MoveMem(PAnsiChar(Replace)^, P^, ReplaceLen);
+          MoveMem(PByteChar(Replace)^, P^, ReplaceLen);
           Inc(P, ReplaceLen);
         end;
     end;
@@ -10255,6 +11266,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrReplaceBlockW( // used by StrReplaceW
     const FindLen: Integer; const Replace, S: WideString;
     const StartIndex, StopIndex: Integer;
@@ -10301,7 +11313,9 @@ begin
   if F <= StopIndex then
     MoveMem(Q^, P^, (StopIndex - F + 1) * SizeOf(WideChar));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrReplaceBlockU( // used by StrReplaceU
     const FindLen: Integer; const Replace, S: UnicodeString;
     const StartIndex, StopIndex: Integer;
@@ -10348,6 +11362,7 @@ begin
   if F <= StopIndex then
     MoveMem(Q^, P^, (StopIndex - F + 1) * SizeOf(WideChar));
 end;
+{$ENDIF}
 
 function StrReplaceBlock( // used by StrReplace
     const FindLen: Integer; const Replace, S: String;
@@ -10478,6 +11493,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrReplaceW(const Find, Replace, S: WideString; const AsciiCaseSensitive: Boolean): WideString;
 var FindLen    : Integer;
     Matches    : StrReplaceMatchArray;
@@ -10513,7 +11529,9 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrReplaceU(const Find, Replace, S: UnicodeString; const AsciiCaseSensitive: Boolean): UnicodeString;
 var FindLen    : Integer;
     Matches    : StrReplaceMatchArray;
@@ -10549,6 +11567,7 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
 function StrReplace(const Find, Replace, S: String; const AsciiCaseSensitive: Boolean): String;
 var FindLen    : Integer;
@@ -10589,7 +11608,7 @@ end;
 
 {$IFNDEF CLR}
 {$IFDEF SupportAnsiString}
-function StrReplaceA(const Find: CharSet; const Replace, S: AnsiString): AnsiString;
+function StrReplaceA(const Find: ByteCharSet; const Replace, S: AnsiString): AnsiString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
 begin
@@ -10618,7 +11637,7 @@ begin
   until I = 0;
 end;
 
-function StrReplaceB(const Find: CharSet; const Replace, S: RawByteString): RawByteString;
+function StrReplaceB(const Find: ByteCharSet; const Replace, S: RawByteString): RawByteString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
 begin
@@ -10648,7 +11667,8 @@ begin
 end;
 {$ENDIF}
 
-function StrReplaceW(const Find: CharSet; const Replace, S: WideString): WideString;
+{$IFDEF SupportWideString}
+function StrReplaceW(const Find: ByteCharSet; const Replace, S: WideString): WideString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
 begin
@@ -10676,8 +11696,10 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
-function StrReplaceU(const Find: CharSet; const Replace, S: UnicodeString): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrReplaceU(const Find: ByteCharSet; const Replace, S: UnicodeString): UnicodeString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
 begin
@@ -10705,8 +11727,9 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
-function StrReplace(const Find: CharSet; const Replace, S: String): String;
+function StrReplace(const Find: ByteCharSet; const Replace, S: String): String;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
 begin
@@ -10766,6 +11789,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrReplaceCharStrW(const Find: WideChar; const Replace, S: WideString): WideString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
@@ -10794,7 +11818,9 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrReplaceCharStrU(const Find: WideChar; const Replace, S: UnicodeString): UnicodeString;
 var Matches    : StrReplaceMatchArray;
     C, I, J, K : Integer;
@@ -10823,6 +11849,7 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 {$ENDIF}
 
 {$IFDEF CLR}
@@ -10892,6 +11919,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrRemoveDupW(const S: WideString; const C: WideChar): WideString;
 var P, Q    : PWideChar;
     D, E    : WideChar;
@@ -10952,7 +11980,9 @@ begin
   if M < L then
     SetLength(Result, M);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrRemoveDupU(const S: UnicodeString; const C: WideChar): UnicodeString;
 var P, Q    : PWideChar;
     D, E    : WideChar;
@@ -11013,6 +12043,7 @@ begin
   if M < L then
     SetLength(Result, M);
 end;
+{$ENDIF}
 
 function StrRemoveDup(const S: String; const C: Char): String;
 var P, Q    : PChar;
@@ -11119,6 +12150,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrRemoveCharW(const S: WideString; const C: WideChar): WideString;
 var P, Q    : PWideChar;
     I, L, M : Integer;
@@ -11155,7 +12187,9 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrRemoveCharU(const S: UnicodeString; const C: WideChar): UnicodeString;
 var P, Q    : PWideChar;
     I, L, M : Integer;
@@ -11192,6 +12226,7 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
 function StrRemoveChar(const S: String; const C: Char): String;
 var P, Q    : PChar;
@@ -11231,7 +12266,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrRemoveCharSetA(const S: AnsiString; const C: CharSet): AnsiString;
+function StrRemoveCharSetA(const S: AnsiString; const C: ByteCharSet): AnsiString;
 var P, Q    : PAnsiChar;
     I, L, M : Integer;
 begin
@@ -11268,8 +12303,8 @@ begin
     end;
 end;
 
-function StrRemoveCharSetB(const S: RawByteString; const C: CharSet): RawByteString;
-var P, Q    : PAnsiChar;
+function StrRemoveCharSetB(const S: RawByteString; const C: ByteCharSet): RawByteString;
+var P, Q    : PByteChar;
     I, L, M : Integer;
 begin
   L := Length(S);
@@ -11306,7 +12341,8 @@ begin
 end;
 {$ENDIF}
 
-function StrRemoveCharSetW(const S: WideString; const C: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrRemoveCharSetW(const S: WideString; const C: ByteCharSet): WideString;
 var P, Q    : PWideChar;
     D       : WideChar;
     I, L, M : Integer;
@@ -11350,8 +12386,10 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
-function StrRemoveCharSetU(const S: UnicodeString; const C: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrRemoveCharSetU(const S: UnicodeString; const C: ByteCharSet): UnicodeString;
 var P, Q    : PWideChar;
     D       : WideChar;
     I, L, M : Integer;
@@ -11395,8 +12433,9 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
-function StrRemoveCharSet(const S: String; const C: CharSet): String;
+function StrRemoveCharSet(const S: String; const C: ByteCharSet): String;
 var P, Q    : PChar;
     D       : Char;
     I, L, M : Integer;
@@ -11501,6 +12540,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrSplitAtW(const S: WideString; const C: WideString;
          var Left, Right: WideString; const AsciiCaseSensitive: Boolean;
          const Optional: Boolean): Boolean;
@@ -11524,7 +12564,9 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrSplitAtU(const S: UnicodeString; const C: UnicodeString;
          var Left, Right: UnicodeString; const AsciiCaseSensitive: Boolean;
          const Optional: Boolean): Boolean;
@@ -11548,12 +12590,13 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
 function StrSplitAt(const S: String; const C: String;
          var Left, Right: String; const AsciiCaseSensitive: Boolean;
          const Optional: Boolean): Boolean;
 var I : Integer;
-    T : WideString;
+    T : String;
 begin
   I := PosStr(C, S, 1, AsciiCaseSensitive);
   Result := I > 0;
@@ -11621,6 +12664,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrSplitAtCharW(const S: WideString; const C: WideChar;
          var Left, Right: WideString; const Optional: Boolean): Boolean;
 var I : Integer;
@@ -11643,7 +12687,9 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrSplitAtCharU(const S: UnicodeString; const C: WideChar;
          var Left, Right: UnicodeString; const Optional: Boolean): Boolean;
 var I : Integer;
@@ -11655,7 +12701,7 @@ begin
     begin
       T := S; // add reference to S (in case it is also Left or Right)
       Left := Copy(T, 1, I - 1);
-      Right := CopyFromW(T, I + 1);
+      Right := CopyFromU(T, I + 1);
     end
   else
     begin
@@ -11666,11 +12712,12 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
 function StrSplitAtChar(const S: String; const C: Char;
          var Left, Right: String; const Optional: Boolean): Boolean;
 var I : Integer;
-    T : WideString;
+    T : String;
 begin
   I := PosChar(C, S);
   Result := I > 0;
@@ -11691,7 +12738,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrSplitAtCharSetA(const S: AnsiString; const C: CharSet;
+function StrSplitAtCharSetA(const S: AnsiString; const C: ByteCharSet;
          var Left, Right: AnsiString; const Optional: Boolean): Boolean;
 var I : Integer;
     T : AnsiString;
@@ -11761,7 +12808,9 @@ begin
     I := J + M;
   until False;
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function StrSplitB(const S, D: RawByteString): RawByteStringArray;
 var I, J, L, M : Integer;
 begin
@@ -11812,6 +12861,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrSplitW(const S, D: WideString): WideStringArray;
 var I, J, L, M : Integer;
 begin
@@ -11860,7 +12910,9 @@ begin
     I := J + M;
   until False;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrSplitU(const S, D: UnicodeString): UnicodeStringArray;
 var I, J, L, M : Integer;
 begin
@@ -11909,6 +12961,7 @@ begin
     I := J + M;
   until False;
 end;
+{$ENDIF}
 
 function StrSplit(const S, D: String): StringArray;
 var I, J, L, M : Integer;
@@ -12001,7 +13054,9 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function StrSplitCharB(const S: RawByteString; const D: AnsiChar): RawByteStringArray;
 var I, J, L : Integer;
 begin
@@ -12045,6 +13100,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrSplitCharW(const S: WideString; const D: WideChar): WideStringArray;
 var I, J, L : Integer;
 begin
@@ -12086,7 +13142,9 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrSplitCharU(const S: UnicodeString; const D: WideChar): UnicodeStringArray;
 var I, J, L : Integer;
 begin
@@ -12128,6 +13186,7 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
 function StrSplitChar(const S: String; const D: Char): StringArray;
 var I, J, L : Integer;
@@ -12172,7 +13231,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrSplitCharSetA(const S: AnsiString; const D: CharSet): AnsiStringArray;
+function StrSplitCharSetA(const S: AnsiString; const D: ByteCharSet): AnsiStringArray;
 var I, J, L : Integer;
 begin
   // Check valid parameters
@@ -12213,8 +13272,10 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
-function StrSplitCharSetB(const S: RawByteString; const D: CharSet): RawByteStringArray;
+{$IFDEF SupportRawByteString}
+function StrSplitCharSetB(const S: RawByteString; const D: ByteCharSet): RawByteStringArray;
 var I, J, L : Integer;
 begin
   // Check valid parameters
@@ -12257,7 +13318,8 @@ begin
 end;
 {$ENDIF}
 
-function StrSplitCharSetW(const S: WideString; const D: CharSet): WideStringArray;
+{$IFDEF SupportWideString}
+function StrSplitCharSetW(const S: WideString; const D: ByteCharSet): WideStringArray;
 var I, J, L : Integer;
 begin
   // Check valid parameters
@@ -12298,8 +13360,10 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
-function StrSplitCharSetU(const S: UnicodeString; const D: CharSet): UnicodeStringArray;
+{$IFDEF SupportUnicodeString}
+function StrSplitCharSetU(const S: UnicodeString; const D: ByteCharSet): UnicodeStringArray;
 var I, J, L : Integer;
 begin
   // Check valid parameters
@@ -12340,8 +13404,9 @@ begin
     I := J + 1;
   until False;
 end;
+{$ENDIF}
 
-function StrSplitCharSet(const S: String; const D: CharSet): StringArray;
+function StrSplitCharSet(const S: String; const D: ByteCharSet): StringArray;
 var I, J, L : Integer;
 begin
   // Check valid parameters
@@ -12384,7 +13449,8 @@ begin
 end;
 
 {$IFNDEF CLR}
-function StrSplitWords(const S: AnsiString; const C: CharSet): AnsiStringArray;
+{$IFDEF SupportAnsiString}
+function StrSplitWords(const S: AnsiString; const C: ByteCharSet): AnsiStringArray;
 var P, Q : PAnsiChar;
     L, M : Integer;
     N    : Integer;
@@ -12426,8 +13492,10 @@ begin
     end;
 end;
 {$ENDIF}
+{$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrJoin(const S: array of AnsiString; const D: AnsiString): AnsiString;
 var L, I : Integer;
 begin
@@ -12442,6 +13510,7 @@ begin
         Result := Result + D;
     end;
 end;
+{$ENDIF}
 {$ELSE}
 {$IFDEF SupportAnsiString}
 function StrJoinA(const S: array of AnsiString; const D: AnsiString): AnsiString;
@@ -12474,10 +13543,12 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function StrJoinB(const S: array of RawByteString; const D: RawByteString): RawByteString;
 var I, L, M, C : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     T : RawByteString;
 begin
   L := Length(S);
@@ -12507,6 +13578,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrJoinW(const S: array of WideString; const D: WideString): WideString;
 var I, L, M, C : Integer;
     P : PWideChar;
@@ -12537,7 +13609,9 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrJoinU(const S: array of UnicodeString; const D: UnicodeString): UnicodeString;
 var I, L, M, C : Integer;
     P : PWideChar;
@@ -12568,6 +13642,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function StrJoin(const S: array of String; const D: String): String;
 var I, L, M, C : Integer;
@@ -12647,10 +13722,12 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportRawByteString}
 function StrJoinCharB(const S: array of RawByteString; const D: AnsiChar): RawByteString;
 var I, L, C : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     T : RawByteString;
 begin
   L := Length(S);
@@ -12679,6 +13756,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrJoinCharW(const S: array of WideString; const D: WideChar): WideString;
 var I, L, C : Integer;
     P : PWideChar;
@@ -12708,7 +13786,9 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrJoinCharU(const S: array of UnicodeString; const D: WideChar): UnicodeString;
 var I, L, C : Integer;
     P : PWideChar;
@@ -12738,6 +13818,7 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
 function StrJoinChar(const S: array of String; const D: Char): String;
 var I, L, C : Integer;
@@ -12776,6 +13857,7 @@ end;
 { Quoting                                                                      }
 {                                                                              }
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 function StrHasSurroundingQuotes(const S: AnsiString; const Quotes: CharSet): Boolean;
 var Q : AnsiChar;
     L : Integer;
@@ -12790,8 +13872,10 @@ begin
           Result := True;
     end;
 end;
+{$ENDIF}
 {$ElSE}
-function StrHasSurroundingQuotesA(const S: AnsiString; const Quotes: CharSet): Boolean;
+{$IFDEF SupportAnsiString}
+function StrHasSurroundingQuotesA(const S: AnsiString; const Quotes: ByteCharSet): Boolean;
 var P : PAnsiChar;
     Q : AnsiChar;
     L : Integer;
@@ -12810,9 +13894,10 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
-function StrHasSurroundingQuotesB(const S: RawByteString; const Quotes: CharSet): Boolean;
-var P : PAnsiChar;
+function StrHasSurroundingQuotesB(const S: RawByteString; const Quotes: ByteCharSet): Boolean;
+var P : PByteChar;
     Q : AnsiChar;
     L : Integer;
 begin
@@ -12831,7 +13916,8 @@ begin
     end;
 end;
 
-function StrHasSurroundingQuotesW(const S: WideString; const Quotes: CharSet): Boolean;
+{$IFDEF SupportWideString}
+function StrHasSurroundingQuotesW(const S: WideString; const Quotes: ByteCharSet): Boolean;
 var P : PWideChar;
     Q : WideChar;
     L : Integer;
@@ -12850,8 +13936,10 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
-function StrHasSurroundingQuotesU(const S: UnicodeString; const Quotes: CharSet): Boolean;
+{$IFDEF SupportUnicodeString}
+function StrHasSurroundingQuotesU(const S: UnicodeString; const Quotes: ByteCharSet): Boolean;
 var P : PWideChar;
     Q : WideChar;
     L : Integer;
@@ -12870,8 +13958,9 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
-function StrHasSurroundingQuotes(const S: String; const Quotes: CharSet): Boolean;
+function StrHasSurroundingQuotes(const S: String; const Quotes: ByteCharSet): Boolean;
 var P : PChar;
     Q : Char;
     L : Integer;
@@ -12895,15 +13984,17 @@ begin
 end;
 {$ENDIF}
 
-function StrRemoveSurroundingQuotesA(const S: AnsiString; const Quotes: CharSet): AnsiString;
+{$IFDEF SupportAnsiString}
+function StrRemoveSurroundingQuotesA(const S: AnsiString; const Quotes: ByteCharSet): AnsiString;
 begin
   if StrHasSurroundingQuotesA(S, Quotes) then
     Result := Copy(S, 2, Length(S) - 2)
   else
     Result := S;
 end;
+{$ENDIF}
 
-function StrRemoveSurroundingQuotesB(const S: RawByteString; const Quotes: CharSet): RawByteString;
+function StrRemoveSurroundingQuotesB(const S: RawByteString; const Quotes: ByteCharSet): RawByteString;
 begin
   if StrHasSurroundingQuotesB(S, Quotes) then
     Result := Copy(S, 2, Length(S) - 2)
@@ -12911,23 +14002,27 @@ begin
     Result := S;
 end;
 
-function StrRemoveSurroundingQuotesW(const S: WideString; const Quotes: CharSet): WideString;
+{$IFDEF SupportWideString}
+function StrRemoveSurroundingQuotesW(const S: WideString; const Quotes: ByteCharSet): WideString;
 begin
   if StrHasSurroundingQuotesW(S, Quotes) then
     Result := Copy(S, 2, Length(S) - 2)
   else
     Result := S;
 end;
+{$ENDIF}
 
-function StrRemoveSurroundingQuotesU(const S: UnicodeString; const Quotes: CharSet): UnicodeString;
+{$IFDEF SupportUnicodeString}
+function StrRemoveSurroundingQuotesU(const S: UnicodeString; const Quotes: ByteCharSet): UnicodeString;
 begin
   if StrHasSurroundingQuotesU(S, Quotes) then
     Result := Copy(S, 2, Length(S) - 2)
   else
     Result := S;
 end;
+{$ENDIF}
 
-function StrRemoveSurroundingQuotes(const S: String; const Quotes: CharSet): String;
+function StrRemoveSurroundingQuotes(const S: String; const Quotes: ByteCharSet): String;
 begin
   if StrHasSurroundingQuotes(S, Quotes) then
     Result := Copy(S, 2, Length(S) - 2)
@@ -12947,15 +14042,19 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrQuoteW(const S: WideString; const Quote: WideChar): WideString;
 begin
   Result := Quote + StrReplaceW(Quote, DupCharW(Quote, 2), S) + Quote;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrQuoteU(const S: UnicodeString; const Quote: WideChar): UnicodeString;
 begin
   Result := Quote + StrReplaceU(Quote, DupCharU(Quote, 2), S) + Quote;
 end;
+{$ENDIF}
 
 function StrQuote(const S: String; const Quote: Char): String;
 begin
@@ -12990,6 +14089,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrUnquoteW(const S: WideString): WideString;
 var Quote : WideChar;
 begin
@@ -13002,7 +14102,9 @@ begin
   Result := StrRemoveSurroundingQuotesW(S, csQuotes);
   Result := StrReplaceW(DupCharW(Quote, 2), Quote, Result);
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrUnquoteU(const S: UnicodeString): UnicodeString;
 var Quote : WideChar;
 begin
@@ -13013,8 +14115,9 @@ begin
     end;
   Quote := S[1];
   Result := StrRemoveSurroundingQuotesU(S, csQuotes);
-  Result := StrReplaceU(DupCharW(Quote, 2), Quote, Result);
+  Result := StrReplaceU(DupCharU(Quote, 2), Quote, Result);
 end;
+{$ENDIF}
 
 function StrUnquote(const S: String): String;
 var Quote : Char;
@@ -13030,7 +14133,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrMatchQuotedStrA(const S: AnsiString; const ValidQuotes: CharSet;
+function StrMatchQuotedStrA(const S: AnsiString; const ValidQuotes: ByteCharSet;
     const Index: Integer): Integer;
 var Quote : AnsiChar;
     I, L  : Integer;
@@ -13062,7 +14165,7 @@ begin
   Result := I - Index + 1;
 end;
 
-function StrIsQuotedStrA(const S: AnsiString; const ValidQuotes: CharSet): Boolean;
+function StrIsQuotedStrA(const S: AnsiString; const ValidQuotes: ByteCharSet): Boolean;
 var L : Integer;
 begin
   L := Length(S);
@@ -13108,7 +14211,7 @@ end;
 function StrFindClosingBracketA(const S: AnsiString;
     const OpenBracketPos: Integer; const CloseBracket: AnsiChar): Integer;
 var OpenBracket : AnsiChar;
-    Brackets    : CharSet;
+    Brackets    : ByteCharSet;
     I, C        : Integer;
 begin
   Result := 0;
@@ -13137,7 +14240,7 @@ end;
 { Escaping                                                                     }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function StrHexEscapeB(const S: RawByteString; const C: CharSet;
+function StrHexEscapeB(const S: RawByteString; const C: ByteCharSet;
     const EscPrefix: RawByteString; const EscSuffix: RawByteString;
     const UpperHex: Boolean; const TwoDigitHex: Boolean): RawByteString;
 var I, J   : Integer;
@@ -13149,9 +14252,9 @@ begin
   while I > 0 do
     begin
       if TwoDigitHex then
-        HexStr := LongWordToHexB(Ord(S[I]), 2)
+        HexStr := Word32ToHexB(Ord(S[I]), 2)
       else
-        HexStr := LongWordToHexB(Ord(S[I]), 1);
+        HexStr := Word32ToHexB(Ord(S[I]), 1);
       if UpperHex then
         AsciiConvertUpperB(HexStr)
       else
@@ -13227,7 +14330,7 @@ end;
 function StrCharEscapeA(const S: AnsiString; const C: array of AnsiChar;
     const EscPrefix: AnsiString; const EscSeq: array of AnsiString): AnsiString;
 var I, J, L : Integer;
-    F       : CharSet;
+    F       : ByteCharSet;
     T       : AnsiChar;
     Lookup  : Array[AnsiChar] of Integer;
 begin
@@ -13320,6 +14423,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrCharUnescapeU(const S: UnicodeString; const EscPrefix: UnicodeString;
     const C: array of WideChar; const Replace: array of UnicodeString;
     const PrefixAsciiCaseSensitive: Boolean;
@@ -13368,6 +14472,7 @@ begin
   else
     Result := Result + CopyFromU(S, J);
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function StrCStyleEscapeA(const S: AnsiString): AnsiString;
@@ -13395,6 +14500,7 @@ end;
 {                                                                              }
 { Prefix and Suffix                                                            }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function StrInclPrefixA(const S: AnsiString; const Prefix: AnsiString;
   const AsciiCaseSensitive: Boolean): AnsiString;
 begin
@@ -13403,6 +14509,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrInclPrefixB(const S: RawByteString; const Prefix: RawByteString;
   const AsciiCaseSensitive: Boolean): RawByteString;
@@ -13413,6 +14520,7 @@ begin
     Result := S;
 end;
 
+{$IFDEF SupportWideString}
 function StrInclPrefixW(const S: WideString; const Prefix: WideString;
   const AsciiCaseSensitive: Boolean): WideString;
 begin
@@ -13421,7 +14529,9 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrInclPrefixU(const S: UnicodeString; const Prefix: UnicodeString;
   const AsciiCaseSensitive: Boolean): UnicodeString;
 begin
@@ -13430,6 +14540,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrInclPrefix(const S: String; const Prefix: String;
   const AsciiCaseSensitive: Boolean): String;
@@ -13440,6 +14551,7 @@ begin
     Result := S;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrInclSuffixA(const S: AnsiString; const Suffix: AnsiString;
   const AsciiCaseSensitive: Boolean): AnsiString;
 begin
@@ -13448,6 +14560,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrInclSuffixB(const S: RawByteString; const Suffix: RawByteString;
   const AsciiCaseSensitive: Boolean): RawByteString;
@@ -13458,6 +14571,7 @@ begin
     Result := S;
 end;
 
+{$IFDEF SupportWideString}
 function StrInclSuffixW(const S: WideString; const Suffix: WideString;
   const AsciiCaseSensitive: Boolean): WideString;
 begin
@@ -13466,7 +14580,9 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrInclSuffixU(const S: UnicodeString; const Suffix: UnicodeString;
   const AsciiCaseSensitive: Boolean): UnicodeString;
 begin
@@ -13475,6 +14591,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrInclSuffix(const S: String; const Suffix: String;
   const AsciiCaseSensitive: Boolean): String;
@@ -13505,6 +14622,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrExclPrefixW(const S: WideString; const Prefix: WideString;
   const AsciiCaseSensitive: Boolean): WideString;
 begin
@@ -13513,7 +14631,9 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrExclPrefixU(const S: UnicodeString; const Prefix: UnicodeString;
   const AsciiCaseSensitive: Boolean): UnicodeString;
 begin
@@ -13522,6 +14642,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrExclPrefix(const S: String; const Prefix: String;
   const AsciiCaseSensitive: Boolean): String;
@@ -13532,6 +14653,7 @@ begin
     Result := S;
 end;
 
+{$IFDEF SupportAnsiString}
 function StrExclSuffixA(const S: AnsiString; const Suffix: AnsiString;
   const AsciiCaseSensitive: Boolean): AnsiString;
 begin
@@ -13540,6 +14662,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrExclSuffixB(const S: RawByteString; const Suffix: RawByteString;
   const AsciiCaseSensitive: Boolean): RawByteString;
@@ -13550,6 +14673,7 @@ begin
     Result := S;
 end;
 
+{$IFDEF SupportWideString}
 function StrExclSuffixW(const S: WideString; const Suffix: WideString;
   const AsciiCaseSensitive: Boolean): WideString;
 begin
@@ -13558,7 +14682,9 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrExclSuffixU(const S: UnicodeString; const Suffix: UnicodeString;
   const AsciiCaseSensitive: Boolean): UnicodeString;
 begin
@@ -13567,6 +14693,7 @@ begin
   else
     Result := S;
 end;
+{$ENDIF}
 
 function StrExclSuffix(const S: String; const Suffix: String;
   const AsciiCaseSensitive: Boolean): String;
@@ -13614,19 +14741,23 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure StrEnsurePrefixW(var S: WideString; const Prefix: WideString;
   const AsciiCaseSensitive: Boolean);
 begin
   if (Prefix <> '') and not StrMatchLeftW(S, Prefix, AsciiCaseSensitive) then
     S := Prefix + S;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrEnsurePrefixU(var S: UnicodeString; const Prefix: UnicodeString;
   const AsciiCaseSensitive: Boolean);
 begin
   if (Prefix <> '') and not StrMatchLeftU(S, Prefix, AsciiCaseSensitive) then
     S := Prefix + S;
 end;
+{$ENDIF}
 
 procedure StrEnsurePrefix(var S: String; const Prefix: String;
   const AsciiCaseSensitive: Boolean);
@@ -13669,19 +14800,23 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 procedure StrEnsureSuffixW(var S: WideString; const Suffix: WideString;
   const AsciiCaseSensitive: Boolean);
 begin
   if (Suffix <> '') and not StrMatchRightW(S, Suffix, AsciiCaseSensitive) then
     S := S + Suffix;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureSuffixU(var S: UnicodeString; const Suffix: UnicodeString;
   const AsciiCaseSensitive: Boolean);
 begin
   if (Suffix <> '') and not StrMatchRightU(S, Suffix, AsciiCaseSensitive) then
     S := S + Suffix;
 end;
+{$ENDIF}
 
 procedure StrEnsureSuffix(var S: String; const Suffix: String;
   const AsciiCaseSensitive: Boolean);
@@ -13692,13 +14827,16 @@ end;
 {$ENDIF}
 
 {$IFDEF CLR}
+{$IFDEF SupportAnsiString}
 procedure StrEnsureNoPrefixA(var S: AnsiString; const Prefix: AnsiString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchLeftA(S, Prefix, AsciiCaseSensitive) then
     Delete(S, 1, Length(Prefix));
 end;
+{$ENDIF}
 {$ELSE}
+{$IFDEF SupportAnsiString}
 procedure StrEnsureNoPrefixA(var S: AnsiString; const Prefix: AnsiString;
   const AsciiCaseSensitive: Boolean);
 var L, M : Integer;
@@ -13714,6 +14852,7 @@ begin
       SetLength(S, L - M);
     end;
 end;
+{$ENDIF}
 
 procedure StrEnsureNoPrefixB(var S: RawByteString; const Prefix: RawByteString;
   const AsciiCaseSensitive: Boolean);
@@ -13722,19 +14861,23 @@ begin
     Delete(S, 1, Length(Prefix));
 end;
 
+{$IFDEF SupportWideString}
 procedure StrEnsureNoPrefixW(var S: WideString; const Prefix: WideString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchLeftW(S, Prefix, AsciiCaseSensitive) then
     Delete(S, 1, Length(Prefix));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureNoPrefixU(var S: UnicodeString; const Prefix: UnicodeString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchLeftU(S, Prefix, AsciiCaseSensitive) then
     Delete(S, 1, Length(Prefix));
 end;
+{$ENDIF}
 
 procedure StrEnsureNoPrefix(var S: String; const Prefix: String;
   const AsciiCaseSensitive: Boolean);
@@ -13744,12 +14887,14 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportAnsiString}
 procedure StrEnsureNoSuffixA(var S: AnsiString; const Suffix: AnsiString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchRightA(S, Suffix, AsciiCaseSensitive) then
     SetLength(S, Length(S) - Length(Suffix));
 end;
+{$ENDIF}
 
 procedure StrEnsureNoSuffixB(var S: RawByteString; const Suffix: RawByteString;
   const AsciiCaseSensitive: Boolean);
@@ -13758,19 +14903,23 @@ begin
     SetLength(S, Length(S) - Length(Suffix));
 end;
 
+{$IFDEF SupportWideString}
 procedure StrEnsureNoSuffixW(var S: WideString; const Suffix: WideString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchRightW(S, Suffix, AsciiCaseSensitive) then
     SetLength(S, Length(S) - Length(Suffix));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 procedure StrEnsureNoSuffixU(var S: UnicodeString; const Suffix: UnicodeString;
   const AsciiCaseSensitive: Boolean);
 begin
   if StrMatchRightU(S, Suffix, AsciiCaseSensitive) then
     SetLength(S, Length(S) - Length(Suffix));
 end;
+{$ENDIF}
 
 procedure StrEnsureNoSuffix(var S: String; const Suffix: String;
   const AsciiCaseSensitive: Boolean);
@@ -13834,7 +14983,7 @@ end;
 
 function StrReverseB(const S: RawByteString): RawByteString;
 var I, L : Integer;
-    P, Q : PAnsiChar;
+    P, Q : PByteChar;
 begin
   L := Length(S);
   if L = 0 then
@@ -13860,6 +15009,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrReverseW(const S: WideString): WideString;
 var I, L : Integer;
     P, Q : PWideChar;
@@ -13886,7 +15036,9 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrReverseU(const S: UnicodeString): UnicodeString;
 var I, L : Integer;
     P, Q : PWideChar;
@@ -13913,6 +15065,7 @@ begin
       Inc(P);
     end;
 end;
+{$ENDIF}
 
 function StrReverse(const S: String): String;
 var I, L : Integer;
@@ -13947,53 +15100,55 @@ end;
 {                                                                              }
 { Base conversion                                                              }
 {                                                                              }
-function BinToLongWord(const S: AnsiString): LongWord;
+{$IFDEF SupportAnsiString}
+function BinToWord32(const S: AnsiString): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryBinToLongWordA(S, Result);
+  Valid := TryBinToWord32A(S, Result);
   if not Valid then
     raise EConvertError.Create('Invalid binary string');
 end;
 
-function OctToLongWord(const S: AnsiString): LongWord;
+function OctToWord32(const S: AnsiString): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryOctToLongWordA(S, Result);
+  Valid := TryOctToWord32A(S, Result);
   if not Valid then
     raise EConvertError.Create('Invalid octal string');
 end;
 
-function StrToLongWord(const S: AnsiString): LongWord;
+function StrToWord32(const S: AnsiString): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryStringToLongWordA(S, Result);
+  Valid := TryStringToWord32A(S, Result);
   if not Valid then
     raise EConvertError.Create('Invalid decimal string');
 end;
 
-function StrToLongWordDef(const S: AnsiString; const Default: LongWord): LongWord;
+function StrToWord32Def(const S: AnsiString; const Default: Word32): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryStringToLongWordA(S, Result);
+  Valid := TryStringToWord32A(S, Result);
   if not Valid then
     Result := Default;
 end;
 
-function HexToLongWord(const S: AnsiString): LongWord;
+function HexToWord32(const S: AnsiString): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryHexToLongWordA(S, Result);
+  Valid := TryHexToWord32A(S, Result);
   if not Valid then
     raise EConvertError.Create('Invalid hexadecimal string');
 end;
 
-function HexToLongWordDef(const S: AnsiString; const Default: LongWord): LongWord;
+function HexToWord32Def(const S: AnsiString; const Default: Word32): Word32;
 var Valid : Boolean;
 begin
-  Valid := TryHexToLongWordA(S, Result);
+  Valid := TryHexToWord32A(S, Result);
   if not Valid then
     Result := Default;
 end;
+{$ENDIF}
 
 
 
@@ -14035,6 +15190,7 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function BooleanToStrW(const B: Boolean): WideString;
 begin
   if B then
@@ -14042,7 +15198,9 @@ begin
   else
     Result := 'False';
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function BooleanToStrU(const B: Boolean): UnicodeString;
 begin
   if B then
@@ -14050,6 +15208,7 @@ begin
   else
     Result := 'False';
 end;
+{$ENDIF}
 
 function BooleanToStr(const B: Boolean): String;
 begin
@@ -14071,15 +15230,19 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF SupportWideString}
 function StrToBooleanW(const S: WideString): Boolean;
 begin
   Result := StrEqualNoAsciiCaseW(S, 'True');
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StrToBooleanU(const S: UnicodeString): Boolean;
 begin
   Result := StrEqualNoAsciiCaseU(S, 'True');
 end;
+{$ENDIF}
 
 function StrToBoolean(const S: String): Boolean;
 begin
@@ -14092,7 +15255,7 @@ end;
 { Character class strings                                                      }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function CharSetToCharClassStr(const C: CharSet): AnsiString;
+function CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
 
   function ChStr(const Ch: AnsiChar): AnsiString;
   begin
@@ -14108,7 +15271,7 @@ function CharSetToCharClassStr(const C: CharSet): AnsiString;
       AsciiHT   : Result := '\t';
       AsciiVT   : Result := '\v';
       else if (Ch < #32) or (Ch > #127) then // non-printable
-        Result := '\x' + LongWordToHexA(Ord(Ch), 1) else
+        Result := '\x' + Word32ToHexA(Ord(Ch), 1) else
         Result := Ch;
     end;
   end;
@@ -14122,7 +15285,7 @@ function CharSetToCharClassStr(const C: CharSet): AnsiString;
         Result := Result + '-' + ChStr(SeqEnd);
   end;
 
-var CS       : CharSet;
+var CS       : ByteCharSet;
     F        : AnsiChar;
     SeqStart : AnsiChar;
     Seq      : Boolean;
@@ -14247,6 +15410,7 @@ end;
 {                                                                              }
 { Dynamic array functions                                                      }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function StringsTotalLengthA(const S: array of AnsiString): Integer;
 var I : Integer;
 begin
@@ -14254,6 +15418,7 @@ begin
   for I := 0 to Length(S) - 1 do
     Inc(Result, Length(S[I]));
 end;
+{$ENDIF}
 
 function StringsTotalLengthB(const S: array of RawByteString): Integer;
 var I : Integer;
@@ -14263,6 +15428,7 @@ begin
     Inc(Result, Length(S[I]));
 end;
 
+{$IFDEF SupportWideString}
 function StringsTotalLengthW(const S: array of WideString): Integer;
 var I : Integer;
 begin
@@ -14270,7 +15436,9 @@ begin
   for I := 0 to Length(S) - 1 do
     Inc(Result, Length(S[I]));
 end;
+{$ENDIF}
 
+{$IFDEF SupportUnicodeString}
 function StringsTotalLengthU(const S: array of UnicodeString): Integer;
 var I : Integer;
 begin
@@ -14278,6 +15446,7 @@ begin
   for I := 0 to Length(S) - 1 do
     Inc(Result, Length(S[I]));
 end;
+{$ENDIF}
 
 function StringsTotalLength(const S: array of String): Integer;
 var I : Integer;
@@ -14287,6 +15456,7 @@ begin
     Inc(Result, Length(S[I]));
 end;
 
+{$IFDEF SupportAnsiString}
 function PosNextNoCaseA(const Find: AnsiString; const V: array of AnsiString;
     const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
@@ -14328,6 +15498,7 @@ begin
       Result := -1;
     end;
 end;
+{$ENDIF}
 
 function PosNextNoCaseB(const Find: RawByteString; const V: array of RawByteString;
     const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
@@ -14371,6 +15542,7 @@ begin
     end;
 end;
 
+{$IFDEF SupportUnicodeString}
 function PosNextNoCaseU(const Find: UnicodeString; const V: array of UnicodeString;
     const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
@@ -14412,6 +15584,7 @@ begin
       Result := -1;
     end;
 end;
+{$ENDIF}
 
 
 
@@ -14478,14 +15651,22 @@ end;
 {$IFDEF STRINGS_TEST}
 {$ASSERTIONS ON}
 procedure Test;
-var C    : AnsiChar;
+var {$IFDEF SupportAnsiString}
+    C    : AnsiChar;
+    {$ENDIF}
     D    : WideChar;
     E    : Char;
+    {$IFDEF SupportAnsiString}
     S, T : AnsiString;
-    W, X : WideString;
+    {$ENDIF}
+    {$IFDEF SupportUnicodeString}
+    W, X : UnicodeString;
+    {$ENDIF}
     Y, Z : String;
+    {$IFDEF SupportAnsiString}
     L    : AnsiStringArray;
     I    : Integer;
+    {$ENDIF}
 begin
   { Unicode character functions                                                }
   Assert(UnicodeIsAsciiChar('A'), 'IsASCIIChar');
@@ -14542,6 +15723,7 @@ begin
   Assert(not StrIsIntegerB('-'), 'StrIsInteger');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrIsNumericW('1234567890'), 'StrIsNumeric');
   Assert(not StrIsNumericW('1234567890X'), 'StrIsNumeric');
   Assert(not StrIsNumericW(''), 'StrIsNumeric');
@@ -14549,6 +15731,7 @@ begin
   Assert(StrIsIntegerW('0'), 'StrIsInteger');
   Assert(not StrIsIntegerW('-1234567890X'), 'StrIsInteger');
   Assert(not StrIsIntegerW('-'), 'StrIsInteger');
+  {$ENDIF}
 
   Assert(StrIsNumeric('1234567890'), 'StrIsNumeric');
   Assert(not StrIsNumeric('1234567890X'), 'StrIsNumeric');
@@ -14583,6 +15766,7 @@ begin
   Assert(CopyRangeB('1234567890', -4, -2) = '', 'CopyRange');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(CopyRangeW('', 1, 2) =  '', 'CopyRange');
   Assert(CopyRangeW('', -1, -2) = '', 'CopyRange');
   Assert(CopyRangeW('1234567890', 5, 7) = '567', 'CopyRange');
@@ -14593,7 +15777,9 @@ begin
   Assert(CopyRangeW('1234567890', -2, 3) = '123', 'CopyRange');
   Assert(CopyRangeW('1234567890', 2, -1) = '', 'CopyRange');
   Assert(CopyRangeW('1234567890', -4, -2) = '', 'CopyRange');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(CopyRangeU('', 1, 2) =  '', 'CopyRange');
   Assert(CopyRangeU('', -1, -2) = '', 'CopyRange');
   Assert(CopyRangeU('1234567890', 5, 7) = '567', 'CopyRange');
@@ -14604,6 +15790,7 @@ begin
   Assert(CopyRangeU('1234567890', -2, 3) = '123', 'CopyRange');
   Assert(CopyRangeU('1234567890', 2, -1) = '', 'CopyRange');
   Assert(CopyRangeU('1234567890', -4, -2) = '', 'CopyRange');
+  {$ENDIF}
 
   Assert(CopyRange('', 1, 2) =  '', 'CopyRange');
   Assert(CopyRange('', -1, -2) = '', 'CopyRange');
@@ -14628,6 +15815,7 @@ begin
   Assert(CopyFromA('1234567890', -2) = '1234567890', 'CopyFrom');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(CopyFromW('a', 0) = 'a', 'CopyFrom');
   Assert(CopyFromW('a', -1) = 'a', 'CopyFrom');
   Assert(CopyFromW('', 1) = '', 'CopyFrom');
@@ -14636,6 +15824,7 @@ begin
   Assert(CopyFromW('1234567890', 11) = '', 'CopyFrom');
   Assert(CopyFromW('1234567890', 0) = '1234567890', 'CopyFrom');
   Assert(CopyFromW('1234567890', -2) = '1234567890', 'CopyFrom');
+  {$ENDIF}
 
   Assert(CopyFrom('a', 0) = 'a', 'CopyFrom');
   Assert(CopyFrom('a', -1) = 'a', 'CopyFrom');
@@ -14669,6 +15858,7 @@ begin
   Assert(CopyLeftB('1234567890', -2) = '', 'CopyLeft');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(CopyLeftW('a', 0) = '', 'CopyLeft');
   Assert(CopyLeftW('a', -1) = '', 'CopyLeft');
   Assert(CopyLeftW('', 1) = '', 'CopyLeft');
@@ -14678,7 +15868,9 @@ begin
   Assert(CopyLeftW('1234567890', 11) = '1234567890', 'CopyLeft');
   Assert(CopyLeftW('1234567890', 0) = '', 'CopyLeft');
   Assert(CopyLeftW('1234567890', -2) = '', 'CopyLeft');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(CopyLeftU('a', 0) = '', 'CopyLeft');
   Assert(CopyLeftU('a', -1) = '', 'CopyLeft');
   Assert(CopyLeftU('', 1) = '', 'CopyLeft');
@@ -14688,6 +15880,7 @@ begin
   Assert(CopyLeftU('1234567890', 11) = '1234567890', 'CopyLeft');
   Assert(CopyLeftU('1234567890', 0) = '', 'CopyLeft');
   Assert(CopyLeftU('1234567890', -2) = '', 'CopyLeft');
+  {$ENDIF}
 
   Assert(CopyLeft('a', 0) = '', 'CopyLeft');
   Assert(CopyLeft('a', -1) = '', 'CopyLeft');
@@ -14720,6 +15913,7 @@ begin
   Assert(CopyRightB('1234567890', -2) = '', 'CopyRight');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(CopyRightW('a', 0) = '', 'CopyRight');
   Assert(CopyRightW('a', -1) = '', 'CopyRight');
   Assert(CopyRightW('', 1) = '', 'CopyRight');
@@ -14728,6 +15922,7 @@ begin
   Assert(CopyRightW('1234567890', 11) = '1234567890', 'CopyRight');
   Assert(CopyRightW('1234567890', 0) = '', 'CopyRight');
   Assert(CopyRightW('1234567890', -2) = '', 'CopyRight');
+  {$ENDIF}
 
   Assert(CopyRight('a', 0) = '', 'CopyRight');
   Assert(CopyRight('a', -1) = '', 'CopyRight');
@@ -14811,111 +16006,6 @@ begin
   Assert(CopyFromEx('12345', -4) =  '2345');
   Assert(CopyFromEx('12345', 6) = '');
 
-  { Case functions                                                             }
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiLowCaseA('A') = 'a');
-  {$ENDIF}
-  Assert(AsciiLowCaseW('A') = 'a');
-  Assert(AsciiLowCase('A') = 'a');
-
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiLowCaseA('a') = 'a');
-  {$ENDIF}
-  Assert(AsciiLowCaseW('a') = 'a');
-  Assert(AsciiLowCase('a') = 'a');
-
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiUpCaseA('A') = 'A');
-  {$ENDIF}
-  Assert(AsciiUpCaseW('A') = 'A');
-  Assert(AsciiUpCase('A') = 'A');
-
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiUpCaseA('a') = 'A');
-  {$ENDIF}
-  Assert(AsciiUpCaseW('a') = 'A');
-  Assert(AsciiUpCase('a') = 'A');
-
-  {$IFDEF SupportAnsiChar}
-  S := '012AbcdEF';
-  Assert(AsciiUpperCaseA(S) = '012ABCDEF');
-  AsciiConvertUpperA(S);
-  Assert(S = '012ABCDEF');
-  {$ENDIF}
-
-  W := '012AbcdEF';
-  Assert(AsciiUpperCaseW(W) = '012ABCDEF');
-  AsciiConvertUpperW(W);
-  Assert(W = '012ABCDEF');
-
-  Y := '012AbcdEF';
-  Assert(AsciiUpperCase(Y) = '012ABCDEF');
-  AsciiConvertUpper(Y);
-  Assert(Y = '012ABCDEF');
-
-  {$IFDEF SupportAnsiChar}
-  S := '012AbcdEF';
-  Assert(AsciiLowerCaseA(S) ='012abcdef');
-  AsciiConvertLowerA(S);
-  Assert(S = '012abcdef');
-  {$ENDIF}
-
-  W := '012AbcdEF';
-  Assert(AsciiLowerCaseW(W) ='012abcdef');
-  AsciiConvertLowerW(W);
-  Assert(W = '012abcdef');
-
-  Y := '012AbcdEF';
-  Assert(AsciiLowerCase(Y) ='012abcdef');
-  AsciiConvertLower(Y);
-  Assert(Y = '012abcdef');
-
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiLowCaseA('A') = 'a', 'LowCase');
-  {$ENDIF}
-  Assert(UpCase('a') = 'A', 'UpCase');
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiLowCaseA('-') = '-', 'LowCase');
-  {$ENDIF}
-
-  Assert(UpCase('}') = '}', 'UpCase');
-  {$IFDEF SupportAnsiChar}
-  Assert(AsciiFirstUpA('abra') = 'Abra', 'FirstUp');
-  Assert(AsciiFirstUpA('') = '', 'FirstUp');
-  {$ENDIF}
-
-  {$IFDEF DELPHI2007_DOWN}{$IFNDEF CLR}
-  for C := #0 to #255 do
-    Assert(AsciiLowCase(C) = LowerCase(C), 'LowCase = LowerCase');
-  {$ENDIF}{$ENDIF}
-  
-  for C := AnsiChar('A') to AnsiChar('Z') do
-    Assert(AsciiLowCaseA(C) <> C, 'LowCase');
-  for C := AnsiChar('a') to AnsiChar('z') do
-    Assert(AsciiLowCaseA(C) = C, 'LowCase');
-
-  Assert(CharEqualNoAsciiCaseA(AnsiChar('a'), AnsiChar('a')));
-  Assert(CharEqualNoAsciiCaseA(AnsiChar('B'), AnsiChar('b')));
-  Assert(not CharEqualNoAsciiCaseA(AnsiChar('C'), AnsiChar('D')));
-
-  {$IFDEF SupportAnsiChar}
-  S := 'aBcDEfg-123';
-  AsciiConvertUpperA(S);
-  Assert(S = 'ABCDEFG-123', 'ConvertUpper');
-
-  S := 'aBcDEfg-123';
-  AsciiConvertLowerA(S);
-  Assert(S = 'abcdefg-123', 'ConvertLower');
-
-  S := '';
-  AsciiConvertLowerA(S);
-  Assert(S = '', 'ConvertLower');
-
-  S := 'abc';
-  AsciiConvertLowerA(S);
-  Assert(S = 'abc', 'ConvertLower');
-  {$ENDIF}
-
   { StrEqualNoCase                                                             }
   {$IFDEF SupportAnsiChar}
   Assert(StrEqualNoAsciiCaseA('A', 'a'), 'StrEqualNoCase');
@@ -14929,15 +16019,19 @@ begin
   Assert(not StrEqualNoAsciiCaseB('@ABCDEFGHIJKLMNOPQRSTUVWXY-` ', '@abcdefghijklmnopqrstuvwxyz` '), 'StrEqualNoCase');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrEqualNoAsciiCaseW('A', 'a'), 'StrEqualNoCase');
   Assert(not StrEqualNoAsciiCaseW('A', 'B'), 'StrEqualNoCase');
   Assert(StrEqualNoAsciiCaseW('@ABCDEFGHIJKLMNOPQRSTUVWXYZ` ', '@abcdefghijklmnopqrstuvwxyz` '), 'StrEqualNoCase');
   Assert(not StrEqualNoAsciiCaseW('@ABCDEFGHIJKLMNOPQRSTUVWXY-` ', '@abcdefghijklmnopqrstuvwxyz` '), 'StrEqualNoCase');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrEqualNoAsciiCaseU('A', 'a'), 'StrEqualNoCase');
   Assert(not StrEqualNoAsciiCaseU('A', 'B'), 'StrEqualNoCase');
   Assert(StrEqualNoAsciiCaseU('@ABCDEFGHIJKLMNOPQRSTUVWXYZ` ', '@abcdefghijklmnopqrstuvwxyz` '), 'StrEqualNoCase');
   Assert(not StrEqualNoAsciiCaseU('@ABCDEFGHIJKLMNOPQRSTUVWXY-` ', '@abcdefghijklmnopqrstuvwxyz` '), 'StrEqualNoCase');
+  {$ENDIF}
 
   Assert(StrEqualNoAsciiCase('A', 'a'), 'StrEqualNoCase');
   Assert(not StrEqualNoAsciiCase('A', 'B'), 'StrEqualNoCase');
@@ -14953,11 +16047,15 @@ begin
   Assert(StrReverseB('1234') = '4321', 'StrReverse');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrReverseW('12345') = '54321', 'StrReverse');
   Assert(StrReverseW('1234') = '4321', 'StrReverse');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrReverseU('12345') = '54321', 'StrReverse');
   Assert(StrReverseU('1234') = '4321', 'StrReverse');
+  {$ENDIF}
 
   Assert(StrReverse('12345') = '54321', 'StrReverse');
   Assert(StrReverse('1234') = '4321', 'StrReverse');
@@ -15001,6 +16099,7 @@ begin
   Assert(StrCompareB('a', '') = 1, 'StrCompareNoCase');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrCompareNoAsciiCaseW('a', 'a') = 0, 'StrCompareNoCase');
   Assert(StrCompareNoAsciiCaseW('a', 'b') = -1, 'StrCompareNoCase');
   Assert(StrCompareNoAsciiCaseW('b', 'a') = 1, 'StrCompareNoCase');
@@ -15018,7 +16117,9 @@ begin
   Assert(StrCompareW('', '') = 0, 'StrCompareNoCase');
   Assert(StrCompareW('', 'a') = -1, 'StrCompareNoCase');
   Assert(StrCompareW('a', '') = 1, 'StrCompareNoCase');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrCompareNoAsciiCaseU('a', 'a') = 0, 'StrCompareNoCase');
   Assert(StrCompareNoAsciiCaseU('a', 'b') = -1, 'StrCompareNoCase');
   Assert(StrCompareNoAsciiCaseU('b', 'a') = 1, 'StrCompareNoCase');
@@ -15036,6 +16137,7 @@ begin
   Assert(StrCompareU('', '') = 0, 'StrCompareNoCase');
   Assert(StrCompareU('', 'a') = -1, 'StrCompareNoCase');
   Assert(StrCompareU('a', '') = 1, 'StrCompareNoCase');
+  {$ENDIF}
 
   Assert(StrCompareNoAsciiCase('a', 'a') = 0, 'StrCompareNoCase');
   Assert(StrCompareNoAsciiCase('a', 'b') = -1, 'StrCompareNoCase');
@@ -15124,6 +16226,7 @@ begin
   Assert(StrMatchLenB('dcba', ['a', 'b', 'c'], 1) = 0, 'StrMatchLen');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(not StrMatchW('', '', 1), 'StrMatch');
   Assert(not StrMatchW('', 'a', 1), 'StrMatch');
   Assert(not StrMatchW('a', '', 1), 'StrMatch');
@@ -15145,7 +16248,6 @@ begin
   Assert(StrMatchLeftW('aBc1D', 'aBc1', True), 'StrMatchLeft');
   Assert(not StrMatchLeftW('AB1D', 'ABc1', False), 'StrMatchLeft');
   Assert(not StrMatchLeftW('aBC1D', 'aBc1', True), 'StrMatchLeft');
-  {$IFDEF SupportAnsiChar}
   Assert(not StrMatchCharW('', ['a', 'b', 'c']), 'StrMatchChar');
   Assert(StrMatchCharW('a', ['a', 'b', 'c']), 'StrMatchChar');
   Assert(not StrMatchCharW('d', ['a', 'b', 'c']), 'StrMatchChar');
@@ -15159,6 +16261,7 @@ begin
   Assert(StrMatchLenW('dcba', ['a', 'b', 'c'], 1) = 0, 'StrMatchLen');
   {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(not StrMatchU('', '', 1), 'StrMatch');
   Assert(not StrMatchU('', 'a', 1), 'StrMatch');
   Assert(not StrMatchU('a', '', 1), 'StrMatch');
@@ -15192,6 +16295,7 @@ begin
   Assert(StrMatchLenU('', ['a', 'b', 'c'], 1) = 0, 'StrMatchLen');
   Assert(StrMatchLenU('dcba', ['a', 'b', 'c'], 2) = 3, 'StrMatchLen');
   Assert(StrMatchLenU('dcba', ['a', 'b', 'c'], 1) = 0, 'StrMatchLen');
+  {$ENDIF}
   {$ENDIF}
 
   Assert(not StrMatch('', '', 1), 'StrMatch');
@@ -15304,6 +16408,7 @@ begin
   Assert(PosNotCharSetB(['a'..'z'], 'abac1a') = 5, 'PosNotChar');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(PosStrW('', 'ABCABC') = 0, 'PosStr');
   Assert(PosStrW('', 'a') = 0, 'PosStr');
   Assert(PosStrW('A', '') = 0, 'PosStr');
@@ -15341,7 +16446,9 @@ begin
   Assert(PosNotCharW(AnsiChar('a'), 'abac') = 2, 'PosNotChar');
   Assert(PosNotCharSetW(['a'..'z'], 'abac1a') = 5, 'PosNotChar');
   {$ENDIF}
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(PosStrU('', 'ABCABC') = 0, 'PosStr');
   Assert(PosStrU('', 'a') = 0, 'PosStr');
   Assert(PosStrU('A', '') = 0, 'PosStr');
@@ -15378,6 +16485,7 @@ begin
   Assert(PosCharSetRevU(['a'..'z'], 'abac') = 4, 'PosCharRev');
   Assert(PosNotCharU(AnsiChar('a'), 'abac') = 2, 'PosNotChar');
   Assert(PosNotCharSetU(['a'..'z'], 'abac1a') = 5, 'PosNotChar');
+  {$ENDIF}
   {$ENDIF}
 
   Assert(PosStr('', 'ABCABC') = 0, 'PosStr');
@@ -15418,6 +16526,7 @@ begin
   Assert(PosNotCharSet(['a'..'z'], 'abac1a') = 5, 'PosNotChar');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(PosStrW('AB', 'XYZABCAACDEF', 1) = 4, 'PosStrW');
   Assert(PosStrW('AA', 'XYZABCAACDEF', 1) = 7, 'PosStrW');
   Assert(PosStrW('A', 'XYZABCAACDEF', 8) = 8, 'PosStrW');
@@ -15429,6 +16538,7 @@ begin
   Assert(PosCharW(WideChar('A'), 'XYZABCAACDEF', 8) = 8, 'PosCharW');
   Assert(PosCharW(WideChar('A'), 'XYZABCAACDEF', 9) = 0, 'PosCharW');
   Assert(PosCharW(WideChar('Q'), 'XYZABCAACDEF', 1) = 0, 'PosCharW');
+  {$ENDIF}
 
   { Trim                                                                       }
   {$IFNDEF CLR}
@@ -15450,15 +16560,17 @@ begin
   Assert(StrTrimB('X', [' ']) = 'X', 'Trim');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrTrimLeftW('   123   ') = '123   ', 'TrimLeft');
   Assert(StrTrimLeftStrNoCaseW('   123   ', '  ') = ' 123   ', 'TrimLeftStrNoCase');
   Assert(StrTrimRightW('   123   ') = '   123', 'TrimRight');
   Assert(StrTrimRightStrNoCaseW('   123   ', '  ') = '   123 ', 'TrimRightStrNoCase');
-  {$IFDEF SupportAnsiChar}
   Assert(StrTrimW('   123   ', [' ']) = '123', 'Trim');
   Assert(StrTrimW('', [' ']) = '', 'Trim');
   Assert(StrTrimW('X', [' ']) = 'X', 'Trim');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrTrimLeftU('   123   ') = '123   ', 'TrimLeft');
   Assert(StrTrimLeftStrNoCaseU('   123   ', '  ') = ' 123   ', 'TrimLeftStrNoCase');
   Assert(StrTrimRightU('   123   ') = '   123', 'TrimRight');
@@ -15466,6 +16578,7 @@ begin
   Assert(StrTrimU('   123   ', [' ']) = '123', 'Trim');
   Assert(StrTrimU('', [' ']) = '', 'Trim');
   Assert(StrTrimU('X', [' ']) = 'X', 'Trim');
+  {$ENDIF}
 
   Assert(StrTrimLeft('   123   ') = '123   ', 'TrimLeft');
   Assert(StrTrimLeftStrNoCase('   123   ', '  ') = ' 123   ', 'TrimLeftStrNoCase');
@@ -15474,11 +16587,12 @@ begin
   Assert(StrTrim('   123   ', [' ']) = '123', 'Trim');
   Assert(StrTrim('', [' ']) = '', 'Trim');
   Assert(StrTrim('X', [' ']) = 'X', 'Trim');
-  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrTrimLeftU(' X ') = 'X ', 'StrTrimLeft');
   Assert(StrTrimRightU(' X ') = ' X', 'StrTrimRight');
   Assert(StrTrimU(' X ') = 'X', 'StrTrim');
+  {$ENDIF}
   {$ENDIF}
 
   { Dup                                                                        }
@@ -15502,6 +16616,7 @@ begin
   Assert(DupCharB(C, -1) = '', 'Dup');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(DupStrW('xy', 3) = 'xyxyxy', 'Dup');
   Assert(DupStrW('', 3) = '', 'Dup');
   Assert(DupStrW('a', 0) = '', 'Dup');
@@ -15510,7 +16625,9 @@ begin
   Assert(DupCharW(D, 6) = 'xxxxxx', 'Dup');
   Assert(DupCharW(D, 0) = '', 'Dup');
   Assert(DupCharW(D, -1) = '', 'Dup');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(DupStrU('xy', 3) = 'xyxyxy', 'Dup');
   Assert(DupStrU('', 3) = '', 'Dup');
   Assert(DupStrU('a', 0) = '', 'Dup');
@@ -15519,6 +16636,7 @@ begin
   Assert(DupCharU(D, 6) = 'xxxxxx', 'Dup');
   Assert(DupCharU(D, 0) = '', 'Dup');
   Assert(DupCharU(D, -1) = '', 'Dup');
+  {$ENDIF}
 
   Assert(DupStr('xy', 3) = 'xyxyxy', 'Dup');
   Assert(DupStr('', 3) = '', 'Dup');
@@ -15548,6 +16666,7 @@ begin
   Assert(StrPadB('xxx', 'y', 7) = 'yyxxxyy', 'Pad');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrPadLeftW('xxx', 'y', 6) = 'yyyxxx', 'PadLeft');
   Assert(StrPadLeftW('xxx', 'y', 2, True) = 'xx', 'PadLeft');
   Assert(StrPadLeftW('x', ' ', 3, True) = '  x', 'PadLeft');
@@ -15555,7 +16674,9 @@ begin
   Assert(StrPadRightW('xxx', 'y', 6) = 'xxxyyy', 'PadRight');
   Assert(StrPadRightW('xxx', 'y', 2, True) = 'xx', 'PadRight');
   Assert(StrPadW('xxx', 'y', 7) = 'yyxxxyy', 'Pad');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrPadLeftU('xxx', 'y', 6) = 'yyyxxx', 'PadLeft');
   Assert(StrPadLeftU('xxx', 'y', 2, True) = 'xx', 'PadLeft');
   Assert(StrPadLeftU('x', ' ', 3, True) = '  x', 'PadLeft');
@@ -15563,6 +16684,7 @@ begin
   Assert(StrPadRightU('xxx', 'y', 6) = 'xxxyyy', 'PadRight');
   Assert(StrPadRightU('xxx', 'y', 2, True) = 'xx', 'PadRight');
   Assert(StrPadU('xxx', 'y', 7) = 'yyxxxyy', 'Pad');
+  {$ENDIF}
 
   Assert(StrPadLeft('xxx', 'y', 6) = 'yyyxxx', 'PadLeft');
   Assert(StrPadLeft('xxx', 'y', 2, True) = 'xx', 'PadLeft');
@@ -15651,16 +16773,20 @@ begin
   Assert(StrCountCharB('abcxyzdexxyxyz', ['a'..'z']) = 14);
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrCountCharW('abcxyzdexxyxyz', WideChar('x')) = 4);
   Assert(StrCountCharW('abcxyzdexxyxyz', WideChar('q')) = 0);
   {$IFDEF SupportAnsiChar}
   Assert(StrCountCharW('abcxyzdexxyxyz', ['a'..'z']) = 14);
   {$ENDIF}
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrCountCharU('abcxyzdexxyxyz', WideChar('x')) = 4);
   Assert(StrCountCharU('abcxyzdexxyxyz', WideChar('q')) = 0);
   {$IFDEF SupportAnsiChar}
   Assert(StrCountCharU('abcxyzdexxyxyz', ['a'..'z']) = 14);
+  {$ENDIF}
   {$ENDIF}
 
   Assert(StrCountChar('abcxyzdexxyxyz', Char('x')) = 4);
@@ -15679,17 +16805,21 @@ begin
   Assert(StrUnquoteA('"1""23"') = '1"23', 'StrUnQuote');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrRemoveSurroundingQuotesW('"123"') = '123', 'StrRemoveSurroundingQuotes');
   Assert(StrRemoveSurroundingQuotesW('"1""23"') = '1""23', 'StrRemoveSurroundingQuotes');
   Assert(StrQuoteW('Abe''s', '''') = '''Abe''''s''', 'StrQuote');
   Assert(StrUnquoteW('"123"') = '123', 'StrUnQuote');
   Assert(StrUnquoteW('"1""23"') = '1"23', 'StrUnQuote');
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrRemoveSurroundingQuotesU('"123"') = '123', 'StrRemoveSurroundingQuotes');
   Assert(StrRemoveSurroundingQuotesU('"1""23"') = '1""23', 'StrRemoveSurroundingQuotes');
   Assert(StrQuoteU('Abe''s', '''') = '''Abe''''s''', 'StrQuote');
   Assert(StrUnquoteU('"123"') = '123', 'StrUnQuote');
   Assert(StrUnquoteU('"1""23"') = '1"23', 'StrUnQuote');
+  {$ENDIF}
 
   Assert(StrRemoveSurroundingQuotes('"123"') = '123', 'StrRemoveSurroundingQuotes');
   Assert(StrRemoveSurroundingQuotes('"1""23"') = '1""23', 'StrRemoveSurroundingQuotes');
@@ -15731,8 +16861,10 @@ begin
   Assert(StrBetweenCharA('1234543210', AnsiChar('4'), AnsiChar('6'), False, True) = '543210', 'StrBetweenChar');
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrBetweenCharW('ABC', WideChar('<'), WideChar('>')) = '', 'StrBetweenChar');
   Assert(StrBetweenCharW('ABC<D>', WideChar('<'), WideChar('>')) = 'D', 'StrBetweenChar');
+  {$ENDIF}
 
   Assert(StrBetweenChar('ABC', Char('<'), Char('>')) = '', 'StrBetweenChar');
   Assert(StrBetweenChar('ABC<D>', Char('<'), Char('>')) = 'D', 'StrBetweenChar');
@@ -15835,6 +16967,7 @@ begin
   {$ENDIF}
   {$ENDIF}
 
+  {$IFDEF SupportWideString}
   Assert(StrReplaceCharW(WideChar('X'), WideChar('A'), '') = '', 'StrReplaceChar');
   Assert(StrReplaceCharW(WideChar('X'), WideChar('A'), 'XXX') = 'AAA', 'StrReplaceChar');
   Assert(StrReplaceCharW(WideChar('X'), WideChar('A'), 'X') = 'A', 'StrReplaceChar');
@@ -15879,7 +17012,9 @@ begin
   Assert(StrRemoveCharSetW('BBBAABABBA', ['B']) = 'AAAA', 'StrRemoveChar');
   {$ENDIF}
   {$ENDIF}
+  {$ENDIF}
 
+  {$IFDEF SupportUnicodeString}
   Assert(StrReplaceCharU(WideChar('X'), WideChar('A'), '') = '', 'StrReplaceChar');
   Assert(StrReplaceCharU(WideChar('X'), WideChar('A'), 'XXX') = 'AAA', 'StrReplaceChar');
   Assert(StrReplaceCharU(WideChar('X'), WideChar('A'), 'X') = 'A', 'StrReplaceChar');
@@ -15922,6 +17057,7 @@ begin
   {$IFNDEF CLR}
   {$IFDEF SupportAnsiChar}
   Assert(StrRemoveCharSetU('BBBAABABBA', ['B']) = 'AAAA', 'StrRemoveChar');
+  {$ENDIF}
   {$ENDIF}
   {$ENDIF}
 
@@ -16006,11 +17142,11 @@ begin
   { CharClassStr                                                               }
   {$IFDEF SupportAnsiString}
   Assert(CharSetToCharClassStr(['a'..'z']) = '[a-z]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteCharSet) = '.', 'CharClassStr');
+  Assert(CharSetToCharClassStr(CompleteByteCharSet) = '.', 'CharClassStr');
   Assert(CharSetToCharClassStr([#0..#31]) = '[\x0-\x1F]', 'CharClassStr');
   Assert(CharSetToCharClassStr([#0..#32]) = '[\x0- ]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteCharSet - ['a']) = '[^a]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteCharSet - ['a'..'z']) = '[^a-z]', 'CharClassStr');
+  Assert(CharSetToCharClassStr(CompleteByteCharSet - ['a']) = '[^a]', 'CharClassStr');
+  Assert(CharSetToCharClassStr(CompleteByteCharSet - ['a'..'z']) = '[^a-z]', 'CharClassStr');
   Assert(CharSetToCharClassStr(['a'..'b']) = '[ab]', 'CharClassStr');
   Assert(CharSetToCharClassStr([]) = '[]', 'CharClassStr');
   {$ENDIF}

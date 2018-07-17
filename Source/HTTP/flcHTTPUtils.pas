@@ -69,8 +69,10 @@ uses
   Classes,
 
   { Fundamentals }
+  flcStdTypes,
   flcUtils,
   flcStrings,
+  flcStringBuilder,
   flcTCPBuffer;
 
 
@@ -788,13 +790,13 @@ type
 
     function  EOF: Boolean;
 
-    function  MatchCh(const C: AnsiCharSet): Boolean;
-    function  MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: AnsiCharSet): Boolean;
+    function  MatchCh(const C: ByteCharSet): Boolean;
+    function  MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: ByteCharSet): Boolean;
     function  MatchStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
 
-    function  SkipStrAndCh(const S: RawByteString; const DelimSet: AnsiCharSet; const SkipDelim: Boolean; const CaseSensitive: Boolean): Boolean;
-    function  SkipCh(const C: AnsiCharSet): Boolean;
-    function  SkipAllCh(const C: AnsiCharSet): Boolean;
+    function  SkipStrAndCh(const S: RawByteString; const DelimSet: ByteCharSet; const SkipDelim: Boolean; const CaseSensitive: Boolean): Boolean;
+    function  SkipCh(const C: ByteCharSet): Boolean;
+    function  SkipAllCh(const C: ByteCharSet): Boolean;
     function  SkipToStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
 
     function  SkipCRLF: Boolean;
@@ -802,11 +804,11 @@ type
     function  SkipLWS: Boolean;
     function  SkipToCRLF: Boolean;
 
-    function  ExtractAllCh(const C: AnsiCharSet): RawByteString;
-    function  ExtractTo(const C: AnsiCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
-    function  ExtractStrTo(const C: AnsiCharSet; const SkipDelim: Boolean): RawByteString;
+    function  ExtractAllCh(const C: ByteCharSet): RawByteString;
+    function  ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
+    function  ExtractStrTo(const C: ByteCharSet; const SkipDelim: Boolean): RawByteString;
     function  ExtractInt(const Default: Int64): Int64;
-    function  ExtractIntTo(const C: AnsiCharSet; const SkipDelim: Boolean; const Default: Int64): Int64;
+    function  ExtractIntTo(const C: ByteCharSet; const SkipDelim: Boolean; const Default: Int64): Int64;
 
     procedure ParseCustomVersion(var Protocol: THTTPVersion);
     procedure ParseVersion(var Version: THTTPVersion);
@@ -2234,14 +2236,14 @@ end;
 function HTTPUrlEncodedUnescapeStr(const S: RawByteString): RawByteString;
 var R : RawByteString;
 begin
-  R := StrReplaceCharB('+', AsciiSP, S);
+  R := StrReplaceCharB('+', HTTP_Space, S);
   R := StrHexUnescapeB(R, '%');
   Result := R;
 end;
 
 procedure HTTPUrlEncodedDecode(const S: RawByteString; out Fields: THTTPUrlEncodedFieldArray);
 var
-  FieldsStrArr : flcUtils.RawByteStringArray;
+  FieldsStrArr : flcStdTypes.RawByteStringArray;
   FieldCount, I : Integer;
   FieldStr, Name, Value : RawByteString;
   FieldP : PHTTPUrlEncodedField;
@@ -2349,10 +2351,10 @@ end;
 { HTTP parser helpers }
 
 const
-  HTTP_SpaceSet : AnsiCharSet = [' '];
-  HTTP_DelimSet : AnsiCharSet = [' ', #13];
-  HTTP_FieldValueDelimSet : AnsiCharSet = [#13];
-  HTTP_CRSet : AnsiCharSet = [#13];
+  HTTP_SpaceSet : ByteCharSet = [' '];
+  HTTP_DelimSet : ByteCharSet = [' ', #13];
+  HTTP_FieldValueDelimSet : ByteCharSet = [#13];
+  HTTP_CRSet : ByteCharSet = [#13];
 
 
 
@@ -2394,7 +2396,7 @@ begin
   Result := FBufPos >= FBufSize;
 end;
 
-function THTTPParser.MatchCh(const C: AnsiCharSet): Boolean;
+function THTTPParser.MatchCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
     P : PAnsiChar;
 begin
@@ -2415,7 +2417,7 @@ begin
   Result := P^ in C;
 end;
 
-function THTTPParser.MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: AnsiCharSet): Boolean;
+function THTTPParser.MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: ByteCharSet): Boolean;
 var L, T, N, F : Integer;
     P : PAnsiChar;
     D : Boolean;
@@ -2444,7 +2446,7 @@ begin
       if CaseSensitive then
         Result := SysUtils.CompareMem(PAnsiChar(S), P, L)
       else
-        Result := StrPMatchNoAsciiCaseA(PAnsiChar(S), P, L);
+        Result := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if not Result then
         exit;
     end
@@ -2463,7 +2465,7 @@ begin
   Result := MatchStrAndCh(S, CaseSensitive, []);
 end;
 
-function THTTPParser.SkipStrAndCh(const S: RawByteString; const DelimSet: AnsiCharSet; const SkipDelim: Boolean; const CaseSensitive: Boolean): Boolean;
+function THTTPParser.SkipStrAndCh(const S: RawByteString; const DelimSet: ByteCharSet; const SkipDelim: Boolean; const CaseSensitive: Boolean): Boolean;
 var L : Integer;
 begin
   Result := MatchStrAndCh(S, CaseSensitive, DelimSet);
@@ -2476,7 +2478,7 @@ begin
   Inc(FBufPos, L);
 end;
 
-function THTTPParser.SkipCh(const C: AnsiCharSet): Boolean;
+function THTTPParser.SkipCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
     P : PAnsiChar;
 begin
@@ -2498,7 +2500,7 @@ begin
     Result := False;
 end;
 
-function THTTPParser.SkipAllCh(const C: AnsiCharSet): Boolean;
+function THTTPParser.SkipAllCh(const C: ByteCharSet): Boolean;
 var N, L, F : Integer;
     P : PAnsiChar;
 begin
@@ -2542,7 +2544,7 @@ begin
       if CaseSensitive then
         T := SysUtils.CompareMem(PAnsiChar(S), P, L)
       else
-        T := StrPMatchNoAsciiCaseA(PAnsiChar(S), P, L);
+        T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if T then
         break;
       Dec(N);
@@ -2583,7 +2585,7 @@ begin
   Result := SkipToStr(HTTP_CRLF, False);
 end;
 
-function THTTPParser.ExtractAllCh(const C: AnsiCharSet): RawByteString;
+function THTTPParser.ExtractAllCh(const C: ByteCharSet): RawByteString;
 var N, L : Integer;
     P, Q : PAnsiChar;
     D : AnsiChar;
@@ -2613,7 +2615,7 @@ begin
   Result := S;
 end;
 
-function THTTPParser.ExtractTo(const C: AnsiCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
+function THTTPParser.ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
 var N, L : Integer;
     P, Q : PAnsiChar;
     D : AnsiChar;
@@ -2646,7 +2648,7 @@ begin
   Result := D;
 end;
 
-function THTTPParser.ExtractStrTo(const C: AnsiCharSet; const SkipDelim: Boolean): RawByteString;
+function THTTPParser.ExtractStrTo(const C: ByteCharSet; const SkipDelim: Boolean): RawByteString;
 begin
   ExtractTo(C, Result, SkipDelim);
 end;
@@ -2659,7 +2661,7 @@ begin
     Result := Default;
 end;
 
-function THTTPParser.ExtractIntTo(const C: AnsiCharSet; const SkipDelim: Boolean; const Default: Int64): Int64;
+function THTTPParser.ExtractIntTo(const C: ByteCharSet; const SkipDelim: Boolean; const Default: Int64): Int64;
 var S : RawByteString;
 begin
   ExtractTo(C, S, SkipDelim);
@@ -2702,7 +2704,7 @@ end;
 
 procedure THTTPParser.ParseHeaderName(var HeaderName: THTTPHeaderName);
 const
-  HTTP_HeaderNameDelimSet : AnsiCharSet = [' ', #9, ':', #13];
+  HTTP_HeaderNameDelimSet : ByteCharSet = [' ', #9, ':', #13];
 var
   I : THTTPHeaderNameEnum;
   S : RawByteString;
@@ -3601,7 +3603,7 @@ const
 var
   ParamPos : Integer;
   HdrValid : Boolean;
-  Chunk32  : LongWord;
+  Chunk32  : Word32;
 begin
   Result := ProcessChunked_ReadStrToCRLF(HeaderBlockSize, HdrStr);
   if not Result then
@@ -3610,7 +3612,7 @@ begin
   if ParamPos > 0 then
     SetLength(HdrStr, ParamPos - 1);
   HdrStr := StrTrimRightB(HdrStr);
-  HdrValid := TryHexToLongWordB(HdrStr, Chunk32);
+  HdrValid := TryHexToWord32B(HdrStr, Chunk32);
   if not HdrValid then
     raise EHTTP.Create(SError_InvalidChunkedEncoding);
   ChunkSize := Chunk32;

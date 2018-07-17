@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipher.pas                                            }
-{   File version:     5.09                                                     }
+{   File version:     5.10                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -45,6 +45,7 @@
 {   2011/08/09  4.07  Revision                                                 }
 {   2015/03/21  4.08  Revision                                                 }
 {   2016/01/09  5.09  Revised for Fundamentals 5.                              }
+{   2018/06/17  5.10  Type changes.                                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -74,6 +75,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
+  flcStdTypes,
   flcUtils,
   { Cipher }
   flcCipherUtils,
@@ -1073,7 +1075,7 @@ procedure EncryptPadBuffer(
           const Padding: TCipherPadding;
           const Buffer: Pointer;
           const InputBufferSize, OutputBufferSize: Integer);
-var P : PAnsiChar;
+var P : PByte;
     I : Integer;
 begin
   P := Buffer;
@@ -1086,7 +1088,7 @@ begin
         FillChar(P^, I - 1, 0);
         Assert(I <= $FF);
         Inc(P, I - 1);
-        P^ := AnsiChar(I);
+        P^ := Byte(I);
       end;
     cpPadPKCS5    :
       begin
@@ -1211,9 +1213,9 @@ begin
   SetLength(Result, L);
   if L = 0 then
     exit;
-  Encrypt(Cipher, Mode, Padding, KeyBits, PAnsiChar(Key), Length(Key),
-      PAnsiChar(Data), M, PAnsiChar(Result), L,
-      PAnsiChar(InitVector), Length(InitVector));
+  Encrypt(Cipher, Mode, Padding, KeyBits, PByteChar(Key), Length(Key),
+      PByteChar(Data), M, PByteChar(Result), L,
+      PByteChar(InitVector), Length(InitVector));
 end;
 
 
@@ -1324,9 +1326,9 @@ begin
   if L = 0 then
     exit;
   Move(Pointer(Data)^, Pointer(Result)^, L);
-  M := Decrypt(Cipher, Mode, Padding, KeyBits, PAnsiChar(Key), Length(Key),
-      PAnsiChar(Result), L,
-      PAnsiChar(InitVector), Length(InitVector));
+  M := Decrypt(Cipher, Mode, Padding, KeyBits, PByteChar(Key), Length(Key),
+      PByteChar(Result), L,
+      PByteChar(InitVector), Length(InitVector));
   if M < L then
     SetLength(Result, M);
 end;
@@ -1649,21 +1651,21 @@ begin
       try
         if Assigned(GetCipherInfo(Cipher)) then
           begin
-            M := IntToStringA(I);
+            M := IntToStringB(I);
             L := Length(PlainText);
-            Move(PAnsiChar(PlainText)^, B[0], L);
+            Move(PByteChar(PlainText)^, B[0], L);
             L := Encrypt(Cipher, Mode, cpNone, KeyBits, Pointer(Key), Length(Key),
                 @B[0], L, @B[0], Sizeof(B), Pointer(InitVector), Length(InitVector));
             C := '';
             SetLength(C, L);
-            Move(B[0], PAnsiChar(C)^, L);
+            Move(B[0], PByteChar(C)^, L);
             if C <> CipherText then
               for X := 1 to L do
                 if C[X] <> CipherText[X] then Writeln(X, '!', Ord(C[X]), '<>', Ord(CipherText[X]));
             Assert(C = CipherText, M);
             L := Decrypt(Cipher, Mode, cpNone, KeyBits, Pointer(Key), Length(Key),
                 @B[0], L, Pointer(InitVector), Length(InitVector));
-            Move(B[0], PAnsiChar(C)^, L);
+            Move(B[0], PByteChar(C)^, L);
             Assert(C = PlainText, M);
             Assert(Encrypt(Cipher, Mode, cpNone, KeyBits, Key, PlainText, InitVector) = CipherText, M);
             Assert(Decrypt(Cipher, Mode, cpNone, KeyBits, Key, CipherText, InitVector) = PlainText, M);
