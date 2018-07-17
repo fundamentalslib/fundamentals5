@@ -292,7 +292,7 @@ type
 
     // parameters
     FAddressFamily  : THTTPServerAddressFamily;
-    FBindAddressStr : AnsiString;
+    FBindAddressStr : RawByteString;
     FServerPort     : Integer;
     FMaxBacklog     : Integer;
     FMaxClients     : Integer;
@@ -331,7 +331,7 @@ type
     procedure CheckNotActive;
 
     procedure SetAddressFamily(const AddressFamily: THTTPServerAddressFamily);
-    procedure SetBindAddress(const BindAddressStr: AnsiString);
+    procedure SetBindAddress(const BindAddressStr: RawByteString);
     procedure SetServerPort(const ServerPort: Integer);
     procedure SetMaxBacklog(const MaxBacklog: Integer);
     procedure SetMaxClients(const MaxClients: Integer);
@@ -401,7 +401,7 @@ type
     property  OnResponseComplete: THTTPServerClientEvent read FOnResponseComplete write FOnResponseComplete;
 
     property  AddressFamily: THTTPServerAddressFamily read FAddressFamily write SetAddressFamily default safIP4;
-    property  BindAddress: AnsiString read FBindAddressStr write SetBindAddress;
+    property  BindAddress: RawByteString read FBindAddressStr write SetBindAddress;
     property  ServerPort: Integer read FServerPort write SetServerPort;
     property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default HTTP_SERVER_DEFAULT_MaxBacklog;
     property  MaxClients: Integer read FMaxClients write SetMaxClients default HTTP_SERVER_DEFAULT_MaxClients;
@@ -1287,7 +1287,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5HTTPServer.SetBindAddress(const BindAddressStr: AnsiString);
+procedure TF5HTTPServer.SetBindAddress(const BindAddressStr: RawByteString);
 begin
   if BindAddressStr = FBindAddressStr then
     exit;

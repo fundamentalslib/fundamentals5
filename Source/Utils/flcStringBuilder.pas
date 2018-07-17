@@ -62,6 +62,10 @@ unit flcStringBuilder;
 
 interface
 
+uses
+  { Fundamentals }
+  flcStdTypes;
+
 
 
 {                                                                              }
@@ -527,7 +531,7 @@ end;
 
 procedure TRawByteStringBuilder.Append(const S: RawByteString);
 var M, L, N : Integer;
-    P       : PAnsiChar;
+    P       : PByte;
 begin
   M := System.Length(S);
   if M = 0 then
@@ -555,7 +559,7 @@ end;
 
 procedure TRawByteStringBuilder.Append(const S: RawByteString; const Count: Integer);
 var M, L, N, I : Integer;
-    P          : PAnsiChar;
+    P          : PByte;
 begin
   if Count <= 0 then
     exit;
@@ -578,7 +582,7 @@ end;
 
 procedure TRawByteStringBuilder.AppendCh(const C: AnsiChar);
 var L, N : Integer;
-    P    : PAnsiChar;
+    P    : PByte;
 begin
   N := FLength;
   L := N + 1;
@@ -586,13 +590,13 @@ begin
     EnsureCapacity(L);
   P := Pointer(FString);
   Inc(P, N);
-  P^ := C;
+  P^ := Ord(C);
   FLength := L;
 end;
 
 procedure TRawByteStringBuilder.AppendCh(const C: AnsiChar; const Count: Integer);
 var L, N : Integer;
-    P    : PAnsiChar;
+    P    : PByte;
 begin
   if Count <= 0 then
     exit;
@@ -608,7 +612,7 @@ end;
 
 procedure TRawByteStringBuilder.Append(const BufPtr: Pointer; const Size: Integer);
 var L, N : Integer;
-    P    : PAnsiChar;
+    P    : PByte;
 begin
   if Size <= 0 then
     exit;
@@ -624,7 +628,7 @@ end;
 
 procedure TRawByteStringBuilder.Append(const S: TRawByteStringBuilder);
 var M, L, N : Integer;
-    P       : PAnsiChar;
+    P       : PByte;
 begin
   M := S.FLength;
   if M = 0 then

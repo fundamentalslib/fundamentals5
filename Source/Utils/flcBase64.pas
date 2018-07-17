@@ -188,7 +188,7 @@ function EncodeBase64(const S, Alphabet: RawByteString; const Pad: Boolean;
     const PadMultiple: Integer; const PadChar: AnsiChar): RawByteString;
 var R, C : Byte;
     F, L, M, N, U : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     T : Boolean;
 begin
   Assert(Length(Alphabet) = 64);
@@ -328,7 +328,7 @@ var F, L, M, P : Integer;
     B, OutPos  : Byte;
     OutB       : array[1..3] of Byte;
     Lookup     : array[AnsiChar] of Byte;
-    R          : PAnsiChar;
+    R          : PByteChar;
 begin
   Assert(Length(Alphabet) = 64);
   {$IFOPT R+}
@@ -382,7 +382,7 @@ begin
     end;
   if (OutPos > 0) and (P = 0) then // incomplete encoding, add the partial byte if not 0
     if OutB[OutPos] <> 0 then
-      StrAppendChB(Result, AnsiChar(OutB[OutPos]));
+      Result := Result + ByteChar(OutB[OutPos]);
 end;
 {$ENDIF}
 

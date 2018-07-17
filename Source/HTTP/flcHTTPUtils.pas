@@ -1552,9 +1552,9 @@ begin
             hpHTTPS  : B.Append('HTTPS');
           end;
           B.AppendCh('/');
-          B.Append(IntToStringA(A.CustomMajVersion));
+          B.Append(IntToStringB(A.CustomMajVersion));
           B.AppendCh('.');
-          B.Append(IntToStringA(A.CustomMinVersion));
+          B.Append(IntToStringB(A.CustomMinVersion));
         end;
     hvHTTP10 : B.Append('HTTP/1.0');
     hvHTTP11 : B.Append('HTTP/1.1');
@@ -1571,7 +1571,7 @@ procedure BuildStrHTTPContentLengthValue(const A: THTTPContentLength; const B: T
 begin
   case A.Value of
     hcltNone      : ;
-    hcltByteCount : B.Append(IntToStringA(A.ByteCount));
+    hcltByteCount : B.Append(IntToStringB(A.ByteCount));
   end;
 end;
 
@@ -1634,17 +1634,17 @@ procedure BuildStrRFCDateTime(
 begin
   B.Append(RFC1123DayNames[DOW]);
   B.Append(', ');
-  B.Append(IntToStringA(Da));
+  B.Append(IntToStringB(Da));
   B.AppendCh(' ');
   B.Append(RFCMonthNames[Mo]);
   B.AppendCh(' ');
-  B.Append(IntToStringA(Ye));
+  B.Append(IntToStringB(Ye));
   B.AppendCh(' ');
-  B.Append(IntToStringA(Ho));
+  B.Append(IntToStringB(Ho));
   B.AppendCh(':');
-  B.Append(IntToStringA(Mi));
+  B.Append(IntToStringB(Mi));
   B.AppendCh(':');
-  B.Append(IntToStringA(Se));
+  B.Append(IntToStringB(Se));
   B.AppendCh(' ');
   B.Append(TZ);
 end;
@@ -1718,11 +1718,11 @@ begin
     hcrfCustom    : B.Append(A.Custom);
     hcrfByteRange :
       begin
-        B.Append(IntToStringA(A.ByteFirst));
+        B.Append(IntToStringB(A.ByteFirst));
         B.AppendCh('-');
-        B.Append(IntToStringA(A.ByteLast));
+        B.Append(IntToStringB(A.ByteLast));
         B.AppendCh('/');
-        B.Append(IntToStringA(A.ByteSize));
+        B.Append(IntToStringB(A.ByteSize));
       end;
   end;
   B.Append(HTTP_CRLF);
@@ -1754,7 +1754,7 @@ begin
   BuildStrHTTPHeaderName(hntAge, B, P);
   case A.Value of
     hafCustom : B.Append(A.Custom);
-    hafAge    : B.Append(IntToStringA(A.Age));
+    hafAge    : B.Append(IntToStringB(A.Age));
   end;
   B.Append(HTTP_CRLF);
 end;
@@ -1886,7 +1886,7 @@ begin
         if A.MaxAge > 0 then
           begin
             BuildParam('Max-Age=');
-            B.Append(IntToStringA(A.MaxAge));
+            B.Append(IntToStringB(A.MaxAge));
           end;
         if A.HttpOnly then
           BuildParam('HttpOnly');
@@ -2001,7 +2001,7 @@ procedure BuildStrHTTPResponseStartLine(const A: THTTPResponseStartLine; const B
 begin
   BuildStrHTTPVersion(A.Version, B, P);
   B.AppendCh(' ');
-  B.Append(IntToStringA(A.Code));
+  B.Append(IntToStringB(A.Code));
   B.AppendCh(' ');
   case A.Msg of
     hslmNone   : ;
@@ -2111,7 +2111,7 @@ function GetHTTPCookieFieldEntryIndexByName(const A: THTTPCookieFieldEntryArray;
 var I : Integer;
 begin
   for I := 0 to Length(A) - 1 do
-    if StrEqualNoAsciiCaseA(A[I].Name, Name) then
+    if StrEqualNoAsciiCaseB(A[I].Name, Name) then
       begin
         Result := I;
         exit;
@@ -2145,7 +2145,7 @@ begin
     begin
       F := @B[I];
       if F^.Secure = Secure then
-        if StrEqualNoAsciiCaseA(F^.Domain, Domain) then
+        if StrEqualNoAsciiCaseB(F^.Domain, Domain) then
           for J := 0 to Length(F^.CustomFields) - 1 do
             begin
               G := @F^.CustomFields[J];
@@ -2272,7 +2272,7 @@ begin
   for I := 0 to Length(Fields) - 1 do
     begin
       F := @Fields[I];
-      if StrEqualNoAsciiCaseA(F^.Name, Name) then
+      if StrEqualNoAsciiCaseB(F^.Name, Name) then
         begin
           Result := F;
           exit;
@@ -2387,7 +2387,7 @@ procedure THTTPParser.SetTextStr(const S: RawByteString);
 begin
   FBufStrRef := S;
   FBufSize := Length(S);
-  FBufPtr := PAnsiChar(FBufStrRef);
+  FBufPtr := PByte(FBufStrRef);
   FBufPos := 0;
 end;
 
@@ -2398,7 +2398,7 @@ end;
 
 function THTTPParser.MatchCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   if C = [] then
     begin
@@ -2419,7 +2419,7 @@ end;
 
 function THTTPParser.MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: ByteCharSet): Boolean;
 var L, T, N, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     D : Boolean;
 begin
   D := C <> [];
@@ -2444,7 +2444,7 @@ begin
   if L > 0 then
     begin
       if CaseSensitive then
-        Result := SysUtils.CompareMem(PAnsiChar(S), P, L)
+        Result := SysUtils.CompareMem(Pointer(S), P, L)
       else
         Result := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if not Result then
@@ -2480,7 +2480,7 @@ end;
 
 function THTTPParser.SkipCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   F := FBufPos;
   N := FBufSize - F;
@@ -2502,7 +2502,7 @@ end;
 
 function THTTPParser.SkipAllCh(const C: ByteCharSet): Boolean;
 var N, L, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   L := 0;
   F := FBufPos;
@@ -2529,7 +2529,7 @@ end;
 
 function THTTPParser.SkipToStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
 var N, L, F, C : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     R, T : Boolean;
 begin
   L := Length(S);
@@ -2542,7 +2542,7 @@ begin
   while N >= L do
     begin
       if CaseSensitive then
-        T := SysUtils.CompareMem(PAnsiChar(S), P, L)
+        T := SysUtils.CompareMem(PByteChar(S), P, L)
       else
         T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if T then
@@ -2587,7 +2587,7 @@ end;
 
 function THTTPParser.ExtractAllCh(const C: ByteCharSet): RawByteString;
 var N, L : Integer;
-    P, Q : PAnsiChar;
+    P, Q : PByteChar;
     D : AnsiChar;
     R : Boolean;
     S : RawByteString;
@@ -2617,7 +2617,7 @@ end;
 
 function THTTPParser.ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
 var N, L : Integer;
-    P, Q : PAnsiChar;
+    P, Q : PByteChar;
     D : AnsiChar;
     R : Boolean;
 begin
@@ -2657,7 +2657,7 @@ function THTTPParser.ExtractInt(const Default: Int64): Int64;
 var S : RawByteString;
 begin
   S := ExtractAllCh(['0'..'9']);
-  if not TryStringToInt64A(S, Result) then
+  if not TryStringToInt64B(S, Result) then
     Result := Default;
 end;
 
@@ -2768,7 +2768,7 @@ begin
   for I := Low(THTTPContentTypeEnum) to High(THTTPContentTypeEnum) do
     begin
       S := HTTP_ContentTypeStr[I];
-      if (S <> '') and not StrMatchRightA(S, '/') then
+      if (S <> '') and not StrMatchRightB(S, '/') then
         if SkipStrAndCh(S, HTTP_ContentTypeDelimSet, False, False) then
           begin
             Value.Value := I;
@@ -3054,7 +3054,7 @@ begin
         case F of
           scsfDomain : SetCookie.Domain := FieldValue;
           scsfPath   : SetCookie.Path := FieldValue;
-          scsfMaxAge : SetCookie.MaxAge := StringToInt64DefA(FieldValue, -1);
+          scsfMaxAge : SetCookie.MaxAge := StringToInt64DefB(FieldValue, -1);
           scsfCustom :
             begin
               L := Length(SetCookie.CustomFields);
@@ -3559,7 +3559,7 @@ begin
 end;
 
 function THTTPContentDecoder.ProcessChunked_ExpectCRLF: Boolean;
-var P : PAnsiChar;
+var P : PByteChar;
 begin
   Result := ProcessChunked_FillBuf(2);
   if not Result then
@@ -3998,7 +3998,7 @@ begin
   if L = 0 then
     exit;
   Assert(Assigned(FWriteProc));
-  FWriteProc(self, PAnsiChar(S)^, L);
+  FWriteProc(self, PByteChar(S)^, L);
 end;
 
 procedure THTTPContentWriter.SendContent;

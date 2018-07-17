@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
-{   File version:     5.18                                                     }
+{   File version:     5.19                                                     }
 {   Description:      Socket library.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
@@ -54,6 +54,7 @@
 {   2015/04/24  4.16  SocketAddrArray help functions.                          }
 {   2015/05/06  4.17  Rename IP4/IP6 address functions.                        }
 {   2016/01/09  5.18  Revised for Fundamentals 5.                              }
+{   2018/07/17  5.19  Type changes.                                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -68,6 +69,9 @@
 {   Delphi XE7 Win64                    5.18  2016/01/09                       }
 {   Delphi 10 Win32                     5.18  2016/01/09                       }
 {   Delphi 10 Win64                     5.18  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.19  2018/07/17                       }
+{   Delphi 10.2 Win64                   5.19  2018/07/17                       }
+{   Delphi 10.2 Linux64                 5.19  2018/07/17                       }
 {   FreePascal 2.6.2 Linux i386         4.15  2014/04/23                       }
 {   FreePascal 2.6.2 Linux x64          4.15  2015/04/01                       }
 {   FreePascal 2.6.2 Win32 i386         4.15  2014/04/23                       }
@@ -144,8 +148,8 @@ type
       iaIP4,
       iaIP6);
 
-function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): LongInt; {$IFDEF UseInline}inline;{$ENDIF}
-function AFToIPAddressFamily(const AF: LongInt): TIPAddressFamily;
+function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): Int32; {$IFDEF UseInline}inline;{$ENDIF}
+function AFToIPAddressFamily(const AF: Int32): TIPAddressFamily;
 
 type
   TIPProtocol = (
@@ -156,7 +160,7 @@ type
       ipUDP,
       ipRaw);
 
-function IPProtocolToIPPROTO(const Protocol: TIPProtocol): LongInt;
+function IPProtocolToIPPROTO(const Protocol: TIPProtocol): Int32;
 
 type
   TIP4Addr = record
@@ -725,8 +729,8 @@ type
     saeAccept);
   TSocketAsynchronousEvents = set of TSocketAsynchronousEvent;
 
-function  SocketAsynchronousEventsToEvents(const Events: TSocketAsynchronousEvents): LongInt;
-function  EventsToSocketAsynchronousEvents(const Events: LongInt): TSocketAsynchronousEvents;
+function  SocketAsynchronousEventsToEvents(const Events: TSocketAsynchronousEvents): Int32;
+function  EventsToSocketAsynchronousEvents(const Events: Int32): TSocketAsynchronousEvents;
 
 procedure SetSocketAsynchronous(
           const SocketHandle: TSocketHandle;
@@ -841,7 +845,7 @@ end;
 {                                                                              }
 { Socket structure routines                                                    }
 {                                                                              }
-function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): LongInt;
+function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): Int32;
 begin
   case AddressFamily of
     iaIP4 : Result := AF_INET;
@@ -851,7 +855,7 @@ begin
   end;
 end;
 
-function AFToIPAddressFamily(const AF: LongInt): TIPAddressFamily;
+function AFToIPAddressFamily(const AF: Int32): TIPAddressFamily;
 begin
   case AF of
     AF_INET  : Result := iaIP4;
@@ -861,7 +865,7 @@ begin
   end;
 end;
 
-function IPProtocolToIPPROTO(const Protocol: TIPProtocol): LongInt;
+function IPProtocolToIPPROTO(const Protocol: TIPProtocol): Int32;
 begin
   case Protocol of
     ipIP   : Result := IPPROTO_IP;
@@ -1162,7 +1166,7 @@ end;
 {$IFDEF SOCKETLIB_POSIX_FPC}
 function FDSetToSocketHandleArray(const FDSet: TFDSet): TSocketHandleArray;
 var I, L, J : Integer;
-    F : LongInt;
+    F : Int32;
 begin
   Result := nil;
   L := FD_COUNT(FDSet);
@@ -1183,7 +1187,7 @@ end;
 {$IFDEF SOCKETLIB_POSIX_DELPHI}
 function FDSetToSocketHandleArray(const FDSet: TFDSet): TSocketHandleArray;
 var I, L, J : Integer;
-    F : LongInt;
+    F : Int32;
 begin
   Result := nil;
   L := FD_COUNT(FDSet);
@@ -1248,7 +1252,6 @@ function SocketAccept(const S: TSocketHandle; out Addr: TSocketAddr): TSocketHan
 var AAddrLen : TAddrLen;
     AAddr    : TSockAddr;
     LSocket  : TSocket;
-    ASocket  : TSocketHandle;
 begin
   AAddrLen := SizeOf(TSockAddr);
   FillChar(AAddr, SizeOf(TSockAddr), 0);
@@ -1481,8 +1484,8 @@ begin
   Result := ntohl(NetLong);
 end;
 
-function SocketRecvFlagsToFlags(const Flags: TSocketRecvFlags): LongInt;
-var F : LongInt;
+function SocketRecvFlagsToFlags(const Flags: TSocketRecvFlags): Int32;
+var F : Int32;
 begin
   F := 0;
   if srfOOB in Flags then
@@ -2336,7 +2339,7 @@ function GuessInternetIP4StrA: RawByteString;
 var A : TIP4Addr;
 begin
   A := GuessInternetIP4;
-  if LongInt(A.Addr32) = LongInt(INADDR_NONE) then
+  if Int32(A.Addr32) = Int32(INADDR_NONE) then
     Result := ''
   else
     Result := IP4AddressStrA(A);
@@ -2808,7 +2811,7 @@ end;
 {                                                                              }
 function AllocateSocketHandle(const AddressFamily: TIPAddressFamily;
     const Protocol: TIPProtocol; const Overlapped: Boolean): TSocketHandle;
-var AF, ST, PR : LongInt;
+var AF, ST, PR : Int32;
     {$IFDEF SOCKETLIB_WIN}
     NewAPI     : Boolean;
     FL         : Word32;
@@ -2903,7 +2906,7 @@ begin
 end;
 
 function GetSocketReceiveBufferSize(const SocketHandle: TSocketHandle): Integer;
-var BufferSize : LongInt;
+var BufferSize : Int32;
     OptLen : Integer;
 begin
   OptLen := Sizeof(BufferSize);
@@ -2919,7 +2922,7 @@ begin
 end;
 
 function GetSocketSendBufferSize(const SocketHandle: TSocketHandle): Integer;
-var BufferSize : LongInt;
+var BufferSize : Int32;
     OptLen : Integer;
 begin
   OptLen := Sizeof(BufferSize);
@@ -2938,7 +2941,7 @@ end;
 procedure GetSocketLinger(const SocketHandle: TSocketHandle;
     var Linger: Boolean; var LingerTimeSec: Integer);
 var Opt : TLinger;
-    OptLen : LongInt;
+    OptLen : Int32;
 begin
   OptLen := Sizeof(Opt);
   if SocketGetSockOpt(SocketHandle, SOL_SOCKET, SO_LINGER, @Opt, OptLen) < 0 then
@@ -2965,7 +2968,7 @@ end;
 procedure GetSocketLinger(const SocketHandle: TSocketHandle;
     var Linger: Boolean; var LingerTimeSec: Integer);
 var Opt : TLinger;
-    OptLen : LongInt;
+    OptLen : Int32;
 begin
   OptLen := Sizeof(Opt);
   if SocketGetSockOpt(SocketHandle, SOL_SOCKET, SO_LINGER, @Opt, OptLen) < 0 then
@@ -2987,7 +2990,7 @@ end;
 
 function GetSocketBroadcast(const SocketHandle: TSocketHandle): Boolean;
 var Opt : LongBool;
-    OptLen : LongInt;
+    OptLen : Int32;
 begin
   OptLen := Sizeof(Opt);
   if SocketSetSockOpt(SocketHandle, SOL_SOCKET, SO_BROADCAST, @Opt, OptLen) < 0 then
@@ -3006,7 +3009,7 @@ end;
 
 {$IFDEF SOCKETLIB_WIN}
 function GetSocketMulticastTTL(const SocketHandle: TSocketHandle): Integer;
-var Opt : LongInt;
+var Opt : Int32;
     OptLen : Integer;
 begin
   Opt := -1;
@@ -3017,7 +3020,7 @@ begin
 end;
 
 procedure SetSocketMulticastTTL(const SocketHandle: TSocketHandle; const TTL: Integer);
-var Opt : LongInt;
+var Opt : Int32;
 begin
   Opt := TTL;
   if SocketSetSockOpt(SocketHandle, IPPROTO_IP, IP_MULTICAST_TTL, @Opt, Sizeof(Opt)) < 0 then
@@ -3036,8 +3039,8 @@ begin
 end;
 
 {$IFDEF SOCKETLIB_WIN}
-function SocketAsynchronousEventsToEvents(const Events: TSocketAsynchronousEvents): LongInt;
-var E : LongInt;
+function SocketAsynchronousEventsToEvents(const Events: TSocketAsynchronousEvents): Int32;
+var E : Int32;
 begin
   E := 0;
   if saeConnect in Events then
@@ -3053,7 +3056,7 @@ begin
   Result := E;
 end;
 
-function EventsToSocketAsynchronousEvents(const Events: LongInt): TSocketAsynchronousEvents;
+function EventsToSocketAsynchronousEvents(const Events: Int32): TSocketAsynchronousEvents;
 var E : TSocketAsynchronousEvents;
 begin
   E := [];
@@ -3074,7 +3077,7 @@ procedure SetSocketAsynchronous(
           const SocketHandle: TSocketHandle;
           const WindowHandle: HWND; const Msg: Integer;
           const Events: TSocketAsynchronousEvents);
-var E : LongInt;
+var E : Int32;
 begin
   E := SocketAsynchronousEventsToEvents(Events);
   if WSAAsyncSelect(SocketHandle, WindowHandle, Msg, E) < 0 then

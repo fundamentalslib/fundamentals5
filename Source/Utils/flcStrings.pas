@@ -800,8 +800,8 @@ function  CopyFrom(const S: String; const Index: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyLeftA(const S: AnsiString; const Count: Integer): AnsiString;
-function  CopyLeftB(const S: RawByteString; const Count: Integer): RawByteString;
 {$ENDIF}
+function  CopyLeftB(const S: RawByteString; const Count: Integer): RawByteString;
 {$IFDEF SupportWideString}
 function  CopyLeftW(const S: WideString; const Count: Integer): WideString;
 {$ENDIF}
@@ -919,8 +919,8 @@ function  StrTrimLeftStrNoCase(const S: String; const TrimStr: String): String;
 
 {$IFDEF SupportAnsiString}
 function  StrTrimRightA(const S: AnsiString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
-function  StrTrimRightB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$ENDIF}
+function  StrTrimRightB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$IFDEF SupportWideString}
 function  StrTrimRightW(const S: WideString;    const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
 function  StrTrimRightW(const S: WideString;    const C: TWideCharMatchFunction): WideString; overload;
@@ -959,8 +959,8 @@ function  StrTrimRightStrNoCase(const S: String; const TrimStr: String): String;
 
 {$IFDEF SupportAnsiString}
 function  StrTrimA(const S: AnsiString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): AnsiString;
-function  StrTrimB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$ENDIF}
+function  StrTrimB(const S: RawByteString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): RawByteString;
 {$IFDEF SupportWideString}
 function  StrTrimW(const S: WideString; const C: ByteCharSet{$IFNDEF CLR} = csWhiteSpace{$ENDIF}): WideString; overload;
 function  StrTrimW(const S: WideString; const C: TWideCharMatchFunction): WideString; overload;
@@ -1440,8 +1440,8 @@ function  StrCountChar(const S: String; const C: ByteCharSet): Integer; overload
 {                                                                              }
 {$IFDEF SupportAnsiString}
 function  StrReplaceCharA(const Find, Replace: AnsiChar; const S: AnsiString): AnsiString; overload;
-function  StrReplaceCharB(const Find, Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$ENDIF}
+function  StrReplaceCharB(const Find, Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$IFDEF SupportWideString}
 function  StrReplaceCharW(const Find, Replace: WideChar; const S: WideString): WideString; overload;
 {$ENDIF}
@@ -1452,8 +1452,8 @@ function  StrReplaceChar(const Find, Replace: Char; const S: String): String; ov
 
 {$IFDEF SupportAnsiString}
 function  StrReplaceCharA(const Find: ByteCharSet; const Replace: AnsiChar; const S: AnsiString): AnsiString; overload;
-function  StrReplaceCharB(const Find: ByteCharSet; const Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$ENDIF}
+function  StrReplaceCharB(const Find: ByteCharSet; const Replace: AnsiChar; const S: RawByteString): RawByteString; overload;
 {$IFDEF SupportWideString}
 function  StrReplaceCharW(const Find: ByteCharSet; const Replace: WideChar; const S: WideString): WideString; overload;
 {$ENDIF}
@@ -1464,8 +1464,8 @@ function  StrReplaceChar(const Find: ByteCharSet; const Replace: Char; const S: 
 
 {$IFDEF SupportAnsiString}
 function  StrReplaceA(const Find, Replace, S: AnsiString; const AsciiCaseSensitive: Boolean = True): AnsiString; overload;
-function  StrReplaceB(const Find, Replace, S: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString; overload;
 {$ENDIF}
+function  StrReplaceB(const Find, Replace, S: RawByteString; const AsciiCaseSensitive: Boolean = True): RawByteString; overload;
 {$IFDEF SupportWideString}
 function  StrReplaceW(const Find, Replace, S: WideString; const AsciiCaseSensitive: Boolean = True): WideString; overload;
 {$ENDIF}
@@ -1477,8 +1477,8 @@ function  StrReplace(const Find, Replace, S: String; const AsciiCaseSensitive: B
 {$IFNDEF CLR}
 {$IFDEF SupportAnsiString}
 function  StrReplaceA(const Find: ByteCharSet; const Replace, S: AnsiString): AnsiString; overload;
-function  StrReplaceB(const Find: ByteCharSet; const Replace, S: RawByteString): RawByteString; overload;
 {$ENDIF}
+function  StrReplaceB(const Find: ByteCharSet; const Replace, S: RawByteString): RawByteString; overload;
 {$IFDEF SupportWideString}
 function  StrReplaceW(const Find: ByteCharSet; const Replace, S: WideString): WideString; overload;
 {$ENDIF}
@@ -1570,10 +1570,10 @@ function  StrSplitAt(const S: String; const C: String;
 function  StrSplitAtCharA(const S: AnsiString; const C: AnsiChar;
           var Left, Right: AnsiString;
           const Optional: Boolean = True): Boolean;
+{$ENDIF}
 function  StrSplitAtCharB(const S: RawByteString; const C: AnsiChar;
           var Left, Right: RawByteString;
           const Optional: Boolean = True): Boolean;
-{$ENDIF}
 {$IFDEF SupportWideString}
 function  StrSplitAtCharW(const S: WideString; const C: WideChar;
           var Left, Right: WideString;
@@ -1769,7 +1769,6 @@ function  StrFindClosingBracketA(const S: AnsiString;
 {                                                                              }
 { Escaping                                                                     }
 {                                                                              }
-{$IFDEF SupportAnsiString}
 function  StrHexEscapeB(const S: RawByteString; const C: ByteCharSet;
           const EscPrefix: RawByteString = '\x';
           const EscSuffix: RawByteString = '';
@@ -1780,6 +1779,7 @@ function  StrHexUnescapeB(const S: RawByteString;
           const EscPrefix: RawByteString = '\x';
           const AsciiCaseSensitive: Boolean = True): RawByteString;
 
+{$IFDEF SupportAnsiString}
 function  StrCharEscapeA(const S: AnsiString; const C: array of AnsiChar;
           const EscPrefix: AnsiString;
           const EscSeq: array of AnsiString): AnsiString;
@@ -7343,6 +7343,7 @@ begin
     else
       Result := Copy(S, 1, Count);
 end;
+{$ENDIF}
 
 function CopyLeftB(const S: RawByteString; const Count: Integer): RawByteString;
 var L : Integer;
@@ -7355,7 +7356,6 @@ begin
     else
       Result := Copy(S, 1, Count);
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function CopyLeftW(const S: WideString; const Count: Integer): WideString;
@@ -8115,6 +8115,7 @@ begin
     Dec(F);
   Result := CopyLeftA(S, F);
 end;
+{$ENDIF}
 
 function StrTrimRightB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 var F : Integer;
@@ -8124,7 +8125,6 @@ begin
     Dec(F);
   Result := CopyLeftB(S, F);
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrTrimRightW(const S: WideString; const C: ByteCharSet): WideString;
@@ -8342,6 +8342,7 @@ begin
     Dec(G);
   Result := CopyRangeA(S, F, G);
 end;
+{$ENDIF}
 
 function StrTrimB(const S: RawByteString; const C: ByteCharSet): RawByteString;
 var F, G, L : Integer;
@@ -8355,7 +8356,6 @@ begin
     Dec(G);
   Result := CopyRangeB(S, F, G);
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrTrimW(const S: WideString; const C: ByteCharSet): WideString;
@@ -10966,7 +10966,6 @@ end;
 {$ENDIF}
 {$ENDIF}
 
-{$IFDEF SupportAnsiString}
 function StrReplaceCharB(const Find, Replace: AnsiChar; const S: RawByteString): RawByteString;
 var I, J : Integer;
 begin
@@ -10978,7 +10977,6 @@ begin
     if S[J] = Find then
       Result[J] := Replace;
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrReplaceCharW(const Find, Replace: WideChar; const S: WideString): WideString;
@@ -11057,6 +11055,7 @@ begin
       Inc(Q);
     end;
 end;
+{$ENDIF}
 
 function StrReplaceCharB(const Find: ByteCharSet; const Replace: AnsiChar;
     const S: RawByteString): RawByteString;
@@ -11070,7 +11069,6 @@ begin
     if S[J] in Find then
       Result[J] := Replace;
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrReplaceCharW(const Find: ByteCharSet; const Replace: WideChar;
@@ -11217,6 +11215,7 @@ begin
   if F <= StopIndex then
     MoveMem(Q^, P^, StopIndex - F + 1);
 end;
+{$ENDIF}
 
 function StrReplaceBlockB( // used by StrReplaceB
     const FindLen: Integer; const Replace, S: RawByteString;
@@ -11264,7 +11263,6 @@ begin
   if F <= StopIndex then
     MoveMem(Q^, P^, StopIndex - F + 1);
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrReplaceBlockW( // used by StrReplaceW
@@ -11455,6 +11453,7 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
 function StrReplaceB(const Find, Replace, S: RawByteString; const AsciiCaseSensitive: Boolean): RawByteString;
 var FindLen    : Integer;
@@ -11491,7 +11490,6 @@ begin
     J := K + 1;
   until I = 0;
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrReplaceW(const Find, Replace, S: WideString; const AsciiCaseSensitive: Boolean): WideString;
@@ -11636,6 +11634,7 @@ begin
     J := K + 1;
   until I = 0;
 end;
+{$ENDIF}
 
 function StrReplaceB(const Find: ByteCharSet; const Replace, S: RawByteString): RawByteString;
 var Matches    : StrReplaceMatchArray;
@@ -11665,7 +11664,6 @@ begin
     J := K + 1;
   until I = 0;
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrReplaceW(const Find: ByteCharSet; const Replace, S: WideString): WideString;
@@ -12639,6 +12637,7 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
 function StrSplitAtCharB(const S: RawByteString; const C: AnsiChar;
          var Left, Right: RawByteString; const Optional: Boolean): Boolean;
@@ -12662,7 +12661,6 @@ begin
       Right := '';
     end;
 end;
-{$ENDIF}
 
 {$IFDEF SupportWideString}
 function StrSplitAtCharW(const S: WideString; const C: WideChar;
@@ -14239,7 +14237,6 @@ end;
 {                                                                              }
 { Escaping                                                                     }
 {                                                                              }
-{$IFDEF SupportAnsiString}
 function StrHexEscapeB(const S: RawByteString; const C: ByteCharSet;
     const EscPrefix: RawByteString; const EscSuffix: RawByteString;
     const UpperHex: Boolean; const TwoDigitHex: Boolean): RawByteString;
@@ -14274,7 +14271,7 @@ function StrHexUnescapeB(const S: RawByteString; const EscPrefix: RawByteString;
     const AsciiCaseSensitive: Boolean): RawByteString;
 var I, J, L, M : Integer;
     V : Byte;
-    R : AnsiString;
+    R : RawByteString;
     H1, H2 : AnsiChar;
     H2Ch : Boolean;
 begin
@@ -14327,6 +14324,7 @@ begin
     Result := R + CopyFromB(S, J);
 end;
 
+{$IFDEF SupportAnsiString}
 function StrCharEscapeA(const S: AnsiString; const C: array of AnsiChar;
     const EscPrefix: AnsiString; const EscSeq: array of AnsiString): AnsiString;
 var I, J, L : Integer;

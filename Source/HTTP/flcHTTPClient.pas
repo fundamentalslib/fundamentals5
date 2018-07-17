@@ -59,7 +59,9 @@ interface
 
 uses
   { System }
+  {$IFDEF MSWIN}
   Windows,
+  {$ENDIF}
   SysUtils,
   Classes,
   SyncObjs,
@@ -154,8 +156,8 @@ type
 
     // host
     FAddressFamily : THTTPClientAddressFamily;
-    FHost          : AnsiString;
-    FPort          : AnsiString;
+    FHost          : RawByteString;
+    FPort          : RawByteString;
 
     // https
     {$IFDEF HTTP_TLS}
@@ -165,8 +167,8 @@ type
 
     // http proxy
     FUseHTTPProxy  : Boolean;
-    FHTTPProxyHost : AnsiString;
-    FHTTPProxyPort : AnsiString;
+    FHTTPProxyHost : RawByteString;
+    FHTTPProxyPort : RawByteString;
 
     // http request
     FMethod        : THTTPClientMethod;
@@ -242,8 +244,8 @@ type
     procedure SetSynchronisedEvents(const SynchronisedEvents: Boolean);
 
     procedure SetAddressFamily(const AddressFamily: THTTPClientAddressFamily);
-    procedure SetHost(const Host: AnsiString);
-    procedure SetPort(const Port: AnsiString);
+    procedure SetHost(const Host: RawByteString);
+    procedure SetPort(const Port: RawByteString);
     function  GetPortInt: Integer;
     procedure SetPortInt(const PortInt: Integer);
 
@@ -253,8 +255,8 @@ type
     {$ENDIF}
 
     procedure SetUseHTTPProxy(const UseHTTPProxy: Boolean);
-    procedure SetHTTPProxyHost(const HTTPProxyHost: AnsiString);
-    procedure SetHTTPProxyPort(const HTTPProxyPort: AnsiString);
+    procedure SetHTTPProxyHost(const HTTPProxyHost: RawByteString);
+    procedure SetHTTPProxyPort(const HTTPProxyPort: RawByteString);
 
     procedure SetMethod(const Method: THTTPClientMethod);
     procedure SetMethodCustom(const MethodCustom: RawByteString);
@@ -336,9 +338,9 @@ type
     procedure FinaliseRequestContent;
 
     procedure PrepareHTTPRequest;
-    function  GetHTTPRequestStr: AnsiString;
+    function  GetHTTPRequestStr: RawByteString;
 
-    procedure SendStr(const S: AnsiString);
+    procedure SendStr(const S: RawByteString);
     procedure SendRequest;
 
     procedure InitResponseContent;
@@ -393,8 +395,8 @@ type
     property  OnResponseComplete: THTTPClientEvent read FOnResponseComplete write FOnResponseComplete;
 
     property  AddressFamily: THTTPClientAddressFamily read FAddressFamily write SetAddressFamily default cafIP4;
-    property  Host: AnsiString read FHost write SetHost;
-    property  Port: AnsiString read FPort write SetPort;
+    property  Host: RawByteString read FHost write SetHost;
+    property  Port: RawByteString read FPort write SetPort;
     property  PortInt: Integer read GetPortInt write SetPortInt;
 
     {$IFDEF HTTP_TLS}
@@ -403,8 +405,8 @@ type
     {$ENDIF}
 
     property  UseHTTPProxy: Boolean read FUseHTTPProxy write SetUseHTTPProxy default False;
-    property  HTTPProxyHost: AnsiString read FHTTPProxyHost write SetHTTPProxyHost;
-    property  HTTPProxyPort: AnsiString read FHTTPProxyPort write SetHTTPProxyPort;
+    property  HTTPProxyHost: RawByteString read FHTTPProxyHost write SetHTTPProxyHost;
+    property  HTTPProxyPort: RawByteString read FHTTPProxyPort write SetHTTPProxyPort;
 
     property  Method: THTTPClientMethod read FMethod write SetMethod default cmGET;
     property  MethodCustom: RawByteString read FMethodCustom write SetMethodCustom;
@@ -424,7 +426,7 @@ type
     property  RequestContentStream: TStream read GetRequestContentStream write SetRequestContentStream;
     property  RequestContentFileName: String read GetRequestContentFileName write SetRequestContentFileName;
 
-    procedure SetRequestContentWwwFormUrlEncodedField(const FieldName, FieldValue: AnsiString);
+    procedure SetRequestContentWwwFormUrlEncodedField(const FieldName, FieldValue: RawByteString);
 
     property  ResponseContentMechanism: THTTPContentReaderMechanism read GetResponseContentMechanism write SetResponseContentMechanism default hcrmEvent;
     property  ResponseContentFileName: String read GetResponseContentFileName write SetResponseContentFileName;
@@ -757,7 +759,7 @@ end;
 procedure TF5HTTPClient.Log(const LogType: THTTPClientLogType; const Msg: String; const Level: Integer);
 begin
   if Assigned(FOnLog) then
-    if FSynchronisedEvents and (GetCurrentThreadID <> MainThreadID) then
+    if FSynchronisedEvents {$IFDEF MSWIN} and (GetCurrentThreadID <> MainThreadID) {$ENDIF} then
       begin
         FSyncLogType := LogType;
         FSyncLogMsg := Msg;
@@ -865,7 +867,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5HTTPClient.SetHost(const Host: AnsiString);
+procedure TF5HTTPClient.SetHost(const Host: RawByteString);
 begin
   if Host = FHost then
     exit;
@@ -873,7 +875,7 @@ begin
   FHost := Host;
 end;
 
-procedure TF5HTTPClient.SetPort(const Port: AnsiString);
+procedure TF5HTTPClient.SetPort(const Port: RawByteString);
 begin
   if Port = FPort then
     exit;
@@ -883,14 +885,14 @@ end;
 
 function TF5HTTPClient.GetPortInt: Integer;
 begin
-  Result := StringToIntDefA(FPort, -1);
+  Result := StringToIntDefB(FPort, -1);
 end;
 
 procedure TF5HTTPClient.SetPortInt(const PortInt: Integer);
 begin
   if (PortInt <= 0) or (PortInt >= $FFFF) then
     raise EHTTPClient.Create(SError_InvalidParameter);
-  SetPort(IntToStringA(PortInt));
+  SetPort(IntToStringB(PortInt));
 end;
 
 {$IFDEF HTTP_TLS}
@@ -919,7 +921,7 @@ begin
   FUseHTTPProxy := UseHTTPProxy;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyHost(const HTTPProxyHost: AnsiString);
+procedure TF5HTTPClient.SetHTTPProxyHost(const HTTPProxyHost: RawByteString);
 begin
   if HTTPProxyHost = FHTTPProxyHost then
     exit;
@@ -927,7 +929,7 @@ begin
   FHTTPProxyHost := HTTPProxyHost;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyPort(const HTTPProxyPort: AnsiString);
+procedure TF5HTTPClient.SetHTTPProxyPort(const HTTPProxyPort: RawByteString);
 begin
   if HTTPProxyPort = FHTTPProxyPort then
     exit;
@@ -1025,7 +1027,7 @@ var P : PHTTPCustomHeader;
 begin
   P := GetCustomHeaderByName(FieldName);
   if Assigned(P) then
-    if StrEqualNoAsciiCaseA(FieldValue, P^.FieldValue) then
+    if StrEqualNoAsciiCaseB(FieldValue, P^.FieldValue) then
       exit;
   CheckNotBusyWithRequest;
   if not Assigned(P) then
@@ -1094,8 +1096,8 @@ begin
   FRequestContentWriter.ContentFileName := RequestContentFileName;
 end;
 
-procedure TF5HTTPClient.SetRequestContentWwwFormUrlEncodedField(const FieldName, FieldValue: AnsiString);
-var Req, S : AnsiString;
+procedure TF5HTTPClient.SetRequestContentWwwFormUrlEncodedField(const FieldName, FieldValue: RawByteString);
+var Req, S : RawByteString;
 begin
   Req := GetRequestContentStr;
   if Req <> '' then
@@ -1881,7 +1883,7 @@ begin
     FRequestHasContent := False;
 end;
 
-function TF5HTTPClient.GetHTTPRequestStr: AnsiString;
+function TF5HTTPClient.GetHTTPRequestStr: RawByteString;
 begin
   Result := HTTPRequestToStr(FRequest);
   {$IFDEF HTTP_DEBUG}
@@ -1889,7 +1891,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5HTTPClient.SendStr(const S: AnsiString);
+procedure TF5HTTPClient.SendStr(const S: RawByteString);
 begin
   Assert(Assigned(FTCPClient));
   Assert(FState in [hcsSendingRequest, hcsSendingContent]);

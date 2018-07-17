@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDateTime.pas                                          }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      DateTime functions                                       }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -57,6 +57,7 @@
 {   2010/06/27  4.20  Compilable with FreePascal 2.4.0 OSX x86-64              }
 {   2011/05/04  4.21  Moved timer functions to cTimers unit.                   }
 {   2016/01/09  5.22  Revised for Fundamendals 5.                              }
+{   2018/07/17  5.23  Update for string types.                                 }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -268,21 +269,27 @@ function  NowAsGMTTime: TDateTime;
 {   ISO-8601 Integer date is an integer in the format YYYYMMDD.                }
 {   TwoDigitYearToYear returns the full year number given a two digit year.    }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  DateTimeToISO8601StringA(const D: TDateTime): AnsiString;
 function  ISO8601StringToTime(const D: AnsiString): TDateTime;
 function  ISO8601StringAsDateTime(const D: AnsiString): TDateTime;
+{$ENDIF}
 
 function  DateTimeToANSI(const D: TDateTime): Integer;
 function  ANSIToDateTime(const Julian: Integer): TDateTime;
 
 function  DateTimeToISOInteger(const D: TDateTime): Integer;
+{$IFDEF SupportAnsiString}
 function  DateTimeToISOStringA(const D: TDateTime): AnsiString;
+{$ENDIF}
 function  ISOIntegerToDateTime(const ISOInteger: Integer): TDateTime;
 
 function  TwoDigitRadix2000YearToYear(const Y: Integer): Integer;
 
+{$IFDEF SupportAnsiString}
 function  DateTimeAsElapsedTimeA(const D: TDateTime;
           const IncludeMilliseconds: Boolean = False): AnsiString;
+{$ENDIF}
 
 function  UnixTimeToDateTime(const UnixTime: Word32): TDateTime;
 function  DateTimeToUnixTime(const D: TDateTime): Word32;
@@ -477,7 +484,7 @@ function  NowAsRFCDateTimeU: UnicodeString;
 function  RFCDateTimeToGMTDateTimeA(const S: RawByteString): TDateTime;
 function  RFCDateTimeToDateTimeA(const S: RawByteString): TDateTime;
 
-function  RFCTimeZoneToGMTBiasA(const Zone: RawByteString): Integer;
+function  RFCTimeZoneToGMTBiasB(const Zone: RawByteString): Integer;
 
 
 
@@ -522,16 +529,22 @@ uses
   Windows,
   {$ENDIF}
   {$ENDIF}
+
   {$IFDEF DELPHI6_UP}
   DateUtils,
   {$ENDIF}
+
   {$IFDEF UNIX}
-    {$IFDEF FREEPASCAL}
-    BaseUnix,
-    Unix,
-    {$ELSE}
-    libc,
-    {$ENDIF}
+  {$IFDEF FREEPASCAL}
+  BaseUnix,
+  Unix,
+  {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF POSIX}
+  {$IFDEF DELPHI}
+  Posix.SysTime,
+  {$ENDIF}
   {$ENDIF}
 
   { Fundamentals }
@@ -1222,7 +1235,8 @@ begin
   end;
   Result := Result + TZI.Bias;
 end;
-{$ELSE}
+{$ENDIF}
+
 {$IFDEF UNIX}
 {$IFDEF FREEPASCAL}
 function GMTBias: Integer;
@@ -1236,16 +1250,15 @@ begin
   else
     Result := 0;
 end;
-{$ELSE}
-function GMTBias: Integer;
-var T : TTime_T;
-    U : TUnixTime;
-begin
-  __time(T);
-  localtime_r(T, U);
-  Result := U.__tm_gmtoff div 60;
-end;
 {$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
+function GMTBias: Integer;
+begin
+  Result := 0;
+end;
 {$ENDIF}
 {$ENDIF}
 
@@ -1271,6 +1284,7 @@ end;
 {                                                                              }
 { Conversions                                                                  }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function DateTimeToISO8601StringA(const D: TDateTime): AnsiString;
 begin
   Result :=
@@ -1316,6 +1330,7 @@ begin
   Da := Word(StringToIntA(CopyRangeA(Date, 7, 8)));
   Result := EncodeDate(Ye, Mo, Da) + ISO8601StringToTime(Time);
 end;
+{$ENDIF}
 
 function DateTimeToANSI(const D: TDateTime): Integer;
 var Ye, Mo, Da : Word;
@@ -1362,6 +1377,7 @@ begin
   Result := Ye * 10000 + Mo * 100 + Da;
 end;
 
+{$IFDEF SupportAnsiString}
 function DateTimeToISOStringA(const D: TDateTime): AnsiString;
 var Ye, Mo, Da : Word;
 begin
@@ -1370,6 +1386,7 @@ begin
             StrPadLeftA(IntToStringA(Mo), '0', 2) + '-' +
             StrPadLeftA(IntToStringA(Da), '0', 2);
 end;
+{$ENDIF}
 
 function ISOIntegerToDateTime(const ISOInteger: Integer): TDateTime;
 var Ye, Mo, Da : Word;
@@ -1392,6 +1409,7 @@ begin
     Result := 1900 + Y;
 end;
 
+{$IFDEF SupportAnsiString}
 function DateTimeAsElapsedTimeA(const D: TDateTime;
     const IncludeMilliseconds: Boolean): AnsiString;
 var I : Integer;
@@ -1407,6 +1425,7 @@ begin
   if IncludeMilliseconds then
     Result := Result + '.' + StrPadLeftA(IntToStringA(Millisecond(D)), '0', 3);
 end;
+{$ENDIF}
 
 // Unix time is the number of seconds elapsed since 1 Jan 1970
 const
@@ -1686,7 +1705,7 @@ function RFC1123DayOfWeekA(const S: RawByteString): Integer;
 var I : Integer;
 begin
   for I := 1 to 7 do
-    if StrEqualNoAsciiCaseA(RFC1123DayNamesA[I], S) then
+    if StrEqualNoAsciiCaseB(RFC1123DayNamesA[I], S) then
       begin
         Result := I;
         exit;
@@ -1843,7 +1862,7 @@ end;
 
 type
   TRFCNamedZoneBias = record
-     Zone : AnsiString;
+     Zone : RawByteString;
      Bias : Integer;
    end;
 
@@ -1893,11 +1912,11 @@ const
        (Zone:'EAST'; Bias:-10*60),  (Zone:'NT';   Bias:-11*60),
        (Zone:'IDLW'; Bias:-12*60) );
 
-function RFCNamedTimeZoneToGMTBiasA(const TimeZone: AnsiString; out Bias: Integer): Boolean;
+function RFCNamedTimeZoneToGMTBiasB(const TimeZone: RawByteString; out Bias: Integer): Boolean;
 var I : Integer;
 begin
   for I := 1 to RFCNamedTimeZones do
-    if StrEqualNoAsciiCaseA(RFCNamedZoneBias[I].Zone, TimeZone) then
+    if StrEqualNoAsciiCaseB(RFCNamedZoneBias[I].Zone, TimeZone) then
       begin
         Bias := RFCNamedZoneBias[I].Bias;
         Result := True;
@@ -1907,9 +1926,9 @@ begin
   Result := False;
 end;
 
-function RFCTimeZoneToGMTBiasA(const Zone: RawByteString): Integer;
+function RFCTimeZoneToGMTBiasB(const Zone: RawByteString): Integer;
 var
-  C : AnsiChar;
+  C : ByteChar;
   S : RawByteString;
 begin
   if Zone = '' then
@@ -1931,50 +1950,50 @@ begin
   else
     begin // named format
       S := StrTrimB(Zone, RFC_SPACE);
-      if not RFCNamedTimeZoneToGMTBiasA(S, Result) then
+      if not RFCNamedTimeZoneToGMTBiasB(S, Result) then
         Result := 0;
     end;
 end;
 
-procedure RFCTimeToGMTTime(const S: AnsiString; out Hours, Minutes, Seconds: Integer);
+procedure RFCTimeToGMTTime(const S: RawByteString; out Hours, Minutes, Seconds: Integer);
 var
   I : Integer;
-  T : AnsiString;
+  T : RawByteString;
   Bias, HH, MM, SS : Integer;
-  U : AnsiStringArray;
+  U : RawByteStringArray;
 begin
   U := nil;
   Hours := 0;
   Minutes := 0;
   Seconds := 0;
-  T := StrTrimA(S, RFC_SPACE);
+  T := StrTrimB(S, RFC_SPACE);
   if T = '' then
     exit;
 
   // Get Zone bias
-  I := PosCharSetRevA(RFC_SPACE, T);
+  I := PosCharSetRevB(RFC_SPACE, T);
   if I > 0 then
     begin
-      Bias := RFCTimeZoneToGMTBiasA(CopyFromA(T, I + 1));
-      T := StrTrimA(CopyLeftA(T, I - 1), RFC_SPACE);
+      Bias := RFCTimeZoneToGMTBiasB(CopyFromB(T, I + 1));
+      T := StrTrimB(CopyLeftB(T, I - 1), RFC_SPACE);
     end
   else
     Bias := 0;
 
   // Get time
-  U := StrSplitA(T, ':');
+  U := StrSplitB(T, ':');
   if (Length(U) = 1) and (Length(U[0]) = 4) then
     begin // old hhmm format
-      HH := StringToIntDefA(Copy(U[0], 1, 2), 0);
-      MM := StringToIntDefA(Copy(U[0], 3, 2), 0);
+      HH := StringToIntDefB(Copy(U[0], 1, 2), 0);
+      MM := StringToIntDefB(Copy(U[0], 3, 2), 0);
       SS := 0;
     end else
   if (Length(U) >= 2) or (Length(U) <= 3) then // hh:mm[:ss] format (RFC1123)
     begin
-      HH := StringToIntDefA(StrTrimA(U[0], RFC_SPACE), 0);
-      MM := StringToIntDefA(StrTrimA(U[1], RFC_SPACE), 0);
+      HH := StringToIntDefB(StrTrimB(U[0], RFC_SPACE), 0);
+      MM := StringToIntDefB(StrTrimB(U[1], RFC_SPACE), 0);
       if Length(U) = 3 then
-        SS := StringToIntDefA(StrTrimA(U[2], RFC_SPACE), 0) else
+        SS := StringToIntDefB(StrTrimB(U[2], RFC_SPACE), 0) else
         SS := 0;
     end
   else
@@ -2157,7 +2176,7 @@ var Ye, Mo, Da         : Word;
     Ye2, Mo2, Da2      : Word;
     Ho2, Mi2, Se2, Ms2 : Word;
     A, B               : TDateTime;
-    S                  : AnsiString;
+    S                  : RawByteString;
     I                  : Integer;
 begin
   Ho := 7;
@@ -2225,8 +2244,8 @@ begin
   Assert(RFCMonthA('Jan') = 1, 'RFCMonth');
   Assert(RFCMonthA('Nov') = 11, 'RFCMonth');
   Assert(EnglishLongMonthNamesA[12] = 'December', 'EnglishLongMonthNames');
-  Assert(RFCTimeZoneToGMTBiasA('GMT') = 0, 'RFCTimeZoneToGMTBias');
-  Assert(RFCTimeZoneToGMTBiasA('est') = -300, 'RFCTimeZoneToGMTBias');
+  Assert(RFCTimeZoneToGMTBiasB('GMT') = 0, 'RFCTimeZoneToGMTBias');
+  Assert(RFCTimeZoneToGMTBiasB('est') = -300, 'RFCTimeZoneToGMTBias');
 
   I := GMTBias;
   Assert((I <= 12 * 60) and (I >= -12 * 60), 'GMTBias');
