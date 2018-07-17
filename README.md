@@ -17,7 +17,10 @@ Includes:
 * JSON parser
 * Google protocol buffer parser, utilities and Pascal code generator
 * Socket library (cross platform - Windows and Linux)
+* TLS Client
+* TLS Server
 * TCP Client
 * TCP Server
 * HTTP Client
 * HTTP Server
+
