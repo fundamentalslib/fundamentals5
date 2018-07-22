@@ -109,33 +109,15 @@ unit flcSocketLib;
 
 interface
 
-{$IFDEF SOCKETLIB_WIN}
 uses
   { System }
+  {$IFDEF SOCKETLIB_WIN}
   Windows,
+  {$ENDIF}
   SysUtils,
   { Fundamentals }
   flcStdTypes,
-  flcSocketLibWindows;
-{$ENDIF}
-
-{$IFDEF SOCKETLIB_POSIX_FPC}
-uses
-  { System }
-  SysUtils,
-  { Fundamentals }
-  flcStdTypes,
-  flcSocketLibPosixFpc;
-{$ENDIF}
-
-{$IFDEF SOCKETLIB_POSIX_DELPHI}
-uses
-  { System }
-  SysUtils,
-  { Fundamentals }
-  flcStdTypes,
-  flcSocketLibPosixDelphi;
-{$ENDIF}
+  flcSocketLibSys;
 
 
 
@@ -395,53 +377,53 @@ const
 {$IFDEF SOCKETLIB_POSIX_FPC}
 const
   // Define Berkeley/Posix error identifiers for equivalent Unix error codes
-  EINTR              = flcSocketLibPosixFpc.EINTR;
-  EBADF              = flcSocketLibPosixFpc.EBADF;
-  EACCES             = flcSocketLibPosixFpc.EACCES;
-  EFAULT             = flcSocketLibPosixFpc.EFAULT;
-  EINVAL             = flcSocketLibPosixFpc.EINVAL;
-  EMFILE             = flcSocketLibPosixFpc.EMFILE;
-  EWOULDBLOCK        = flcSocketLibPosixFpc.EWOULDBLOCK;
-  EAGAIN             = flcSocketLibPosixFpc.EWOULDBLOCK;
-  EINPROGRESS        = flcSocketLibPosixFpc.EINPROGRESS;
-  EALREADY           = flcSocketLibPosixFpc.EALREADY;
-  ENOTSOCK           = flcSocketLibPosixFpc.ENOTSOCK;
-  EDESTADDRREQ       = flcSocketLibPosixFpc.EDESTADDRREQ;
-  EMSGSIZE           = flcSocketLibPosixFpc.EMSGSIZE;
-  EPROTOTYPE         = flcSocketLibPosixFpc.EPROTOTYPE;
-  ENOPROTOOPT        = flcSocketLibPosixFpc.ENOPROTOOPT;
-  EPROTONOSUPPORT    = flcSocketLibPosixFpc.EPROTONOSUPPORT;
-  ESOCKTNOSUPPORT    = flcSocketLibPosixFpc.ESOCKTNOSUPPORT;
-  EOPNOTSUPP         = flcSocketLibPosixFpc.EOPNOTSUPP;
-  EPFNOSUPPORT       = flcSocketLibPosixFpc.EPFNOSUPPORT;
-  EAFNOSUPPORT       = flcSocketLibPosixFpc.EAFNOSUPPORT;
-  EADDRINUSE         = flcSocketLibPosixFpc.EADDRINUSE;
-  EADDRNOTAVAIL      = flcSocketLibPosixFpc.EADDRNOTAVAIL;
-  ENETDOWN           = flcSocketLibPosixFpc.ENETDOWN;
-  ENETUNREACH        = flcSocketLibPosixFpc.ENETUNREACH;
-  ENETRESET          = flcSocketLibPosixFpc.ENETRESET;
-  ECONNABORTED       = flcSocketLibPosixFpc.ECONNABORTED;
-  ECONNRESET         = flcSocketLibPosixFpc.ECONNRESET;
-  ENOBUFS            = flcSocketLibPosixFpc.ENOBUFS;
-  EISCONN            = flcSocketLibPosixFpc.EISCONN;
-  ENOTCONN           = flcSocketLibPosixFpc.ENOTCONN;
-  ESHUTDOWN          = flcSocketLibPosixFpc.ESHUTDOWN;
-  ETOOMANYREFS       = flcSocketLibPosixFpc.ETOOMANYREFS;
-  ETIMEDOUT          = flcSocketLibPosixFpc.ETIMEDOUT;
-  ECONNREFUSED       = flcSocketLibPosixFpc.ECONNREFUSED;
-  //ELOOP              = flcSocketLibPosixFpc.ELOOP;
-  ENAMETOOLONG       = flcSocketLibPosixFpc.ENAMETOOLONG;
-  EHOSTDOWN          = flcSocketLibPosixFpc.EHOSTDOWN;
-  EHOSTUNREACH       = flcSocketLibPosixFpc.EHOSTUNREACH;
-  //ENOTEMPTY          = flcSocketLibPosixFpc.ENOTEMPTY;
-  //EUSERS             = flcSocketLibPosixFpc.EUSERS;
-  //EDQUOT             = flcSocketLibPosixFpc.EDQUOT;
-  //ESTALE             = flcSocketLibPosixFpc.ESTALE;
-  //EREMOTE            = flcSocketLibPosixFpc.EREMOTE;
-  //HOST_NOT_FOUND     = flcSocketLibPosixFpc.HOST_NOT_FOUND;
-  //TRY_AGAIN          = flcSocketLibPosixFpc.TRY_AGAIN;
-  //NO_RECOVERY        = flcSocketLibPosixFpc.NO_RECOVERY;
-  //ENOMEM             = flcSocketLibPosixFpc._NOT_ENOUGH_MEMORY;
+  EINTR              = flcSocketLibSys.EINTR;
+  EBADF              = flcSocketLibSys.EBADF;
+  EACCES             = flcSocketLibSys.EACCES;
+  EFAULT             = flcSocketLibSys.EFAULT;
+  EINVAL             = flcSocketLibSys.EINVAL;
+  EMFILE             = flcSocketLibSys.EMFILE;
+  EWOULDBLOCK        = flcSocketLibSys.EWOULDBLOCK;
+  EAGAIN             = flcSocketLibSys.EWOULDBLOCK;
+  EINPROGRESS        = flcSocketLibSys.EINPROGRESS;
+  EALREADY           = flcSocketLibSys.EALREADY;
+  ENOTSOCK           = flcSocketLibSys.ENOTSOCK;
+  EDESTADDRREQ       = flcSocketLibSys.EDESTADDRREQ;
+  EMSGSIZE           = flcSocketLibSys.EMSGSIZE;
+  EPROTOTYPE         = flcSocketLibSys.EPROTOTYPE;
+  ENOPROTOOPT        = flcSocketLibSys.ENOPROTOOPT;
+  EPROTONOSUPPORT    = flcSocketLibSys.EPROTONOSUPPORT;
+  ESOCKTNOSUPPORT    = flcSocketLibSys.ESOCKTNOSUPPORT;
+  EOPNOTSUPP         = flcSocketLibSys.EOPNOTSUPP;
+  EPFNOSUPPORT       = flcSocketLibSys.EPFNOSUPPORT;
+  EAFNOSUPPORT       = flcSocketLibSys.EAFNOSUPPORT;
+  EADDRINUSE         = flcSocketLibSys.EADDRINUSE;
+  EADDRNOTAVAIL      = flcSocketLibSys.EADDRNOTAVAIL;
+  ENETDOWN           = flcSocketLibSys.ENETDOWN;
+  ENETUNREACH        = flcSocketLibSys.ENETUNREACH;
+  ENETRESET          = flcSocketLibSys.ENETRESET;
+  ECONNABORTED       = flcSocketLibSys.ECONNABORTED;
+  ECONNRESET         = flcSocketLibSys.ECONNRESET;
+  ENOBUFS            = flcSocketLibSys.ENOBUFS;
+  EISCONN            = flcSocketLibSys.EISCONN;
+  ENOTCONN           = flcSocketLibSys.ENOTCONN;
+  ESHUTDOWN          = flcSocketLibSys.ESHUTDOWN;
+  ETOOMANYREFS       = flcSocketLibSys.ETOOMANYREFS;
+  ETIMEDOUT          = flcSocketLibSys.ETIMEDOUT;
+  ECONNREFUSED       = flcSocketLibSys.ECONNREFUSED;
+  //ELOOP              = flcSocketLibSys.ELOOP;
+  ENAMETOOLONG       = flcSocketLibSys.ENAMETOOLONG;
+  EHOSTDOWN          = flcSocketLibSys.EHOSTDOWN;
+  EHOSTUNREACH       = flcSocketLibSys.EHOSTUNREACH;
+  //ENOTEMPTY          = flcSocketLibSys.ENOTEMPTY;
+  //EUSERS             = flcSocketLibSys.EUSERS;
+  //EDQUOT             = flcSocketLibSys.EDQUOT;
+  //ESTALE             = flcSocketLibSys.ESTALE;
+  //EREMOTE            = flcSocketLibSys.EREMOTE;
+  //HOST_NOT_FOUND     = flcSocketLibSys.HOST_NOT_FOUND;
+  //TRY_AGAIN          = flcSocketLibSys.TRY_AGAIN;
+  //NO_RECOVERY        = flcSocketLibSys.NO_RECOVERY;
+  //ENOMEM             = flcSocketLibSys._NOT_ENOUGH_MEMORY;
 {$ENDIF}
 
 type
@@ -480,8 +462,8 @@ type
       inaMulticast,
       inaBroadcast);
 
-function  IsIP4AddressA(const Address: RawByteString; out NetAddress: TIP4Addr): Boolean;
-function  IsIP6AddressA(const Address: RawByteString; out NetAddress: TIP6Addr): Boolean;
+function  IsIP4AddressB(const Address: RawByteString; out NetAddress: TIP4Addr): Boolean;
+function  IsIP6AddressB(const Address: RawByteString; out NetAddress: TIP6Addr): Boolean;
 
 function  IsIP4AddressU(const Address: UnicodeString; out NetAddress: TIP4Addr): Boolean;
 {$IFDEF SOCKETLIB_WIN}
@@ -493,8 +475,8 @@ function  IsIP4Address(const Address: String; out NetAddress: TIP4Addr): Boolean
 function  IsIP6Address(const Address: String; out NetAddress: TIP6Addr): Boolean;
 {$ENDIF}
 
-function  IP4AddressStrA(const Address: TIP4Addr): RawByteString;
-function  IP6AddressStrA(const Address: TIP6Addr): RawByteString;
+function  IP4AddressStrB(const Address: TIP4Addr): RawByteString;
+function  IP6AddressStrB(const Address: TIP6Addr): RawByteString;
 
 function  IP4AddressStr(const Address: TIP4Addr): String;
 function  IP6AddressStr(const Address: TIP6Addr): String;
@@ -561,8 +543,8 @@ function  HostEntName(const HostEnt: PHostEnt): RawByteString;
 { IP protocol                                                                  }
 {   Enumeration of IP protocols.                                               }
 {                                                                              }
-function  IPProtocolToStrA(const Protocol: TIPProtocol): RawByteString;
-function  StrToIPProtocolA(const Protocol: RawByteString): TIPProtocol;
+function  IPProtocolToStrB(const Protocol: TIPProtocol): RawByteString;
+function  StrToIPProtocolB(const Protocol: RawByteString): TIPProtocol;
 
 function  IPProtocolToStr(const Protocol: TIPProtocol): String;
 function  StrToIPProtocol(const Protocol: String): TIPProtocol;
@@ -573,23 +555,23 @@ function  StrToIPProtocol(const Protocol: String): TIPProtocol;
 { Local host                                                                   }
 {                                                                              }
 type
-  AddressStrArrayA = Array of RawByteString;
+  AddressStrArrayB = Array of RawByteString;
   AddressStrArray = Array of String;
 
-function  LocalHostNameA: RawByteString;
+function  LocalHostNameB: RawByteString;
 function  LocalHostName: String;
 
 function  LocalIPAddresses: TIP4AddrArray;
 function  LocalIP6Addresses: TIP6AddrArray;
 
-function  LocalIP4AddressesStrA: AddressStrArrayA;
-function  LocalIP6AddressesStrA: AddressStrArrayA;
+function  LocalIP4AddressesStrB: AddressStrArrayB;
+function  LocalIP6AddressesStrB: AddressStrArrayB;
 
 function  LocalIP4AddressesStr: AddressStrArray;
 function  LocalIP6AddressesStr: AddressStrArray;
 
 function  GuessInternetIP4: TIP4Addr;
-function  GuessInternetIP4StrA: RawByteString;
+function  GuessInternetIP4StrB: RawByteString;
 function  GuessInternetIP4Str: String;
 
 
@@ -599,9 +581,9 @@ function  GuessInternetIP4Str: String;
 {   Reverse name lookup (domain name from IP address).                         }
 {   Blocks. Raises an exception if unsuccessful.                               }
 {                                                                              }
-function  GetRemoteHostNameA(const Address: TSocketAddr): RawByteString; overload;
-function  GetRemoteHostNameA(const Address: TIP4Addr): RawByteString; overload;
-function  GetRemoteHostNameA(const Address: TIP6Addr): RawByteString; overload;
+function  GetRemoteHostNameB(const Address: TSocketAddr): RawByteString; overload;
+function  GetRemoteHostNameB(const Address: TIP4Addr): RawByteString; overload;
+function  GetRemoteHostNameB(const Address: TIP6Addr): RawByteString; overload;
 
 function  GetRemoteHostName(const Address: TSocketAddr): String; overload;
 function  GetRemoteHostName(const Address: TIP4Addr): String; overload;
@@ -614,20 +596,20 @@ function  GetRemoteHostName(const Address: TIP6Addr): String; overload;
 {   Resolves Host (IP or domain name).                                         }
 {   Blocks. Raises an exception if unsuccessful.                               }
 {                                                                              }
-function  ResolveHostExA(const Host: RawByteString; const AddressFamily: TIPAddressFamily): TSocketAddrArray;
-function  ResolveHostA(const Host: RawByteString; const AddressFamily: TIPAddressFamily): TSocketAddr;
+function  ResolveHostExB(const Host: RawByteString; const AddressFamily: TIPAddressFamily): TSocketAddrArray;
+function  ResolveHostB(const Host: RawByteString; const AddressFamily: TIPAddressFamily): TSocketAddr;
 
 function  ResolveHostEx(const Host: String; const AddressFamily: TIPAddressFamily): TSocketAddrArray;
 function  ResolveHost(const Host: String; const AddressFamily: TIPAddressFamily): TSocketAddr;
 
-function  ResolveHostIP4ExA(const Host: RawByteString): TIP4AddrArray;
-function  ResolveHostIP4A(const Host: RawByteString): TIP4Addr;
+function  ResolveHostIP4ExB(const Host: RawByteString): TIP4AddrArray;
+function  ResolveHostIP4B(const Host: RawByteString): TIP4Addr;
 
 function  ResolveHostIP4Ex(const Host: String): TIP4AddrArray;
 function  ResolveHostIP4(const Host: String): TIP4Addr;
 
-function  ResolveHostIP6ExA(const Host: RawByteString): TIP6AddrArray;
-function  ResolveHostIP6A(const Host: RawByteString): TIP6Addr;
+function  ResolveHostIP6ExB(const Host: RawByteString): TIP6AddrArray;
+function  ResolveHostIP6B(const Host: RawByteString): TIP6Addr;
 
 function  ResolveHostIP6Ex(const Host: String): TIP6AddrArray;
 function  ResolveHostIP6(const Host: String): TIP6Addr;
@@ -639,12 +621,12 @@ function  ResolveHostIP6(const Host: String): TIP6Addr;
 {   NetPort is the Port value in network byte order.                           }
 {   ResolvePort returns the NetPort.                                           }
 {                                                                              }
-function  ResolvePortA(const Port: RawByteString; const Protocol: TIPProtocol): Word;
+function  ResolvePortB(const Port: RawByteString; const Protocol: TIPProtocol): Word;
 function  ResolvePort(const Port: String; const Protocol: TIPProtocol): Word;
 
 function  NetPortToPort(const NetPort: Word): Word;
 function  NetPortToPortStr(const NetPort: Word): String;
-function  NetPortToPortStrA(const NetPort: Word): RawByteString;
+function  NetPortToPortStrB(const NetPort: Word): RawByteString;
 
 function  PortToNetPort(const Port: Word): Word;
 
@@ -653,11 +635,11 @@ function  PortToNetPort(const Port: Word): Word;
 {                                                                              }
 { Resolve host and port                                                        }
 {                                                                              }
-function  ResolveA(
+function  ResolveB(
           const Host: RawByteString; const Port: Integer;
           const AddressFamily: TIPAddressFamily = iaIP4;
           const Protocol: TIPProtocol = ipTCP): TSocketAddr; overload;
-function  ResolveA(
+function  ResolveB(
           const Host, Port: RawByteString;
           const AddressFamily: TIPAddressFamily = iaIP4;
           const Protocol: TIPProtocol = ipTCP): TSocketAddr; overload;
@@ -763,8 +745,6 @@ uses
   { System }
   {$IFDEF SOCKETLIB_POSIX_FPC}
   dynlibs,
-  {$ENDIF}
-  {$IFDEF SOCKETLIB_POSIX_DELPHI}
   {$ENDIF}
   SyncObjs,
   { Fundamentals }
@@ -1013,7 +993,7 @@ begin
     begin
       AddrIn6 := @Addr;
       Result.AddrFamily := iaIP6;
-      Result.Port := NetPortToPort(AddrIn6.sin6_port);
+      Result.Port := NetPortToPort(AddrIn6^.sin6_port);
       Move(AddrIn6.sin6_addr, Result.AddrIP6, SizeOf(TIP6Addr));
     end;
   else
@@ -1057,8 +1037,8 @@ end;
 function SocketAddrIPStrA(const Addr: TSocketAddr): RawByteString;
 begin
   case Addr.AddrFamily of
-    iaIP4 : Result := IP4AddressStrA(Addr.AddrIP4);
-    iaIP6 : Result := IP6AddressStrA(Addr.AddrIP6);
+    iaIP4 : Result := IP4AddressStrB(Addr.AddrIP4);
+    iaIP6 : Result := IP6AddressStrB(Addr.AddrIP6);
   else
     Result := '';
   end;
@@ -1249,17 +1229,17 @@ end;
 { Socket library functions                                                     }
 {                                                                              }
 function SocketAccept(const S: TSocketHandle; out Addr: TSocketAddr): TSocketHandle;
-var AAddrLen : TAddrLen;
+var AAddrLen : TSockLen;
     AAddr    : TSockAddr;
-    LSocket  : TSocket;
+    ASocket  : TSocket;
 begin
   AAddrLen := SizeOf(TSockAddr);
   FillChar(AAddr, SizeOf(TSockAddr), 0);
-  LSocket := Accept(TSocket(S), @AAddr, AAddrLen);
-  if (LSocket <> INVALID_SOCKET) and (AAddrLen > 0) then
+  ASocket := Accept(TSocket(S), @AAddr, AAddrLen);
+  if (ASocket <> INVALID_SOCKET) and (AAddrLen > 0) then
     begin
       Addr := SockAddrToSocketAddr(AAddr);
-      Result := TSocketHandle(LSocket);
+      Result := TSocketHandle(ASocket);
     end
   else
     begin
@@ -1410,7 +1390,7 @@ end;
 
 function SocketGetPeerName(const S: TSocketHandle; out Name: TSocketAddr): Integer;
 var Addr : TSockAddr;
-    L : TAddrLen;
+    L : TSockLen;
 begin
   L := SizeOf(Addr);
   Result := GetPeerName(TSocket(S), Addr, L);
@@ -1429,7 +1409,7 @@ end;
 
 function SocketGetSockName(const S: TSocketHandle; out Name: TSocketAddr): Integer;
 var Addr : TSockAddr;
-    L : TAddrLen;
+    L : TSockLen;
 begin
   L := SizeOf(Addr);
   Result := GetSockName(S, Addr, L);
@@ -1439,7 +1419,7 @@ end;
 function SocketGetSockOpt(const S: TSocketHandle; const Level, OptName: Integer;
          const OptVal: Pointer; var OptLen: Integer): Integer;
 var
-  OptLenT : TAddrLen;
+  OptLenT : TSockLen;
 begin
   FillChar(OptVal^, OptLen, 0);
   OptLenT := OptLen;
@@ -1667,19 +1647,19 @@ end;
 {$IFDEF SOCKETLIB_POSIX_FPC}
 function SocketGetLastError: Integer;
 begin
-  Result := flcSocketLibPosixFpc.SockGetLastError;
+  Result := flcSocketLibSys.SockGetLastError;
 end;
 {$ENDIF}
 {$IFDEF SOCKETLIB_POSIX_DELPHI}
 function SocketGetLastError: Integer;
 begin
-  Result := flcSocketLibPosixDelphi.GetLastSocketError;
+  Result := flcSocketLibSys.GetLastSocketError;
 end;
 {$ENDIF}
 {$IFDEF SOCKETLIB_WIN}
 function SocketGetLastError: Integer;
 begin
-  Result := flcSocketLibWindows.WSAGetLastError;
+  Result := flcSocketLibSys.WSAGetLastError;
 end;
 {$ENDIF}
 
@@ -1731,10 +1711,10 @@ begin
     {$ENDIF}
   else
     {$IFDEF SOCKETLIB_WIN}
-    Result := flcSocketLibWindows.WinSockErrorMessage(ErrorCode);
+    Result := flcSocketLibSys.WinSockErrorMessage(ErrorCode);
     {$ELSE}
     {$IFDEF SOCKETLIB_POSIX_FPC}
-    Result := flcSocketLibPosixFpc.UnixSockErrorMessage(ErrorCode);
+    Result := flcSocketLibSys.UnixSockErrorMessage(ErrorCode);
     {$ELSE}
     Result := Format('System error #%d', [ErrorCode]);
     {$ENDIF}
@@ -1747,7 +1727,7 @@ end;
 {                                                                              }
 { IP Addresses                                                                 }
 {                                                                              }
-function IsIP4AddressA(const Address: RawByteString; out NetAddress: TIP4Addr): Boolean;
+function IsIP4AddressB(const Address: RawByteString; out NetAddress: TIP4Addr): Boolean;
 var I, L, N : Integer;
 begin
   // Validate length: shortest full IP address is 7 characters: #.#.#.#
@@ -1789,7 +1769,7 @@ begin
       Result := False;
 end;
 
-function IsIP6AddressA(const Address: RawByteString; out NetAddress: TIP6Addr): Boolean;
+function IsIP6AddressB(const Address: RawByteString; out NetAddress: TIP6Addr): Boolean;
 var Hints    : TAddrInfo;
     AddrInfo : PAddrInfo;
     CurrAddr : PAddrInfo;
@@ -1855,7 +1835,7 @@ end;
 
 function IsIP4AddressU(const Address: UnicodeString; out NetAddress: TIP4Addr): Boolean;
 begin
-  Result := IsIP4AddressA(UTF8Encode(Address), NetAddress);
+  Result := IsIP4AddressB(UTF8Encode(Address), NetAddress);
 end;
 
 {$IFDEF SOCKETLIB_WIN}
@@ -1942,12 +1922,12 @@ begin
 end;
 {$ENDIF}
 
-function IP4AddressStrA(const Address: TIP4Addr): RawByteString;
+function IP4AddressStrB(const Address: TIP4Addr): RawByteString;
 begin
   Result := Socketinet_ntoa(Address);
 end;
 
-function IP6AddressStrA(const Address: TIP6Addr): RawByteString;
+function IP6AddressStrB(const Address: TIP6Addr): RawByteString;
 var I : Integer;
 begin
   // Handle special addresses
@@ -1974,7 +1954,7 @@ end;
 function IP4AddressStr(const Address: TIP4Addr): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(IP4AddressStrA(Address));
+  Result := String(IP4AddressStrB(Address));
   {$ELSE}
   Result := IP4AddressStrA(Address);
   {$ENDIF}
@@ -1983,7 +1963,7 @@ end;
 function IP6AddressStr(const Address: TIP6Addr): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(IP6AddressStrA(Address));
+  Result := String(IP6AddressStrB(Address));
   {$ELSE}
   Result := IP6AddressStrA(Address);
   {$ENDIF}
@@ -2142,7 +2122,7 @@ end;
 
 function HostEntAddressStr(const HostEnt: PHostEnt; const Index: Integer): RawByteString;
 begin
-  Result := IP4AddressStrA(HostEntAddressIP4(HostEnt, Index));
+  Result := IP4AddressStrB(HostEntAddressIP4(HostEnt, Index));
 end;
 
 function HostEntName(const HostEnt: PHostEnt): RawByteString;
@@ -2159,7 +2139,7 @@ const
   ProtocolStr: Array[TIPProtocol] of RawByteString =
       ('', 'ip', 'icmp', 'tcp', 'udp', 'raw');
 
-function IPProtocolToStrA(const Protocol: TIPProtocol): RawByteString;
+function IPProtocolToStrB(const Protocol: TIPProtocol): RawByteString;
 var ProtoNum : Integer;
     PEnt     : PProtoEnt;
 begin
@@ -2186,7 +2166,7 @@ begin
     Result := '';
 end;
 
-function StrToIPProtocolA(const Protocol: RawByteString): TIPProtocol;
+function StrToIPProtocolB(const Protocol: RawByteString): TIPProtocol;
 var I    : TIPProtocol;
     PEnt : PProtoEnt;
 begin
@@ -2214,7 +2194,7 @@ end;
 function IPProtocolToStr(const Protocol: TIPProtocol): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(IPProtocolToStrA(Protocol));
+  Result := String(IPProtocolToStrB(Protocol));
   {$ELSE}
   Result := IPProtocolToStrA(Protocol);
   {$ENDIF}
@@ -2223,7 +2203,7 @@ end;
 function StrToIPProtocol(const Protocol: String): TIPProtocol;
 begin
   {$IFDEF StringIsUnicode}
-  Result := StrToIPProtocolA(RawByteString(Protocol));
+  Result := StrToIPProtocolB(RawByteString(Protocol));
   {$ELSE}
   Result := StrToIPProtocolA(Protocol);
   {$ENDIF}
@@ -2233,7 +2213,7 @@ end;
 {                                                                              }
 { Local Host                                                                   }
 {                                                                              }
-function LocalHostNameA: RawByteString;
+function LocalHostNameB: RawByteString;
 var Buf : Array[0..1024] of AnsiChar;
     Err : Integer;
 begin
@@ -2251,7 +2231,7 @@ end;
 function LocalHostName: String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(LocalHostNameA);
+  Result := String(LocalHostNameB);
   {$ELSE}
   Result := LocalHostNameA;
   {$ENDIF}
@@ -2263,21 +2243,21 @@ begin
   if not WinSockStarted then
     WinSockStartup;
   {$ENDIF}
-  Result := HostEntAddresses(GetHostByName(Pointer(LocalHostNameA)));
+  Result := HostEntAddresses(GetHostByName(Pointer(LocalHostNameB)));
 end;
 
 function LocalIP6Addresses: TIP6AddrArray;
 var Addr : TSocketAddrArray;
     L, I : Integer;
 begin
-  SocketGetAddrInfo(iaIP6, ipNone, LocalHostNameA, '', Addr);
+  SocketGetAddrInfo(iaIP6, ipNone, LocalHostNameB, '', Addr);
   L := Length(Addr);
   SetLength(Result, L);
   for I := 0 to L - 1 do
     IP6AddrAssign(Result[I], Addr[I].AddrIP6);
 end;
 
-function LocalIP4AddressesStrA: AddressStrArrayA;
+function LocalIP4AddressesStrB: AddressStrArrayB;
 var V : TIP4AddrArray;
     I, L : Integer;
 begin
@@ -2285,10 +2265,10 @@ begin
   L := Length(V);
   SetLength(Result, L);
   for I := 0 to L - 1 do
-    Result[I] := IP4AddressStrA(V[I]);
+    Result[I] := IP4AddressStrB(V[I]);
 end;
 
-function LocalIP6AddressesStrA: AddressStrArrayA;
+function LocalIP6AddressesStrB: AddressStrArrayB;
 var V : TIP6AddrArray;
     I, L : Integer;
 begin
@@ -2296,7 +2276,7 @@ begin
   L := Length(V);
   SetLength(Result, L);
   for I := 0 to L - 1 do
-    Result[I] := IP6AddressStrA(V[I]);
+    Result[I] := IP6AddressStrB(V[I]);
 end;
 
 function LocalIP4AddressesStr: AddressStrArray;
@@ -2335,20 +2315,20 @@ begin
   Result := IP4AddrNone;
 end;
 
-function GuessInternetIP4StrA: RawByteString;
+function GuessInternetIP4StrB: RawByteString;
 var A : TIP4Addr;
 begin
   A := GuessInternetIP4;
   if Int32(A.Addr32) = Int32(INADDR_NONE) then
     Result := ''
   else
-    Result := IP4AddressStrA(A);
+    Result := IP4AddressStrB(A);
 end;
 
 function GuessInternetIP4Str: String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(GuessInternetIP4StrA);
+  Result := String(GuessInternetIP4StrB);
   {$ELSE}
   Result := GuessInternetIP4StrA;
   {$ENDIF}
@@ -2359,7 +2339,7 @@ end;
 {                                                                              }
 { Remote host name                                                             }
 {                                                                              }
-function GetRemoteHostNameA(const Address: TSocketAddr): RawByteString;
+function GetRemoteHostNameB(const Address: TSocketAddr): RawByteString;
 var NewAPI  : Boolean;
     HostEnt : TSocketHost;
 begin
@@ -2385,48 +2365,48 @@ begin
   Result := HostEnt.Host;
 end;
 
-function GetRemoteHostNameA(const Address: TIP4Addr): RawByteString;
+function GetRemoteHostNameB(const Address: TIP4Addr): RawByteString;
 var S : TSocketAddr;
 begin
   InitSocketAddrNone(S);
   S.AddrFamily := iaIP4;
   S.AddrIP4 := Address;
-  Result := GetRemoteHostNameA(S);
+  Result := GetRemoteHostNameB(S);
 end;
 
-function GetRemoteHostNameA(const Address: TIP6Addr): RawByteString;
+function GetRemoteHostNameB(const Address: TIP6Addr): RawByteString;
 var S : TSocketAddr;
 begin
   InitSocketAddrNone(S);
   S.AddrFamily := iaIP6;
   IP6AddrAssign(S.AddrIP6, Address);
-  Result := GetRemoteHostNameA(S);
+  Result := GetRemoteHostNameB(S);
 end;
 
 function GetRemoteHostName(const Address: TSocketAddr): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(GetRemoteHostNameA(Address));
+  Result := String(GetRemoteHostNameB(Address));
   {$ELSE}
-  Result := GetRemoteHostNameA(Address);
+  Result := GetRemoteHostNameB(Address);
   {$ENDIF}
 end;
 
 function GetRemoteHostName(const Address: TIP4Addr): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(GetRemoteHostNameA(Address));
+  Result := String(GetRemoteHostNameB(Address));
   {$ELSE}
-  Result := GetRemoteHostNameA(Address);
+  Result := GetRemoteHostNameB(Address);
   {$ENDIF}
 end;
 
 function GetRemoteHostName(const Address: TIP6Addr): String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := String(GetRemoteHostNameA(Address));
+  Result := String(GetRemoteHostNameB(Address));
   {$ELSE}
-  Result := GetRemoteHostNameA(Address);
+  Result := GetRemoteHostNameB(Address);
   {$ENDIF}
 end;
 
@@ -2435,7 +2415,7 @@ end;
 {                                                                              }
 { Resolve host                                                                 }
 {                                                                              }
-function ResolveHostExA(const Host: RawByteString;
+function ResolveHostExB(const Host: RawByteString;
     const AddressFamily: TIPAddressFamily): TSocketAddrArray;
 var NewAPI  : Boolean;
     HostEnt : PHostEnt;
@@ -2450,14 +2430,14 @@ begin
   if Host = '' then
     raise ESocketLib.Create('Host not specified');
   if AddressFamily = iaIP4 then
-    if IsIP4AddressA(Host, InAddr) then
+    if IsIP4AddressB(Host, InAddr) then
       begin
         SetLength(Result, 1);
         InitSocketAddr(Result[0], InAddr, 0);
         exit;
       end;
   if AddressFamily = iaIP6 then
-    if IsIP6AddressA(Host, In6Addr) then
+    if IsIP6AddressB(Host, In6Addr) then
       begin
         SetLength(Result, 1);
         InitSocketAddr(Result[0], In6Addr, 0);
@@ -2488,11 +2468,11 @@ begin
     raise ESocketLib.Create('Failed to resolve host', SocketGetLastError);
 end;
 
-function ResolveHostA(const Host: RawByteString;
+function ResolveHostB(const Host: RawByteString;
     const AddressFamily: TIPAddressFamily): TSocketAddr;
 var A : TSocketAddrArray;
 begin
-  A := ResolveHostExA(Host, AddressFamily);
+  A := ResolveHostExB(Host, AddressFamily);
   if Length(A) = 0 then
     raise ESocketLib.Create('Failed to resolve host');
   Result := A[0];
@@ -2501,22 +2481,22 @@ end;
 function ResolveHostEx(const Host: String; const AddressFamily: TIPAddressFamily): TSocketAddrArray;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostExA(RawByteString(Host), AddressFamily);
+  Result := ResolveHostExB(RawByteString(Host), AddressFamily);
   {$ELSE}
-  Result := ResolveHostExA(Host, AddressFamily);
+  Result := ResolveHostExB(Host, AddressFamily);
   {$ENDIF}
 end;
 
 function ResolveHost(const Host: String; const AddressFamily: TIPAddressFamily): TSocketAddr;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostA(RawByteString(Host), AddressFamily);
+  Result := ResolveHostB(RawByteString(Host), AddressFamily);
   {$ELSE}
-  Result := ResolveHostA(Host, AddressFamily);
+  Result := ResolveHostB(Host, AddressFamily);
   {$ENDIF}
 end;
 
-function ResolveHostIP4ExA(const Host: RawByteString): TIP4AddrArray;
+function ResolveHostIP4ExB(const Host: RawByteString): TIP4AddrArray;
 var HostEnt : PHostEnt;
     InAddr  : TIP4Addr;
     {$IFDEF SOCKETLIB_WIN}
@@ -2526,7 +2506,7 @@ var HostEnt : PHostEnt;
 begin
   if Host = '' then
     raise ESocketLib.Create('Host not specified');
-  if IsIP4AddressA(Host, InAddr) then
+  if IsIP4AddressB(Host, InAddr) then
     begin
       SetLength(Result, 1);
       Result[0] := InAddr;
@@ -2554,10 +2534,10 @@ begin
     raise ESocketLib.Create('Failed to resolve host', SocketGetLastError);
 end;
 
-function ResolveHostIP4A(const Host: RawByteString): TIP4Addr;
+function ResolveHostIP4B(const Host: RawByteString): TIP4Addr;
 var A : TIP4AddrArray;
 begin
-  A := ResolveHostIP4ExA(Host);
+  A := ResolveHostIP4ExB(Host);
   if Length(A) = 0 then
     raise ESocketLib.Create('Failed to resolve host');
   Result.Addr32 := A[0].Addr32;
@@ -2566,7 +2546,7 @@ end;
 function ResolveHostIP4Ex(const Host: String): TIP4AddrArray;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostIP4ExA(RawByteString(Host));
+  Result := ResolveHostIP4ExB(RawByteString(Host));
   {$ELSE}
   Result := ResolveHostIP4ExA(Host);
   {$ENDIF}
@@ -2575,20 +2555,20 @@ end;
 function ResolveHostIP4(const Host: String): TIP4Addr;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostIP4A(RawByteString(Host));
+  Result := ResolveHostIP4B(RawByteString(Host));
   {$ELSE}
   Result := ResolveHostIP4A(Host);
   {$ENDIF}
 end;
 
-function ResolveHostIP6ExA(const Host: RawByteString): TIP6AddrArray;
+function ResolveHostIP6ExB(const Host: RawByteString): TIP6AddrArray;
 var In6Addr : TIP6Addr;
     Addrs   : TSocketAddrArray;
     L, I    : Integer;
 begin
   if Host = '' then
     raise ESocketLib.Create('Host not specified');
-  if IsIP6AddressA(Host, In6Addr) then
+  if IsIP6AddressB(Host, In6Addr) then
     begin
       SetLength(Result, 1);
       Result[0] := In6Addr;
@@ -2603,12 +2583,12 @@ begin
     Result[I] := Addrs[I].AddrIP6;
 end;
 
-function ResolveHostIP6A(const Host: RawByteString): TIP6Addr;
+function ResolveHostIP6B(const Host: RawByteString): TIP6Addr;
 var Addrs : TSocketAddrArray;
 begin
   if Host = '' then
     raise ESocketLib.Create('Host not specified');
-  if IsIP6AddressA(Host, Result) then
+  if IsIP6AddressB(Host, Result) then
     exit;
   SocketGetAddrInfo(iaIP6, ipNone, Host, '', Addrs);
   if Length(Addrs) = 0 then
@@ -2620,7 +2600,7 @@ end;
 function ResolveHostIP6Ex(const Host: String): TIP6AddrArray;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostIP6ExA(RawByteString(Host));
+  Result := ResolveHostIP6ExB(RawByteString(Host));
   {$ELSE}
   Result := ResolveHostIP6ExA(Host);
   {$ENDIF}
@@ -2629,7 +2609,7 @@ end;
 function ResolveHostIP6(const Host: String): TIP6Addr;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveHostIP6A(RawByteString(Host));
+  Result := ResolveHostIP6B(RawByteString(Host));
   {$ELSE}
   Result := ResolveHostIP6A(Host);
   {$ENDIF}
@@ -2649,7 +2629,7 @@ begin
 end;
 {$ENDIF}
 
-function ResolvePortA(const Port: RawByteString; const Protocol: TIPProtocol): Word;
+function ResolvePortB(const Port: RawByteString; const Protocol: TIPProtocol): Word;
 var PortInt  : Integer;
     PortPtr  : PByte;
     ProtoEnt : PProtoEnt;
@@ -2691,7 +2671,7 @@ end;
 function ResolvePort(const Port: String; const Protocol: TIPProtocol): Word;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolvePortA(RawByteString(Port), Protocol);
+  Result := ResolvePortB(RawByteString(Port), Protocol);
   {$ELSE}
   Result := ResolvePortA(Port, Protocol);
   {$ENDIF}
@@ -2707,7 +2687,7 @@ begin
   Result := IntToStr(NetPortToPort(NetPort));
 end;
 
-function NetPortToPortStrA(const NetPort: Word): RawByteString;
+function NetPortToPortStrB(const NetPort: Word): RawByteString;
 begin
   Result := RawByteString(IntToStr(NetPortToPort(NetPort)));
 end;
@@ -2722,7 +2702,7 @@ end;
 {                                                                              }
 { Resolve host and port                                                        }
 {                                                                              }
-function ResolveA(
+function ResolveB(
          const Host: RawByteString; const Port: Integer;
          const AddressFamily: TIPAddressFamily = iaIP4;
          const Protocol: TIPProtocol = ipTCP): TSocketAddr;
@@ -2733,7 +2713,7 @@ begin
       begin
         Result.AddrFamily := iaIP4;
         if Host <> '' then
-          Result.AddrIP4 := ResolveHostIP4A(Host)
+          Result.AddrIP4 := ResolveHostIP4B(Host)
         else
           Result.AddrIP4.Addr32 := Word32(INADDR_ANY);
         Result.Port := Port;
@@ -2742,7 +2722,7 @@ begin
       begin
         Result.AddrFamily := iaIP6;
         if Host <> '' then
-          Result.AddrIP6 := ResolveHostIP6A(Host)
+          Result.AddrIP6 := ResolveHostIP6B(Host)
         else
           IP6AddrSetZero(Result.AddrIP6);
         Result.Port := Port;
@@ -2750,7 +2730,7 @@ begin
   end;
 end;
 
-function ResolveA(
+function ResolveB(
          const Host, Port: RawByteString;
          const AddressFamily: TIPAddressFamily;
          const Protocol: TIPProtocol): TSocketAddr;
@@ -2761,21 +2741,21 @@ begin
       begin
         Result.AddrFamily := iaIP4;
         if Host <> '' then
-          Result.AddrIP4 := ResolveHostIP4A(Host)
+          Result.AddrIP4 := ResolveHostIP4B(Host)
         else
           Result.AddrIP4.Addr32 := Word32(INADDR_ANY);
         if Port <> '' then
-          Result.Port := NetPortToPort(ResolvePortA(Port, Protocol));
+          Result.Port := NetPortToPort(ResolvePortB(Port, Protocol));
       end;
     iaIP6 :
       begin
         Result.AddrFamily :=  iaIP6;
         if Host <> '' then
-          Result.AddrIP6 := ResolveHostIP6A(Host)
+          Result.AddrIP6 := ResolveHostIP6B(Host)
         else
           IP6AddrSetZero(Result.AddrIP6);
         if Port <> '' then
-          Result.Port := NetPortToPort(ResolvePortA(Port, Protocol));
+          Result.Port := NetPortToPort(ResolvePortB(Port, Protocol));
       end;
   end;
 end;
@@ -2786,7 +2766,11 @@ function Resolve(
          const Protocol: TIPProtocol = ipTCP): TSocketAddr;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveA(RawByteString(Host), Port, AddressFamily, Protocol);
+  {$IFDEF POSIX}
+  Result := ResolveB(UTF8Encode(Host), Port, AddressFamily, Protocol);
+  {$ELSE}
+  Result := ResolveB(RawByteString(Host), Port, AddressFamily, Protocol);
+  {$ENDIF}
   {$ELSE}
   Result := ResolveA(Host, Port, AddressFamily, Protocol);
   {$ENDIF}
@@ -2798,7 +2782,11 @@ function Resolve(
          const Protocol: TIPProtocol = ipTCP): TSocketAddr;
 begin
   {$IFDEF StringIsUnicode}
-  Result := ResolveA(RawByteString(Host), RawByteString(Port), AddressFamily, Protocol);
+  {$IFDEF POSIX}
+  Result := ResolveB(UTF8Encode(Host), UTF8Encode(Port), AddressFamily, Protocol);
+  {$ELSE}
+  Result := ResolveB(RawByteString(Host), RawByteString(Port), AddressFamily, Protocol);
+  {$ENDIF}
   {$ELSE}
   Result := ResolveA(Host, Port, AddressFamily, Protocol);
   {$ENDIF}
@@ -3099,7 +3087,7 @@ end;
 {$ASSERTIONS ON}
 procedure Test;
 var S : RawByteString;
-    W : AddressStrArrayA;
+    W : AddressStrArrayB;
     A : TIP4Addr;
     L : TIP4AddrArray;
     H : TSocket;
@@ -3118,37 +3106,37 @@ begin
   Assert(AFToIPAddressFamily(AF_INET) = iaIP4);
 
   // IsIPAddress
-  Assert(IsIP4AddressA('192.168.0.1', A),          'IsIPAddress');
+  Assert(IsIP4AddressB('192.168.0.1', A),          'IsIPAddress');
   Assert((A.Addr8[0] = 192) and
          (A.Addr8[1] = 168) and
          (A.Addr8[2] = 0)   and
          (A.Addr8[3] = 1),                         'IsIPAddress');
   Assert(IP4AddressType(A) = inaPrivate,           'IPAddressType');
-  Assert(IP4AddressStrA(A) = '192.168.0.1',        'IPAddressStr');
+  Assert(IP4AddressStrB(A) = '192.168.0.1',        'IPAddressStr');
   Assert(IP4AddressStr(A) = '192.168.0.1',         'IPAddressStr');
-  Assert(IsIP4AddressA('0.0.0.0', A),              'IsIPAddress');
+  Assert(IsIP4AddressB('0.0.0.0', A),              'IsIPAddress');
   Assert(A.Addr32 = 0,                             'IsIPAddress');
   Assert(IsIP4Address('0.0.0.0', A),               'IsIPAddress');
   Assert(A.Addr32 = 0,                             'IsIPAddress');
-  Assert(IsIP4AddressA('255.255.255.255', A),      'IsIPAddress');
+  Assert(IsIP4AddressB('255.255.255.255', A),      'IsIPAddress');
   Assert(A.Addr32 = INADDR_BROADCAST,              'IsIPAddress');
-  Assert(IP4AddressStrA(A) = '255.255.255.255',    'IPAddressStr');
-  Assert(not IsIP4AddressA('', A),                 'IsIPAddress');
-  Assert(not IsIP4AddressA('192.168.0.', A),       'IsIPAddress');
-  Assert(not IsIP4AddressA('192.168.0', A),        'IsIPAddress');
-  Assert(not IsIP4AddressA('192.168.0.256', A),    'IsIPAddress');
+  Assert(IP4AddressStrB(A) = '255.255.255.255',    'IPAddressStr');
+  Assert(not IsIP4AddressB('', A),                 'IsIPAddress');
+  Assert(not IsIP4AddressB('192.168.0.', A),       'IsIPAddress');
+  Assert(not IsIP4AddressB('192.168.0', A),        'IsIPAddress');
+  Assert(not IsIP4AddressB('192.168.0.256', A),    'IsIPAddress');
   {$IFNDEF SOCKETLIB_POSIX_DELPHI}
   Assert(SocketGetLastError = 0,                   'IsIPAddress');
   {$ENDIF}
-  Assert(IsIP4AddressA('192.168.0.255', A),        'IsIPAddress');
-  Assert(IP4AddressStrA(A) = '192.168.0.255',      'IPAddressStr');
+  Assert(IsIP4AddressB('192.168.0.255', A),        'IsIPAddress');
+  Assert(IP4AddressStrB(A) = '192.168.0.255',      'IPAddressStr');
   {$IFNDEF SOCKETLIB_POSIX_DELPHI}
   Assert(SocketGetLastError = 0,                   'IsIPAddress');
   {$ENDIF}
 
   // ResolveHost IP
-  A := ResolveHostIP4A('192.168.0.1');
-  Assert(IP4AddressStrA(A) = '192.168.0.1',        'ResolveHostIP4');
+  A := ResolveHostIP4B('192.168.0.1');
+  Assert(IP4AddressStrB(A) = '192.168.0.1',        'ResolveHostIP4');
   Assert((A.Addr8[0] = 192) and
          (A.Addr8[1] = 168) and
          (A.Addr8[2] = 0)   and
@@ -3159,11 +3147,11 @@ begin
   Assert(D.AddrIP4.Addr32 = A.Addr32,             'PopulateSockAddr');
 
   // ResolveHost: local
-  S := LocalHostNameA;
+  S := LocalHostNameB;
   Assert(S <> '',                                 'LocalHostName');
-  A := ResolveHostIP4A(S);
+  A := ResolveHostIP4B(S);
   Assert(A.Addr32 <> 0,                           'ResolveHostIP4');
-  L := ResolveHostIP4ExA(S);
+  L := ResolveHostIP4ExB(S);
   Assert(Length(L) > 0,                           'ResolveHostIP4Ex');
   Assert(L[0].Addr32 <> INADDR_ANY,               'ResolveHostIP4Ex');
   {$IFDEF SOCKETLIB_TEST_IP6}
@@ -3172,7 +3160,7 @@ begin
   C := ResolveHostIP6ExA(S);
   Assert(Length(C) > 0,                           'ResolveHostIP6Ex');
   {$ENDIF}
-  E := ResolveHostExA(S, iaIP4);
+  E := ResolveHostExB(S, iaIP4);
   Assert(Length(E) > 0,                           'ResolveHost');
   Assert(E[0].AddrFamily = iaIP4,                 'ResolveHost');
   Assert(E[0].AddrIP4.Addr32 <> INADDR_ANY,       'ResolveHost');
@@ -3182,7 +3170,7 @@ begin
   Assert(E[0].AddrFamily = iaIP6,                 'ResolveHost');
   Assert(not IP6AddrIsZero(E[0].AddrIP6),         'ResolveHost');
   {$ENDIF}
-  S := GetRemoteHostNameA(A);
+  S := GetRemoteHostNameB(A);
   Assert(S <> '',                                 'GetRemoteHostName');
 
   {$IFDEF SOCKETLIB_TEST_IP4_INTERNET}
@@ -3199,15 +3187,15 @@ begin
   {$ENDIF}
 
   // ResolvePort
-  P := ResolvePortA('25', ipTCP);
+  P := ResolvePortB('25', ipTCP);
   Assert(ntohs(P) = 25,                           'ResolvePort');
-  P := ResolvePortA('http', ipTCP);
+  P := ResolvePortB('http', ipTCP);
   Assert(ntohs(P) = 80,                           'ResolvePort');
   P := ResolvePort('http', ipTCP);
   Assert(ntohs(P) = 80,                           'ResolvePort');
 
   // LocalIPAddresses
-  W := LocalIP4AddressesStrA;
+  W := LocalIP4AddressesStrB;
   Assert(Length(W) > 0,                           'LocalIPAddresses');
 
   {$IFDEF SOCKETLIB_TEST_IP6}

@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcWinSock.pas                                           }
+{   File name:        flcSocketLibWindows.inc                                  }
 {   File version:     5.12                                                     }
 {   Description:      WinSock API                                              }
 {                                                                              }
@@ -69,36 +69,21 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ..\flcInclude.inc}
-
 {$IFDEF DEBUG}
 {$IFDEF TEST}
   {$DEFINE WINSOCK_TEST}
 {$ENDIF}
 {$ENDIF}
 
-unit flcSocketLibWindows;
-
 interface
 
 uses
   { System }
   Windows,
-  SysUtils;
+  SysUtils,
 
-
-
-{                                                                              }
-{ Standard types                                                               }
-{                                                                              }
-type
-  Int32 = LongInt;
-  {$IFDEF SupportFixedUInt}
-  UInt32 = FixedUInt;
-  {$ELSE}
-  UInt32 = LongWord;
-  {$ENDIF}
-  Word32 = UInt32;
+  { Fundamentals }
+  flcStdTypes;
 
 
 
@@ -511,7 +496,7 @@ type
       3 : (s6_addr   : packed array[0..15] of ShortInt);
       4 : (s6_addr8  : packed array[0..15] of ShortInt);
       5 : (s6_addr16 : packed array[0..7] of SmallInt);
-      6 : (s6_addr32 : packed array[0..3] of LongInt);
+      6 : (s6_addr32 : packed array[0..3] of Int32);
   end;
   TIn6Addr = in6_addr;
   TIn6AddrArray = array of TIn6Addr;
@@ -557,7 +542,7 @@ const
 type
   PFDSet = ^TFDSet;
   TFDSet = record
-    fd_count : LongInt;
+    fd_count : Int32;
     fd_array : array[0..FD_SETSIZE-1] of TSocket;
   end;
 
@@ -570,8 +555,8 @@ function  FD_COUNT(const fdset: TFDSet): Integer;
 type
   PTimeVal = ^TTimeVal;
   timeval = record
-    tv_sec  : LongInt;
-    tv_usec : LongInt;
+    tv_sec  : Int32;
+    tv_usec : Int32;
   end;
   TTimeVal = timeval;
 
@@ -604,11 +589,11 @@ type
 type
   PAddrInfo = ^TAddrInfo;
   addrinfo = record
-               ai_flags     : LongInt;
-               ai_family    : LongInt;
-               ai_socktype  : LongInt;
-               ai_protocol  : LongInt;
-               ai_addrlen   : LongInt;
+               ai_flags     : Int32;
+               ai_family    : Int32;
+               ai_socktype  : Int32;
+               ai_protocol  : Int32;
+               ai_addrlen   : Int32;
                ai_canonname : PAnsiChar;
                ai_addr      : PSockAddr;
                ai_next      : PAddrInfo;
@@ -617,11 +602,11 @@ type
 
   PAddrInfoW = ^TAddrInfoW;
   addrinfoW = record
-                ai_flags     : LongInt;
-                ai_family    : LongInt;
-                ai_socktype  : LongInt;
-                ai_protocol  : LongInt;
-                ai_addrlen   : LongInt;
+                ai_flags     : Int32;
+                ai_family    : Int32;
+                ai_socktype  : Int32;
+                ai_protocol  : Int32;
+                ai_addrlen   : Int32;
                 ai_canonname : PWideChar;
                 ai_addr      : PSockAddr;
                 ai_next      : PAddrInfoW;
@@ -665,7 +650,7 @@ const
 
 type
   TWSAProtocolChain = record
-    ChainLen     : LongInt;
+    ChainLen     : Int32;
     ChainEntries : array[0..MAX_PROTOCOL_CHAIN-1] of Word32;
   end;
 
@@ -683,15 +668,15 @@ type
     ProviderId        : TGUID;
     CatalogEntryId    : Word32;
     ProtocolChain     : TWSAProtocolChain;
-    Version           : LongInt;
-    AddressFamily     : LongInt;
-    MaxSockAddr       : LongInt;
-    MinSockAddr       : LongInt;
-    SocketType        : LongInt;
-    iProtocol         : LongInt;
-    ProtocolMaxOffset : LongInt;
-    NetworkByteOrder  : LongInt;
-    SecurityScheme    : LongInt;
+    Version           : Int32;
+    AddressFamily     : Int32;
+    MaxSockAddr       : Int32;
+    MinSockAddr       : Int32;
+    SocketType        : Int32;
+    iProtocol         : Int32;
+    ProtocolMaxOffset : Int32;
+    NetworkByteOrder  : Int32;
+    SecurityScheme    : Int32;
     MessageSize       : Word32;
     ProviderReserved  : Word32;
     szProtocol        : Array[0..WSAPROTOCOL_LEN+1-1] of AnsiChar;
@@ -707,18 +692,18 @@ type
     ProviderId        : TGUID;
     CatalogEntryId    : Word32;
     ProtocolChain     : TWSAProtocolChain;
-    Version           : LongInt;
-    AddressFamily     : LongInt;
-    MaxSockAddr       : LongInt;
-    MinSockAddr       : LongInt;
-    SocketType        : LongInt;
-    iProtocol         : LongInt;
-    ProtocolMaxOffset : LongInt;
-    NetworkByteOrder  : LongInt;
-    SecurityScheme    : LongInt;
+    Version           : Int32;
+    AddressFamily     : Int32;
+    MaxSockAddr       : Int32;
+    MinSockAddr       : Int32;
+    SocketType        : Int32;
+    iProtocol         : Int32;
+    ProtocolMaxOffset : Int32;
+    NetworkByteOrder  : Int32;
+    SecurityScheme    : Int32;
     MessageSize       : Word32;
     ProviderReserved  : Word32;
-    szProtocol        : Array[0..WSAPROTOCOL_LEN+1-1] of WideChar;
+    szProtocol        : array[0..WSAPROTOCOL_LEN+1-1] of WideChar;
   end;
 
 const
@@ -727,22 +712,22 @@ const
 type
   PWSANetworkEvents = ^TWSANetworkEvents;
   TWSANetworkEvents = record
-    NetworkEvents : LongInt;
-    ErrorCode     : Array[0..FD_MAX_EVENTS-1] of LongInt;
+    NetworkEvents : Int32;
+    ErrorCode     : array[0..FD_MAX_EVENTS-1] of Int32;
   end;
 
-  TServiceType = LongInt;
+  TServiceType = Int32;
 
   PFlowSpec = ^TFlowSpec;
   TFlowSpec = record
-    TokenRate          : LongInt;
-    TokenBucketSize    : LongInt;
-    PeakBandwidth      : LongInt;
-    Latency            : LongInt;
-    DelayVariation     : LongInt;
+    TokenRate          : Int32;
+    TokenBucketSize    : Int32;
+    PeakBandwidth      : Int32;
+    Latency            : Int32;
+    DelayVariation     : Int32;
     ServiceType        : TServiceType;
-    MaxSduSize         : LongInt;
-    MinimumPolicedSize : LongInt;
+    MaxSduSize         : Int32;
+    MinimumPolicedSize : Int32;
   end;
 
   TQualityOfService = record
@@ -810,22 +795,22 @@ type
 
   PAFProtocols = ^TAFProtocols;
   TAFProtocols = record
-    AddressFamily : LongInt;
-    Protocol      : LongInt;
+    AddressFamily : Int32;
+    Protocol      : Int32;
   end;
 
   PSOCKET_ADDRESS = ^SOCKET_ADDRESS;
   SOCKET_ADDRESS = record
     Sockaddr       : PSockAddr;
-    SockaddrLength : LongInt;
+    SockaddrLength : Int32;
   end;
 
   PCSADDR_INFO = ^CSADDR_INFO;
   CSADDR_INFO = record
     LocalAddr  : SOCKET_ADDRESS;
     RemoteAddr : SOCKET_ADDRESS;
-    SocketType : LongInt;
-    Protocol   : LongInt;
+    SocketType : Int32;
+    Protocol   : Int32;
   end;
 
   PBLOB = ^TBLOB;
@@ -888,7 +873,7 @@ type
       {$IFDEF OS_WIN32}
       const CallbackData: UInt32
       {$ENDIF}
-      ): LongInt; stdcall;
+      ): Int32; stdcall;
   TConditionProc = LPCONDITIONPROC;
 
   LPWSAOVERLAPPED_COMPLETION_ROUTINE = procedure (
@@ -993,9 +978,9 @@ function  IsWinSock2API: Boolean;
 
 { Berkeley socket interface (WinSock)                                          }
 type
-  TAddrLen = LongInt;
+  TSockLen = Int32;
 
-function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: Integer): TSocket;
+function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TSockLen): TSocket;
 function  Bind(const S: TSocket; const Name: TSockAddr; const NameLen: Integer): Integer;
 function  CloseSocket(const S: TSocket): Integer;
 function  Connect(const S: TSocket; const Name: PSockAddr; const NameLen: Integer): Integer;
@@ -1011,12 +996,12 @@ function  GetHostName(const Name: PAnsiChar; const Len: Integer): Integer;
 function  GetNameInfo(const Addr: PSockAddr; const NameLen: Integer;
           const Host: PAnsiChar; const HostLen: Word32;
           const Serv: PAnsiChar; const ServLen: Word32; const Flags: Integer): Integer;
-function  GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: Integer): Integer;
+function  GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 function  GetProtoByName(const Name: PAnsiChar): PProtoEnt;
 function  GetProtoByNumber(const Proto: Integer): PProtoEnt;
 function  GetServByName(const Name, Proto: PAnsiChar): PServEnt;
 function  GetServByPort(const Port: Integer; const Proto: PAnsiChar): PServEnt;
-function  GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: Integer): Integer;
+function  GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 function  GetSockOpt(const S: TSocket; const Level, OptName: Integer;
           const OptVal: Pointer; var OptLen: Integer): Integer;
 function  htons(const HostShort: Word): Word;
@@ -1043,13 +1028,13 @@ function  Socket(const AF, Struct, Protocol: Integer): TSocket;
 
 
 { WinSock 1 interface                                                          }
-function  WSAAsyncGetHostByAddr(const HWindow: HWND; const wMsg: LongInt;
+function  WSAAsyncGetHostByAddr(const HWindow: HWND; const wMsg: Int32;
           const Addr: PAnsiChar; const Len, Struct: Integer; const Buf: PAnsiChar;
           const BufLen: Integer): THandle;
-function  WSAAsyncGetHostByName(const HWindow: HWND; const wMsg: LongInt;
+function  WSAAsyncGetHostByName(const HWindow: HWND; const wMsg: Int32;
           const Name, Buf: PAnsiChar; const BufLen: Integer): THandle;
 function  WSAAsyncSelect(const S: TSocket; const HWindow: HWND;
-          const wMsg: LongInt; const lEvent: LongInt): Integer;
+          const wMsg: Int32; const lEvent: Int32): Integer;
 function  WSACancelAsyncRequest(const AsyncTaskHandle: THandle): Integer;
 function  WSAGetLastError: Integer;
 procedure WSASetLastError(const Error: Integer);
@@ -1093,14 +1078,14 @@ function  WSAEnumNameSpaceProvidersW(var BufferLength: Word32;
 function  WSAEnumNetworkEvents(const S: TSocket;
           const EventObject: WSAEVENT;
           const NetworkEvents: PWSANetworkEvents): Integer;
-function  WSAEnumProtocolsA(const lpiProtocols: PLongInt;
+function  WSAEnumProtocolsA(const lpiProtocols: PInt32;
           const ProtocolBuffer: PWSAProtocol_InfoA;
           var BufferLength: Word32): Integer;
-function  WSAEnumProtocolsW(const lpiProtocols: PLongInt;
+function  WSAEnumProtocolsW(const lpiProtocols: PInt32;
           const ProtocolBuffer: PWSAProtocol_InfoW;
           var BufferLength: Word32): Integer;
 function  WSAEventSelect(const S: TSocket; const EventObject: WSAEVENT;
-          const NetworkEvents: LongInt): Integer;
+          const NetworkEvents: Int32): Integer;
 function  WSAGetOverlappedResult(const S: TSocket; const Overlapped: PWSAOverlapped;
           const lpcbTransfer: LPDWORD; const Wait: BOOL;
           var Flags: Word32): WordBool;
@@ -1154,7 +1139,7 @@ function  WSARecvDisconnect(const S: TSocket; const lpInboundDisconnectData: PWS
 function  WSARecvFrom(const S: TSocket;
           const Buffers: PWSABuf; const BufferCount: Word32;
           var NumberOfBytesRecvd: Word32; var Flags: Word32;
-          const lpFrom: PSockAddr; const lpFromlen: PLongInt;
+          const lpFrom: PSockAddr; const lpFromlen: PInt32;
           const Overlapped: PWSAOverlapped;
           const CompletionRoutine: TWSAOverlappedCompletionRoutine): Integer;
 function  WSARemoveServiceClass(const ServiceClassId: PGUID): Integer;
@@ -1373,45 +1358,45 @@ type
   TGetServByNameProc =
       function (name, proto: PAnsiChar): PServEnt; stdcall;
   TGetServByPortProc =
-      function (port: LongInt; proto: PAnsiChar): PServEnt; stdcall;
+      function (port: Int32; proto: PAnsiChar): PServEnt; stdcall;
   TGetProtoByNameProc =
       function (name: PAnsiChar): PProtoEnt; stdcall;
   TGetProtoByNumberProc =
-      function (proto: LongInt): PProtoEnt; stdcall;
+      function (proto: Int32): PProtoEnt; stdcall;
   TGetHostByNameProc =
       function (name: PAnsiChar): PHostEnt; stdcall;
   TGetHostByAddrProc =
-      function (addr: Pointer; len, Struct: LongInt): PHostEnt; stdcall;
+      function (addr: Pointer; len, Struct: Int32): PHostEnt; stdcall;
   TGetHostNameProc =
-      function (name: PAnsiChar; len: LongInt): LongInt; stdcall;
+      function (name: PAnsiChar; len: Int32): Int32; stdcall;
   TSocketProc =
-      function (af, Struct, protocol: LongInt): TSocket; stdcall;
+      function (af, Struct, protocol: Int32): TSocket; stdcall;
   TShutdownProc =
-      function (s: TSocket; how: LongInt): LongInt; stdcall;
+      function (s: TSocket; how: Int32): Int32; stdcall;
   TSetSockOptProc =
-      function (s: TSocket; level, optname: LongInt;
-                optval: PAnsiChar; optlen: LongInt): LongInt; stdcall;
+      function (s: TSocket; level, optname: Int32;
+                optval: PAnsiChar; optlen: Int32): Int32; stdcall;
   TGetSockOptProc =
-      function (s: TSocket; level, optname: LongInt;
-                optval: PAnsiChar; var optlen: LongInt): LongInt; stdcall;
+      function (s: TSocket; level, optname: Int32;
+                optval: PAnsiChar; var optlen: Int32): Int32; stdcall;
   TSendToProc =
-      function (s: TSocket; const Buf; len, flags: LongInt;
-                const addrto: PSockAddr; tolen: LongInt): LongInt; stdcall;
+      function (s: TSocket; const Buf; len, flags: Int32;
+                const addrto: PSockAddr; tolen: Int32): Int32; stdcall;
   TSendProc =
-      function (s: TSocket; const Buf; len, flags: LongInt): LongInt; stdcall;
+      function (s: TSocket; const Buf; len, flags: Int32): Int32; stdcall;
   TRecvProc =
-      function (s: TSocket; var Buf; len, flags: LongInt): LongInt; stdcall;
+      function (s: TSocket; var Buf; len, flags: Int32): Int32; stdcall;
   TRecvFromProc =
-      function (s: TSocket; var Buf; len, flags: LongInt;
-                var from: TSockAddr; var fromlen: LongInt): LongInt; stdcall;
+      function (s: TSocket; var Buf; len, flags: Int32;
+                var from: TSockAddr; var fromlen: Int32): Int32; stdcall;
   TntohsProc =
       function (netshort: Word): Word; stdcall;
   TntohlProc =
       function (netlong: Word32): Word32; stdcall;
   TListenProc =
-      function (s: TSocket; backlog: LongInt): LongInt; stdcall;
+      function (s: TSocket; backlog: Int32): Int32; stdcall;
   TIoctlSocketProc =
-      function (s: TSocket; cmd: Word32; var arg: Word32): LongInt; stdcall;
+      function (s: TSocket; cmd: Word32; var arg: Word32): Int32; stdcall;
   Tinet_ntoaProc =
       function (inaddr: TInAddr): PAnsiChar; stdcall;
   Tinet_addrProc =
@@ -1421,55 +1406,55 @@ type
   ThtonlProc =
       function (hostlong: Word32): Word32; stdcall;
   TGetSockNameProc =
-      function (s: TSocket; var name: TSockAddr; var namelen: LongInt): LongInt; stdcall;
+      function (s: TSocket; var name: TSockAddr; var namelen: Int32): Int32; stdcall;
   TGetPeerNameProc =
-      function (s: TSocket; var name: TSockAddr; var namelen: LongInt): LongInt; stdcall;
+      function (s: TSocket; var name: TSockAddr; var namelen: Int32): Int32; stdcall;
   TConnectProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt): LongInt; stdcall;
+      function (s: TSocket; name: PSockAddr; namelen: Int32): Int32; stdcall;
   TCloseSocketProc =
-      function (s: TSocket): LongInt; stdcall;
+      function (s: TSocket): Int32; stdcall;
   TBindProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt): LongInt; stdcall;
+      function (s: TSocket; name: PSockAddr; namelen: Int32): Int32; stdcall;
   TAcceptProc =
-      function (s: TSocket; addr: PSockAddr; var addrlen: LongInt): TSocket; stdcall;
+      function (s: TSocket; addr: PSockAddr; var addrlen: Int32): TSocket; stdcall;
   TSelectProc =
       function (nfds: Word32; readfds, writefds, exceptfds: PFDSet;
-                timeout: PTimeVal): LongInt; stdcall;
+                timeout: PTimeVal): Int32; stdcall;
   TGetAddrInfoProc =
       function (NodeName: PAnsiChar; ServName: PAnsiChar; Hints: PAddrInfo;
-                var Addrinfo: PAddrInfo): LongInt; stdcall;
+                var Addrinfo: PAddrInfo): Int32; stdcall;
   TGetAddrInfoWProc =
       function (NodeName: PWideChar; ServName: PWideChar; Hints: PAddrInfoW;
-                var Addrinfo: PAddrInfoW): LongInt; stdcall;
+                var Addrinfo: PAddrInfoW): Int32; stdcall;
   TFreeAddrInfoProc =
       procedure (ai: PAddrInfo); stdcall;
   TFreeAddrInfoWProc =
       procedure (ai: PAddrInfoW); stdcall;
   TGetNameInfoProc =
-      function (addr: PSockAddr; namelen: LongInt; host: PAnsiChar;
+      function (addr: PSockAddr; namelen: Int32; host: PAnsiChar;
                 hostlen: Word32; serv: PAnsiChar; servlen: Word32;
-                flags: LongInt): LongInt; stdcall;
+                flags: Int32): Int32; stdcall;
   TWSAAsyncGetHostByAddrProc =
-      function (HWindow: HWND; wMsg: LongInt; addr: PAnsiChar; len, Struct: LongInt;
-                buf: PAnsiChar; buflen: LongInt): THandle; stdcall;
+      function (HWindow: HWND; wMsg: Int32; addr: PAnsiChar; len, Struct: Int32;
+                buf: PAnsiChar; buflen: Int32): THandle; stdcall;
   TWSAAsyncGetHostByNameProc =
-      function (HWindow: HWND; wMsg: LongInt; name, buf: PAnsiChar; buflen: LongInt): THandle; stdcall;
+      function (HWindow: HWND; wMsg: Int32; name, buf: PAnsiChar; buflen: Int32): THandle; stdcall;
   TWSAAsyncSelectProc =
-      function (s: TSocket; HWindow: HWND; wMsg: LongInt; lEvent: LongInt): LongInt; stdcall;
+      function (s: TSocket; HWindow: HWND; wMsg: Int32; lEvent: Int32): Int32; stdcall;
   TWSACancelAsyncRequestProc =
-      function (hAsyncTaskHandle: THandle): LongInt; stdcall;
+      function (hAsyncTaskHandle: THandle): Int32; stdcall;
   TWSACleanupProc =
-      function : LongInt; stdcall;
+      function : Int32; stdcall;
   TWSAGetLastErrorProc =
-      function : LongInt; stdcall;
+      function : Int32; stdcall;
   TWSASetLastErrorProc =
-      procedure (Error: LongInt); stdcall;
+      procedure (Error: Int32); stdcall;
   TWSAStartupProc =
-      function (wVersionRequired: Word; var WSData: TWSAData): LongInt; stdcall;
+      function (wVersionRequired: Word; var WSData: TWSAData): Int32; stdcall;
 
   { WinSock 2                                                                  }
   TWSAAcceptProc =
-      function (s: TSocket; addr: PSockAddr; addrlen: PLongInt;
+      function (s: TSocket; addr: PSockAddr; addrlen: PInt32;
                 Condition: LPCONDITIONPROC;
                 {$IFDEF OS_WIN64}
                 const CallbackData: UInt64
@@ -1481,42 +1466,42 @@ type
       function (var Address: TSockAddr; AddressLength: Word32;
                 ProtocolInfo: PWSAProtocol_InfoA;
                 AddressString: PAnsiChar;
-                var AddressStringLength: Word32): LongInt; stdcall;
+                var AddressStringLength: Word32): Int32; stdcall;
   TWSAAddressToStringWProc =
       function (var Address: TSockAddr; AddressLength: Word32;
                 ProtocolInfo: PWSAProtocol_InfoW;
                 AddressString: PWideChar;
-                var AddressStringLength: Word32): LongInt; stdcall;
+                var AddressStringLength: Word32): Int32; stdcall;
   TWSACloseEventProc =
       function (Event: WSAEVENT) : WordBool; stdcall;
   TWSAConnectProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt;
+      function (s: TSocket; name: PSockAddr; namelen: Int32;
                 CallerData, CalleeData: PWSABuf;
-                SQOS, GQOS: PQualityOfService): LongInt; stdcall;
+                SQOS, GQOS: PQualityOfService): Int32; stdcall;
   TWSACreateEventProc =
       function : WSAEVENT; stdcall;
   TWSADuplicateSocketAProc =
       function (s: TSocket; ProcessId: Word32;
-                ProtocolInfo: PWSAProtocol_InfoA): LongInt; stdcall;
+                ProtocolInfo: PWSAProtocol_InfoA): Int32; stdcall;
   TWSADuplicateSocketWProc =
       function (s: TSocket; ProcessId: Word32;
-                ProtocolInfo: PWSAProtocol_InfoW): LongInt; stdcall;
+                ProtocolInfo: PWSAProtocol_InfoW): Int32; stdcall;
   TWSAEnumNameSpaceProvidersAProc =
-      function (var BufferLength: Word32; const Buffer: PWSANameSpace_InfoA): LongInt; stdcall;
+      function (var BufferLength: Word32; const Buffer: PWSANameSpace_InfoA): Int32; stdcall;
   TWSAEnumNameSpaceProvidersWProc =
-      function (var BufferLength: Word32; const Buffer: PWSANameSpace_InfoW): LongInt; stdcall;
+      function (var BufferLength: Word32; const Buffer: PWSANameSpace_InfoW): Int32; stdcall;
   TWSAEnumNetworkEventsProc =
       function (s: TSocket; EventObject: WSAEVENT;
-                NetworkEvents: PWSANetworkEvents): LongInt; stdcall;
+                NetworkEvents: PWSANetworkEvents): Int32; stdcall;
   TWSAEnumProtocolsAProc =
-      function (Protocols: PLongInt; ProtocolBuffer: PWSAProtocol_InfoA;
-                var BufferLength: Word32): LongInt; stdcall;
+      function (Protocols: PInt32; ProtocolBuffer: PWSAProtocol_InfoA;
+                var BufferLength: Word32): Int32; stdcall;
   TWSAEnumProtocolsWProc =
-      function (Protocols: PLongInt; ProtocolBuffer: PWSAProtocol_InfoW;
-                var BufferLength: Word32): LongInt; stdcall;
+      function (Protocols: PInt32; ProtocolBuffer: PWSAProtocol_InfoW;
+                var BufferLength: Word32): Int32; stdcall;
   TWSAEventSelectProc =
       function (s: TSocket; EventObject: WSAEVENT;
-                NetworkEvents: LongInt): LongInt; stdcall;
+                NetworkEvents: Int32): Int32; stdcall;
   TWSAGetOverlappedResultProc =
       function (s: TSocket; Overlapped: PWSAOverlapped;
                 lpcbTransfer: LPDWORD; fWait: BOOL;
@@ -1525,68 +1510,68 @@ type
       function (s: TSocket; QOSName: PWSABuf; QOS: PQualityOfService): WordBool; stdcall;
   TWSAGetServiceClassInfoAProc =
       function (ProviderId: PGUID; ServiceClassId: PGUID;
-                var BufSize: Word32; ServiceClassInfo: PWSAServiceClassInfoA): LongInt; stdcall;
+                var BufSize: Word32; ServiceClassInfo: PWSAServiceClassInfoA): Int32; stdcall;
   TWSAGetServiceClassInfoWProc =
       function (ProviderId: PGUID; ServiceClassId: PGUID;
-                var BufSize: Word32; ServiceClassInfo: PWSAServiceClassInfoW): LongInt; stdcall;
+                var BufSize: Word32; ServiceClassInfo: PWSAServiceClassInfoW): Int32; stdcall;
   TWSAGetServiceClassNameByClassIdAProc =
       function (ServiceClassId: PGUID; ServiceClassName: PAnsiChar;
-                var BufferLength: Word32): LongInt; stdcall;
+                var BufferLength: Word32): Int32; stdcall;
   TWSAGetServiceClassNameByClassIdWProc =
       function (ServiceClassId: PGUID; ServiceClassName: PWideChar;
-                var BufferLength: Word32): LongInt; stdcall;
+                var BufferLength: Word32): Int32; stdcall;
   TWSAhtonlProc =
-      function (s: TSocket; hostlong: Word32; var netlong: Word32): LongInt; stdcall;
+      function (s: TSocket; hostlong: Word32; var netlong: Word32): Int32; stdcall;
   TWSAhtonsProc =
-      function (s: TSocket; hostshort: Word; var netshort: Word): LongInt; stdcall;
+      function (s: TSocket; hostshort: Word; var netshort: Word): Int32; stdcall;
   TWSAInstallServiceClassAProc =
-      function (ServiceClassInfo: PWSAServiceClassInfoA): LongInt; stdcall;
+      function (ServiceClassInfo: PWSAServiceClassInfoA): Int32; stdcall;
   TWSAInstallServiceClassWProc =
-      function (ServiceClassInfo: PWSAServiceClassInfoW): LongInt; stdcall;
+      function (ServiceClassInfo: PWSAServiceClassInfoW): Int32; stdcall;
   TWSAIoctlProc =
       function (s: TSocket; IoControlCode: Word32;
                 InBuffer: Pointer; InBufferLen: Word32;
                 OutBuffer: Pointer; OutBufferLen: Word32;
                 lpcbBytesReturned: LPDWORD;
                 Overlapped: PWSAOverlapped;
-                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): LongInt; stdcall;
+                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): Int32; stdcall;
   TWSAJoinLeafProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt;
+      function (s: TSocket; name: PSockAddr; namelen: Int32;
                 CallerData, CalleeData: PWSABuf;
                 SQOS, GQOS: PQualityOfService; Flags: Word32): TSocket; stdcall;
   TWSALookupServiceBeginAProc =
       function (Restrictions: PWSAQuerySetA; ControlFlags: Word32;
-                lphLookup: PHANDLE): LongInt; stdcall;
+                lphLookup: PHANDLE): Int32; stdcall;
   TWSALookupServiceBeginWProc =
       function (Restrictions: PWSAQuerySetW; ControlFlags: Word32;
-                lphLookup: PHANDLE): LongInt; stdcall;
+                lphLookup: PHANDLE): Int32; stdcall;
   TWSALookupServiceEndProc =
-      function (Lookup: THandle): LongInt; stdcall;
+      function (Lookup: THandle): Int32; stdcall;
   TWSALookupServiceNextAProc =
       function (Lookup: THandle; ControlFlags: Word32;
-                var BufferLength: Word32; Results: PWSAQuerySetA): LongInt; stdcall;
+                var BufferLength: Word32; Results: PWSAQuerySetA): Int32; stdcall;
   TWSALookupServiceNextWProc =
       function (Lookup: THandle; ControlFlags: Word32;
-                var BufferLength: Word32; Results: PWSAQuerySetW): LongInt; stdcall;
+                var BufferLength: Word32; Results: PWSAQuerySetW): Int32; stdcall;
   TWSANtohlProc =
-      function (s: TSocket; netlong: Word32; var hostlong: Word32): LongInt; stdcall;
+      function (s: TSocket; netlong: Word32; var hostlong: Word32): Int32; stdcall;
   TWSANtohsProc =
-      function (s: TSocket; netshort: Word; var hostshort: Word): LongInt; stdcall;
+      function (s: TSocket; netshort: Word; var hostshort: Word): Int32; stdcall;
   TWSARecvProc =
       function (s: TSocket; Buffers: PWSABuf; BufferCount: Word32;
                 var NumberOfBytesRecvd: Word32; var Flags: Word32;
                 Overlapped: PWSAOverlapped;
-                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): LongInt; stdcall;
+                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): Int32; stdcall;
   TWSARecvDisconnectProc =
-      function (s: TSocket; InboundDisconnectData: PWSABuf): LongInt; stdcall;
+      function (s: TSocket; InboundDisconnectData: PWSABuf): Int32; stdcall;
   TWSARecvFromProc =
       function (s: TSocket; Buffers: PWSABuf; BufferCount: Word32;
                 var NumberOfBytesRecvd: Word32; var Flags: Word32;
-                From: PSockAddr; lpFromlen: PLongInt;
+                From: PSockAddr; lpFromlen: PInt32;
                 Overlapped: PWSAOverlapped;
-                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): LongInt; stdcall;
+                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): Int32; stdcall;
   TWSARemoveServiceClassProc =
-      function (ServiceClassId: PGUID): LongInt; stdcall;
+      function (ServiceClassId: PGUID): Int32; stdcall;
   TWSAResetEventProc =
       function (Event: WSAEVENT): WordBool; stdcall;
   TWSASendProc =
@@ -1594,38 +1579,38 @@ type
                 var NumberOfBytesSent: Word32;
                 Flags: Word32;
                 Overlapped: PWSAOverlapped;
-                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): LongInt; stdcall;
+                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): Int32; stdcall;
   TWSASendDisconnectProc =
-      function (s: TSocket; OutboundDisconnectData: PWSABuf): LongInt; stdcall;
+      function (s: TSocket; OutboundDisconnectData: PWSABuf): Int32; stdcall;
   TWSASendToProc =
       function (s: TSocket; Buffers: PWSABuf; BufferCount: Word32;
                 var NumberOfBytesSent: Word32;
                 Flags: Word32;
-                AddrTo: PSockAddr; ToLen: LongInt;
+                AddrTo: PSockAddr; ToLen: Int32;
                 Overlapped: PWSAOverlapped;
-                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): LongInt; stdcall;
+                CompletionRoutine: LPWSAOVERLAPPED_COMPLETION_ROUTINE): Int32; stdcall;
   TWSASetEventProc =
       function (Event: WSAEVENT): WordBool; stdcall;
   TWSASetServiceAProc =
       function (RegInfo: PWSAQuerySetA; essoperation: TWSAeSetServiceOp;
-                ControlFlags: Word32): LongInt; stdcall;
+                ControlFlags: Word32): Int32; stdcall;
   TWSASetServiceWProc =
       function (RegInfo: PWSAQuerySetW; essoperation: TWSAeSetServiceOp;
-                ControlFlags: Word32): LongInt; stdcall;
+                ControlFlags: Word32): Int32; stdcall;
   TWSASocketAProc =
-      function (af, iType, protocol: LongInt; ProtocolInfo: PWSAProtocol_InfoA;
+      function (af, iType, protocol: Int32; ProtocolInfo: PWSAProtocol_InfoA;
                 g: GROUP; Flags: Word32): TSocket; stdcall;
   TWSASocketWProc =
-      function (af, iType, protocol: LongInt; ProtocolInfo: PWSAProtocol_InfoW;
+      function (af, iType, protocol: Int32; ProtocolInfo: PWSAProtocol_InfoW;
                 g: GROUP; Flags: Word32): TSocket; stdcall;
   TWSAStringToAddressAProc =
-      function (AddressString: PAnsiChar; AddressFamily: LongInt;
+      function (AddressString: PAnsiChar; AddressFamily: Int32;
                 ProtocolInfo: PWSAProtocol_InfoA;
-                var Address: TSockAddr; var AddressLength: LongInt): LongInt; stdcall;
+                var Address: TSockAddr; var AddressLength: Int32): Int32; stdcall;
   TWSAStringToAddressWProc =
-      function (AddressString: PWideChar; AddressFamily: LongInt;
+      function (AddressString: PWideChar; AddressFamily: Int32;
                 ProtocolInfo: PWSAProtocol_InfoA;
-                var Address: TSockAddr; var AddressLength: LongInt): LongInt; stdcall;
+                var Address: TSockAddr; var AddressLength: Int32): Int32; stdcall;
   TWSAWaitForMultipleEventsProc =
       function (cEvents: Word32; lphEvents: PWSAEVENT;
                 WaitAll: LongBool; Timeout: Word32; Alertable: LongBool): Word32; stdcall;
@@ -2205,7 +2190,7 @@ begin
 end;
 
 { WinSock 1                                                                    }
-function WSAAsyncGetHostByAddr(const HWindow: HWND; const wMsg: LongInt;
+function WSAAsyncGetHostByAddr(const HWindow: HWND; const wMsg: Int32;
     const Addr: PAnsiChar; const Len, Struct: Integer; const Buf: PAnsiChar;
     const BufLen: Integer): THandle;
 begin
@@ -2214,7 +2199,7 @@ begin
   Result := WSAAsyncGetHostByAddrProc(HWindow, wMsg, Addr, Len, Struct, Buf, BufLen);
 end;
 
-function WSAAsyncGetHostByName(const HWindow: HWND; const wMsg: LongInt;
+function WSAAsyncGetHostByName(const HWindow: HWND; const wMsg: Int32;
     const Name, Buf: PAnsiChar; const BufLen: Integer): THandle;
 begin
   if not Assigned(WSAAsyncGetHostByNameProc) then
@@ -2223,7 +2208,7 @@ begin
 end;
 
 function WSAAsyncSelect(const S: TSocket; const HWindow: HWND;
-    const wMsg: LongInt; const lEvent: LongInt): Integer;
+    const wMsg: Int32; const lEvent: Int32): Integer;
 begin
   if not Assigned(WSAAsyncSelectProc) then
     GetSocketProc('WSAAsyncSelect', @WSAAsyncSelectProc);
@@ -2351,7 +2336,7 @@ begin
   Result := WSAEnumNetworkEventsProc(S, EventObject, NetworkEvents);
 end;
 
-function WSAEnumProtocolsA(const lpiProtocols: PLongInt;
+function WSAEnumProtocolsA(const lpiProtocols: PInt32;
     const ProtocolBuffer: PWSAProtocol_InfoA;
     var BufferLength: Word32): Integer;
 begin
@@ -2360,7 +2345,7 @@ begin
   Result := WSAEnumProtocolsAProc(lpiProtocols, ProtocolBuffer, BufferLength);
 end;
 
-function WSAEnumProtocolsW(const lpiProtocols: PLongInt;
+function WSAEnumProtocolsW(const lpiProtocols: PInt32;
     const ProtocolBuffer: PWSAProtocol_InfoW;
     var BufferLength: Word32): Integer;
 begin
@@ -2370,7 +2355,7 @@ begin
 end;
 
 function WSAEventSelect(const S: TSocket; const EventObject: WSAEVENT;
-    const NetworkEvents: LongInt): Integer;
+    const NetworkEvents: Int32): Integer;
 begin
   if not Assigned(WSAEventSelectProc) then
     GetSocketProc('WSAEventSelect', @WSAEventSelectProc);
@@ -2472,7 +2457,7 @@ end;
 function WSARecvFrom(const S: TSocket; const Buffers: PWSABuf;
     const BufferCount: Word32;
     var NumberOfBytesRecvd: Word32; var Flags: Word32;
-    const lpFrom: PSockAddr; const lpFromlen: PLongInt;
+    const lpFrom: PSockAddr; const lpFromlen: PInt32;
     const Overlapped: PWSAOverlapped;
     const CompletionRoutine: TWSAOverlappedCompletionRoutine): Integer;
 begin

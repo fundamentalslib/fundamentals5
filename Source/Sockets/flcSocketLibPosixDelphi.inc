@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcSocketLibPosixDelphi.pas                              }
+{   File name:        flcSocketLibPosixDelphi.inc                              }
 {   File version:     5.02                                                     }
 {   Description:      Delphi Posix socket library                              }
 {                                                                              }
@@ -43,12 +43,8 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ..\flcInclude.inc}
-
 {$WARN SYMBOL_PLATFORM OFF}
 {$WARN UNIT_PLATFORM OFF}
-
-unit flcSocketLibPosixDelphi;
 
 interface
 
@@ -165,12 +161,12 @@ const
   AI_NUMERICHOST = Posix.NetDB.AI_NUMERICHOST;
 
 type
-  TAddrLen = FixedUInt;
+  TSockLen = FixedUInt;
 
-function  Accept(const socket: TSocket; const address: PSockAddr; var address_len: TAddrLen): Integer;
-function  Bind(const socket: TSocket; const address: TSockAddr; const address_len: TAddrLen): Integer;
+function  Accept(const socket: TSocket; const address: PSockAddr; var address_len: TSockLen): Integer;
+function  Bind(const socket: TSocket; const address: TSockAddr; const address_len: TSockLen): Integer;
 function  CloseSocket(const socket: TSocket): Integer;
-function  Connect(const socket: TSocket; const address: PSockAddr; const address_len: TAddrLen): Integer;
+function  Connect(const socket: TSocket; const address: PSockAddr; const address_len: TSockLen): Integer;
 procedure FreeAddrInfo(const ai: PAddrInfo);
 function  GetAddrInfo(const HostName: Pointer; const ServName: Pointer;
           const Hints: PAddrInfo; var AddrInfo: PAddrInfo): Integer;
@@ -183,12 +179,12 @@ function  GetNameInfo(const Addr: PSockAddr; const NameLen: Integer;
           const Serv: Pointer; const ServLen: Word32; const Flags: Integer): Integer;
 function  GetProtoByName(const Name: Pointer): PProtoEnt;
 function  GetProtoByNumber(const Proto: Integer): PProtoEnt;
-function  GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: TAddrLen): Integer;
+function  GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 function  GetServByName(const Name, Proto: Pointer): PServEnt;
 function  GetServByPort(const Port: Integer; const Proto: Pointer): PServEnt;
-function  GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: TAddrLen): Integer;
+function  GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 function  GetSockOpt(const S: TSocket; const Level, OptName: Integer;
-          const OptVal: Pointer; var OptLen: TAddrLen): Integer;
+          const OptVal: Pointer; var OptLen: TSockLen): Integer;
 function  htons(const HostShort: Word): Word;
 function  htonl(const HostLong: Word32): Word32;
 function  inet_ntoa(const InAddr: TInAddr): Pointer;
@@ -315,12 +311,12 @@ end;
   Result := C;
 end;
 
-function Accept(const socket: TSocket; const address: PSockAddr; var address_len: TAddrLen): Integer;
+function Accept(const socket: TSocket; const address: PSockAddr; var address_len: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.accept(socket, address^, address_len);
 end;
 
-function Bind(const socket: TSocket; const address: TSockAddr; const address_len: TAddrLen): Integer;
+function Bind(const socket: TSocket; const address: TSockAddr; const address_len: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.bind(socket, Psockaddr(@address)^, address_len);
 end;
@@ -330,7 +326,7 @@ begin
   Result := __close(socket);
 end;
 
-function Connect(const socket: TSocket; const address: PSockAddr; const address_len: TAddrLen): Integer;
+function Connect(const socket: TSocket; const address: PSockAddr; const address_len: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.connect(socket, address^, address_len);
 end;
@@ -384,7 +380,7 @@ begin
   Result := Posix.NetDB.getprotobynumber(Proto);
 end;
 
-function GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: TAddrLen): Integer;
+function GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.getpeername(S, Psockaddr(@Name)^, NameLen);
 end;
@@ -399,13 +395,13 @@ begin
   Result := Posix.NetDB.getservbyport(Port, Proto);
 end;
 
-function GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: TAddrLen): Integer;
+function GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.getsockname(S, Psockaddr(@Name)^, NameLen);
 end;
 
 function GetSockOpt(const S: TSocket; const Level, OptName: Integer;
-         const OptVal: Pointer; var OptLen: TAddrLen): Integer;
+         const OptVal: Pointer; var OptLen: TSockLen): Integer;
 begin
   Result := Posix.SysSocket.getsockopt(S, Level, OptName,
       OptVal^, OptLen);
@@ -454,7 +450,7 @@ end;
 function RecvFrom(const S: TSocket; var Buf; const Len, Flags: Integer;
          var From: TSockAddr; var FromLen: Integer): Integer;
 var
-  FromLenT : TAddrLen;
+  FromLenT : TSockLen;
 begin
   FromLenT := FromLen;
   Result := Posix.SysSocket.recvfrom(S, Buf, Len, Flags, Psockaddr(@From)^, FromLenT);

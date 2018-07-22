@@ -216,6 +216,7 @@ type
     property  SocketHandle: TSocketHandle read FSocketHandle;
     function  SocketHandleInvalid: Boolean;
 
+    procedure AllocateSocketHandle;
     function  ReleaseSocketHandle: TSocketHandle;
     procedure CloseSocket;
     procedure Close;
@@ -320,7 +321,7 @@ uses
 {$ENDIF}
 {$IFDEF SOCKET_POSIX_DELPHI}
 uses
-  flcSocketLibPosixDelphi;
+  flcSocketLibSys;
 {$ENDIF}
 
 
@@ -464,8 +465,7 @@ begin
   FOverlapped := Overlapped;
   // allocate a new socket handle if not specified
   if (SocketHandle = INVALID_SOCKETHANDLE) or (SocketHandle = 0) then
-    FSocketHandle := flcSocketLib.AllocateSocketHandle(AddressFamily, Protocol,
-        Overlapped)
+    AllocateSocketHandle
   else
     FSocketHandle := SocketHandle;
   Assert(FSocketHandle <> 0);
@@ -518,6 +518,13 @@ end;
 procedure TSysSocket.Log(const LogType: TSysSocketLogType; const Msg: String; const Args: array of const);
 begin
   Log(LogType, Format(Msg, Args));
+end;
+
+procedure TSysSocket.AllocateSocketHandle;
+begin
+  if (FSocketHandle = INVALID_SOCKETHANDLE) or (FSocketHandle = 0) then
+    FSocketHandle := flcSocketLib.AllocateSocketHandle(AddressFamily, Protocol,
+        Overlapped)
 end;
 
 function TSysSocket.SocketHandleInvalid: Boolean;
@@ -773,7 +780,7 @@ begin
   R := False;
   TriggerResolve(Host, Port, SockAddr, R);
   if not R then
-    SockAddr := flcSocketLib.ResolveA(Host, Port, FAddressFamily, FProtocol);
+    SockAddr := flcSocketLib.ResolveB(Host, Port, FAddressFamily, FProtocol);
   {$IFDEF SOCKET_DEBUG}
   Log(sltDebug, 'Resolve:Addr:%s', [SocketAddrStr(SockAddr)]);
   {$ENDIF}
@@ -889,12 +896,12 @@ begin
       if IP4AddrIsNone(A.AddrIP4) then
         Result := ''
       else
-        Result := IP4AddressStrA(A.AddrIP4);
+        Result := IP4AddressStrB(A.AddrIP4);
     iaIP6 :
       if IP6AddrIsZero(A.AddrIP6) then
         Result := ''
       else
-        Result := IP6AddressStrA(A.AddrIP6);
+        Result := IP6AddressStrB(A.AddrIP6);
   else
     Result := '';
   end;
@@ -1087,12 +1094,12 @@ begin
       if IP4AddrIsNone(A.AddrIP4) then
         Result := ''
       else
-        Result := IP4AddressStrA(A.AddrIP4);
+        Result := IP4AddressStrB(A.AddrIP4);
     iaIP6 :
       if IP6AddrIsZero(A.AddrIP6) then
         Result := ''
       else
-        Result := IP6AddressStrA(A.AddrIP6);
+        Result := IP6AddressStrB(A.AddrIP6);
   else
     Result := '';
   end;
@@ -1106,9 +1113,9 @@ begin
     Result := ''
   else
     begin
-      Result := flcSocketLib.GetRemoteHostNameA(Address);
+      Result := flcSocketLib.GetRemoteHostNameB(Address);
       if Result = '' then
-        Result := IP4AddressStrA(Address);
+        Result := IP4AddressStrB(Address);
       {$IFDEF SOCKET_DEBUG}
       Log(sltDebug, 'RemoteHostName:%s', [Result]);
       {$ENDIF}

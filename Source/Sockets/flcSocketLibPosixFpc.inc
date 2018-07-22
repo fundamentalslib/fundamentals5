@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcSocketLibPosixFpc.pas                                 }
+{   File name:        flcSocketLibPosixFpc.inc                                 }
 {   File version:     5.08                                                     }
 {   Description:      FreePascal Posix socket library                          }
 {                                                                              }
@@ -54,18 +54,18 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ..\flcInclude.inc}
-
-unit flcSocketLibPosixFpc;
-
 interface
 
 uses
+  { System }
   SysUtils,
   BaseUnix,
   UnixType,
   Sockets,
-  DynLibs;
+  DynLibs,
+
+  { Fundamentals }
+  flcStdTypes;
 
 
 
@@ -73,7 +73,7 @@ uses
 { Unix socket types                                                            }
 {                                                                              }
 type
-  TSocket = LongWord;
+  TSocket = Word32;
 
 const
   INVALID_SOCKET = TSocket(not 0);
@@ -90,7 +90,7 @@ type
     case Integer of
       0 : (S_un_b : SunB);
       1 : (S_un_w : SunW);
-      2 : (S_addr : LongWord);
+      2 : (S_addr : Word32);
   end;
   TInAddr = in_addr;
 
@@ -111,11 +111,11 @@ type
     case Integer of
       0 : (u6_addr8  : packed array[0..15] of Byte);
       1 : (u6_addr16 : packed array[0..7] of Word);
-      2 : (u6_addr32 : packed array[0..3] of LongWord);
+      2 : (u6_addr32 : packed array[0..3] of Word32);
       3 : (s6_addr   : packed array[0..15] of ShortInt);
       4 : (s6_addr8  : packed array[0..15] of ShortInt);
       5 : (s6_addr16 : packed array[0..7] of SmallInt);
-      6 : (s6_addr32 : packed array[0..3] of LongInt);
+      6 : (s6_addr32 : packed array[0..3] of Int32);
   end;
   TIn6Addr = in6_addr;
 
@@ -278,10 +278,10 @@ const
   {$ENDIF}
 
   // IP4 addresses
-  INADDR_ANY       = LongWord($00000000);
-  INADDR_LOOPBACK  = LongWord($7F000001);
-  INADDR_BROADCAST = LongWord(not 0);
-  INADDR_NONE      = LongWord(not 0);
+  INADDR_ANY       = Word32($00000000);
+  INADDR_LOOPBACK  = Word32($7F000001);
+  INADDR_BROADCAST = Word32(not 0);
+  INADDR_NONE      = Word32(not 0);
 
 
 
@@ -292,12 +292,12 @@ type
   PLinger = ^TLinger;
   linger = record
     l_onoff  : LongBool;
-    l_linger : LongInt;
+    l_linger : Int32;
   end;
   TLinger = linger;
 
 type
-  TFD_MASK = LongWord;
+  TFD_MASK = Word32;
 
 const
   FD_SETSIZE   = 1024;
@@ -310,9 +310,9 @@ type
     fds_bits : packed array[0..FD_ARRAYSIZE - 1] of TFD_MASK;
   end;
 
-function  FD_ISSET(fd: LongInt; const fdset: TFDSet): Boolean;
-procedure FD_SET(const fd: LongInt; var fdset: TFDSet);
-procedure FD_CLR(const fd: LongInt; var fdset: TFDSet);
+function  FD_ISSET(fd: Int32; const fdset: TFDSet): Boolean;
+procedure FD_SET(const fd: Int32; var fdset: TFDSet);
+procedure FD_CLR(const fd: Int32; var fdset: TFDSet);
 procedure FD_ZERO(out fdset: TFDSet);
 function  FD_COUNT(const fdset: TFDSet): Integer;
 
@@ -321,9 +321,9 @@ type
   sockaddr_in6 = packed record
 		sin6_family   : Word;
 		sin6_port     : Word;
-		sin6_flowinfo : LongWord;
+		sin6_flowinfo : Word32;
 		sin6_addr     : TIn6Addr;
-		sin6_scope_id : LongWord;
+		sin6_scope_id : Word32;
   end;
   TSockAddrIn6 = sockaddr_in6;
 
@@ -336,9 +336,9 @@ type
           sin_zero      : array[0..7] of Byte );
         AF_INET6 : (
           sin6_port     : Word;
-          sin6_flowinfo : LongWord;
+          sin6_flowinfo : Word32;
           sin6_addr     : TIn6Addr;
-          sin6_scope_id : LongWord; );
+          sin6_scope_id : Word32; );
   end;
   TSockAddr = sockaddr;
   TSockAddrArray = Array of TSockAddr;
@@ -346,11 +346,11 @@ type
 type
   PAddrInfo = ^TAddrInfo;
   addrinfo = record
-                ai_flags     : LongInt;
-                ai_family    : LongInt;
-                ai_socktype  : LongInt;
-                ai_protocol  : LongInt;
-                ai_addrlen   : LongInt;
+                ai_flags     : Int32;
+                ai_family    : Int32;
+                ai_socktype  : Int32;
+                ai_protocol  : Int32;
+                ai_addrlen   : Int32;
                 ai_addr      : PSockAddr;
                 ai_canonname : PAnsiChar;
                 ai_next      : PAddrInfo;
@@ -368,8 +368,8 @@ type
   hostent = record
     h_name     : PAnsiChar;
     h_aliases  : ^PAnsiChar;
-    h_addrtype : LongInt;
-    h_length   : LongInt;
+    h_addrtype : Int32;
+    h_length   : Int32;
     case Byte of
       0 : (h_addr_list : ^PAnsiChar);
       1 : (h_addr      : ^PAnsiChar);
@@ -380,8 +380,8 @@ type
   netent = packed record
     n_name     : PAnsiChar;
     n_aliases  : ^PAnsiChar;
-    n_addrtype : LongInt;
-    n_net      : LongWord;
+    n_addrtype : Int32;
+    n_net      : Word32;
   end;
   TNetEnt = netent;
 
@@ -414,8 +414,8 @@ type
     tv_sec  : Int64;
     tv_usec : Int64;
     {$ELSE}
-    tv_sec  : LongInt;
-    tv_usec : LongInt;
+    tv_sec  : Int32;
+    tv_usec : Int32;
     {$ENDIF}
   end;
   TTimeVal = timeval;
@@ -497,10 +497,10 @@ function  UnixSockErrorMessage(const ErrorCode: Integer): String;
 { Socket library functions                                                     }
 {                                                                              }
 type
-  TAddrLen = LongInt;
+  TSockLen = Int32;
 
 { Berkeley socket interface                                                    }
-function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TAddrLen): TSocket;
+function  Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TSockLen): TSocket;
 function  Bind(const S: TSocket; const Name: TSockAddr; const NameLen: Integer): Integer;
 function  CloseSocket(const S: TSocket): Integer;
 function  Connect(const S: TSocket; const Name: PSockAddr; const NameLen: Integer): Integer;
@@ -511,8 +511,8 @@ function  GetHostByAddr(const Addr: Pointer; const Len: Integer; const AF: Integ
 function  GetHostByName(const Name: PAnsiChar): PHostEnt;
 function  GetHostName(const Name: PAnsiChar; const Len: Integer): Integer;
 function  GetNameInfo(const Addr: PSockAddr; const NameLen: Integer;
-          const Host: PAnsiChar; const HostLen: LongWord;
-          const Serv: PAnsiChar; const ServLen: LongWord; const Flags: Integer): Integer;
+          const Host: PAnsiChar; const HostLen: Word32;
+          const Serv: PAnsiChar; const ServLen: Word32; const Flags: Integer): Integer;
 function  GetPeerName(const S: TSocket; var Name: TSockAddr; var NameLen: Integer): Integer;
 function  GetProtoByName(const Name: PAnsiChar): PProtoEnt;
 function  GetProtoByNumber(const Proto: Integer): PProtoEnt;
@@ -522,17 +522,17 @@ function  GetSockName(const S: TSocket; var Name: TSockAddr; var NameLen: Intege
 function  GetSockOpt(const S: TSocket; const Level, OptName: Integer;
           const OptVal: Pointer; var OptLen: Integer): Integer;
 function  htons(const HostShort: Word): Word;
-function  htonl(const HostLong: LongWord): LongWord;
+function  htonl(const HostLong: Word32): Word32;
 function  inet_ntoa(const InAddr: TInAddr): PAnsiChar;
-function  inet_addr(const P: PAnsiChar): LongWord;
-function  IoctlSocket(const S: TSocket; const Cmd: LongWord; var Arg: LongWord): Integer;
+function  inet_addr(const P: PAnsiChar): Word32;
+function  IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Integer;
 function  Listen(const S: TSocket; const Backlog: Integer): Integer;
 function  ntohs(const NetShort: Word): Word;
-function  ntohl(const NetLong: LongWord): LongWord;
+function  ntohl(const NetLong: Word32): Word32;
 function  Recv(const S: TSocket; var Buf; const Len, Flags: Integer): Integer;
 function  RecvFrom(const S: TSocket; var Buf; const Len, Flags: Integer;
           var From: TSockAddr; var FromLen: Integer): Integer;
-function  Select(const nfds: LongWord; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;
+function  Select(const nfds: Word32; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;
           const TimeOut: PTimeVal): Integer;
 function  Send(const S: TSocket; const Buf; const Len, Flags: Integer): Integer;
 function  SendTo(const S: TSocket; const Buf; const Len, Flags: Integer;
@@ -589,17 +589,17 @@ end;
 {                                                                              }
 { Unix socket types                                                            }
 {                                                                              }
-function FDMASK(const d: LongInt): TFD_MASK;
+function FDMASK(const d: Int32): TFD_MASK;
 begin
   Result := 1 shl (d mod NFDBITS);
 end;
 
-function FD_ISSET(fd: LongInt; const fdset: TFDSet): Boolean;
+function FD_ISSET(fd: Int32; const fdset: TFDSet): Boolean;
 begin
   Result := (fdset.fds_bits[fd div NFDBITS] and FDMASK(fd)) <> 0;
 end;
 
-procedure FD_SET(const fd: LongInt; var fdset: TFDSet);
+procedure FD_SET(const fd: Int32; var fdset: TFDSet);
 var I : Integer;
 begin
   I := fd div NFDBITS;
@@ -607,7 +607,7 @@ begin
   fdset.fds_bits[I] := fdset.fds_bits[I] or FDMASK(fd);
 end;
 
-procedure FD_CLR(const fd: LongInt; var fdset: TFDSet);
+procedure FD_CLR(const fd: Int32; var fdset: TFDSet);
 var I : Integer;
 begin
   I := fd div NFDBITS;
@@ -624,7 +624,7 @@ end;
 
 function FD_COUNT(const fdset: TFDSet): Integer;
 var C, I, J : Integer;
-    F : LongInt;
+    F : Int32;
 begin
   C := 0;
   for I := 0 to FD_ARRAYSIZE - 1 do
@@ -651,79 +651,79 @@ type
   TGetServByNameProc =
       function (name, proto: PAnsiChar): PServEnt; cdecl;
   TGetServByPortProc =
-      function (port: LongInt; proto: PAnsiChar): PServEnt; cdecl;
+      function (port: Int32; proto: PAnsiChar): PServEnt; cdecl;
   TGetProtoByNameProc =
       function (name: PAnsiChar): PProtoEnt; cdecl;
   TGetProtoByNumberProc =
-      function (proto: LongInt): PProtoEnt; cdecl;
+      function (proto: Int32): PProtoEnt; cdecl;
   TGetHostByNameProc =
       function (name: PAnsiChar): PHostEnt; cdecl;
   TGetHostByAddrProc =
-      function (addr: Pointer; len, Struct: LongInt): PHostEnt; cdecl;
+      function (addr: Pointer; len, Struct: Int32): PHostEnt; cdecl;
   TGetHostNameProc =
-      function (name: PAnsiChar; len: LongInt): LongInt; cdecl;
+      function (name: PAnsiChar; len: Int32): Int32; cdecl;
   TSocketProc =
-      function (af, Struct, Protocol: LongInt): TSocket; cdecl;
+      function (af, Struct, Protocol: Int32): TSocket; cdecl;
   TShutdownProc =
-      function (s: TSocket; how: LongInt): LongInt; cdecl;
+      function (s: TSocket; how: Int32): Int32; cdecl;
   TSetSockOptProc =
-      function (s: TSocket; level, optname: LongInt; optval: PAnsiChar;
-                optlen: LongInt): LongInt; cdecl;
+      function (s: TSocket; level, optname: Int32; optval: PAnsiChar;
+                optlen: Int32): Int32; cdecl;
   TGetSockOptProc =
-      function (s: TSocket; level, optname: LongInt; optval: PAnsiChar;
-                var optlen: LongInt): LongInt; cdecl;
+      function (s: TSocket; level, optname: Int32; optval: PAnsiChar;
+                var optlen: Int32): Int32; cdecl;
   TSendToProc =
-      function (s: TSocket; const Buf; len, flags: LongInt;
-                const addrto: PSockAddr; tolen: LongInt): LongInt; cdecl;
+      function (s: TSocket; const Buf; len, flags: Int32;
+                const addrto: PSockAddr; tolen: Int32): Int32; cdecl;
   TSendProc =
-      function (s: TSocket; const Buf; len, flags: LongInt): LongInt; cdecl;
+      function (s: TSocket; const Buf; len, flags: Int32): Int32; cdecl;
   TRecvProc =
-      function (s: TSocket; var Buf; len, flags: LongInt): LongInt; cdecl;
+      function (s: TSocket; var Buf; len, flags: Int32): Int32; cdecl;
   TRecvFromProc =
-      function (s: TSocket; var Buf; len, flags: LongInt;
-                var from: TSockAddr; var fromlen: LongInt): LongInt; cdecl;
+      function (s: TSocket; var Buf; len, flags: Int32;
+                var from: TSockAddr; var fromlen: Int32): Int32; cdecl;
   TntohsProc =
       function (netshort: Word): Word; cdecl;
   TntohlProc =
-      function (netlong: LongWord): LongWord; cdecl;
+      function (netlong: Word32): Word32; cdecl;
   TListenProc =
-      function (s: TSocket; backlog: LongInt): LongInt; cdecl;
+      function (s: TSocket; backlog: Int32): Int32; cdecl;
   TIoctlSocketProc =
-      function (s: TSocket; cmd: LongWord; var arg: LongWord): LongInt; cdecl;
+      function (s: TSocket; cmd: Word32; var arg: Word32): Int32; cdecl;
   TInet_ntoaProc =
       function (inaddr: TInAddr): PAnsiChar; cdecl;
   TInet_addrProc =
-      function (cp: PAnsiChar): LongWord; cdecl;
+      function (cp: PAnsiChar): Word32; cdecl;
   ThtonsProc =
       function (hostshort: Word): Word; cdecl;
   ThtonlProc =
-      function (hostlong: LongWord): LongWord; cdecl;
+      function (hostlong: Word32): Word32; cdecl;
   TGetSockNameProc =
-      function (s: TSocket; var name: TSockAddr; var namelen: LongInt): LongInt; cdecl;
+      function (s: TSocket; var name: TSockAddr; var namelen: Int32): Int32; cdecl;
   TGetPeerNameProc =
-      function (s: TSocket; var name: TSockAddr; var namelen: LongInt): LongInt; cdecl;
+      function (s: TSocket; var name: TSockAddr; var namelen: Int32): Int32; cdecl;
   TConnectProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt): LongInt; cdecl;
+      function (s: TSocket; name: PSockAddr; namelen: Int32): Int32; cdecl;
   TCloseSocketProc =
-      function (s: TSocket): LongInt; cdecl;
+      function (s: TSocket): Int32; cdecl;
   TBindProc =
-      function (s: TSocket; name: PSockAddr; namelen: LongInt): LongInt; cdecl;
+      function (s: TSocket; name: PSockAddr; namelen: Int32): Int32; cdecl;
   TAcceptProc =
-      function (s: TSocket; addr: PSockAddr; var addrlen: LongInt): TSocket; cdecl;
+      function (s: TSocket; addr: PSockAddr; var addrlen: Int32): TSocket; cdecl;
   TSelectProc =
-      function (nfds: LongWord; readfds, writefds, exceptfds: PFDSet;
-                timeout: PTimeVal): LongInt; cdecl;
+      function (nfds: Word32; readfds, writefds, exceptfds: PFDSet;
+                timeout: PTimeVal): Int32; cdecl;
   TGetAddrInfoProc =
       function (NodeName: PAnsiChar; ServName: PAnsiChar; Hints: PAddrInfo;
-                var Addrinfo: PAddrInfo): LongInt; cdecl;
+                var Addrinfo: PAddrInfo): Int32; cdecl;
   TFreeAddrInfoProc =
       procedure (ai: PAddrInfo); cdecl;
   TGetNameInfoProc =
-      function (addr: PSockAddr; namelen: LongInt; host: PAnsiChar;
-                hostlen: LongWord; serv: PAnsiChar; servlen: LongWord;
-                flags: LongInt): LongInt; cdecl;
+      function (addr: PSockAddr; namelen: Int32; host: PAnsiChar;
+                hostlen: Word32; serv: PAnsiChar; servlen: Word32;
+                flags: Int32): Int32; cdecl;
   Terrno_locationProc =
-      function: PLongInt; cdecl;
+      function: PInt32; cdecl;
 
 
 
@@ -799,7 +799,7 @@ procedure LoadSocketLibrary;
 
 begin
   // Ignore if already loaded
-  if LongWord(SocketLibraryHandle) <> 0 then
+  if Word32(SocketLibraryHandle) <> 0 then
     exit;
   // Raise an exception if an attempt is made to reload the library after
   // unit has finalized
@@ -824,7 +824,7 @@ var H : TSocketLibraryHandle;
 begin
   // Ignore if not loaded
   H := SocketLibraryHandle;
-  if LongWord(H) = 0 then
+  if Word32(H) = 0 then
     exit;
   // Set state unloaded
   SocketLibraryHandle := TSocketLibraryHandle(0);
@@ -894,7 +894,7 @@ end;
 {                                                                              }
 { Socket library functions                                                     }
 {                                                                              }
-function Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TAddrLen): TSocket;
+function Accept(const S: TSocket; const Addr: PSockAddr; var AddrLen: TSockLen): TSocket;
 begin
   if not Assigned(AcceptProc) then
     GetSocketProc('accept', @AcceptProc);
@@ -959,8 +959,8 @@ begin
 end;
 
 function GetNameInfo(const Addr: PSockAddr; const NameLen: Integer;
-    const Host: PAnsiChar; const HostLen: LongWord; const Serv: PAnsiChar;
-    const ServLen: LongWord; const Flags: Integer): Integer;
+    const Host: PAnsiChar; const HostLen: Word32; const Serv: PAnsiChar;
+    const ServLen: Word32; const Flags: Integer): Integer;
 begin
   if not Assigned(GetNameInfoProc) then
     GetSocketProc('getnameinfo', @GetNameInfoProc);
@@ -1024,7 +1024,7 @@ begin
   Result := htonsProc(HostShort);
 end;
 
-function htonl(const HostLong: LongWord): LongWord;
+function htonl(const HostLong: Word32): Word32;
 begin
   if not Assigned(htonlProc) then
     GetSocketProc('htonl', @htonlProc);
@@ -1038,14 +1038,14 @@ begin
   Result := inet_ntoaProc(InAddr);
 end;
 
-function inet_addr(const P: PAnsiChar): LongWord;
+function inet_addr(const P: PAnsiChar): Word32;
 begin
   if not Assigned(Inet_addrProc) then
     GetSocketProc('inet_addr', @Inet_addrProc);
   Result := inet_addrProc(P);
 end;
 
-function IoctlSocket(const S: TSocket; const Cmd: LongWord; var Arg: LongWord): Integer;
+function IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Integer;
 begin
   if not Assigned(IoctlSocketProc) then
     GetSocketProc('ioctlsocket', @IoctlSocketProc);
@@ -1066,7 +1066,7 @@ begin
   Result := ntohsProc(NetShort);
 end;
 
-function ntohl(const NetLong: LongWord): LongWord;
+function ntohl(const NetLong: Word32): Word32;
 begin
   if not Assigned(ntohlProc) then
     GetSocketProc('ntohl', @ntohlProc);
@@ -1088,7 +1088,7 @@ begin
   Result := RecvFromProc(S, Buf, Len, Flags, From, FromLen);
 end;
 
-function Select(const nfds: LongWord; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;
+function Select(const nfds: Word32; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;
     const TimeOut: PTimeVal): Integer;
 begin
   if not Assigned(SelectProc) then
@@ -1143,7 +1143,7 @@ begin
 end;
 
 function SockAvailableToRecv(const S: TSocket): Integer;
-var L : LongWord;
+var L : Word32;
 begin
   if FpIoctl(S, FIONREAD, @L) <> 0 then
     Result := 0
@@ -1152,7 +1152,7 @@ begin
 end;
 
 procedure SetSockBlocking(const S: TSocket; const Block: Boolean);
-var A : LongInt;
+var A : Int32;
 begin
   if S = INVALID_SOCKET then
     raise EUnixSock.Create('Invalid socket handle');
