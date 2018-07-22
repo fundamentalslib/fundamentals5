@@ -808,7 +808,12 @@ end;
 
 destructor TTCPConnection.Destroy;
 begin
-  FreeAndNil(FWorkerThread);
+  if Assigned(FWorkerThread) then
+    begin
+      FWorkerThread.Terminate;
+      FWorkerThread.WaitFor;
+      FreeAndNil(FWorkerThread);
+    end;
   FreeAndNil(FBlockingConnection);
   TCPBufferFinalise(FWriteBuffer);
   TCPBufferFinalise(FReadBuffer);
@@ -892,7 +897,7 @@ end;
 
 procedure TTCPConnection.SetStateConnected;
 begin
-  Assert(FState in [cnsInit, cnsProxyNegotiation]);
+  Assert(FState in [cnsInit, cnsProxyNegotiation, cnsClosed]);
   SetState(cnsConnected);
   Lock;
   try
@@ -1263,7 +1268,7 @@ end;
 procedure TTCPConnection.Start;
 var ProxiesFin : Boolean;
 begin
-  Assert(FState = cnsInit);
+  Assert(FState in [cnsInit, cnsClosed]);
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Start');
   {$ENDIF}

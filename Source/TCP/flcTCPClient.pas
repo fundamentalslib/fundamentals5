@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.15                                                     }
+{   File version:     5.16                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -53,9 +53,9 @@
 {   2015/04/26  4.13  Blocking interface and worker thread.                    }
 {   2015/04/27  4.14  Options to retry failed connections.                     }
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
+{   2018/07/19  5.16  ReconnectOnDisconnect property.                          }
 {                                                                              }
 { Todo:                                                                        }
-{ - ReconnectOnDisconnet option                                                }
 { - shared processing threads                                                  }
 {                                                                              }
 {******************************************************************************}
@@ -168,14 +168,15 @@ type
   protected
     // parameters
     FAddressFamily      : TTCPClientAddressFamily;
-    FHost               : RawByteString;
-    FPort               : RawByteString;
-    FLocalHost          : RawByteString;
-    FLocalPort          : RawByteString;
+    FHost               : String;
+    FPort               : String;
+    FLocalHost          : String;
+    FLocalPort          : String;
 
     FRetryFailedConnect            : Boolean;
     FRetryFailedConnectDelaySec    : Integer;
     FRetryFailedConnectMaxAttempts : Integer;
+    FReconnectOnDisconnect         : Boolean;
 
     {$IFDEF TCPCLIENT_SOCKS}
     FSocksEnabled       : Boolean;
@@ -243,9 +244,6 @@ type
     FConnectAddr       : TSocketAddr;
     FConnection        : TTCPConnection;
     FSyncListLog       : TList;
-    FSyncLogType       : TTCPClientLogType;
-    FSyncLogMsg        : RawByteString;
-    FSyncLogLevel      : Integer;
 
     {$IFDEF TCPCLIENT_TLS}
     FTLSProxy          : TTCPConnectionProxy;
@@ -274,23 +272,24 @@ type
     procedure Unlock;
 
     function  GetState: TTCPClientState;
-    function  GetStateStr: RawByteString;
+    function  GetStateStr: String;
     procedure SetState(const State: TTCPClientState);
 
     procedure CheckNotActive;
     procedure CheckActive;
 
     procedure SetAddressFamily(const AddressFamily: TTCPClientAddressFamily);
-    procedure SetHost(const Host: RawByteString);
-    procedure SetPort(const Port: RawByteString);
+    procedure SetHost(const Host: String);
+    procedure SetPort(const Port: String);
     function  GetPortInt: Integer;
     procedure SetPortInt(const PortInt: Integer);
-    procedure SetLocalHost(const LocalHost: RawByteString);
-    procedure SetLocalPort(const LocalPort: RawByteString);
+    procedure SetLocalHost(const LocalHost: String);
+    procedure SetLocalPort(const LocalPort: String);
 
     procedure SetRetryFailedConnect(const RetryFailedConnect: Boolean);
     procedure SetRetryFailedConnectDelaySec(const RetryFailedConnectDelaySec: Integer);
     procedure SetRetryFailedConnectMaxAttempts(const RetryFailedConnectMaxAttempts: Integer);
+    procedure SetReconnectOnDisconnect(const ReconnectOnDisconnect: Boolean);
 
     {$IFDEF TCPCLIENT_SOCKS}
     procedure SetSocksProxy(const SocksProxy: Boolean);
@@ -416,13 +415,15 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    procedure Finalise;
+
     // Parameters
     property  AddressFamily: TTCPClientAddressFamily read FAddressFamily write SetAddressFamily default cafIP4;
-    property  Host: RawByteString read FHost write SetHost;
-    property  Port: RawByteString read FPort write SetPort;
+    property  Host: String read FHost write SetHost;
+    property  Port: String read FPort write SetPort;
     property  PortInt: Integer read GetPortInt write SetPortInt;
-    property  LocalHost: RawByteString read FLocalHost write SetLocalHost;
-    property  LocalPort: RawByteString read FLocalPort write SetLocalPort;
+    property  LocalHost: String read FLocalHost write SetLocalHost;
+    property  LocalPort: String read FLocalPort write SetLocalPort;
 
     // Connect retry
     // If RetryFailedConnect if True, a failed connection attempt will be
@@ -430,9 +431,12 @@ type
     // RetryFailedConnectDelaySec seconds between retries.
     // If RetryFailedConnectMaxAttempts is -1, the connection will be retried
     // until the client is stopped.
+    // If ReconnectOnDisconnect is True, a connect will automatically be
+    // initiated after an established connection is disconnected.
     property  RetryFailedConnect: Boolean read FRetryFailedConnect write SetRetryFailedConnect default False;
     property  RetryFailedConnectDelaySec: Integer read FRetryFailedConnectDelaySec write SetRetryFailedConnectDelaySec default 60;
     property  RetryFailedConnectMaxAttempts: Integer read FRetryFailedConnectMaxAttempts write SetRetryFailedConnectMaxAttempts default -1;
+    property  ReconnectOnDisconnect: Boolean read FReconnectOnDisconnect write SetReconnectOnDisconnect default False;
 
     // Socks
     {$IFDEF TCPCLIENT_SOCKS}
@@ -485,7 +489,7 @@ type
 
     // state
     property  State: TTCPClientState read GetState;
-    property  StateStr: RawByteString read GetStateStr;
+    property  StateStr: String read GetStateStr;
 
     function  IsConnecting: Boolean;
     function  IsConnectingOrConnected: Boolean;
@@ -570,6 +574,7 @@ type
     property  RetryFailedConnect;
     property  RetryFailedConnectDelaySec;
     property  RetryFailedConnectMaxAttempts;
+    property  ReconnectOnDisconnect;
 
     {$IFDEF TCPCLIENT_SOCKS}
     property  SocksHost;
@@ -628,8 +633,7 @@ implementation
 
 uses
   { Fundamentals }
-  flcStdTypes,
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -648,7 +652,7 @@ const
   SError_Terminated              = 'Terminated';
   SError_TimedOut                = 'Timed out';
 
-  SClientState : array[TTCPClientState] of RawByteString = (
+  SClientState : array[TTCPClientState] of String = (
       'Initialise',
       'Starting',
       'Started',
@@ -1080,6 +1084,7 @@ procedure TTCPClientProcessThread.Execute;
 begin
   Assert(Assigned(FTCPClient));
   FTCPClient.ThreadExecute(self);
+  FTCPClient := nil;
 end;
 
 
@@ -1108,6 +1113,7 @@ begin
   FRetryFailedConnect := False;
   FRetryFailedConnectDelaySec := 60;
   FRetryFailedConnectMaxAttempts := -1;
+  FReconnectOnDisconnect := False;
   {$IFDEF TCPCLIENT_SOCKS}
   FSocksEnabled := False;
   FSocksAuth := False;
@@ -1126,19 +1132,29 @@ begin
 end;
 
 destructor TF5TCPClient.Destroy;
+begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TF5TCPClient.Finalise;
 var I : Integer;
 begin
+  if Assigned(FProcessThread) then
+    begin
+      FProcessThread.Terminate;
+      FProcessThread.WaitFor;
+    end;
   FreeAndNil(FProcessThread);
+  FreeAndNil(FConnection);
   if Assigned(FSyncListLog) then
     begin
       for I := FSyncListLog.Count - 1 downto 0 do
         Dispose(FSyncListLog.Items[0]);
       FreeAndNil(FSyncListLog);
     end;
-  FreeAndNil(FConnection);
   FreeAndNil(FSocket);
   FreeAndNil(FLock);
-  inherited Destroy;
 end;
 
 { Synchronize }
@@ -1243,7 +1259,7 @@ begin
   end;
 end;
 
-function TF5TCPClient.GetStateStr: RawByteString;
+function TF5TCPClient.GetStateStr: String;
 begin
   Result := SClientState[GetState];
 end;
@@ -1283,7 +1299,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5TCPClient.SetHost(const Host: RawByteString);
+procedure TF5TCPClient.SetHost(const Host: String);
 begin
   if Host = FHost then
     exit;
@@ -1294,7 +1310,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPClient.SetPort(const Port: RawByteString);
+procedure TF5TCPClient.SetPort(const Port: String);
 begin
   if Port = FPort then
     exit;
@@ -1307,15 +1323,15 @@ end;
 
 function TF5TCPClient.GetPortInt: Integer;
 begin
-  Result := StringToIntDefB(FPort, -1)
+  Result := StrToIntDef(FPort, -1)
 end;
 
 procedure TF5TCPClient.SetPortInt(const PortInt: Integer);
 begin
-  SetPort(IntToStringB(PortInt));
+  SetPort(IntToStr(PortInt));
 end;
 
-procedure TF5TCPClient.SetLocalHost(const LocalHost: RawByteString);
+procedure TF5TCPClient.SetLocalHost(const LocalHost: String);
 begin
   if LocalHost = FLocalHost then
     exit;
@@ -1326,7 +1342,7 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPClient.SetLocalPort(const LocalPort: RawByteString);
+procedure TF5TCPClient.SetLocalPort(const LocalPort: String);
 begin
   if LocalPort = FLocalPort then
     exit;
@@ -1356,6 +1372,14 @@ begin
     exit;
   CheckNotActive;
   FRetryFailedConnectMaxAttempts := RetryFailedConnectMaxAttempts;
+end;
+
+procedure TF5TCPClient.SetReconnectOnDisconnect(const ReconnectOnDisconnect: Boolean);
+begin
+  if ReconnectOnDisconnect = FReconnectOnDisconnect then
+    exit;
+  CheckNotActive;
+  FReconnectOnDisconnect := ReconnectOnDisconnect;
 end;
 
 {$IFDEF TCPCLIENT_SOCKS}
@@ -2050,14 +2074,14 @@ var
   LocAddr : TSocketAddr;
 begin
   Assert(FActive);
-  Assert(FState in [csStarted, csConnectRetry]);
+  Assert(FState in [csStarted, csConnectRetry, csClosed]);
   Assert(FHost <> '');
   {$IFDEF TCP_DEBUG}
   Log(cltDebug, 'DoResolveLocal');
   {$ENDIF}
 
   SetState(csResolvingLocal);
-  LocAddr := flcSocketLib.ResolveA(FLocalHost, FLocalPort, FIPAddressFamily, ipTCP);
+  LocAddr := flcSocketLib.Resolve(FLocalHost, FLocalPort, FIPAddressFamily, ipTCP);
   Lock;
   try
     FLocalAddr := LocAddr;
@@ -2092,7 +2116,7 @@ begin
   {$ENDIF}
 
   SetState(csResolving);
-  ConAddr := flcSocketLib.ResolveA(FHost, FPort, FIPAddressFamily, ipTCP);
+  ConAddr := flcSocketLib.Resolve(FHost, FPort, FIPAddressFamily, ipTCP);
 
   Lock;
   try
@@ -2222,6 +2246,7 @@ var
   {$ENDIF}
   ConnRetry : Boolean;
   ConnAttempt : Integer;
+  Reconnect : Boolean;
 begin
   Assert(Assigned(Thread));
   {$IFDEF TCP_DEBUG_THREAD}
@@ -2235,15 +2260,6 @@ begin
       if IsTerminated then
         exit;
       SetStarted;
-      FSocket.SetBlocking(True);
-      // resolve local
-      DoResolveLocal;
-      if IsTerminated then
-        exit;
-      // bind
-      DoBind;
-      if IsTerminated then
-        exit;
     except
       on E : Exception do
         begin
@@ -2252,86 +2268,114 @@ begin
           exit;
         end;
     end;
-    // resolve and connect
-    ConnAttempt := 1;
+    Reconnect := False;
     repeat
-      ConnRetry := False;
       try
-        // resolve
-        DoResolve;
+        if Reconnect then
+          begin
+            // re-allocate socket handle
+            DoClose;
+            FSocket.AllocateSocketHandle;
+          end;
+        FSocket.SetBlocking(True);
+        // resolve local
+        DoResolveLocal;
         if IsTerminated then
           exit;
-        // connect
-        DoConnect;
+        // bind
+        DoBind;
         if IsTerminated then
           exit;
-        // success
       except
         on E : Exception do
           begin
-            // retry
-            if FRetryFailedConnect then
-              if (FRetryFailedConnectMaxAttempts < 0) or
-                 (ConnAttempt < FRetryFailedConnectMaxAttempts) then
-                begin
-                  if not WaitSec(FRetryFailedConnectDelaySec) then
-                    exit;
-                  Inc(ConnAttempt);
-                  ConnRetry := True;
-                  SetState(csConnectRetry);
-                  if IsTerminated then
-                    exit;
-                end;
-            if not ConnRetry then
-              begin
-                SetErrorFromException(E);
-                TriggerConnectFailed;
-                exit;
-              end;
+            SetErrorFromException(E);
+            TriggerConnectFailed;
+            exit;
           end;
       end;
-    until not ConnRetry;
-    // poll loop
-    try
-      FSocket.SetBlocking(False);
-      {$IFDEF OS_MSWIN}
-      MsgTerminated := False;
-      {$ENDIF}
-      while not IsTerminated do
-        begin
-          FConnection.PollSocket(ConIdle, ConTerminated);
-          if ConTerminated then
+      // resolve and connect
+      ConnAttempt := 1;
+      repeat
+        ConnRetry := False;
+        try
+          // resolve
+          DoResolve;
+          if IsTerminated then
+            exit;
+          // connect
+          DoConnect;
+          if IsTerminated then
+            exit;
+          // success
+        except
+          on E : Exception do
             begin
-              Thread.Terminate;
-              {$IFDEF TCP_DEBUG_THREAD}
-              Log(cltDebug, 'ThreadTerminate:ConnectionTerminated');
-              {$ENDIF}
-            end
-          else
-          if ConIdle then
-            begin
-              {$IFDEF OS_MSWIN}
-              MsgProcessed := ProcessMessage(MsgTerminated);
-              if MsgTerminated then
+              // retry
+              if FRetryFailedConnect then
+                if (FRetryFailedConnectMaxAttempts < 0) or
+                   (ConnAttempt < FRetryFailedConnectMaxAttempts) then
+                  begin
+                    if not WaitSec(FRetryFailedConnectDelaySec) then
+                      exit;
+                    Inc(ConnAttempt);
+                    ConnRetry := True;
+                    SetState(csConnectRetry);
+                    if IsTerminated then
+                      exit;
+                  end;
+              if not ConnRetry then
                 begin
-                  Thread.Terminate;
-                  {$IFDEF TCP_DEBUG_THREAD}
-                  Log(cltDebug, 'ThreadTerminate:MsgTerminated');
-                  {$ENDIF}
-                end
-              else
-                if not MsgProcessed then
-                  TriggerProcessThreadIdle;
-              {$ELSE}
-              TriggerProcessThreadIdle;
-              {$ENDIF}
+                  SetErrorFromException(E);
+                  TriggerConnectFailed;
+                  exit;
+                end;
             end;
         end;
-    except
-      on E : Exception do
-        if not Thread.Terminated then
-          SetErrorFromException(E);
-    end;
+      until not ConnRetry;
+      // poll loop
+      try
+        FSocket.SetBlocking(False);
+        {$IFDEF OS_MSWIN}
+        MsgTerminated := False;
+        {$ENDIF}
+        while not IsTerminated do
+          begin
+            FConnection.PollSocket(ConIdle, ConTerminated);
+            if ConTerminated then
+              begin
+                {$IFDEF TCP_DEBUG_THREAD}
+                Log(cltDebug, 'ThreadTerminate:ConnectionTerminated');
+                {$ENDIF}
+                break;
+              end
+            else
+            if ConIdle then
+              begin
+                {$IFDEF OS_MSWIN}
+                MsgProcessed := ProcessMessage(MsgTerminated);
+                if MsgTerminated then
+                  begin
+                    Thread.Terminate;
+                    {$IFDEF TCP_DEBUG_THREAD}
+                    Log(cltDebug, 'ThreadTerminate:MsgTerminated');
+                    {$ENDIF}
+                  end
+                else
+                  if not MsgProcessed then
+                    TriggerProcessThreadIdle;
+                {$ELSE}
+                TriggerProcessThreadIdle;
+                {$ENDIF}
+              end;
+          end;
+      except
+        on E : Exception do
+          if not Thread.Terminated then
+            SetErrorFromException(E);
+      end;
+      Reconnect := not Thread.Terminated and FReconnectOnDisconnect;
+    until not Reconnect;
   finally
     if not Thread.Terminated then
       SetClosed;
@@ -2365,8 +2409,6 @@ begin
   try
     if FActive then
       exit;
-    IsAlreadyStarting := False;
-    WaitForStart := False;
     // validate paramters
     if FHost = '' then
       raise ETCPClient.Create(SError_HostNotSpecified);

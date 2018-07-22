@@ -1182,6 +1182,7 @@ var
   C : TF5TCPClient;
   DebugObj : TTCPDebugObj;
   TestObj : TTestObjB;
+  I : Integer;
 begin
   DebugObj := TTCPDebugObj.Create;
   TestObj := TTestObjB.Create;
@@ -1205,16 +1206,23 @@ begin
   C.OnWorkerExecute := TestObj.ClientExec;
   C.RetryFailedConnect := True;
   C.RetryFailedConnectDelaySec := 2;
-  C.RetryFailedConnectMaxAttempts := 2;
+  C.RetryFailedConnectMaxAttempts := 3;
+  C.ReconnectOnDisconnect := False;
   C.Active := True;
 
-  Sleep(1000);
+  Sleep(2000);
 
   S.Active := True;
 
+  I := 0;
   repeat
     Sleep(1);
-  until TestObj.FinC and TestObj.FinS;
+    Inc(I);
+  until (TestObj.FinC and TestObj.FinS) or (I > 4000);
+  Assert(TestObj.FinC and TestObj.FinS);
+
+  //S.Active := False;
+  //Sleep(100000);
 
   C.Active := False;
   S.Active := False;

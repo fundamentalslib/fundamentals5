@@ -245,7 +245,7 @@ type
   private
     // parameters
     FAddressFamily      : TIPAddressFamily;
-    FBindAddressStr     : RawByteString;
+    FBindAddressStr     : String;
     FServerPort         : Integer;
     FMaxBacklog         : Integer;
     FMaxClients         : Integer;
@@ -320,7 +320,7 @@ type
     procedure Loaded; override;
 
     procedure SetAddressFamily(const AddressFamily: TIPAddressFamily);
-    procedure SetBindAddress(const BindAddressStr: RawByteString);
+    procedure SetBindAddress(const BindAddressStr: String);
     procedure SetServerPort(const ServerPort: Integer);
     procedure SetMaxBacklog(const MaxBacklog: Integer);
     procedure SetMaxClients(const MaxClients: Integer);
@@ -400,10 +400,11 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Finalise;
 
     // Parameters
     property  AddressFamily: TIPAddressFamily read FAddressFamily write SetAddressFamily default iaIP4;
-    property  BindAddress: RawByteString read FBindAddressStr write SetBindAddress;
+    property  BindAddress: String read FBindAddressStr write SetBindAddress;
     property  ServerPort: Integer read FServerPort write SetServerPort;
     property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default TCP_SERVER_DEFAULT_MaxBacklog;
     property  MaxClients: Integer read FMaxClients write SetMaxClients default TCP_SERVER_DEFAULT_MaxClients;
@@ -981,6 +982,7 @@ begin
     end;
   finally
     FServer.ThreadTerminate(self);
+    FServer := nil;
   end;
 end;
 
@@ -1020,13 +1022,29 @@ begin
 end;
 
 destructor TF5TCPServer.Destroy;
+begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TF5TCPServer.Finalise;
 var I : Integer;
     C : TTCPServerClient;
 begin
   // stop threads
   try
-    FreeAndNil(FControlThread);
+    if Assigned(FProcessThread) then
+      begin
+        FProcessThread.Terminate;
+        FProcessThread.WaitFor;
+      end;
+    if Assigned(FControlThread) then
+      begin
+        FControlThread.Terminate;
+        FControlThread.WaitFor;
+      end;
     FreeAndNil(FProcessThread);
+    FreeAndNil(FControlThread);
     for I := Length(FClients) - 1 downto 0 do
       FClients[I].TerminateWorkerThread;
   except
@@ -1056,7 +1074,6 @@ begin
   // free
   FreeAndNil(FServerSocket);
   FreeAndNil(FLock);
-  inherited Destroy;
 end;
 
 procedure TF5TCPServer.Lock;
@@ -1155,7 +1172,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5TCPServer.SetBindAddress(const BindAddressStr: RawByteString);
+procedure TF5TCPServer.SetBindAddress(const BindAddressStr: String);
 begin
   if BindAddressStr = FBindAddressStr then
     exit;
@@ -1738,7 +1755,7 @@ begin
   if IsTerminated then
     exit;
   // initialise server socket
-  FBindAddress := ResolveHostA(FBindAddressStr, FAddressFamily);
+  FBindAddress := ResolveHost(FBindAddressStr, FAddressFamily);
   SetSocketAddrPort(FBindAddress, FServerPort);
   if IsTerminated then
     exit;
