@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStrings.pas                                           }
-{   File version:     5.68                                                     }
+{   File version:     5.69                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
@@ -111,6 +111,7 @@
 {   2017/10/24  5.66  Created units flcUnicodeChar, flcZeroTerminatedString    }
 {   2018/07/17  5.67  Type changes.                                            }
 {   2018/08/11  5.68  Created unit flcUnicodeString.                           }
+{   2018/08/11  5.69  Removed dependency on flcCharSet.                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1922,23 +1923,6 @@ function  StrToBoolean(const S: String): Boolean;
 
 
 {                                                                              }
-{ Character class strings                                                      }
-{                                                                              }
-{   Perl-like character class string representation of character sets, eg      }
-{   the set ['0', 'A'..'Z'] is presented as [0A-Z]. Negated classes are also   }
-{   supported, eg '[^A-Za-z]' is all non-alpha characters. The empty and       }
-{   complete sets have special representations; '[]' and '.' respectively.     }
-{                                                                              }
-{$IFDEF SupportAnsiString}
-function  CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
-{$ENDIF}
-{$IFNDEF CLR}
-// function  CharClassStrToCharSet(const S: AnsiString): CharSet;
-{$ENDIF}
-
-
-
-{                                                                              }
 { Dynamic array functions                                                      }
 {                                                                              }
 {$IFDEF SupportAnsiString}
@@ -1992,8 +1976,7 @@ implementation
 
 uses
   { Fundamentals }
-  flcUtils,
-  flcCharSet;
+  flcUtils;
 
 
 
@@ -2797,6 +2780,14 @@ begin
       end
     else
       exit;
+end;
+
+function WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean;
+begin
+  if Ord(A) >= $100 then
+    Result := False
+  else
+    Result := AnsiChar(Ord(A)) in C;
 end;
 
 function StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer;
@@ -14910,162 +14901,6 @@ end;
 
 
 {                                                                              }
-{ Character class strings                                                      }
-{                                                                              }
-{$IFDEF SupportAnsiString}
-function CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
-
-  function ChStr(const Ch: AnsiChar): AnsiString;
-  begin
-    case Ch of
-      '\'       : Result := '\\';
-      ']'       : Result := '\]';
-      AsciiBEL  : Result := '\a';
-      AsciiBS   : Result := '\b';
-      AsciiESC  : Result := '\e';
-      AsciiFF   : Result := '\f';
-      AsciiLF   : Result := '\n';
-      AsciiCR   : Result := '\r';
-      AsciiHT   : Result := '\t';
-      AsciiVT   : Result := '\v';
-      else if (Ch < #32) or (Ch > #127) then // non-printable
-        Result := '\x' + Word32ToHexA(Ord(Ch), 1) else
-        Result := Ch;
-    end;
-  end;
-
-  function SeqStr(const SeqStart, SeqEnd: AnsiChar): AnsiString;
-  begin
-    Result := ChStr(SeqStart);
-    if Ord(SeqEnd) = Ord(SeqStart) + 1 then
-      Result := Result + ChStr(SeqEnd) else // consequetive chars
-      if SeqEnd > SeqStart then // range
-        Result := Result + '-' + ChStr(SeqEnd);
-  end;
-
-var CS       : ByteCharSet;
-    F        : AnsiChar;
-    SeqStart : AnsiChar;
-    Seq      : Boolean;
-
-begin
-  if IsComplete(C) then
-    Result := '.' else
-  if IsEmpty(C) then
-    Result := '[]' else
-    begin
-      Result := '[';
-      CS := C;
-      if (AnsiChar(#0) in C) and (AnsiChar(#255) in C) then
-        begin
-          ComplementCharSet(CS);
-          Result := Result + '^';
-        end;
-      Seq := False;
-      SeqStart := #0;
-      for F := #0 to #255 do
-        if F in CS then
-          begin
-            if not Seq then
-              begin
-                SeqStart := F;
-                Seq := True;
-              end;
-          end else
-          if Seq then
-            begin
-              Result := Result + SeqStr(SeqStart, AnsiChar(Ord(F) - 1));
-              Seq := False;
-            end;
-      if Seq then
-        Result := Result + SeqStr(SeqStart, #255);
-      Result := Result + ']';
-    end;
-end;
-{$ENDIF}
-
-{$IFNDEF CLR}
-(*
-function CharClassStrToCharSet(const S: AnsiString): CharSet;
-var I, L : Integer;
-
-  function DecodeChar: AnsiChar;
-  var J : Integer;
-  begin
-    if S[I] = '\' then
-      if I + 1 = L then
-        begin
-          Inc(I);
-          Result := '\';
-        end else
-        if not MatchQuantSeqB(J, [['x'], csHexDigit, csHexDigit],
-            [mqOnce, mqOnce, mqOptional], S, [moDeterministic], I + 1) then
-          begin
-            case S[I + 1] of
-              '0' : Result := AsciiNULL;
-              'a' : Result := AsciiBEL;
-              'b' : Result := AsciiBS;
-              'e' : Result := AsciiESC;
-              'f' : Result := AsciiFF;
-              'n' : Result := AsciiLF;
-              'r' : Result := AsciiCR;
-              't' : Result := AsciiHT;
-              'v' : Result := AsciiVT;
-              else Result := S[I + 1];
-            end;
-            Inc(I, 2);
-          end else
-          begin
-            if J = I + 2 then
-              Result := AnsiChar(HexAnsiCharToInt(S[J])) else
-              Result := AnsiChar(HexAnsiCharToInt(S[J - 1]) * 16 + HexAnsiCharToInt(S[J]));
-            I := J + 1;
-          end
-    else
-      begin
-        Result := S[I];
-        Inc(I);
-      end;
-  end;
-
-var Neg  : Boolean;
-    A, B : AnsiChar;
-begin
-  L := Length(S);
-  if (L = 0) or (S = '[]') then
-    Result := [] else
-  if L = 1 then
-    if S[1] in ['.', '*', '?'] then
-      Result := CompleteCharSet else
-      Result := [S[1]] else
-  if (S[1] <> '[') or (S[L] <> ']') then
-    raise EConvertError.Create('Invalid character class string')
-  else
-    begin
-      Neg := S[2] = '^';
-      I := iif(Neg, 3, 2);
-      Result := [];
-      while I < L do
-        begin
-          A := DecodeChar;
-          if (I + 1 < L) and (S[I] = '-') then
-            begin
-              Inc(I);
-              B := DecodeChar;
-              Result := Result + [A..B];
-            end else
-            Include(Result, A);
-       end;
-      if Neg then
-        ComplementCharSet(Result);
-    end;
-end;
-*)
-{$ENDIF}
-
-
-
-{                                                                              }
 { Dynamic array functions                                                      }
 {                                                                              }
 {$IFDEF SupportAnsiString}
@@ -16778,35 +16613,6 @@ begin
          'ABCDE', 'StrCharEscape');
   Assert(StrCharUnescapeA('AB\\c\\dE', '\\', ['c', 'd'], ['C', 'D'], True, True) =
          'ABCDE', 'StrCharUnescape');
-  {$ENDIF}
-
-  { CharClassStr                                                               }
-  {$IFDEF SupportAnsiString}
-  Assert(CharSetToCharClassStr(['a'..'z']) = '[a-z]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteByteCharSet) = '.', 'CharClassStr');
-  Assert(CharSetToCharClassStr([#0..#31]) = '[\x0-\x1F]', 'CharClassStr');
-  Assert(CharSetToCharClassStr([#0..#32]) = '[\x0- ]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteByteCharSet - ['a']) = '[^a]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(CompleteByteCharSet - ['a'..'z']) = '[^a-z]', 'CharClassStr');
-  Assert(CharSetToCharClassStr(['a'..'b']) = '[ab]', 'CharClassStr');
-  Assert(CharSetToCharClassStr([]) = '[]', 'CharClassStr');
-  {$ENDIF}
-  {$IFNDEF CLR}
-  (*
-  Assert(CharClassStrToCharSet('[a]') = ['a'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[]') = [], 'CharClassStr');
-  Assert(CharClassStrToCharSet('.') = CompleteCharSet, 'CharClassStr');
-  Assert(CharClassStrToCharSet('') = [], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[a-z]') = ['a'..'z'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[^a-z]') = CompleteCharSet - ['a'..'z'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[-]') = ['-'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[a-]') = ['a', '-'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[\x5]') = [#$5], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[\x1f]') = [#$1f], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[\x10-]') = [#$10, '-'], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[\x10-\x1f]') = [#$10..#$1f], 'CharClassStr');
-  Assert(CharClassStrToCharSet('[\x10-\xf]') = [], 'CharClassStr');
-  *)
   {$ENDIF}
 end;
 {$ENDIF}
