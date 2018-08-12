@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcFloats.pas                                            }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      Floating point types utility functions.                  }
 {                                                                              }
 {   Copyright:        Copyright (c) 2003-2018, David J Butler                  }
@@ -36,6 +36,7 @@
 {                                                                              }
 {   2003/03/14  3.01  Added FloatZero, FloatsEqual and FloatsCompare.          }
 {   2018/07/11  5.02  Move to flcFloats unit from flcUtils.                    }
+{   2018/08/12  5.03  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -61,6 +62,7 @@ unit flcFloats;
 interface
 
 uses
+  { Fundamentals }
   flcStdTypes,
   flcUtils;
 
@@ -86,10 +88,8 @@ function  FloatClip(const Value: Float; const Low, High: Float): Float;
 { InXXXRange returns True if A in range of type XXX                            }
 function  InSingleRange(const A: Float): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  InDoubleRange(const A: Float): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-{$IFNDEF CLR}
 function  InCurrencyRange(const A: Float): Boolean; overload;
 function  InCurrencyRange(const A: Int64): Boolean; overload;
-{$ENDIF}
 
 { ExtendedExponent returns the exponent component of an Extended value         }
 {$IFNDEF ExtendedIsDouble}
@@ -197,7 +197,6 @@ function  FloatApproxCompare(const A, B: Float;
 {                                                                              }
 function  FloatToStringA(const A: Extended): AnsiString;
 function  FloatToStringB(const A: Extended): RawByteString;
-function  FloatToStringW(const A: Extended): WideString;
 function  FloatToStringU(const A: Extended): UnicodeString;
 function  FloatToString(const A: Extended): String;
 
@@ -205,21 +204,15 @@ function  TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Val
 function  TryStringToFloatPW(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
 function  TryStringToFloatP(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
 
-function  TryStringToFloatA(const A: AnsiString; out B: Extended): Boolean;
 function  TryStringToFloatB(const A: RawByteString; out B: Extended): Boolean;
-function  TryStringToFloatW(const A: WideString; out B: Extended): Boolean;
 function  TryStringToFloatU(const A: UnicodeString; out B: Extended): Boolean;
 function  TryStringToFloat(const A: String; out B: Extended): Boolean;
 
-function  StringToFloatA(const A: AnsiString): Extended;
 function  StringToFloatB(const A: RawByteString): Extended;
-function  StringToFloatW(const A: WideString): Extended;
 function  StringToFloatU(const A: UnicodeString): Extended;
 function  StringToFloat(const A: String): Extended;
 
-function  StringToFloatDefA(const A: AnsiString; const Default: Extended): Extended;
 function  StringToFloatDefB(const A: RawByteString; const Default: Extended): Extended;
-function  StringToFloatDefW(const A: WideString; const Default: Extended): Extended;
 function  StringToFloatDefU(const A: UnicodeString; const Default: Extended): Extended;
 function  StringToFloatDef(const A: String; const Default: Extended): Extended;
 
@@ -311,21 +304,13 @@ begin
   Result := (B >= MinSingle) and (B <= MaxSingle);
 end;
 
-{$IFDEF CLR}
-function InDoubleRange(const A: Float): Boolean;
-begin
-  Result := True;
-end;
-{$ELSE}
 function InDoubleRange(const A: Float): Boolean;
 var B : Float;
 begin
   B := Abs(A);
   Result := (B >= MinDouble) and (B <= MaxDouble);
 end;
-{$ENDIF}
 
-{$IFNDEF CLR}
 function InCurrencyRange(const A: Float): Boolean;
 begin
   Result := (A >= MinCurrency) and (A <= MaxCurrency);
@@ -335,7 +320,6 @@ function InCurrencyRange(const A: Int64): Boolean;
 begin
   Result := (A >= MinCurrency) and (A <= MaxCurrency);
 end;
-{$ENDIF}
 
 {$IFNDEF ExtendedIsDouble}
 function ExtendedExponentBase2(const A: Extended; var Exponent: Integer): Boolean;
@@ -661,11 +645,6 @@ end;
 function FloatToStringB(const A: Extended): RawByteString;
 begin
   Result := RawByteString(FloatToStringS(A));
-end;
-
-function FloatToStringW(const A: Extended): WideString;
-begin
-  Result := WideString(FloatToStringS(A));
 end;
 
 function FloatToStringU(const A: Extended): UnicodeString;
@@ -1122,31 +1101,11 @@ begin
   Result := convertOK;
 end;
 
-function TryStringToFloatA(const A: AnsiString; out B: Extended): Boolean;
-var L, N : Integer;
-begin
-  L := Length(A);
-  Result := TryStringToFloatPA(PAnsiChar(A), L, B, N) = convertOK;
-  if Result then
-    if N < L then
-      Result := False;
-end;
-
 function TryStringToFloatB(const A: RawByteString; out B: Extended): Boolean;
 var L, N : Integer;
 begin
   L := Length(A);
   Result := TryStringToFloatPA(PAnsiChar(A), L, B, N) = convertOK;
-  if Result then
-    if N < L then
-      Result := False;
-end;
-
-function TryStringToFloatW(const A: WideString; out B: Extended): Boolean;
-var L, N : Integer;
-begin
-  L := Length(A);
-  Result := TryStringToFloatPW(PWideChar(A), L, B, N) = convertOK;
   if Result then
     if N < L then
       Result := False;
@@ -1180,21 +1139,9 @@ begin
   raise ERangeError.Create(SRangeCheckError);
 end;
 
-function StringToFloatA(const A: AnsiString): Extended;
-begin
-  if not TryStringToFloatA(A, Result) then
-    RaiseRangeCheckError;
-end;
-
 function StringToFloatB(const A: RawByteString): Extended;
 begin
   if not TryStringToFloatB(A, Result) then
-    RaiseRangeCheckError;
-end;
-
-function StringToFloatW(const A: WideString): Extended;
-begin
-  if not TryStringToFloatW(A, Result) then
     RaiseRangeCheckError;
 end;
 
@@ -1210,21 +1157,9 @@ begin
     RaiseRangeCheckError;
 end;
 
-function StringToFloatDefA(const A: AnsiString; const Default: Extended): Extended;
-begin
-  if not TryStringToFloatA(A, Result) then
-    Result := Default;
-end;
-
 function StringToFloatDefB(const A: RawByteString; const Default: Extended): Extended;
 begin
   if not TryStringToFloatB(A, Result) then
-    Result := Default;
-end;
-
-function StringToFloatDefW(const A: WideString; const Default: Extended): Extended;
-begin
-  if not TryStringToFloatW(A, Result) then
     Result := Default;
 end;
 
@@ -1423,24 +1358,6 @@ begin
   Assert(FloatToStringB(1.5) = ToRawByteString('1.5'));
   Assert(FloatToStringB(1.1) = ToRawByteString('1.1'));
 
-  Assert(FloatToStringW(0.0) = ToWideString('0'));
-  Assert(FloatToStringW(-1.5) = ToWideString('-1.5'));
-  Assert(FloatToStringW(1.5) = ToWideString('1.5'));
-  Assert(FloatToStringW(1.1) = ToWideString('1.1'));
-  {$IFNDEF ExtendedIsDouble}
-  Assert(FloatToStringW(123456789.123456789) = ToWideString('123456789.123456789'));
-  {$IFDEF DELPHIXE2_UP}
-  Assert(FloatToStringW(123456789012345.1234567890123456789) = ToWideString('123456789012345.123'));
-  {$ELSE}
-  Assert(FloatToStringW(123456789012345.1234567890123456789) = ToWideString('123456789012345.1234'));
-  {$ENDIF}
-  Assert(FloatToStringW(1234567890123456.1234567890123456789) = ToWideString('1.23456789012346E+0015'));
-  {$ENDIF}
-  Assert(FloatToStringW(0.12345) = ToWideString('0.12345'));
-  Assert(FloatToStringW(1e100) = ToWideString('1E+0100'));
-  Assert(FloatToStringW(1.234e+100) = ToWideString('1.234E+0100'));
-  Assert(FloatToStringW(1.5e-100) = ToWideString('1.5E-0100'));
-
   Assert(FloatToStringU(0.0) = '0');
   Assert(FloatToStringU(-1.5) = '-1.5');
   Assert(FloatToStringU(1.5) = '1.5');
@@ -1547,36 +1464,36 @@ begin
   Assert(ExtendedApproxEqual(E, 1.2e+201, 1e-1) and (L = 106));
   {$ENDIF}
 
-  Assert(StringToFloatA(ToAnsiString('0')) = 0.0);
-  Assert(StringToFloatA(ToAnsiString('1')) = 1.0);
-  Assert(StringToFloatA(ToAnsiString('1.5')) = 1.5);
-  Assert(StringToFloatA(ToAnsiString('+1.5')) = 1.5);
-  Assert(StringToFloatA(ToAnsiString('-1.5')) = -1.5);
-  Assert(StringToFloatA(ToAnsiString('1.1')) = 1.1);
-  Assert(StringToFloatA(ToAnsiString('-00.00')) = 0.0);
-  Assert(StringToFloatA(ToAnsiString('+00.00')) = 0.0);
-  Assert(StringToFloatA(ToAnsiString('0000000000000000000000001.1000000000000000000000000')) = 1.1);
-  Assert(StringToFloatA(ToAnsiString('.5')) = 0.5);
-  Assert(StringToFloatA(ToAnsiString('-.5')) = -0.5);
+  Assert(StringToFloatB(ToAnsiString('0')) = 0.0);
+  Assert(StringToFloatB(ToAnsiString('1')) = 1.0);
+  Assert(StringToFloatB(ToAnsiString('1.5')) = 1.5);
+  Assert(StringToFloatB(ToAnsiString('+1.5')) = 1.5);
+  Assert(StringToFloatB(ToAnsiString('-1.5')) = -1.5);
+  Assert(StringToFloatB(ToAnsiString('1.1')) = 1.1);
+  Assert(StringToFloatB(ToAnsiString('-00.00')) = 0.0);
+  Assert(StringToFloatB(ToAnsiString('+00.00')) = 0.0);
+  Assert(StringToFloatB(ToAnsiString('0000000000000000000000001.1000000000000000000000000')) = 1.1);
+  Assert(StringToFloatB(ToAnsiString('.5')) = 0.5);
+  Assert(StringToFloatB(ToAnsiString('-.5')) = -0.5);
   {$IFNDEF ExtendedIsDouble}
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('1.123456789')), 1.123456789, 1e-10));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('123456789.123456789')), 123456789.123456789, 1e-10));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('1.5e500')), 1.5e500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('+1.5e+500')), 1.5e500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('1.2E-500')), 1.2e-500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('-1.2E-500')), -1.2e-500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatA(ToAnsiString('-1.23456789E-500')), -1.23456789e-500, 1e-9));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.123456789')), 1.123456789, 1e-10));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('123456789.123456789')), 123456789.123456789, 1e-10));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.5e500')), 1.5e500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('+1.5e+500')), 1.5e500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.2E-500')), 1.2e-500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('-1.2E-500')), -1.2e-500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('-1.23456789E-500')), -1.23456789e-500, 1e-9));
   {$ENDIF}
 
-  Assert(not TryStringToFloatA(ToAnsiString(''), E));
-  Assert(not TryStringToFloatA(ToAnsiString('+'), E));
-  Assert(not TryStringToFloatA(ToAnsiString('-'), E));
-  Assert(not TryStringToFloatA(ToAnsiString('.'), E));
-  Assert(not TryStringToFloatA(ToAnsiString(' '), E));
-  Assert(not TryStringToFloatA(ToAnsiString(' 0'), E));
-  Assert(not TryStringToFloatA(ToAnsiString('0 '), E));
-  Assert(not TryStringToFloatA(ToAnsiString('--0'), E));
-  Assert(not TryStringToFloatA(ToAnsiString('0X'), E));
+  Assert(not TryStringToFloatB(ToAnsiString(''), E));
+  Assert(not TryStringToFloatB(ToAnsiString('+'), E));
+  Assert(not TryStringToFloatB(ToAnsiString('-'), E));
+  Assert(not TryStringToFloatB(ToAnsiString('.'), E));
+  Assert(not TryStringToFloatB(ToAnsiString(' '), E));
+  Assert(not TryStringToFloatB(ToAnsiString(' 0'), E));
+  Assert(not TryStringToFloatB(ToAnsiString('0 '), E));
+  Assert(not TryStringToFloatB(ToAnsiString('--0'), E));
+  Assert(not TryStringToFloatB(ToAnsiString('0X'), E));
 end;
 
 procedure Test;

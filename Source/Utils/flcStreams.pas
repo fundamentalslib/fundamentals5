@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 4.00                                        }
 {   File name:        flcStreams.pas                                           }
-{   File version:     5.25                                                     }
+{   File version:     5.26                                                     }
 {   Description:      Reader, Writer and Stream classes                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -59,6 +59,7 @@
 {   2015/03/31  4.23  Revision.                                                }
 {   2016/01/17  5.24  Revised for Fundamentals 5.                              }
 {   2016/05/02  5.25  Change character handling in StringWriters and Readers.  }
+{   2018/08/12  5.26  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -176,22 +177,12 @@ type
 
     function  ReadCharA: AnsiChar; virtual;
     function  ReadCharW: WideChar; virtual;
-    {$IFDEF SupportAnsiString}
-    function  ReadStrA(const Len: Integer): AnsiString; virtual;
-    {$ENDIF}
-    {$IFDEF SupportRawByteString}
     function  ReadStrB(const Len: Integer): RawByteString; virtual;
-    {$ENDIF}
-    function  ReadStrW(const Len: Integer): WideString; virtual;
     function  ReadStrU(const Len: Integer): UnicodeString; virtual;
 
-    {$IFDEF SupportRawByteString}
     function  GetToEOFB: RawByteString; virtual;
-    {$ENDIF}
 
-    {$IFDEF SupportRawByteString}
     function  GetAsStringB: RawByteString; virtual;
-    {$ENDIF}
 
     function  ReadByte: Byte; virtual;
     function  ReadWord: Word;
@@ -202,29 +193,19 @@ type
     function  ReadDouble: Double;
     function  ReadFloat: Float;
 
-    {$IFDEF SupportRawByteString}
     function  ReadPackedRawByteString: RawByteString;
-    {$ENDIF}
-    {$IFDEF SupportAnsiString}
-    function  ReadPackedAnsiString: AnsiString;
-    {$ENDIF}
-    function  ReadPackedWideString: WideString;
+    function  ReadPackedUTF8String: UTF8String;
     function  ReadPackedUnicodeString: UnicodeString;
     function  ReadPackedString: String;
 
-    {$IFDEF SupportAnsiString}
-    function  ReadPackedAnsiStringArray: AnsiStringArray;
-    {$ENDIF}
-    function  ReadPackedWideStringArray: WideStringArray;
+    function  ReadPackedRawByteStringArray: RawByteStringArray;
     function  ReadPackedUnicodeStringArray: UnicodeStringArray;
     function  ReadPackedStringArray: StringArray;
 
     function  Peek(out Buffer; const Size: Integer): Integer; virtual;
     procedure PeekBuffer(out Buffer; const Size: Integer);
 
-    {$IFDEF SupportRawByteString}
     function  PeekStrB(const Len: Integer): RawByteString; virtual;
-    {$ENDIF}
     function  PeekStrU(const Len: Integer): UnicodeString; virtual;
 
     function  PeekByte: Byte; virtual;
@@ -265,13 +246,10 @@ type
     function  LocateBuffer(const Buffer; const Size: Integer;
               const MaxOffset: Integer = -1;
               const CaseSensitive: Boolean = True): Integer; virtual;
-    {$IFDEF SupportRawByteString}
     function  LocateStrB(const S: RawByteString;
               const MaxOffset: Integer = -1;
               const CaseSensitive: Boolean = True): Integer; virtual;
-    {$ENDIF}
 
-    {$IFDEF SupportRawByteString}
     function  ExtractAllB(const C: ByteCharSet;
               const ExtractNonMatch: Boolean = False;
               const MaxCount: Integer = -1): RawByteString;
@@ -285,7 +263,6 @@ type
               const EOLTypes: TReaderEOLTypes = DefaultReaderEOLTypes): RawByteString;
     function  SkipLine(const MaxLineLength: Integer = -1;
               const EOLTypes: TReaderEOLTypes = DefaultReaderEOLTypes): Boolean;
-    {$ENDIF}
   end;
 
 
@@ -331,7 +308,6 @@ type
 
 
 
-{$IFDEF SupportRawByteString}
 {                                                                              }
 { TRawByteStringReader                                                         }
 {   Memory reader implementation for a reference counted long string.          }
@@ -351,7 +327,6 @@ type
 
     function  ReadCharW: WideChar; override;
   end;
-{$ENDIF}
 
 
 
@@ -411,9 +386,7 @@ type
 
   EFileReader = class(EReader);
 
-{$IFDEF SupportRawByteString}
 function  ReadFileToStrB(const FileName: String): RawByteString;
-{$ENDIF}
 
 
 
@@ -624,7 +597,6 @@ type
     procedure SetSize(const Size: Int64); override;
 
     procedure SetAsStringB(const S: RawByteString); virtual;
-    procedure SetAsStringW(const S: WideString); virtual;
     procedure SetAsStringU(const S: UnicodeString); virtual;
 
   public
@@ -635,7 +607,6 @@ type
     procedure Clear; virtual;
 
     property  AsStringB: RawByteString write SetAsStringB;
-    property  AsStringW: WideString write SetAsStringW;
     property  AsStringU: UnicodeString write SetAsStringU;
 
     procedure WriteBuffer(const Buffer; const Size: Integer);
@@ -644,7 +615,6 @@ type
     procedure WriteCharW(const V: WideChar); virtual;
     procedure WriteStrA(const Buffer: AnsiString); virtual;
     procedure WriteStrB(const Buffer: RawByteString); virtual;
-    procedure WriteStrW(const Buffer: WideString); virtual;
     procedure WriteStrU(const Buffer: UnicodeString); virtual;
 
     procedure WriteByte(const V: Byte); virtual;
@@ -658,12 +628,10 @@ type
 
     procedure WritePackedAnsiString(const V: AnsiString);
     procedure WritePackedRawByteString(const V: RawByteString);
-    procedure WritePackedWideString(const V: WideString);
     procedure WritePackedUnicodeString(const V: UnicodeString);
     procedure WritePackedString(const V: String);
 
     procedure WritePackedAnsiStringArray(const V: array of AnsiString);
-    procedure WritePackedWideStringArray(const V: array of WideString);
     procedure WritePackedUnicodeStringArray(const V: array of UnicodeString);
     procedure WritePackedStringArray(const V: array of String);
 
@@ -731,9 +699,9 @@ procedure WriteStrToFileB(
           const OpenMode: TFileWriterOpenMode = fwomCreate);
 procedure AppendStrToFileB(const FileName: String; const S: RawByteString);
 
-procedure WriteWideStrToFile(const FileName: String; const S: WideString;
+procedure WriteUnicodeStrToFile(const FileName: String; const S: UnicodeString;
           const OpenMode: TFileWriterOpenMode = fwomCreate);
-procedure AppendWideStrToFile(const FileName: String; const S: WideString);
+procedure AppendUnicodeStrToFile(const FileName: String; const S: UnicodeString);
 
 
 
@@ -796,7 +764,6 @@ type
     function  Write(const Buffer; const Size: Integer): Integer; override;
     procedure WriteCharA(const V: AnsiChar); override;
     procedure WriteCharW(const V: WideChar); override;
-    procedure WriteStrW(const Buffer: WideString); override;
     procedure WriteStrU(const Buffer: UnicodeString); override;
     procedure WriteByte(const V: Byte); override;
     procedure WriteWord(const V: Word); override;
@@ -852,14 +819,10 @@ type
 
     procedure ReadBuffer(var Buffer; const Size: Integer);
     function  ReadByte: Byte;
-    {$IFDEF SupportRawByteString}
     function  ReadStrB(const Size: Integer): RawByteString;
-    {$ENDIF}
 
     procedure WriteBuffer(const Buffer; const Size: Integer);
-    {$IFDEF SupportRawByteString}
     procedure WriteStrB(const S: RawByteString);
-    {$ENDIF}
     procedure WriteStrU(const S: UnicodeString);
 
     procedure Assign(const Source: TObject); virtual;
@@ -1197,35 +1160,6 @@ begin
     RaiseReadError;
 end;
 
-{$IFDEF SupportAnsiString}
-function AReaderEx.ReadStrA(const Len: Integer): AnsiString;
-var L, I : Integer;
-begin
-  if Len <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  SetLength(Result, Len);
-  L := 0;
-  for I := 1 to Len do
-    begin
-      if EOF then
-        break;
-      Result[I] := ReadCharA;
-      Inc(L);
-    end;
-  if L <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  if L < Len then
-    SetLength(Result, L);
-end;
-{$ENDIF}
-
-{$IFDEF SupportRawByteString}
 function AReaderEx.ReadStrB(const Len: Integer): RawByteString;
 var L, I : Integer;
 begin
@@ -1241,33 +1175,6 @@ begin
       if EOF then
         break;
       Result[I] := ReadCharA;
-      Inc(L);
-    end;
-  if L <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  if L < Len then
-    SetLength(Result, L);
-end;
-{$ENDIF}
-
-function AReaderEx.ReadStrW(const Len: Integer): WideString;
-var L, I : Integer;
-begin
-  if Len <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  SetLength(Result, Len);
-  L := 0;
-  for I := 1 to Len do
-    begin
-      if EOF then
-        break;
-      Result[I] := ReadCharW;
       Inc(L);
     end;
   if L <= 0 then
@@ -1305,7 +1212,6 @@ begin
     SetLength(Result, L);
 end;
 
-{$IFDEF SupportRawByteString}
 function AReaderEx.GetToEOFB: RawByteString;
 var S    : Int64;
     B    : RawByteString;
@@ -1358,15 +1264,12 @@ begin
     // size known
     Result := ReadStrB(S - GetPosition);
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function AReaderEx.GetAsStringB: RawByteString;
 begin
   SetPosition(0);
   Result := GetToEOFB;
 end;
-{$ENDIF}
 
 function AReaderEx.ReadByte: Byte;
 begin
@@ -1408,7 +1311,6 @@ begin
   ReadBuffer(Result, Sizeof(Float));
 end;
 
-{$IFDEF SupportRawByteString}
 function AReaderEx.ReadPackedRawByteString: RawByteString;
 var L : Integer;
 begin
@@ -1417,26 +1319,14 @@ begin
     raise EReader.Create(SInvalidDataFormat);
   Result := ReadStrB(L);
 end;
-{$ENDIF}
 
-{$IFDEF SupportAnsiString}
-function AReaderEx.ReadPackedAnsiString: AnsiString;
+function AReaderEx.ReadPackedUTF8String: UTF8String;
 var L : Integer;
 begin
   L := ReadLongInt;
   if L < 0 then
     raise EReader.Create(SInvalidDataFormat);
   Result := ReadStrB(L);
-end;
-{$ENDIF}
-
-function AReaderEx.ReadPackedWideString: WideString;
-var L : Integer;
-begin
-  L := ReadLongInt;
-  if L < 0 then
-    raise EReader.Create(SInvalidDataFormat);
-  Result := ReadStrW(L);
 end;
 
 function AReaderEx.ReadPackedUnicodeString: UnicodeString;
@@ -1457,8 +1347,7 @@ begin
   {$ENDIF}
 end;
 
-{$IFDEF SupportAnsiString}
-function AReaderEx.ReadPackedAnsiStringArray: AnsiStringArray;
+function AReaderEx.ReadPackedRawByteStringArray: RawByteStringArray;
 var I, L : Integer;
 begin
   L := ReadLongInt;
@@ -1466,19 +1355,7 @@ begin
     raise EReader.Create(SInvalidDataFormat);
   SetLength(Result, L);
   for I := 0 to L - 1 do
-    Result[I] := ReadPackedAnsiString;
-end;
-{$ENDIF}
-
-function AReaderEx.ReadPackedWideStringArray: WideStringArray;
-var I, L : Integer;
-begin
-  L := ReadLongInt;
-  if L < 0 then
-    raise EReader.Create(SInvalidDataFormat);
-  SetLength(Result, L);
-  for I := 0 to L - 1 do
-    Result[I] := ReadPackedWideString;
+    Result[I] := ReadPackedRawByteString;
 end;
 
 function AReaderEx.ReadPackedUnicodeStringArray: UnicodeStringArray;
@@ -1520,7 +1397,6 @@ begin
     RaiseReadError;
 end;
 
-{$IFDEF SupportRawByteString}
 function AReaderEx.PeekStrB(const Len: Integer): RawByteString;
 var L : Integer;
 begin
@@ -1539,7 +1415,6 @@ begin
   if L < Len then
     SetLength(Result, L);
 end;
-{$ENDIF}
 
 function AReaderEx.PeekStrU(const Len: Integer): UnicodeString;
 var L : Integer;
@@ -1803,7 +1678,6 @@ begin
   end;
 end;
 
-{$IFDEF SupportRawByteString}
 function AReaderEx.LocateStrB(const S: RawByteString; const MaxOffset: Integer;
     const CaseSensitive: Boolean): Integer;
 begin
@@ -1821,7 +1695,7 @@ begin
     else
       Result := ReadStrB(MaxCount)
   else
-    Result := ReadStrA(I);
+    Result := ReadStrB(I);
 end;
 
 function AReaderEx.ExtractToStrB(const S: RawByteString; const MaxLength: Integer;
@@ -1835,7 +1709,7 @@ begin
     else
       Result := ReadStrB(MaxLength)
   else
-    Result := ReadStrA(I);
+    Result := ReadStrB(I);
 end;
 
 function AReaderEx.ExtractToCharB(const C: AnsiChar; const MaxLength: Integer = -1): RawByteString;
@@ -1889,7 +1763,7 @@ const
   csNewLineCRLFEOF : ByteCharSet = [#10, #13, #26];
 
 procedure FirstNewLineCharsFromEOLTypes(const EOLTypes: TReaderEOLTypes;
-    var Chars: PCharSet);
+    var Chars: PByteCharSet);
 begin
   if [eolCR, eolCRLF] * EOLTypes <> [] then
     if [eolLF, eolLFCR] * EOLTypes <> [] then
@@ -1968,7 +1842,7 @@ end;
 
 function AReaderEx.ExtractLineB(const MaxLineLength: Integer;
     const EOLTypes: TReaderEOLTypes): RawByteString;
-var NewLineChars : PCharSet;
+var NewLineChars : PByteCharSet;
     Fin : Boolean;
 begin
   if EOLTypes = [] then
@@ -2002,7 +1876,7 @@ end;
 
 function AReaderEx.SkipLine(const MaxLineLength: Integer;
     const EOLTypes: TReaderEOLTypes): Boolean;
-var NewLineChars : PCharSet;
+var NewLineChars : PByteCharSet;
     I    : Integer;
     P, Q : Int64;
     Fin  : Boolean;
@@ -2050,7 +1924,6 @@ begin
       end;
   until Fin;
 end;
-{$ENDIF}
 
 
 
@@ -2231,7 +2104,6 @@ end;
 
 
 
-{$IFDEF SupportRawByteString}
 {                                                                              }
 { TRawByteStringReader                                                         }
 {                                                                              }
@@ -2256,7 +2128,6 @@ function TRawByteStringReader.ReadCharW: WideChar;
 begin
   Result := WideChar(ReadCharA);
 end;
-{$ENDIF}
 
 
 
@@ -2389,7 +2260,6 @@ end;
 
 
 { ReadFileToStrB                                                               }
-{$IFDEF SupportRawByteString}
 function ReadFileToStrB(const FileName: String): RawByteString;
 var F : TFileReader;
 begin
@@ -2400,7 +2270,6 @@ begin
     F.Free;
   end;
 end;
-{$ENDIF}
 
 
 
@@ -3069,14 +2938,6 @@ begin
     WriteCharA(Buffer[I]);
 end;
 
-procedure AWriterEx.WriteStrW(const Buffer: WideString);
-var
-  I : Integer;
-begin
-  for I := 1 to Length(Buffer) do
-    WriteCharW(Buffer[I]);
-end;
-
 procedure AWriterEx.WriteStrU(const Buffer: UnicodeString);
 var
   I : Integer;
@@ -3089,13 +2950,6 @@ procedure AWriterEx.SetAsStringB(const S: RawByteString);
 begin
   Position := 0;
   WriteStrA(S);
-  Truncate;
-end;
-
-procedure AWriterEx.SetAsStringW(const S: WideString);
-begin
-  Position := 0;
-  WriteStrW(S);
   Truncate;
 end;
 
@@ -3158,12 +3012,6 @@ begin
   WriteStrB(V);
 end;
 
-procedure AWriterEx.WritePackedWideString(const V: WideString);
-begin
-  WriteLongInt(Length(V));
-  WriteStrW(V);
-end;
-
 procedure AWriterEx.WritePackedUnicodeString(const V: UnicodeString);
 begin
   WriteLongInt(Length(V));
@@ -3186,15 +3034,6 @@ begin
   WriteLongInt(L);
   for I := 0 to L - 1 do
     WritePackedAnsiString(V[I]);
-end;
-
-procedure AWriterEx.WritePackedWideStringArray(const V: array of WideString);
-var I, L : Integer;
-begin
-  L := Length(V);
-  WriteLongInt(L);
-  for I := 0 to L - 1 do
-    WritePackedWideString(V[I]);
 end;
 
 procedure AWriterEx.WritePackedUnicodeStringArray(const V: array of UnicodeString);
@@ -3425,7 +3264,7 @@ begin
   end;
 end;
 
-procedure WriteWideStrToFile(const FileName: String; const S: WideString;
+procedure WriteUnicodeStrToFile(const FileName: String; const S: UnicodeString;
     const OpenMode: TFileWriterOpenMode);
 var F : TFileWriter;
 begin
@@ -3437,13 +3276,13 @@ begin
   end;
 end;
 
-procedure AppendWideStrToFile(const FileName: String; const S: WideString);
+procedure AppendUnicodeStrToFile(const FileName: String; const S: UnicodeString);
 var F : TFileWriter;
 begin
   F := TFileWriter.Create(FileName, fwomCreateIfNotExist);
   try
     F.Append;
-    F.WriteStrW(S);
+    F.WriteStrU(S);
   finally
     F.Free;
   end;
@@ -3654,11 +3493,6 @@ end;
 procedure TUnicodeStringWriter.WriteCharW(const V: WideChar);
 begin
   Write(V, SizeOf(WideChar));
-end;
-
-procedure TUnicodeStringWriter.WriteStrW(const Buffer: WideString);
-begin
-  Write(Pointer(Buffer)^, Length(Buffer) * Sizeof(WideChar));
 end;
 
 procedure TUnicodeStringWriter.WriteStrU(const Buffer: UnicodeString);
@@ -3968,7 +3802,6 @@ begin
   ReadBuffer(Result, 1);
 end;
 
-{$IFDEF SupportRawByteString}
 function AStream.ReadStrB(const Size: Integer): RawByteString;
 var L : Integer;
 begin
@@ -3987,7 +3820,6 @@ begin
   if L < Size then
     SetLength(Result, L);
 end;
-{$ENDIF}
 
 procedure AStream.WriteBuffer(const Buffer; const Size: Integer);
 begin
@@ -3997,12 +3829,10 @@ begin
     raise EStream.Create(SWriteError);
 end;
 
-{$IFDEF SupportRawByteString}
 procedure AStream.WriteStrB(const S: RawByteString);
 begin
   WriteBuffer(Pointer(S)^, Length(S));
 end;
-{$ENDIF}
 
 procedure AStream.WriteStrU(const S: UnicodeString);
 begin
@@ -4297,8 +4127,6 @@ end;
 procedure TestReader(const Reader: AReaderEx; const FreeReader: Boolean);
 begin
   try
-    {$IFDEF SupportRawByteString}
-    {$IFDEF SupportAnsiString}
     Reader.Position := 0;
     Assert(not Reader.EOF,                                  'Reader.EOF');
     Assert(Reader.Size = 26,                                'Reader.Size');
@@ -4309,16 +4137,16 @@ begin
     Assert(Char(Reader.ReadByte) = '0',                     'Reader.ReadByte');
     Assert(Char(Reader.PeekByte) = '1',                     'Reader.PeekByte');
     Assert(Char(Reader.ReadByte) = '1',                     'Reader.ReadByte');
-    Assert(Reader.ReadStrA(0) = '',                         'Reader.ReadStr');
-    Assert(Reader.ReadStrA(-1) = '',                        'Reader.ReadStr');
-    Assert(Reader.ReadStrA(1) = '2',                        'Reader.ReadStr');
+    Assert(Reader.ReadStrB(0) = '',                         'Reader.ReadStr');
+    Assert(Reader.ReadStrB(-1) = '',                        'Reader.ReadStr');
+    Assert(Reader.ReadStrB(1) = '2',                        'Reader.ReadStr');
     Assert(Reader.MatchChar('3'),                           'Reader.MatchChar');
     Assert(Reader.MatchStr('3', True),                      'Reader.MatchStr');
     Assert(Reader.MatchStr('345', True),                    'Reader.MatchStr');
     Assert(not Reader.MatchStr('35', True),                 'Reader.MatchStr');
     Assert(not Reader.MatchStr('4', True),                  'Reader.MatchStr');
     Assert(not Reader.MatchStr('', True),                   'Reader.MatchStr');
-    Assert(Reader.ReadStrA(2) = '34',                       'Reader.ReadStr');
+    Assert(Reader.ReadStrB(2) = '34',                       'Reader.ReadStr');
     Assert(Reader.PeekStrB(3) = '567',                      'Reader.PeekStr');
     Assert(Reader.Locate('5', False, 0) = 0,                'Reader.Locate');
     Assert(Reader.Locate('8', False, -1) = 3,               'Reader.Locate');
@@ -4355,7 +4183,7 @@ begin
     Assert(Reader.SkipAll(['d'], False, 0) = 0,             'Reader.SkipAll');
     Assert(Reader.ExtractAllB(['d', 'E'], False, 1) = 'd',   'Reader.ExtractAll');
     Assert(Reader.ExtractAllB(['*'], True, 1) = 'E',         'Reader.ExtractAll');
-    Assert(Reader.ReadStrA(2) = '*.',                       'Reader.ReadStr');
+    Assert(Reader.ReadStrB(2) = '*.',                       'Reader.ReadStr');
     Assert(Reader.ExtractAllB(['X'], False, 1) = 'X',        'Reader.ExtractAll');
     Assert(Reader.ExtractAllB(['X'], False, -1) = 'XX',      'Reader.ExtractAll');
     Assert(Reader.ExtractAllB(['X', '*'], True, 1) = 'Y',    'Reader.ExtractAll');
@@ -4366,9 +4194,7 @@ begin
     Assert(Reader.Position = 26,                            'Reader.Position');
     Reader.Position := Reader.Position - 2;
     Assert(Reader.PeekStrB(3) = '*.',                       'Reader.PeekStr');
-    Assert(Reader.ReadStrA(3) = '*.',                       'Reader.ReadStr');
-    {$ENDIF}
-    {$ENDIF}
+    Assert(Reader.ReadStrB(3) = '*.',                       'Reader.ReadStr');
   finally
     if FreeReader then
       Reader.Free;
@@ -4378,16 +4204,15 @@ end;
 procedure TestLineReader(const Reader: AReaderEx; const FreeReader: Boolean);
 begin
   try
-    {$IFDEF SupportRawByteString}
     Reader.Position := 0;
-    Assert(not Reader.EOF,                    'Reader.EOF');
+    Assert(not Reader.EOF,                     'Reader.EOF');
     Assert(Reader.ExtractLineB = '1',          'Reader.ExtractLine');
     Assert(Reader.ExtractLineB = '23',         'Reader.ExtractLine');
     Assert(Reader.ExtractLineB = '',           'Reader.ExtractLine');
     Assert(Reader.ExtractLineB = '4',          'Reader.ExtractLine');
     Assert(Reader.ExtractLineB = '5',          'Reader.ExtractLine');
     Assert(Reader.ExtractLineB = '6',          'Reader.ExtractLine');
-    Assert(Reader.EOF,                        'Reader.EOF');
+    Assert(Reader.EOF,                         'Reader.EOF');
 
     Reader.Position := 0;
     Assert(Reader.ExtractLineB(-1, [eolCRLF, eolEOF]) = '1', 'Reader.ExtractLine');
@@ -4422,14 +4247,12 @@ begin
     Assert(Reader.SkipLine(-1, [eolCR, eolCRLF, eolEOF]), 'Reader.SkipLine');
     Assert(Reader.SkipLine(-1, [eolCR, eolCRLF, eolEOF]), 'Reader.SkipLine');
     Assert(Reader.EOF, 'Reader.EOF');
-    {$ENDIF}
   finally
     if FreeReader then
       Reader.Free;
   end;
 end;
 
-{$IFDEF SupportRawByteString}
 type
   TUnsizedStringReader = class(TRawByteStringReader)
   protected
@@ -4454,9 +4277,7 @@ begin
     S.Free;
   end;
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 procedure Test_Reader;
 var S : TRawByteStringReader;
     I : Integer;
@@ -4571,18 +4392,14 @@ begin
     DeleteFile('selftestfile');
   end;
 end;
-{$ENDIF}
 
 procedure Test;
 begin
-  {$IFDEF SupportRawByteString}
   Test_Reader;
   Test_Writer;
   Test_FileStream;
-  {$ENDIF}
 end;
 {$ENDIF}
-
 
 
 end.

@@ -112,7 +112,6 @@ type
   end;
   {$ENDIF}
 
-  {$IFDEF SupportRawByteString}
   TRawByteStringBuilder = class
   protected
     FString : RawByteString;
@@ -146,41 +145,7 @@ type
 
     procedure Pack;
   end;
-  {$ENDIF}
 
-  {$IFDEF SupportWideString}
-  TWideStringBuilder = class
-  protected
-    FString : WideString;
-    FLength : Integer;
-
-    procedure EnsureCapacity(const L: Integer);
-    function  GetAsWideString: WideString;
-    procedure SetAsWideString(const S: WideString);
-
-  public
-    constructor Create(const S: WideString = ''); overload;
-    constructor Create(const Capacity: Integer); overload;
-
-    property  Length: Integer read FLength;
-    property  AsWideString: WideString read GetAsWideString write SetAsWideString;
-
-    procedure Clear;
-    procedure Assign(const S: TWideStringBuilder);
-
-    procedure Append(const S: WideString); overload;
-    procedure AppendCRLF;
-    procedure AppendLn(const S: WideString = '');
-    procedure Append(const S: WideString; const Count: Integer); overload;
-    procedure AppendCh(const C: WideChar); overload;
-    procedure AppendCh(const C: WideChar; const Count: Integer); overload;
-    procedure Append(const S: TWideStringBuilder); overload;
-
-    procedure Pack;
-  end;
-  {$ENDIF}
-
-  {$IFDEF SupportUnicodeString}
   TUnicodeStringBuilder = class
   protected
     FString : UnicodeString;
@@ -210,7 +175,6 @@ type
 
     procedure Pack;
   end;
-  {$ENDIF}
 
   TStringBuilder = class
   protected
@@ -468,7 +432,6 @@ end;
 {                                                                              }
 { TRawByteStringBuilder                                                        }
 {                                                                              }
-{$IFDEF SupportRawByteString}
 constructor TRawByteStringBuilder.Create(const S: RawByteString);
 begin
   inherited Create;
@@ -651,183 +614,12 @@ begin
     exit;
   SetLength(FString, L);
 end;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ TWideStringBuilder                                                           }
-{                                                                              }
-{$IFDEF SupportWideString}
-constructor TWideStringBuilder.Create(const S: WideString);
-begin
-  inherited Create;
-  SetAsWideString(S);
-end;
-
-constructor TWideStringBuilder.Create(const Capacity: Integer);
-begin
-  inherited Create;
-  EnsureCapacity(Capacity);
-end;
-
-procedure TWideStringBuilder.EnsureCapacity(const L: Integer);
-var N : Integer;
-begin
-  N := System.Length(FString);
-  if L > N then
-    begin
-      N := StringBuilderNewCapacity(L, N);
-      SetLength(FString, N);
-    end;
-end;
-
-function TWideStringBuilder.GetAsWideString: WideString;
-begin
-  if FLength = System.Length(FString) then
-    Result := FString
-  else
-    Result := Copy(FString, 1, FLength);
-end;
-
-procedure TWideStringBuilder.SetAsWideString(const S: WideString);
-begin
-  FString := S;
-  FLength := System.Length(S);
-end;
-
-procedure TWideStringBuilder.Clear;
-begin
-  FString := '';
-  FLength := 0;
-end;
-
-procedure TWideStringBuilder.Assign(const S: TWideStringBuilder);
-var L : Integer;
-begin
-  L := S.FLength;
-  FString := Copy(S.FString, 1, L);
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.Append(const S: WideString);
-var M, L, N : Integer;
-    P       : PWideChar;
-begin
-  M := System.Length(S);
-  if M = 0 then
-    exit;
-  N := FLength;
-  L := N + M;
-  if L > System.Length(FString) then
-    EnsureCapacity(L);
-  P := Pointer(FString);
-  Inc(P, N);
-  Move(Pointer(S)^, P^, M * SizeOf(WideChar));
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.AppendCRLF;
-begin
-  Append(WideCRLF);
-end;
-
-procedure TWideStringBuilder.AppendLn(const S: WideString);
-begin
-  Append(S);
-  AppendCRLF;
-end;
-
-procedure TWideStringBuilder.Append(const S: WideString; const Count: Integer);
-var M, L, N, I : Integer;
-    P          : PWideChar;
-begin
-  if Count <= 0 then
-    exit;
-  M := System.Length(S);
-  if M = 0 then
-    exit;
-  N := FLength;
-  L := N + (M * Count);
-  if L > System.Length(FString) then
-    EnsureCapacity(L);
-  P := Pointer(FString);
-  Inc(P, N);
-  for I := 1 to Count do
-    begin
-      Move(Pointer(S)^, P^, M * SizeOf(WideChar));
-      Inc(P, M);
-    end;
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.AppendCh(const C: WideChar);
-var L, N : Integer;
-    P    : PWideChar;
-begin
-  N := FLength;
-  L := N + 1;
-  if L > System.Length(FString) then
-    EnsureCapacity(L);
-  P := Pointer(FString);
-  Inc(P, N);
-  P^ := C;
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.AppendCh(const C: WideChar; const Count: Integer);
-var L, N, I : Integer;
-    P       : PWideChar;
-begin
-  if Count <= 0 then
-    exit;
-  N := FLength;
-  L := N + Count;
-  if L > System.Length(FString) then
-    EnsureCapacity(L);
-  P := Pointer(FString);
-  Inc(P, N);
-  for I := 0 to Count - 1 do
-    begin
-      P^ := C;
-      Inc(P);
-    end;
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.Append(const S: TWideStringBuilder);
-var M, L, N : Integer;
-    P       : PWideChar;
-begin
-  M := S.FLength;
-  if M = 0 then
-    exit;
-  N := FLength;
-  L := N + M;
-  if L > System.Length(FString) then
-    EnsureCapacity(L);
-  P := Pointer(FString);
-  Inc(P, N);
-  Move(Pointer(S.FString)^, P^, M * SizeOf(WideChar));
-  FLength := L;
-end;
-
-procedure TWideStringBuilder.Pack;
-var L : Integer;
-begin
-  L := FLength;
-  if L = System.Length(FString) then
-    exit;
-  SetLength(FString, L);
-end;
-{$ENDIF}
 
 
 
 {                                                                              }
 { TUnicodeStringBuilder                                                        }
 {                                                                              }
-{$IFDEF SupportUnicodeString}
 constructor TUnicodeStringBuilder.Create(const S: UnicodeString);
 begin
   inherited Create;
@@ -989,7 +781,6 @@ begin
     exit;
   SetLength(FString, L);
 end;
-{$ENDIF}
 
 
 
@@ -1192,7 +983,6 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF SupportRawByteString}
 procedure Test_RawByteStringBuilder;
 var A : TRawByteStringBuilder;
 begin
@@ -1219,27 +1009,25 @@ begin
     A.Free;
   end;
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-procedure Test_WideStringBuilder;
-var A : TWideStringBuilder;
+procedure Test_UnicodeStringBuilder;
+var A : TUnicodeStringBuilder;
 begin
-  A := TWideStringBuilder.Create;
+  A := TUnicodeStringBuilder.Create;
   try
     Assert(A.Length = 0);
     A.Append('X');
     Assert(A.Length = 1);
     A.Append('ABC');
     Assert(A.Length = 4);
-    Assert(A.GetAsWideString = 'XABC');
+    Assert(A.GetAsUnicodeString = 'XABC');
     A.AppendCRLF;
     Assert(A.Length = 6);
     A.AppendCh(WideChar('D'));
     Assert(A.Length = 7);
     A.AppendCh(WideChar('E'), 3);
     Assert(A.Length = 10);
-    Assert(A.GetAsWideString = 'XABC'#13#10'DEEE');
+    Assert(A.GetAsUnicodeString = 'XABC'#13#10'DEEE');
     A.Pack;
     Assert(A.Length = 10);
     A.Clear;
@@ -1248,7 +1036,6 @@ begin
     A.Free;
   end;
 end;
-{$ENDIF}
 
 procedure Test_StringBuilder;
 var A : TStringBuilder;
@@ -1287,12 +1074,8 @@ begin
   {$IFDEF SupportAnsiString}
   Test_AnsiStringBuilder;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   Test_RawByteStringBuilder;
-  {$ENDIF}
-  {$IFDEF SupportWideString}
-  Test_WideStringBuilder;
-  {$ENDIF}
+  Test_UnicodeStringBuilder;
   Test_StringBuilder;
 end;
 

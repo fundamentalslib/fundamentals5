@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.38                                                     }
+{   File version:     5.39                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
@@ -58,7 +58,6 @@
 {     + Pointer                                                                }
 {     + AnsiString                                                             }
 {     + RawByteString                                                          }
-{     + WideString                                                             }
 {     + String                                                                 }
 {     + Object                                                                 }
 {                                                                              }
@@ -79,7 +78,6 @@
 {     + Pointer                                                                }
 {     + AnsiString                                                             }
 {     + RawByteString                                                          }
-{     + WideString                                                             }
 {     + String                                                                 }
 {     + TObject                                                                }
 {     + IInterface                                                             }
@@ -104,7 +102,6 @@
 {                                                                              }
 {   This unit implements sparse arrays that can hold the following values:     }
 {     + String                                                                 }
-{     + WideString                                                             }
 {     + Int64                                                                  }
 {     + Extended                                                               }
 {     + TObject                                                                }
@@ -168,6 +165,7 @@
 {   2015/03/13  4.36  RawByteString support.                                   }
 {   2016/01/16  5.37  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.38  Int32/Word32 arrays.                                     }
+{   2018/08/12  5.39  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -420,16 +418,13 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeArray 'AnsiString'    'B'  'AnsiString'    ''  'I' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeArray 'RawByteString' 'B'  'RawByteString' ''  'I' }
 type
   AUTF8StringArray = ARawByteStringArray;
   EUTF8StringArray = ERawByteStringArray;
-{$ENDIF}
 
 
 
-{%TEMPLATE ATypeArray 'WideString'    'B'  'WideString'    ''  'I' }
 {%TEMPLATE ATypeArray 'UnicodeString' 'B'  'UnicodeString' ''  'I' }
 {%TEMPLATE ATypeArray 'String'        'B'  'String'        ''  ''  }
 {%TEMPLATE ATypeArray 'Pointer'       'B'  'Pointer'       ''  'I' }
@@ -618,18 +613,15 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE AArrayDynArray 'AnsiString'    'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE AArrayDynArray 'RawByteString' 'RawByteString' }
 {                                                                              }
 { TUTF8StringArray                                                             }
 {                                                                              }
 type
   TUTF8StringArray = TRawByteStringArray;
-{$ENDIF}
 
 
 
-{%TEMPLATE AArrayDynArray 'WideString'    'WideString'    }
 {%TEMPLATE AArrayDynArray 'UnicodeString' 'UnicodeString' }
 {%TEMPLATE AArrayDynArray 'String'        'String'        }
 {%TEMPLATE AArrayDynArray 'Pointer'       'Pointer'       }
@@ -748,7 +740,6 @@ type
 
 
 
-{$IFDEF SupportRawByteString}
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {   ARawByteStringArray that maintains a hash lookup table of array values.    }
@@ -780,7 +771,6 @@ type
 
     function  PosNext(const Find: RawByteString; const PrevPos: Integer = -1): Integer;
   end;
-{$ENDIF}
 
 
 
@@ -889,10 +879,7 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryBase 'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryBase 'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryBase 'W' 'WideString'    }
 {%TEMPLATE ATypeDictionaryBase 'U' 'UnicodeString' }
 {%TEMPLATE ATypeDictionaryBase ''  'String'        }
 {%DEFINE ATypeDictionary}
@@ -944,10 +931,7 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'LongInt'  'LongInt'  ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'LongInt'  'LongInt'  ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'LongInt'  'LongInt'  ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'LongInt'  'LongInt'  ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'LongInt'  'LongInt'  ''  '' ''  'String'        'I' ''  }
 {                                                                              }
@@ -957,10 +941,7 @@ type
   {$IFDEF SupportAnsiString}
   AIntegerDictionaryA = ALongIntDictionaryA;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   AIntegerDictionaryB = ALongIntDictionaryB;
-  {$ENDIF}
-  AIntegerDictionaryW = ALongIntDictionaryW;
   AIntegerDictionaryU = ALongIntDictionaryU;
   AIntegerDictionary  = ALongIntDictionary;
 
@@ -969,10 +950,7 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'LongWord' 'LongWord' ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'LongWord' 'LongWord' ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'LongWord' 'LongWord' ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'LongWord' 'LongWord' ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'LongWord' 'LongWord' ''  '' ''  'String'        'I' ''  }
 {                                                                              }
@@ -982,10 +960,7 @@ type
   {$IFDEF SupportAnsiString}
   ACardinalDictionaryA = ALongWordDictionaryA;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   ACardinalDictionaryB = ALongWordDictionaryB;
-  {$ENDIF}
-  ACardinalDictionaryW = ALongWordDictionaryW;
   ACardinalDictionaryU = ALongWordDictionaryU;
   ACardinalDictionary  = ALongWordDictionary;
 
@@ -994,94 +969,63 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Int64'         'Int64'         ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Int64'         'Int64'         ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Int64'         'Int64'         ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'Int64'         'Int64'         ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'Int64'         'Int64'         ''  '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Single'        'Single'        ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Single'        'Single'        ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Single'        'Single'        ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'Single'        'Single'        ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'Single'        'Single'        ''  '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Double'        'Double'        ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Double'        'Double'        ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Double'        'Double'        ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'Double'        'Double'        ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'Double'        'Double'        ''  '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Extended'      'Extended'      ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Extended'      'Extended'      ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Extended'      'Extended'      ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'Extended'      'Extended'      ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'Extended'      'Extended'      ''  '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'AnsiString'    'AnsiString'    'L' '' 'A' 'AnsiString'    'I' ''  }
-{%TEMPLATE ATypeDictionary 'AnsiString'    'AnsiString'    'L' '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'AnsiString'    'AnsiString'    'L' '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'AnsiString'    'AnsiString'    'L' '' ''  'String'        'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'RawByteString' 'RawByteString' 'L' '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
 {%TEMPLATE ATypeDictionary 'RawByteString' 'RawByteString' 'L' '' 'B' 'RawByteString' 'I' ''  }
-{%TEMPLATE ATypeDictionary 'RawByteString' 'RawByteString' 'L' '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'RawByteString' 'RawByteString' 'L' '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'RawByteString' 'RawByteString' 'L' '' ''  'String'        'I' ''  }
-{$ENDIF}
-{$IFDEF SupportAnsiString}
-{%TEMPLATE ATypeDictionary 'WideString'    'WideString'    'L' '' 'A' 'AnsiString'    'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'WideString'    'WideString'    'L' '' 'W' 'WideString'    'I' ''  }
-{%TEMPLATE ATypeDictionary 'WideString'    'WideString'    'L' '' 'U' 'UnicodeString' 'I' ''  }
-{%TEMPLATE ATypeDictionary 'WideString'    'WideString'    'L' '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'UnicodeString' 'UnicodeString' 'L' '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{%TEMPLATE ATypeDictionary 'UnicodeString' 'UnicodeString' 'L' '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'UnicodeString' 'UnicodeString' 'L' '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'UnicodeString' 'UnicodeString' 'L' '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'String'        'String'        'L' '' 'A' 'AnsiString'    ''  ''  }
 {$ENDIF}
-{%TEMPLATE ATypeDictionary 'String'        'String'        'L' '' 'W' 'WideString'    ''  ''  }
 {%TEMPLATE ATypeDictionary 'String'        'String'        'L' '' 'U' 'UnicodeString' ''  ''  }
 {%TEMPLATE ATypeDictionary 'String'        'String'        'L' '' ''  'String'        ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Pointer'       'Pointer'       ''  '' 'A' 'AnsiString'    'I' ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Pointer'       'Pointer'       ''  '' 'B' 'RawByteString' 'I' ''  }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Pointer'       'Pointer'       ''  '' 'W' 'WideString'    'I' ''  }
 {%TEMPLATE ATypeDictionary 'Pointer'       'Pointer'       ''  '' 'U' 'UnicodeString' 'I' ''  }
 {%TEMPLATE ATypeDictionary 'Pointer'       'Pointer'       ''  '' ''  'String'        'I' ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Interface'     'IInterface'    ''  '' 'A' 'AnsiString'    ''  ''  }
 {$ENDIF}
-{%TEMPLATE ATypeDictionary 'Interface'     'IInterface'    ''  '' 'W' 'WideString'    ''  ''  }
 {%TEMPLATE ATypeDictionary 'Interface'     'IInterface'    ''  '' 'U' 'UnicodeString' ''  ''  }
 {%TEMPLATE ATypeDictionary 'Interface'     'IInterface'    ''  '' ''  'String'        ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionary 'Object'        'TObject'       ''  '' 'A' 'AnsiString'    'I' 'O' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionary 'Object'        'TObject'       ''  '' 'B' 'RawByteString' 'I' 'O' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionary 'Object'        'TObject'       ''  '' 'W' 'WideString'    'I' 'O' }
 {%TEMPLATE ATypeDictionary 'Object'        'TObject'       ''  '' 'U' 'UnicodeString' 'I' 'O' }
 {%TEMPLATE ATypeDictionary 'Object'        'TObject'       ''  '' ''  'String'        'I' 'O' }
 
@@ -1191,10 +1135,7 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'LongInt'  'LongInt'  ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'LongInt'  'LongInt'  ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'LongInt'  'LongInt'  ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'LongInt'  'LongInt'  ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'LongInt'  'LongInt'  ''  ''  'String'        }
 {                                                                              }
@@ -1204,12 +1145,10 @@ type
   {$IFDEF SupportAnsiString}
   TGeneralIntegerDictionaryA = TGeneralLongIntDictionaryA;
   {$ENDIF}
-  TGeneralIntegerDictionaryW = TGeneralLongIntDictionaryW;
   TGeneralIntegerDictionary  = TGeneralLongIntDictionary;
   {$IFDEF SupportAnsiString}
   TIntegerDictionaryA = TLongIntDictionaryA;
   {$ENDIF}
-  TIntegerDictionaryW = TLongIntDictionaryW;
   TIntegerDictionary  = TLongIntDictionary;
 
 
@@ -1217,10 +1156,7 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'LongWord' 'LongWord' ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'LongWord' 'LongWord' ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'LongWord' 'LongWord' ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'LongWord' 'LongWord' ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'LongWord' 'LongWord' ''  ''  'String'        }
 {                                                                              }
@@ -1230,13 +1166,11 @@ type
   {$IFDEF SupportAnsiString}
   TGeneralCardinalDictionaryA = TGeneralLongWordDictionaryA;
   {$ENDIF}
-  TGeneralCardinalDictionaryW = TGeneralLongWordDictionaryW;
   TGeneralCardinalDictionaryU = TGeneralLongWordDictionaryU;
   TGeneralCardinalDictionary  = TGeneralLongWordDictionary;
   {$IFDEF SupportAnsiString}
   TCardinalDictionaryA = TLongWordDictionaryA;
   {$ENDIF}
-  TCardinalDictionaryW = TLongWordDictionaryW;
   TCardinalDictionaryU = TLongWordDictionaryU;
   TCardinalDictionary  = TLongWordDictionary;
 
@@ -1245,94 +1179,63 @@ type
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Int64'         'Int64'         ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Int64'         'Int64'         ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Int64'         'Int64'         ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Int64'         'Int64'         ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Int64'         'Int64'         ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Single'        'Single'        ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Single'        'Single'        ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Single'        'Single'        ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Single'        'Single'        ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Single'        'Single'        ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Double'        'Double'        ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Double'        'Double'        ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Double'        'Double'        ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Double'        'Double'        ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Double'        'Double'        ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Extended'      'Extended'      ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Extended'      'Extended'      ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Extended'      'Extended'      ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Extended'      'Extended'      ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Extended'      'Extended'      ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'AnsiString'    'AnsiString'    ''  'A' 'AnsiString'    }
-{%TEMPLATE ADictionaryAArray 'AnsiString'    'AnsiString'    ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'AnsiString'    'AnsiString'    ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'AnsiString'    'AnsiString'    ''  ''  'String'        }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'RawByteString' 'RawByteString' ''  'A' 'AnsiString'    }
 {$ENDIF}
 {%TEMPLATE ADictionaryAArray 'RawByteString' 'RawByteString' ''  'B' 'RawByteString' }
-{%TEMPLATE ADictionaryAArray 'RawByteString' 'RawByteString' ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'RawByteString' 'RawByteString' ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'RawByteString' 'RawByteString' ''  ''  'String'        }
-{$ENDIF}
-{$IFDEF SupportAnsiString}
-{%TEMPLATE ADictionaryAArray 'WideString'    'WideString'    ''  'A' 'AnsiString'    }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'WideString'    'WideString'    ''  'W' 'WideString'    }
-{%TEMPLATE ADictionaryAArray 'WideString'    'WideString'    ''  'U' 'UnicodeString' }
-{%TEMPLATE ADictionaryAArray 'WideString'    'WideString'    ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'UnicodeString' 'UnicodeString' ''  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryAArray 'UnicodeString' 'UnicodeString' ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'UnicodeString' 'UnicodeString' ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'UnicodeString' 'UnicodeString' ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'String'        'String'        ''  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryAArray 'String'        'String'        ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'String'        'String'        ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'String'        'String'        ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Pointer'       'Pointer'       ''  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Pointer'       'Pointer'       ''  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Pointer'       'Pointer'       ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Pointer'       'Pointer'       ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Pointer'       'Pointer'       ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Interface'     'IInterface'    ''  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Interface'     'IInterface'    ''  'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Interface'     'IInterface'    ''  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Interface'     'IInterface'    ''  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryAArray 'Object'        'TObject'       'O' 'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryAArray 'Object'        'TObject'       'O' 'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryAArray 'Object'        'TObject'       'O' 'W' 'WideString'    }
 {%TEMPLATE ADictionaryAArray 'Object'        'TObject'       'O' 'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryAArray 'Object'        'TObject'       'O' ''  'String'        }
 {                                                                              }
@@ -1425,55 +1328,6 @@ type
   end;
   ESparseAnsiStringArray = class(ESparseArray);
 {$ENDIF}
-
-
-
-{                                                                              }
-{ TSparseWideStringArray                                                       }
-{   Sparse array that holds WideString values.                                 }
-{                                                                              }
-type
-  TSparseWideStringRecord = record
-    Idx   : Integer;
-    Value : WideString;
-  end;
-  PSparseWideStringRecord = ^TSparseWideStringRecord;
-  TSparseWideStringRecordArray = Array of TSparseWideStringRecord;
-  TSparseWideStringArrayHashList = Array of TSparseWideStringRecordArray;
-
-  TSparseWideStringArray = class(ASparseArray)
-  private
-    FHashList : TSparseWideStringArrayHashList;
-    FHashSize : Integer;
-    FCount    : Integer;
-
-  protected
-    function  LocateItemRecord(const Idx: Integer;
-              var LookupIdx, ChainIdx: Integer): PSparseWideStringRecord;
-    procedure Rehash;
-
-    function  GetCount: Integer; override;
-    function  GetItem(const Idx: Integer): WideString;
-    procedure SetItem(const Idx: Integer; const Value: WideString);
-
-  public
-    procedure Assign(const Source: TObject); override;
-    function  IsEqual(const V: TObject): Boolean; override;
-
-    property  Item[const Idx: Integer]: WideString read GetItem write SetItem; default;
-    function  LocateItem(const Idx: Integer; var Value: WideString): Boolean;
-
-    property  Count: Integer read FCount;
-    function  IsEmpty: Boolean; override;
-    procedure Clear; override;
-
-    procedure Delete(const Idx: Integer); override;
-
-    function  HasItem(const Idx: Integer): Boolean; override;
-    function  FindFirst(var Idx: Integer; var Value: WideString): Boolean;
-    function  FindNext(var Idx: Integer; var Value: WideString): Boolean;
-  end;
-  ESparseWideStringArray = class(ESparseArray);
 
 
 
@@ -2390,10 +2244,7 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeArrayImpl  'AnsiString'    'AnsiString'    ''              ''              '''''' ''         ''           'ToStringA'    'ToAnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeArrayImpl  'RawByteString' 'RawByteString' ''              ''              '''''' ''         ''           'ToStringB'    'ToRawByteString' }
-{$ENDIF}
-{%TEMPLATE ATypeArrayImpl  'WideString'    'WideString'    ''              ''              '''''' ''         ''           'ToStringW'    'ToWideString'    }
 {%TEMPLATE ATypeArrayImpl  'UnicodeString' 'UnicodeString' ''              ''              '''''' ''         ''           'ToStringU'    'ToUnicodeString' }
 {%TEMPLATE ATypeArrayImpl  'String'        'String'        ''              ''              '''''' ''         ''           ''             ''                }
 {%TEMPLATE ATypeArrayImpl  'Pointer'       'Pointer'       ''              ''              'nil'  ''         'NativeInt(' 'PointerToStr' 'StrToPointer'    }
@@ -3160,10 +3011,7 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE AArrayDynArrayImpl 'AnsiString'    ''   'AnsiString'    'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE AArrayDynArrayImpl 'RawByteString' ''   'RawByteString' 'B' }
-{$ENDIF}
-{%TEMPLATE AArrayDynArrayImpl 'WideString'    ''   'WideString'    'W' }
 {%TEMPLATE AArrayDynArrayImpl 'UnicodeString' ''   'UnicodeString' 'U' }
 {%TEMPLATE AArrayDynArrayImpl 'String'        ''   'String'        ''  }
 {%TEMPLATE AArrayDynArrayImpl 'Pointer'       'Z'  'Pointer'       ''  }
@@ -3718,7 +3566,6 @@ end;
 
 
 
-{$IFDEF SupportRawByteString}
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {                                                                              }
@@ -3900,7 +3747,6 @@ begin
   // not found
   Result := 1;
 end;
-{$ENDIF}
 
 
 
@@ -4138,7 +3984,6 @@ end;
 
 
 
-{$IFDEF SupportRawByteString}
 {                                                                              }
 { ADictionaryB                                                                 }
 {                                                                              }
@@ -4155,27 +4000,6 @@ end;
 function ADictionaryB.GetKeyStrByIndex(const Idx: Integer): String;
 begin
   Result := ToStringB(GetKeyByIndex(Idx));
-end;
-{$ENDIF}
-
-
-
-{                                                                              }
-{ ADictionaryW                                                                 }
-{                                                                              }
-procedure ADictionaryW.RaiseKeyNotFoundError(const Key: WideString);
-begin
-  raise EDictionary.CreateFmt('Key not found: %s', [Key]);
-end;
-
-procedure ADictionaryW.RaiseDuplicateKeyError(const Key: WideString);
-begin
-  raise EDictionary.CreateFmt('Duplicate key: %s', [Key]);
-end;
-
-function ADictionaryW.GetKeyStrByIndex(const Idx: Integer): String;
-begin
-  Result := ToStringW(GetKeyByIndex(Idx));
 end;
 
 
@@ -4285,112 +4109,75 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'LongInt'       'LongInt'       'AnsiString'    'IntToStr'        ''  '0'    ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'LongInt'       'LongInt'       'RawByteString' 'IntToStr'        ''  '0'    ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'LongInt'       'LongInt'       'WideString'    'IntToStr'        ''  '0'    ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'LongInt'       'LongInt'       'UnicodeString' 'IntToStr'        ''  '0'    ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'LongInt'       'LongInt'       'String'        'IntToStr'        ''  '0'    ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'LongWord'      'LongWord'      'AnsiString'    'IntToStr'        ''  '0'    ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'LongWord'      'LongWord'      'RawByteString' 'IntToStr'        ''  '0'    ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'LongWord'      'LongWord'      'WideString'    'IntToStr'        ''  '0'    ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'LongWord'      'LongWord'      'UnicodeString' 'IntToStr'        ''  '0'    ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'LongWord'      'LongWord'      'String'        'IntToStr'        ''  '0'    ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Int64'         'Int64'         'AnsiString'    'IntToStr'        ''  '0'    ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Int64'         'Int64'         'RawByteString' 'IntToStr'        ''  '0'    ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Int64'         'Int64'         'WideString'    'IntToStr'        ''  '0'    ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Int64'         'Int64'         'UnicodeString' 'IntToStr'        ''  '0'    ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Int64'         'Int64'         'String'        'IntToStr'        ''  '0'    ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Single'        'Single'        'AnsiString'    'FloatToStr'      ''  '0.0'  ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Single'        'Single'        'RawByteString' 'FloatToStr'      ''  '0.0'  ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Single'        'Single'        'WideString'    'FloatToStr'      ''  '0.0'  ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Single'        'Single'        'UnicodeString' 'FloatToStr'      ''  '0.0'  ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Single'        'Single'        'String'        'FloatToStr'      ''  '0.0'  ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Double'        'Double'        'AnsiString'    'FloatToStr'      ''  '0.0'  ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Double'        'Double'        'RawByteString' 'FloatToStr'      ''  '0.0'  ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Double'        'Double'        'WideString'    'FloatToStr'      ''  '0.0'  ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Double'        'Double'        'UnicodeString' 'FloatToStr'      ''  '0.0'  ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Double'        'Double'        'String'        'FloatToStr'      ''  '0.0'  ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Extended'      'Extended'      'AnsiString'    'FloatToStr'      ''  '0.0'  ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Extended'      'Extended'      'RawByteString' 'FloatToStr'      ''  '0.0'  ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Extended'      'Extended'      'WideString'    'FloatToStr'      ''  '0.0'  ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Extended'      'Extended'      'UnicodeString' 'FloatToStr'      ''  '0.0'  ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Extended'      'Extended'      'String'        'FloatToStr'      ''  '0.0'  ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'AnsiString'    'AnsiString'    'AnsiString'    'ToStringA'       ''  '''''' 'L' ''  'A' }
-{%TEMPLATE ATypeDictionaryImpl 'AnsiString'    'AnsiString'    'WideString'    'ToStringA'       ''  '''''' 'L' ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'AnsiString'    'AnsiString'    'UnicodeString' 'ToStringA'       ''  '''''' 'L' ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'AnsiString'    'AnsiString'    'String'        'ToStringA'       ''  '''''' 'L' ''  ''  }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'RawByteString' 'RawByteString' 'AnsiString'    'ToStringB'       ''  '''''' 'L' ''  'A' }
 {$ENDIF}
 {%TEMPLATE ATypeDictionaryImpl 'RawByteString' 'RawByteString' 'RawByteString' 'ToStringB'       ''  '''''' 'L' ''  'B' }
-{%TEMPLATE ATypeDictionaryImpl 'RawByteString' 'RawByteString' 'WideString'    'ToStringB'       ''  '''''' 'L' ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'RawByteString' 'RawByteString' 'UnicodeString' 'ToStringB'       ''  '''''' 'L' ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'RawByteString' 'RawByteString' 'String'        'ToStringB'       ''  '''''' 'L' ''  ''  }
-{$ENDIF}
-{$IFDEF SupportAnsiString}
-{%TEMPLATE ATypeDictionaryImpl 'WideString'    'WideString'    'AnsiString'    'ToStringW'       ''  '''''' 'L' ''  'A' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'WideString'    'WideString'    'WideString'    'ToStringW'       ''  '''''' 'L' ''  'W' }
-{%TEMPLATE ATypeDictionaryImpl 'WideString'    'WideString'    'UnicodeString' 'ToStringW'       ''  '''''' 'L' ''  'U' }
-{%TEMPLATE ATypeDictionaryImpl 'WideString'    'WideString'    'String'        'ToStringW'       ''  '''''' 'L' ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'UnicodeString' 'UnicodeString' 'AnsiString'    'ToStringU'       ''  '''''' 'L' ''  'A' }
 {$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'UnicodeString' 'UnicodeString' 'WideString'    'ToStringU'       ''  '''''' 'L' ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'UnicodeString' 'UnicodeString' 'UnicodeString' 'ToStringU'       ''  '''''' 'L' ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'UnicodeString' 'UnicodeString' 'String'        'ToStringU'       ''  '''''' 'L' ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'String'        'String'        'AnsiString'    ''                ''  '''''' 'L' ''  'A' }
 {$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'String'        'String'        'WideString'    ''                ''  '''''' 'L' ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'String'        'String'        'UnicodeString' ''                ''  '''''' 'L' ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'String'        'String'        'String'        ''                ''  '''''' 'L' ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Pointer'       'Pointer'       'AnsiString'    'PointerToStr'    ''  ''     ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Pointer'       'Pointer'       'RawByteString' 'PointerToStr'    ''  ''     ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Pointer'       'Pointer'       'WideString'    'PointerToStr'    ''  ''     ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Pointer'       'Pointer'       'UnicodeString' 'PointerToStr'    ''  ''     ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Pointer'       'Pointer'       'String'        'PointerToStr'    ''  ''     ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Interface'     'IInterface'    'AnsiString'    ''                ''  ''     ''  ''  'A' }
 {$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Interface'     'IInterface'    'WideString'    ''                ''  ''     ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Interface'     'IInterface'    'UnicodeString' ''                ''  ''     ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Interface'     'IInterface'    'String'        ''                ''  ''     ''  ''  ''  }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ATypeDictionaryImpl 'Object'        'TObject'       'AnsiString'    'ObjectClassName' 'O' ''     ''  ''  'A' }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ATypeDictionaryImpl 'Object'        'TObject'       'RawByteString' 'ObjectClassName' 'O' ''     ''  ''  'B' }
-{$ENDIF}
-{%TEMPLATE ATypeDictionaryImpl 'Object'        'TObject'       'WideString'    'ObjectClassName' 'O' ''     ''  ''  'W' }
 {%TEMPLATE ATypeDictionaryImpl 'Object'        'TObject'       'UnicodeString' 'ObjectClassName' 'O' ''     ''  ''  'U' }
 {%TEMPLATE ATypeDictionaryImpl 'Object'        'TObject'       'String'        'ObjectClassName' 'O' ''     ''  ''  ''  }
 {                                                                              }
@@ -4852,112 +4639,75 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'LongInt'       '0'    'LongInt'       ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'LongInt'       '0'    'LongInt'       ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'LongInt'       '0'    'LongInt'       ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'LongInt'       '0'    'LongInt'       ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'LongInt'       '0'    'LongInt'       ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'LongWord'      '0'    'LongWord'      ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'LongWord'      '0'    'LongWord'      ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'LongWord'      '0'    'LongWord'      ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'LongWord'      '0'    'LongWord'      ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'LongWord'      '0'    'LongWord'      ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Int64'         '0'    'Int64'         ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Int64'         '0'    'Int64'         ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Int64'         '0'    'Int64'         ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Int64'         '0'    'Int64'         ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Int64'         '0'    'Int64'         ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Single'        '0.0'  'Single'        ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Single'        '0.0'  'Single'        ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Single'        '0.0'  'Single'        ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Single'        '0.0'  'Single'        ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Single'        '0.0'  'Single'        ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Double'        '0.0'  'Double'        ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Double'        '0.0'  'Double'        ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Double'        '0.0'  'Double'        ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Double'        '0.0'  'Double'        ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Double'        '0.0'  'Double'        ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Extended'      '0.0'  'Extended'      ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Extended'      '0.0'  'Extended'      ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Extended'      '0.0'  'Extended'      ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Extended'      '0.0'  'Extended'      ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Extended'      '0.0'  'Extended'      ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'AnsiString'    '''''' 'AnsiString'    ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
-{%TEMPLATE ADictionaryByArrayImpl 'AnsiString'    '''''' 'AnsiString'    ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'AnsiString'    '''''' 'AnsiString'    ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'AnsiString'    '''''' 'AnsiString'    ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'RawByteString' '''''' 'RawByteString' ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
 {%TEMPLATE ADictionaryByArrayImpl 'RawByteString' '''''' 'RawByteString' ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{%TEMPLATE ADictionaryByArrayImpl 'RawByteString' '''''' 'RawByteString' ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'RawByteString' '''''' 'RawByteString' ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'RawByteString' '''''' 'RawByteString' ''  'TTypeDictionaryConstructor'  ''  'String'        }
-{$ENDIF}
-{$IFDEF SupportAnsiString}
-{%TEMPLATE ADictionaryByArrayImpl 'WideString'    '''''' 'WideString'    ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'WideString'    '''''' 'WideString'    ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
-{%TEMPLATE ADictionaryByArrayImpl 'WideString'    '''''' 'WideString'    ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
-{%TEMPLATE ADictionaryByArrayImpl 'WideString'    '''''' 'WideString'    ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'UnicodeString' '''''' 'UnicodeString' ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'UnicodeString' '''''' 'UnicodeString' ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'UnicodeString' '''''' 'UnicodeString' ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'UnicodeString' '''''' 'UnicodeString' ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'String'        '''''' 'String'        ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'String'        '''''' 'String'        ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'String'        '''''' 'String'        ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'String'        '''''' 'String'        ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Pointer'       'nil'  'Pointer'       ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Pointer'       'nil'  'Pointer'       ''  'TTypeDictionaryConstructor'  'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Pointer'       'nil'  'Pointer'       ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Pointer'       'nil'  'Pointer'       ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Pointer'       'nil'  'Pointer'       ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Interface'     'nil'  'IInterface'    ''  'TTypeDictionaryConstructor'  'A' 'AnsiString'    }
 {$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Interface'     'nil'  'IInterface'    ''  'TTypeDictionaryConstructor'  'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Interface'     'nil'  'IInterface'    ''  'TTypeDictionaryConstructor'  'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Interface'     'nil'  'IInterface'    ''  'TTypeDictionaryConstructor'  ''  'String'        }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE ADictionaryByArrayImpl 'Object'        'nil'  'TObject'       'O' 'ObjectDictionaryConstructor' 'A' 'AnsiString'    }
 {$ENDIF}
-{$IFDEF SupportRawByteString}
 {%TEMPLATE ADictionaryByArrayImpl 'Object'        'nil'  'TObject'       'O' 'ObjectDictionaryConstructor' 'B' 'RawByteString' }
-{$ENDIF}
-{%TEMPLATE ADictionaryByArrayImpl 'Object'        'nil'  'TObject'       'O' 'ObjectDictionaryConstructor' 'W' 'WideString'    }
 {%TEMPLATE ADictionaryByArrayImpl 'Object'        'nil'  'TObject'       'O' 'ObjectDictionaryConstructor' 'U' 'UnicodeString' }
 {%TEMPLATE ADictionaryByArrayImpl 'Object'        'nil'  'TObject'       'O' 'ObjectDictionaryConstructor' ''  'String'        }
 {                                                                              }
@@ -5259,55 +5009,6 @@ begin
   Dec(FCount);
 end;
 {$ENDIF}
-
-
-
-{                                                                              }
-{ TSparseWideStringArray                                                       }
-{                                                                              }
-procedure TSparseWideStringArray.Assign(const Source: TObject);
-var I, L : Integer;
-begin
-  if Source is TSparseWideStringArray then
-    begin
-      Clear;
-      L := Length(TSparseWideStringArray(Source).FHashList);
-      SetLength(FHashList, L);
-      for I := 0 to L - 1 do
-        FHashList[I] := Copy(TSparseWideStringArray(Source).FHashList[I]);
-      FHashSize := TSparseWideStringArray(Source).FHashSize;
-      FCount := TSparseWideStringArray(Source).FCount;
-    end
-  else
-    inherited Assign(Source);
-end;
-
-procedure TSparseWideStringArray.Clear;
-begin
-  FHashList := nil;
-  FHashSize := 0;
-  FCount := 0;
-end;
-
-{%TEMPLATE TSparseArrayImpl 'WideString' 'WideString' ''''''}
-procedure TSparseWideStringArray.Delete(const Idx: Integer);
-var P    : PSparseWideStringRecord;
-    I, J : Integer;
-    L    : Integer;
-begin
-  P := LocateItemRecord(Idx, I, J);
-  if not Assigned(P) then
-    IndexError;
-  P^.Value := '';
-  L := Length(FHashList[I]);
-  if J < L - 1 then
-    begin
-      Move(FHashList[I][J + 1], FHashList[I][J], (L - J - 1) * Sizeof(TSparseWideStringRecord));
-      ZeroMem(FHashList[I][L - 1], Sizeof(TSparseWideStringRecord));
-    end;
-  SetLength(FHashList[I], L - 1);
-  Dec(FCount);
-end;
 
 
 

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeChar.pas                                       }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      Unicode char utility functions                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
@@ -37,6 +37,7 @@
 {   2012/08/28  4.01  Add Unicode character functions from cUnicode.           }
 {   2017/10/24  5.02  Move from Strings unit.                                  }
 {   2017/07/17  5.03  Type changes.                                            }
+{   2018/08/12  5.04  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -169,44 +170,20 @@ function  UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
 
 function  UnicodeGetCombiningClass(const Ch: WideChar): Byte;
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  UnicodeUpCaseFoldingW(const Ch: WideChar): WideString;
-{$ENDIF}
 function  UnicodeUpCaseFoldingU(const Ch: WideChar): UnicodeString;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  UnicodeLowCaseFoldingW(const Ch: WideChar): WideString;
-{$ENDIF}
 function  UnicodeLowCaseFoldingU(const Ch: WideChar): UnicodeString;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  UnicodeTitleCaseFoldingW(const Ch: WideChar): WideString;
-{$ENDIF}
 function  UnicodeTitleCaseFoldingU(const Ch: WideChar): UnicodeString;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function  UnicodeGetCharacterDecompositionW(const Ch: WideChar): WideString; overload;
-function  UnicodeGetCharacterDecompositionW(const Ch: UCS4Char): WideString; overload;
-{$ENDIF}
+function  UnicodeGetCharacterDecompositionU(const Ch: WideChar): UnicodeString; overload;
+function  UnicodeGetCharacterDecompositionU(const Ch: UCS4Char): UnicodeString; overload;
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  UnicodeUpperCaseFoldingW(const S: WideString): WideString;
-{$ENDIF}
 function  UnicodeUpperCaseFoldingU(const S: UnicodeString): UnicodeString;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  UnicodeLowerCaseFoldingW(const S: WideString): WideString;
-{$ENDIF}
 function  UnicodeLowerCaseFoldingU(const S: UnicodeString): UnicodeString;
+
+
+
+{$IFDEF UNICODE_CHAR_TEST}
+procedure Test;
 {$ENDIF}
 
 
@@ -3090,52 +3067,6 @@ begin
   end;
 end;
 
-{$IFDEF ManagedCode}
-function UnicodeUpCase(const Ch: WideChar): WideChar;
-var I : Integer;
-    J : Integer;
-    C : WideChar;
-    P : TUnicodeLetterInfo;
-begin
-  if Ord(Ch) < $80 then // ASCII short-cut
-    begin
-      if AnsiChar(Ord(Ch)) in ['a'..'z'] then
-        Result := WideChar(Ord(Ch) - (Ord('a') - Ord('A'))) else
-        Result := Ch;
-    end else
-    begin
-      I := UnicodeLocateLetterInfo(Ch);
-      if I >= 0 then
-        begin
-          P := UnicodeLetterInfo[I];
-          if P.Attr = laUpper then
-            Result := Ch else
-            begin
-              C := P.CaseCode;
-              if C = #$FFFF then
-                Result := Ch else
-                Result := C;
-            end;
-        end else
-        begin
-          J := UnicodeLocateTitleCaseLetterInfo(Ch);
-          if J >= 0 then
-            begin
-              C := UnicodeTitleCaseLetterInfo[J].Upper;
-              if C = #$FFFF then
-                Result := Ch else
-                Result := C;
-            end else
-            begin
-              C := UnicodeLocateOtherLowerCase(Ch);
-              if C = #$0000 then
-                Result := Ch else
-                Result := C;
-            end;
-        end;
-    end;
-end;
-{$ELSE}
 function UnicodeUpCase(const Ch: WideChar): WideChar;
 var I : Integer;
     J : Integer;
@@ -3187,54 +3118,7 @@ begin
         end;
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function UnicodeLowCase(const Ch: WideChar): WideChar;
-var I : Integer;
-    J : Integer;
-    C : WideChar;
-    P : TUnicodeLetterInfo;
-begin
-  if Ord(Ch) < $80 then // ASCII short-cut
-    begin
-      if AnsiChar(Ord(Ch)) in ['A'..'Z'] then
-        Result := WideChar(Ord(Ch) + (Ord('a') - Ord('A'))) else
-        Result := Ch;
-    end else
-    begin
-      I := UnicodeLocateLetterInfo(Ch);
-      if I >= 0 then
-        begin
-          P := UnicodeLetterInfo[I];
-          if P.Attr = laLower then
-            Result := Ch else
-            begin
-              C := P.CaseCode;
-              if C = #$FFFF then
-                Result := Ch else
-                Result := C;
-            end;
-        end else
-        begin
-          J := UnicodeLocateTitleCaseLetterInfo(Ch);
-          if J >= 0 then
-            begin
-              C := UnicodeTitleCaseLetterInfo[J].Lower;
-              if C = #$FFFF then
-                Result := Ch else
-                Result := C;
-            end else
-            begin
-              C := UnicodeLocateOtherUpperCase(Ch);
-              if C = #$0000 then
-                Result := Ch else
-                Result := C;
-            end;
-        end;
-    end;
-end;
-{$ELSE}
 function UnicodeLowCase(const Ch: WideChar): WideChar;
 var I : Integer;
     J : Integer;
@@ -3286,56 +3170,7 @@ begin
         end;
     end;
 end;
-{$ENDIF}
 
-{$IFDEF CLR}
-function UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
-var I    : Integer;
-    J    : Integer;
-    C, D : AnsiChar;
-    E, F : WideChar;
-    P    : TUnicodeTitleCaseLetterInfo;
-begin
-  Result := A = B;
-  if Result then
-    exit;
-  if (Ord(A) < $80) and (Ord(B) < $80) then // ASCII short-cut
-    begin
-      if AnsiChar(Ord(A)) in ['A'..'Z'] then
-        C := AnsiChar(Byte(Ord(A)) + (Ord('a') - Ord('A'))) else
-        C := AnsiChar(Ord(A));
-      if AnsiChar(Ord(B)) in ['A'..'Z'] then
-        D := AnsiChar(Byte (Ord(B)) + (Ord('a') - Ord('A'))) else
-        D := AnsiChar(Ord(B));
-      Result := C = D;
-      exit;
-    end;
-  I := UnicodeLocateLetterInfo(A);
-  if I >= 0 then
-    begin
-      E := UnicodeLetterInfo[I].CaseCode;
-      if E = #$FFFF then
-        Result := False else
-        Result := E = B;
-      exit;
-    end;
-  J := UnicodeLocateTitleCaseLetterInfo(A);
-  if J >= 0 then
-    begin
-      P := UnicodeTitleCaseLetterInfo[J];
-      E := P.Upper;
-      F := P.Lower;
-      Result := ((E <> #$FFFF) and (E = B)) or
-                ((F <> #$FFFF) and (F = B));
-      exit;
-    end;
-  E := UnicodeUnicodeLocateOtherLowerCase(A);
-  if E <> #$0000 then
-    Result := E = B
-  else
-    Result := False;
-end;
-{$ELSE}
 function UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
 var I    : Integer;
     J    : Integer;
@@ -3382,7 +3217,6 @@ begin
   else
     Result := False;
 end;
-{$ENDIF}
 
 function UnicodeGetCombiningClass(const Ch: WideChar): Byte;
 begin
@@ -3524,7 +3358,6 @@ begin
   end;
 end;
 
-{$IFDEF SupportUnicodeString}
 function UnicodeLocateFoldingUpperCase(const Ch: WideChar): UnicodeString;
 begin
   if Ord(Ch) < $00DF then
@@ -3653,27 +3486,7 @@ begin
   else
     Result := '';
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function UnicodeUpCaseFoldingW(const Ch: WideChar): WideString;
-var R : WideChar;
-begin
-  R := UnicodeUpCase(Ch);
-  if R = Ch then
-    begin
-      Result := UnicodeLocateFoldingUpperCase(Ch);
-      if Result = '' then
-        Result := Ch;
-    end
-  else
-    Result := R;
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeUpCaseFoldingU(const Ch: WideChar): UnicodeString;
 var R : WideChar;
 begin
@@ -3687,9 +3500,7 @@ begin
   else
     Result := R;
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
 function UnicodeLocateFoldingLowerCase(const Ch: WideChar): UnicodeString;
 begin
   if Ch = #$0130 then
@@ -3697,27 +3508,7 @@ begin
   else
     Result := '';
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function UnicodeLowCaseFoldingW(const Ch: WideChar): WideString;
-var R : WideChar;
-begin
-  R := UnicodeLowCase(Ch);
-  if R = Ch then
-    begin
-      Result := UnicodeLocateFoldingLowerCase(Ch);
-      if Result = '' then
-        Result := Ch;
-    end
-  else
-    Result := R;
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeLowCaseFoldingU(const Ch: WideChar): UnicodeString;
 var R : WideChar;
 begin
@@ -3731,9 +3522,7 @@ begin
   else
     Result := R;
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
 function UnicodeLocateFoldingTitleCase(const Ch: WideChar): UnicodeString;
 begin
   if Ord(Ch) < $00DF then
@@ -3808,27 +3597,13 @@ begin
   else
     Result := '';
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function UnicodeTitleCaseFoldingW(const Ch: WideChar): WideString;
-begin
-  Result := UnicodeLocateFoldingTitleCase(Ch);
-  if Result = '' then
-    Result := Ch;
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeTitleCaseFoldingU(const Ch: WideChar): UnicodeString;
 begin
   Result := UnicodeLocateFoldingTitleCase(Ch);
   if Result = '' then
     Result := Ch;
 end;
-{$ENDIF}
 
 type
   TUnicodeDecompositionAttr = (daNone, daNoBreak, daCompat, daSuper,
@@ -7359,48 +7134,7 @@ begin
   Result := -1;
 end;
 
-{$IFDEF CLR}
-function GetCharacterDecompositionU(const Ch: WideChar): UnicodeString;
-var I, J : Integer;
-begin
-  I := LocateDecompositionInfoU(Ch);
-  if I < 0 then
-    // Exceptionally long decompositions not stored in table
-    case Ch of
-      #$3316 : Result := #$30AD#$30ED#$30E1#$30FC#$30C8#$30EB;             // SQUARE KIROMEETORU
-      #$33AF : Result := #$0072#$0061#$0064#$2215#$0073#$00B2;             // SQUARE RAD OVER S SQUARED
-      #$FDFA : Result := #$0635#$0644#$0649#$0020#$0627#$0644#$0644#$0647#$0020#$0639#$0644#$064A#$0647#$0020#$0648#$0633#$0644#$0645; // ARABIC LIGATURE SALLALLAHOU ALAYHE WASALLAM
-      #$FDFB : Result := #$062C#$0644#$0020#$062C#$0644#$0627#$0644#$0647; // ARABIC LIGATURE JALLAJALALOUHOU
-    else
-      Result := '';
-    end
-  else
-    begin
-      if UnicodeDecompositionInfo[I].Ch2 = #$FFFF then
-        J := 1 else
-      if UnicodeDecompositionInfo[I].Ch3 = #$FFFF then
-        J := 2 else
-      if UnicodeDecompositionInfo[I].Ch4 = #$FFFF then
-        J := 3 else
-      if UnicodeDecompositionInfo[I].Ch5 = #$FFFF then
-        J := 4
-      else
-        J := 5;
-      SetLength(Result, J);
-      Result[1] := UnicodeDecompositionInfo[I].Ch1;
-      if J > 1 then
-        Result[2] := UnicodeDecompositionInfo[I].Ch2;
-      if J > 2 then
-        Result[3] := UnicodeDecompositionInfo[I].Ch3;
-      if J > 3 then
-        Result[4] := UnicodeDecompositionInfo[I].Ch4;
-      if J > 4 then
-        Result[5] := UnicodeDecompositionInfo[I].Ch5;
-    end;
-end;
-{$ELSE}
-{$IFDEF SupportWideString}
-function UnicodeGetCharacterDecompositionW(const Ch: WideChar): WideString;
+function UnicodeGetCharacterDecompositionU(const Ch: WideChar): UnicodeString;
 var I, J : Integer;
     P, Q : PWideChar;
 begin
@@ -7437,8 +7171,6 @@ begin
         end;
     end;
 end;
-{$ENDIF}
-{$ENDIF}
 
 type
   TUnicodeUCS4DecompositionInfo = packed record
@@ -8472,58 +8204,12 @@ begin
   Result := -1;
 end;
 
-{$IFDEF CLR}
-function GetCharacterDecompositionU(const Ch: UCS4Char): WideString;
-var I : Integer;
-    P : TUnicodeUCS4DecompositionInfo;
-begin
-  if Ch < $10000 then
-    Result := GetCharacterDecompositionU(WideChar(Ch))
-  else
-    begin
-      if Ch and $FFF00 = $1D100 then // UCS4 decompositions
-        begin
-          (*
-              (Unicode:$1D15E; Attr:daNone; Ch1:#$1D157; Ch2:#$1D165),     // MUSICAL SYMBOL HALF NOTE
-              (Unicode:$1D15F; Attr:daNone; Ch1:#$1D158; Ch2:#$1D165),     // MUSICAL SYMBOL QUARTER NOTE
-              (Unicode:$1D160; Attr:daNone; Ch1:#$1D15F; Ch2:#$1D16E),     // MUSICAL SYMBOL EIGHTH NOTE
-              (Unicode:$1D161; Attr:daNone; Ch1:#$1D15F; Ch2:#$1D16F),     // MUSICAL SYMBOL SIXTEENTH NOTE
-              (Unicode:$1D162; Attr:daNone; Ch1:#$1D15F; Ch2:#$1D170),     // MUSICAL SYMBOL THIRTY-SECOND NOTE
-              (Unicode:$1D163; Attr:daNone; Ch1:#$1D15F; Ch2:#$1D171),     // MUSICAL SYMBOL SIXTY-FOURTH NOTE
-              (Unicode:$1D164; Attr:daNone; Ch1:#$1D15F; Ch2:#$1D172),     // MUSICAL SYMBOL ONE HUNDRED TWENTY-EIGHTH NOTE
-              (Unicode:$1D1BB; Attr:daNone; Ch1:#$1D1B9; Ch2:#$1D165),     // MUSICAL SYMBOL MINIMA
-              (Unicode:$1D1BC; Attr:daNone; Ch1:#$1D1BA; Ch2:#$1D165),     // MUSICAL SYMBOL MINIMA BLACK
-              (Unicode:$1D1BD; Attr:daNone; Ch1:#$1D1BB; Ch2:#$1D16E),     // MUSICAL SYMBOL SEMIMINIMA WHITE
-              (Unicode:$1D1BE; Attr:daNone; Ch1:#$1D1BC; Ch2:#$1D16E),     // MUSICAL SYMBOL SEMIMINIMA BLACK
-              (Unicode:$1D1BF; Attr:daNone; Ch1:#$1D1BB; Ch2:#$1D16F),     // MUSICAL SYMBOL FUSA WHITE
-              (Unicode:$1D1C0; Attr:daNone; Ch1:#$1D1BC; Ch2:#$1D16F),     // MUSICAL SYMBOL FUSA BLACK
-          *)
-        end;
-      I := LocateHighUCS4DecompositionInfoU(Ch);
-      if I < 0 then
-        Result := ''
-      else
-        begin
-          P := UnicodeUCS4DecompositionInfo[I];
-          if P.Ch2 = #$FFFF then
-            Result := P.Ch1
-          else
-            begin
-              SetLength(Result, 2);
-              Result[1] := P.Ch1;
-              Result[2] := P.Ch2;
-            end;
-        end;
-    end;
-end;
-{$ELSE}
-{$IFDEF SupportWideString}
-function UnicodeGetCharacterDecompositionW(const Ch: UCS4Char): WideString;
+function UnicodeGetCharacterDecompositionU(const Ch: UCS4Char): UnicodeString;
 var I : Integer;
     P : PUnicodeUCS4DecompositionInfo;
 begin
   if Ch < $10000 then
-    Result := UnicodeGetCharacterDecompositionW(WideChar(Ch))
+    Result := UnicodeGetCharacterDecompositionU(WideChar(Ch))
   else
     begin
       if Ch and $FFF00 = $1D100 then // UCS4 decompositions
@@ -8561,22 +8247,7 @@ begin
         end;
     end;
 end;
-{$ENDIF}
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function UnicodeUpperCaseFoldingW(const S: WideString): WideString;
-var I : Integer;
-begin
-  Result := '';
-  for I := 1 to Length(S) do
-    Result := Result + UnicodeUpCaseFoldingW(S[I]);
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeUpperCaseFoldingU(const S: UnicodeString): UnicodeString;
 var I : Integer;
 begin
@@ -8584,21 +8255,7 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeUpCaseFoldingU(S[I]);
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function UnicodeLowerCaseFoldingW(const S: WideString): WideString;
-var I : Integer;
-begin
-  Result := '';
-  for I := 1 to Length(S) do
-    Result := Result + UnicodeLowCaseFoldingW(S[I]);
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeLowerCaseFoldingU(const S: UnicodeString): UnicodeString;
 var I : Integer;
 begin
@@ -8606,8 +8263,32 @@ begin
   for I := 1 to Length(S) do
     Result := Result + UnicodeLowCaseFoldingU(S[I]);
 end;
+
+
+
+{$IFDEF UNICODE_CHAR_TEST}
+procedure Test;
+begin
+  { Unicode character functions                                                }
+  Assert(UnicodeIsAsciiChar('A'), 'IsASCIIChar');
+  Assert(not UnicodeIsAsciiChar(#$1234), 'IsASCIIChar');
+  Assert(UnicodeIsWhiteSpace(' '), 'IsWhiteSpace');
+  Assert(UnicodeIsPunctuation('.'), 'IsPunctuation');
+  Assert(not UnicodeIsPunctuation('A'), 'IsPunctuation');
+  Assert(UnicodeIsDecimalDigit(WideChar('0')), 'IsDecimalDigit');
+  Assert(UnicodeDecimalDigitValue(WideChar('5')) = 5, 'DecimalDigitValue');
+  Assert(UnicodeIsUpperCase('A'), 'IsUpperCase');
+  Assert(not UnicodeIsUpperCase('a'), 'IsUpperCase');
+  Assert(UnicodeIsLetter('A'), 'IsLetter');
+  Assert(not UnicodeIsLetter('1'), 'IsLetter');
+  Assert(UnicodeUpCase('a') = 'A', 'UnicodeUpCase');
+  Assert(UnicodeUpCase('A') = 'A', 'UnicodeUpCase');
+  Assert(UnicodeLowCase('a') = 'a', 'UnicodeUpCase');
+  Assert(UnicodeLowCase('A') = 'a', 'UnicodeUpCase');
+end;
 {$ENDIF}
 
 
 
 end.
+

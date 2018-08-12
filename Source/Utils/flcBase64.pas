@@ -78,14 +78,13 @@ uses
 {   DecodeBase64 converts a base 64 string using Alphabet (64 characters for   }
 {   values 0-63) to a binary string.                                           }
 {                                                                              }
-{$IFDEF SupportRawByteString}
 function  EncodeBase64(const S, Alphabet: RawByteString;
           const Pad: Boolean = False;
           const PadMultiple: Integer = 4;
           const PadChar: AnsiChar = AnsiChar(Ord('='))): RawByteString;
 
 function  DecodeBase64(const S, Alphabet: RawByteString;
-          const PadSet: ByteCharSet{$IFNDEF CLR} = []{$ENDIF}): RawByteString;
+          const PadSet: ByteCharSet = []): RawByteString;
 
 const
   b64_MIMEBase64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -96,7 +95,6 @@ function  MIMEBase64Decode(const S: RawByteString): RawByteString;
 function  MIMEBase64Encode(const S: RawByteString): RawByteString;
 function  UUDecode(const S: RawByteString): RawByteString;
 function  XXDecode(const S: RawByteString): RawByteString;
-{$ENDIF}
 
 
 
@@ -110,80 +108,6 @@ uses
 {                                                                              }
 { Base64                                                                       }
 {                                                                              }
-{$IFDEF SupportRawByteString}
-{$IFDEF CLR}
-function EncodeBase64(const S, Alphabet: RawByteString; const Pad: Boolean;
-    const PadMultiple: Integer; const PadChar: AnsiChar): RawByteString;
-var R, C : Byte;
-    I, F, L, M, N, U : Integer;
-    T : Boolean;
-begin
-  Assert(Length(Alphabet) = 64);
-  {$IFOPT R+}
-  if Length(Alphabet) <> 64 then
-    begin
-      Result := StrEmptyB;
-      exit;
-    end;
-  {$ENDIF}
-  L := Length(S);
-  if L = 0 then
-    begin
-      Result := StrEmptyB;
-      exit;
-    end;
-  M := L mod 3;
-  N := (L div 3) * 4 + M;
-  if M > 0 then
-    Inc(N);
-  T := Pad and (PadMultiple > 1);
-  if T then
-    begin
-      U := N mod PadMultiple;
-      if U > 0 then
-        begin
-          U := PadMultiple - U;
-          Inc(N, U);
-        end;
-    end else
-    U := 0;
-  SetLength(Result, N);
-  I := 1;
-  R := 0;
-  for F := 0 to L - 1 do
-    begin
-      C := Byte(S [F + 1]);
-      case F mod 3 of
-        0 : begin
-              Result[I] := Alphabet[C shr 2 + 1];
-              Inc(I);
-              R := (C and 3) shl 4;
-            end;
-        1 : begin
-              Result[I] := Alphabet[C shr 4 + R + 1];
-              Inc(I);
-              R := (C and $0F) shl 2;
-            end;
-        2 : begin
-              Result[I] := Alphabet[C shr 6 + R + 1];
-              Inc(I);
-              Result[I] := Alphabet[C and $3F + 1];
-              Inc(I);
-            end;
-      end;
-    end;
-  if M > 0 then
-    begin
-      Result[I] := Alphabet[R + 1];
-      Inc(I);
-    end;
-  for F := 1 to U do
-    begin
-      Result[I] := PadChar;
-      Inc(I);
-    end;
-end;
-{$ELSE}
 function EncodeBase64(const S, Alphabet: RawByteString; const Pad: Boolean;
     const PadMultiple: Integer; const PadChar: AnsiChar): RawByteString;
 var R, C : Byte;
@@ -256,73 +180,7 @@ begin
       Inc(P);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF CLR}
-function DecodeBase64(const S, Alphabet: RawByteString; const PadSet: CharSet): RawByteString;
-var F, L, M, P : Integer;
-    B, OutPos  : Byte;
-    C          : AnsiChar;
-    OutB       : array[1..3] of Byte;
-    Lookup     : array[AnsiChar] of Byte;
-    R          : Integer;
-begin
-  Assert(Length(Alphabet) = 64);
-  {$IFOPT R+}
-  if Length(Alphabet) <> 64 then
-    begin
-      Result := '';
-      exit;
-    end;
-  {$ENDIF}
-  L := Length(S);
-  P := 0;
-  if PadSet <> [] then
-    while (L - P > 0) and (S[L - P] in PadSet) do
-      Inc(P);
-  M := L - P;
-  if M = 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  SetLength(Result, (M * 3) div 4);
-  for C := #0 to #255 do
-    Lookup[C] := 0;
-  for F := 0 to 63 do
-    Lookup[Alphabet[F + 1]] := Byte(F);
-  R := 1;
-  OutPos := 0;
-  for F := 1 to L - P do
-    begin
-      B := Lookup[S[F]];
-      case OutPos of
-          0 : OutB[1] := B shl 2;
-          1 : begin
-                OutB[1] := OutB[1] or (B shr 4);
-                Result[R] := AnsiChar(OutB[1]);
-                Inc(R);
-                OutB[2] := (B shl 4) and $FF;
-              end;
-          2 : begin
-                OutB[2] := OutB[2] or (B shr 2);
-                Result[R] := AnsiChar(OutB[2]);
-                Inc(R);
-                OutB[3] := (B shl 6) and $FF;
-              end;
-          3 : begin
-                OutB[3] := OutB[3] or B;
-                Result[R] := AnsiChar(OutB[3]);
-                Inc(R);
-              end;
-        end;
-      OutPos := (OutPos + 1) mod 4;
-    end;
-  if (OutPos > 0) and (P = 0) then // incomplete encoding, add the partial byte if not 0
-    if OutB[OutPos] <> 0 then
-      Result := Result + AnsiChar(OutB[OutPos]);
-end;
-{$ELSE}
 function DecodeBase64(const S, Alphabet: RawByteString; const PadSet: ByteCharSet): RawByteString;
 var F, L, M, P : Integer;
     B, OutPos  : Byte;
@@ -384,7 +242,6 @@ begin
     if OutB[OutPos] <> 0 then
       Result := Result + ByteChar(OutB[OutPos]);
 end;
-{$ENDIF}
 
 function MIMEBase64Encode(const S: RawByteString): RawByteString;
 begin
@@ -406,7 +263,6 @@ function XXDecode(const S: RawByteString): RawByteString;
 begin
   Result := DecodeBase64(S, ToRawByteString(b64_XXEncode), []);
 end;
-{$ENDIF}
 
 
 

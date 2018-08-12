@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      Bit function: 32 bit.                                    }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -81,11 +81,7 @@ function  ClearBitScanReverse32(const Value, BitIndex: Word32): Integer; overloa
 function  ReverseBits32(const Value: Word32): Word32; overload;
 function  ReverseBits32(const Value: Word32; const BitCount: Integer): Word32; overload;
 function  SwapEndian32(const Value: Word32): Word32;
-{$IFDEF ManagedCode}
-procedure SwapEndianBuf32(var Buf: array of Word32);
-{$ELSE}
 procedure SwapEndianBuf32(var Buf; const Count: Integer);
-{$ENDIF}
 function  TwosComplement32(const Value: Word32): Word32;
 
 function  RotateLeftBits16(const Value: Word; const Bits: Byte): Word;
@@ -209,14 +205,6 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SwapEndianBuf32(var Buf: array of Word32);
-var I : Integer;
-begin
-  for I := 0 to Length(Buf) - 1 do
-    Buf[I] := SwapEndian(Buf[I]);
-end;
-{$ELSE}
 procedure SwapEndianBuf32(var Buf; const Count: Integer);
 var P : PWord32;
     I : Integer;
@@ -228,7 +216,6 @@ begin
       Inc(P);
     end;
 end;
-{$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
 function TwosComplement32(const Value: Word32): Word32; register; assembler;

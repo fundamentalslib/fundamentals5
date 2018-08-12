@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStdTypes.pas                                          }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      Standard type definitions.                               }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -34,8 +34,9 @@
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2000-       1.01  Initial versions                                         }
+{   2000-2018   1.01  Initial versions                                         }
 {   2018/07/11  5.02  Move to flcStdTypes unit from flcUtils.                  }
+{   2018/08/12  5.03  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -145,7 +146,6 @@ type
   PUInt32   = ^UInt32;
   PUInt64   = ^UInt64;
 
-  {$IFNDEF ManagedCode}
   Int16Rec = packed record
     case Integer of
       0 : (Lo, Hi : Byte);
@@ -159,7 +159,6 @@ type
       2 : (Bytes  : array[0..3] of Byte);
   end;
   PInt32Rec = ^Int32Rec;
-  {$ENDIF}
 
 const
   MinByte       = Low(Byte);
@@ -234,7 +233,6 @@ type
   PExtended = ^Extended;
   {$ENDIF}
 
-  {$IFNDEF ManagedCode}
   {$IFNDEF ExtendedIsDouble}
   ExtendedRec = packed record
     case Boolean of
@@ -244,7 +242,6 @@ type
       );
       False: (Value: Extended);
   end;
-  {$ENDIF}
   {$ENDIF}
 
   Float32 = Single;
@@ -281,12 +278,10 @@ const
   MaxExtended : Extended = 1.1E+4932;
   {$ENDIF}
 
-{$IFNDEF ManagedCode}
 {$IFNDEF ExtendedIsDouble}
 const
   ExtendedNan      : ExtendedRec = (Mantissa:($FFFFFFFF, $FFFFFFFF); Exponent:$7FFF);
   ExtendedInfinity : ExtendedRec = (Mantissa:($00000000, $80000000); Exponent:$7FFF);
-{$ENDIF}
 {$ENDIF}
 
 {$IFDEF SupportCurrency}
@@ -358,17 +353,19 @@ type
   RawByteChar = ByteChar;
   PRawByteChar = ^RawByteChar;
 
-  {$IFNDEF SupportRawByteString}
-  {$IFDEF SupportAnsiString}
+{$IFNDEF SupportRawByteString}
+{$IFDEF SupportAnsiString}
+type
   RawByteString = AnsiString;
-  {$ENDIF}
-  {$ENDIF}
+{$ENDIF}
+{$ENDIF}
 
-  {$IFDEF SupportRawByteString}
-  {$IFDEF FREEPASCAL}
+{$IFDEF SupportRawByteString}
+{$IFDEF FREEPASCAL}
+type
   PRawByteString = ^RawByteString;
-  {$ENDIF}
-  {$ENDIF}
+{$ENDIF}
+{$ENDIF}
 
 
 
@@ -382,6 +379,13 @@ type
 type
   UTF8Char = ByteChar;
   PUTF8Char = ^UTF8Char;
+{$ENDIF}
+
+{$IFNDEF SupportUTF8String}
+{$IFDEF SupportAnsiString}
+type
+  UTF8String = AnsiString;
+{$ENDIF}
 {$ENDIF}
 
 
@@ -412,6 +416,13 @@ type
   UnicodeChar = WideChar;
   PUnicodeChar = ^UnicodeChar;
 
+{$IFNDEF SupportUnicodeString}
+{$IFDEF SupportWideString}
+type
+  UnicodeString = WideString;
+{$ENDIF}
+{$ENDIF}
+
 
 
 {                                                                              }
@@ -434,8 +445,8 @@ type
   ByteSet = set of Byte;
   ByteCharSet = set of ByteChar;
 
-  PCharSet = ^ByteCharSet;
   PByteSet = ^ByteSet;
+  PByteCharSet = ^ByteCharSet;
 
 
 
@@ -464,19 +475,10 @@ type
   {$IFDEF SupportAnsiString}
   AnsiStringArray = array of AnsiString;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   RawByteStringArray = array of RawByteString;
-  {$ENDIF}
-  {$IFDEF SupportWideString}
-  WideStringArray = array of WideString;
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
   UnicodeStringArray = array of UnicodeString;
-  {$ENDIF}
   StringArray = array of String;
-  {$IFNDEF ManagedCode}
   PointerArray = array of Pointer;
-  {$ENDIF}
   ObjectArray = array of TObject;
   InterfaceArray = array of IInterface;
   ByteCharSetArray = array of ByteCharSet;
@@ -525,15 +527,8 @@ const
   {$IFDEF SupportAnsiString}
   MaxAnsiStringArrayElements = MaxArraySize div Sizeof(AnsiString);
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   MaxRawByteStringArrayElements = MaxArraySize div Sizeof(RawByteString);
-  {$ENDIF}
-  {$IFDEF SupportWideString}
-  MaxWideStringArrayElements = MaxArraySize div Sizeof(WideString);
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
   MaxUnicodeStringArrayElements = MaxArraySize div Sizeof(UnicodeString);
-  {$ENDIF}
   MaxStringArrayElements = MaxArraySize div Sizeof(String);
   MaxPointerArrayElements = MaxArraySize div Sizeof(Pointer);
   MaxObjectArrayElements = MaxArraySize div Sizeof(TObject);
@@ -564,15 +559,8 @@ type
   {$IFDEF SupportAnsiString}
   TStaticAnsiStringArray = array[0..MaxAnsiStringArrayElements - 1] of AnsiString;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   TStaticRawByteStringArray = array[0..MaxRawByteStringArrayElements - 1] of RawByteString;
-  {$ENDIF}
-  {$IFDEF SupportWideString}
-  TStaticWideStringArray = array[0..MaxWideStringArrayElements - 1] of WideString;
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
   TStaticUnicodeStringArray = array[0..MaxUnicodeStringArrayElements - 1] of UnicodeString;
-  {$ENDIF}
   {$IFDEF StringIsUnicode}
   TStaticStringArray = TStaticUnicodeStringArray;
   {$ELSE}
@@ -611,15 +599,8 @@ type
   {$IFDEF SupportAnsiString}
   PStaticAnsiStringArray = ^TStaticAnsiStringArray;
   {$ENDIF}
-  {$IFDEF SupportRawByteString}
   PStaticRawByteStringArray = ^TStaticRawByteStringArray;
-  {$ENDIF}
-  {$IFDEF SupportWideString}
-  PStaticWideStringArray = ^TStaticWideStringArray;
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
   PStaticUnicodeStringArray = ^TStaticUnicodeStringArray;
-  {$ENDIF}
   PStaticStringArray = ^TStaticStringArray;
   PStaticPointerArray = ^TStaticPointerArray;
   PStaticObjectArray = ^TStaticObjectArray;

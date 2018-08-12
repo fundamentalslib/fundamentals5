@@ -1007,18 +1007,12 @@
   {$IFDEF IOS}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
-    {$UNDEF SupportRawByteString}
-    {$UNDEF SupportUTF8String}
-    {$UNDEF SupportUTF8Char}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}
   {$IFDEF ANDROID}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
-    {$UNDEF SupportRawByteString}
-    {$UNDEF SupportUTF8String}
-    {$UNDEF SupportUTF8Char}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}

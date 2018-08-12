@@ -83,7 +83,7 @@ type
     FReaderStartPos : Int64;
     FCodec          : TCustomUnicodeCodec;
     FCodecOwner     : Boolean;
-    FBuffer         : WideString;
+    FBuffer         : UnicodeString;
     FBufPos         : Integer;
     FBufLen         : Integer;
     FRawBuf         : Pointer;
@@ -108,7 +108,6 @@ type
 
     function  ReadChar: WideChar;
     function  ReadWide(const Buf: PWideChar; const Len: Integer): Integer;
-    function  ReadWideStr(const Len: Integer): WideString;
     function  ReadUnicodeStr(const Len: Integer): UnicodeString;
     function  ReadUTF8Str(const Len: Integer): RawByteString;
 
@@ -405,29 +404,6 @@ begin
   Inc(P, FBufPos);
   Move(P^, Buf^, Sizeof(WideChar) * Result);
   Inc(FBufPos, Result);
-end;
-
-function TUnicodeReader.ReadWideStr(const Len: Integer): WideString;
-var L: Integer;
-    P: PWideChar;
-begin
-  if Len <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  // buffer
-  L := FBufLen - FBufPos;
-  if L < Len then
-    L := BufferChars(Len);
-  if L > Len then
-    L := Len;
-  // read
-  P := Pointer(FBuffer);
-  Inc(P, FBufPos);
-  SetLength(Result, L);
-  Move(P^, Pointer(Result)^, Sizeof(WideChar) * L);
-  Inc(FBufPos, L);
 end;
 
 function TUnicodeReader.ReadUnicodeStr(const Len: Integer): UnicodeString;

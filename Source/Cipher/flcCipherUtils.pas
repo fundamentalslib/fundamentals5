@@ -56,17 +56,6 @@ uses
 
 
 {                                                                              }
-{ RawByteString                                                                }
-{                                                                              }
-{$IFNDEF SupportRawByteString}
-type
-  RawByteString = AnsiString;
-  PRawByteString = ^RawByteString;
-{$ENDIF}
-
-
-
-{                                                                              }
 { Cipher errors                                                                }
 {                                                                              }
 const

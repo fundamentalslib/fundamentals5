@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcJSON.pas                                              }
-{   File version:     5.12                                                     }
+{   File version:     5.13                                                     }
 {   Description:      JSON                                                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2011-2018, David J Butler                  }
@@ -46,6 +46,7 @@
 {   2015/05/05  4.10  JSONFloat type, dynamic array functions.                 }
 {   2016/01/09  5.11  Revised for Fundamentals 5.                              }
 {   2018/07/23  5.12  Delphi type changes.                                     }
+{   2018/08/12  5.13  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -125,9 +126,6 @@ type
 
     function  GetValueStr: UnicodeString; virtual;
     function  GetValueStrUTF8: RawByteString;
-    {$IFDEF SupportWideString}
-    function  GetValueStrWide: WideString;
-    {$ENDIF}
     function  GetValueInt: Int64; virtual;
     function  GetValueFloat: JSONFloat; virtual;
     function  GetValueBoolean: Boolean; virtual;
@@ -137,9 +135,6 @@ type
 
     procedure SetValueStr(const AValue: UnicodeString); virtual;
     procedure SetValueStrUTF8(const AValue: RawByteString); virtual;
-    {$IFDEF SupportWideString}
-    procedure SetValueStrWide(const AValue: WideString); virtual;
-    {$ENDIF}
     procedure SetValueInt(const AValue: Int64); virtual;
     procedure SetValueFloat(const AValue: JSONFloat); virtual;
     procedure SetValueBoolean(const AValue: Boolean); virtual;
@@ -158,17 +153,11 @@ type
 
     function  GetJSONString(const AOptions: TJSONStringOptions = []): UnicodeString;
     function  GetJSONStringUTF8(const AOptions: TJSONStringOptions = []): RawByteString;
-    {$IFDEF SupportWideString}
-    function  GetJSONStringWide(const AOptions: TJSONStringOptions = []): WideString;
-    {$ENDIF}
 
     property  ValueType: TJSONValueType read GetValueType;
 
     property  ValueStr: UnicodeString read GetValueStr write SetValueStr;
     property  ValueStrUTF8: RawByteString read GetValueStrUTF8 write SetValueStrUTF8;
-    {$IFDEF SupportWideString}
-    property  ValueStrWide: WideString read GetValueStrWide write SetValueStrWide;
-    {$ENDIF}
     property  ValueInt: Int64 read GetValueInt write SetValueInt;
     property  ValueFloat: JSONFloat read GetValueFloat write SetValueFloat;
     property  ValueBoolean: Boolean read GetValueBoolean write SetValueBoolean;
@@ -208,9 +197,6 @@ type
 
   public
     constructor Create(const AValue: UnicodeString);
-    {$IFDEF SupportWideString}
-    constructor CreateWide(const AValue: WideString);
-    {$ENDIF}
     constructor CreateUTF8(const AValue: RawByteString);
 
     function  Clone: TJSONValue; override;
@@ -313,9 +299,6 @@ type
 
     function  GetItemAsStr(const Idx: Integer): UnicodeString;
     function  GetItemAsStrUTF8(const Idx: Integer): RawByteString;
-    {$IFDEF SupportWideString}
-    function  GetItemAsStrWide(const Idx: Integer): WideString;
-    {$ENDIF}
     function  GetItemAsInt(const Idx: Integer): Int64;
     function  GetItemAsFloat(const Idx: Integer): JSONFloat;
     function  GetItemAsBoolean(const Idx: Integer): Boolean;
@@ -325,9 +308,6 @@ type
 
     procedure SetItemAsStr(const Idx: Integer; const Value: UnicodeString);
     procedure SetItemAsStrUTF8(const Idx: Integer; const Value: RawByteString);
-    {$IFDEF SupportWideString}
-    procedure SetItemAsStrWide(const Idx: Integer; const Value: WideString);
-    {$ENDIF}
     procedure SetItemAsInt(const Idx: Integer; const Value: Int64);
     procedure SetItemAsFloat(const Idx: Integer; const Value: JSONFloat);
     procedure SetItemAsBoolean(const Idx: Integer; const Value: Boolean);
@@ -353,9 +333,6 @@ type
     function  ItemIsNull(const Idx: Integer): Boolean;
     property  ItemAsStr[const Idx: Integer]: UnicodeString read GetItemAsStr write SetItemAsStr;
     property  ItemAsStrUTF8[const Idx: Integer]: RawByteString read GetItemAsStrUTF8 write SetItemAsStrUTF8;
-    {$IFDEF SupportWideString}
-    property  ItemAsStrWide[const Idx: Integer]: WideString read GetItemAsStrWide write SetItemAsStrWide;
-    {$ENDIF}
     property  ItemAsInt[const Idx: Integer]: Int64 read GetItemAsInt write SetItemAsInt;
     property  ItemAsFloat[const Idx: Integer]: JSONFloat read GetItemAsFloat write SetItemAsFloat;
     property  ItemAsBoolean[const Idx: Integer]: Boolean read GetItemAsBoolean write SetItemAsBoolean;
@@ -366,9 +343,6 @@ type
     procedure Append(const A: TJSONValue);
     procedure AppendStr(const A: UnicodeString);
     procedure AppendStrUTF8(const A: RawByteString);
-    {$IFDEF SupportWideString}
-    procedure AppendStrWide(const A: WideString);
-    {$ENDIF}
     procedure AppendInt(const A: Int64);
     procedure AppendFloat(const A: JSONFloat);
     procedure AppendBoolean(const A: Boolean);
@@ -380,9 +354,6 @@ type
 
     function  GetAsStrArray: UnicodeStringArray;
     function  GetAsStrArrayUTF8: RawByteStringArray;
-    {$IFDEF SupportWideString}
-    function  GetAsStrArrayWide: WideStringArray;
-    {$ENDIF}
     function  GetAsIntArray: Int64Array;
     function  GetAsFloatArray: JSONFloatArray;
   end;
@@ -429,9 +400,6 @@ type
     function  ItemIsNull(const Name: UnicodeString): Boolean;
     function  GetItemAsStr(const Name: UnicodeString; const Default: UnicodeString = ''): UnicodeString;
     function  GetItemAsStrUTF8(const Name: UnicodeString; const Default: RawByteString = ''): RawByteString;
-    {$IFDEF SupportWideString}
-    function  GetItemAsStrWide(const Name: UnicodeString; const Default: WideString = ''): WideString;
-    {$ENDIF}
     function  GetItemAsInt(const Name: UnicodeString; const Default: Int64 = 0): Int64;
     function  GetItemAsFloat(const Name: UnicodeString; const Default: JSONFloat = 0.0): JSONFloat;
     function  GetItemAsBoolean(const Name: UnicodeString; const Default: Boolean = False): Boolean;
@@ -444,9 +412,6 @@ type
 
     procedure SetItemAsStr(const Name: UnicodeString; const Value: UnicodeString);
     procedure SetItemAsStrUTF8(const Name: UnicodeString; const Value: RawByteString);
-    {$IFDEF SupportWideString}
-    procedure SetItemAsStrWide(const Name: UnicodeString; const Value: WideString);
-    {$ENDIF}
     procedure SetItemAsInt(const Name: UnicodeString; const Value: Int64);
     procedure SetItemAsFloat(const Name: UnicodeString; const Value: JSONFloat);
     procedure SetItemAsBoolean(const Name: UnicodeString; const Value: Boolean);
@@ -536,9 +501,6 @@ type
 
     function  ParseText(const AText: UnicodeString): TJSONValue;
     function  ParseTextUTF8(const AText: RawByteString): TJSONValue;
-    {$IFDEF SupportWideString}
-    function  ParseTextWide(const AText: WideString): TJSONValue;
-    {$ENDIF}
   end;
 
   EJSONParser = class(Exception);
@@ -550,9 +512,6 @@ type
 {                                                                              }
 function  ParseJSONText(const JSONText: UnicodeString): TJSONValue;
 function  ParseJSONTextUTF8(const JSONText: RawByteString): TJSONValue;
-{$IFDEF SupportWideString}
-function  ParseJSONTextWide(const JSONText: WideString): TJSONValue;
-{$ENDIF}
 
 function  GetSchemaSchemaObj: TJSONObject;
 procedure ValidateSchema(const Schema: TJSONObject);
@@ -626,6 +585,7 @@ const
 function EscapedJSONStringValue(const S: UnicodeString): UnicodeString;
 var T : UnicodeString;
 begin
+
   T := S;
   T := StrReplaceCharStrU('\', '\\', T);
   T := StrReplaceCharStrU('/', '\/', T);
@@ -676,13 +636,6 @@ begin
   Result := UnicodeStringToUTF8String(GetJSONString(AOptions));
 end;
 
-{$IFDEF SupportWideString}
-function TJSONValue.GetJSONStringWide(const AOptions: TJSONStringOptions): WideString;
-begin
-  Result := UnicodeStringToWideString(GetJSONString(AOptions));
-end;
-{$ENDIF}
-
 function TJSONValue.GetValueType: TJSONValueType;
 begin
   raise EJSONValue.CreateFmt('%s: GetValueType not implemented', [ClassName]);
@@ -697,13 +650,6 @@ function TJSONValue.GetValueStrUTF8: RawByteString;
 begin
   Result := UnicodeStringToUTF8String(GetValueStr);
 end;
-
-{$IFDEF SupportWideString}
-function TJSONValue.GetValueStrWide: WideString;
-begin
-  Result := UnicodeStringToWideString(GetValueStr);
-end;
-{$ENDIF}
 
 function TJSONValue.GetValueInt: Int64;
 begin
@@ -759,13 +705,6 @@ procedure TJSONValue.SetValueStrUTF8(const AValue: RawByteString);
 begin
   SetValueStr(UTF8StringToUnicodeString(AValue));
 end;
-
-{$IFDEF SupportWideString}
-procedure TJSONValue.SetValueStrWide(const AValue: WideString);
-begin
-  SetValueStr(WideStringToUnicodeString(AValue));
-end;
-{$ENDIF}
 
 procedure TJSONValue.SetValueInt(const AValue: Int64);
 begin
@@ -923,14 +862,6 @@ begin
   inherited Create;
   FValue := AValue;
 end;
-
-{$IFDEF SupportWideString}
-constructor TJSONString.CreateWide(const AValue: WideString);
-begin
-  inherited Create;
-  SetValueStrWide(AValue);
-end;
-{$ENDIF}
 
 constructor TJSONString.CreateUTF8(const AValue: RawByteString);
 begin
@@ -1427,7 +1358,7 @@ begin
     {$ENDIF}
     System.vtCurrency      : Result := TJSONFloat.Create(Value.VCurrency^);
     {$IFDEF SupportWideString}
-    System.vtWideString    : Result := TJSONString.Create(ToStringW(WideString(Value.VWideString)));
+    System.vtWideString    : Result := TJSONString.Create(UnicodeString(WideString(Value.VWideString)));
     {$ENDIF}
     System.vtInt64         : Result := TJSONInteger.Create(Value.VInt64^);
     {$IFDEF SupportUnicodeString}
@@ -1533,13 +1464,6 @@ begin
   Result := GetItem(Idx).GetValueStrUTF8;
 end;
 
-{$IFDEF SupportWideString}
-function TJSONArray.GetItemAsStrWide(const Idx: Integer): WideString;
-begin
-  Result := GetItem(Idx).GetValueStrWide;
-end;
-{$ENDIF}
-
 function TJSONArray.GetItemAsInt(const Idx: Integer): Int64;
 begin
   Result := GetItem(Idx).GetValueInt;
@@ -1580,13 +1504,6 @@ begin
   GetItem(Idx).SetValueStrUTF8(Value);
 end;
 
-{$IFDEF SupportWideString}
-procedure TJSONArray.SetItemAsStrWide(const Idx: Integer; const Value: WideString);
-begin
-  GetItem(Idx).SetValueStrWide(Value);
-end;
-{$ENDIF}
-
 procedure TJSONArray.SetItemAsInt(const Idx: Integer; const Value: Int64);
 begin
   GetItem(Idx).SetValueInt(Value);
@@ -1626,13 +1543,6 @@ procedure TJSONArray.AppendStrUTF8(const A: RawByteString);
 begin
   Append(TJSONString.CreateUTF8(A));
 end;
-
-{$IFDEF SupportWideString}
-procedure TJSONArray.AppendStrWide(const A: WideString);
-begin
-  Append(TJSONString.CreateWide(A));
-end;
-{$ENDIF}
 
 procedure TJSONArray.AppendInt(const A: Int64);
 begin
@@ -1810,17 +1720,6 @@ begin
   for I := 0 to L - 1 do
     Result[I] := GetItemAsStrUTF8(I);
 end;
-
-{$IFDEF SupportWideString}
-function TJSONArray.GetAsStrArrayWide: WideStringArray;
-var L, I : Integer;
-begin
-  L := Length(FList);
-  SetLength(Result, L);
-  for I := 0 to L - 1 do
-    Result[I] := GetItemAsStrWide(I);
-end;
-{$ENDIF}
 
 function TJSONArray.GetAsIntArray: Int64Array;
 var L, I : Integer;
@@ -2011,25 +1910,6 @@ begin
       end;
 end;
 
-{$IFDEF SupportWideString}
-function TJSONObject.GetItemAsStrWide(const Name: UnicodeString; const Default: WideString): WideString;
-var I : TJSONValue;
-begin
-  I := GetItemValueByName(Name);
-  if not Assigned(I) then
-    Result := Default
-  else
-    if I.ValueIsNull then
-      Result := Default
-    else
-      try
-        Result := I.ValueStrWide;
-      except
-        Result := Default;
-      end;
-end;
-{$ENDIF}
-
 function TJSONObject.GetItemAsInt(const Name: UnicodeString; const Default: Int64): Int64;
 var I : TJSONValue;
 begin
@@ -2172,18 +2052,6 @@ begin
   else
     I.ValueStrUTF8 := Value;
 end;
-
-{$IFDEF SupportWideString}
-procedure TJSONObject.SetItemAsStrWide(const Name: UnicodeString; const Value: WideString);
-var I : TJSONValue;
-begin
-  I := GetItemValueByName(Name);
-  if not Assigned(I) then
-    Add(Name, TJSONString.CreateWide(Value))
-  else
-    I.ValueStrWide := Value;
-end;
-{$ENDIF}
 
 procedure TJSONObject.SetItemAsInt(const Name: UnicodeString; const Value: Int64);
 var I : TJSONValue;
@@ -3026,13 +2894,6 @@ begin
   Result := ParseText(UTF8StringToUnicodeString(AText));
 end;
 
-{$IFDEF SupportWideString}
-function TJSONParser.ParseTextWide(const AText: WideString): TJSONValue;
-begin
-  Result := ParseText(WideStringToUnicodeString(AText));
-end;
-{$ENDIF}
-
 
 
 {                                                                              }
@@ -3053,13 +2914,6 @@ function ParseJSONTextUTF8(const JSONText: RawByteString): TJSONValue;
 begin
   Result := ParseJSONText(UTF8StringToUnicodeString(JSONText));
 end;
-
-{$IFDEF SupportWideString}
-function ParseJSONTextWide(const JSONText: WideString): TJSONValue;
-begin
-  Result := ParseJSONText(WideStringToUnicodeString(JSONText));
-end;
-{$ENDIF}
 
 
 

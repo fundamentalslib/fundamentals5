@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeCodecs.pas                                     }
-{   File version:     5.23                                                     }
+{   File version:     5.24                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2018                                  }
@@ -88,6 +88,7 @@
 {   2015/05/06  4.21  Move UTF functions to unit cUtils.                       }
 {   2016/01/09  5.22  Revised for Fundamentals 5.                              }
 {   2016/04/16  5.23  Use virtual GetAlias instead of GetAliasList.            }
+{   2018/08/12  5.24  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -221,9 +222,7 @@ type
     class function GetAlias(const Idx: Integer): String; virtual;
 
     class function IsAlias(const Alias: String): Boolean;
-    {$IFDEF SupportAnsiString}
     class function IsAliasA(const Alias: AnsiString): Boolean;
-    {$ENDIF}
     class function IsAliasU(const Alias: UnicodeString): Boolean;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
@@ -232,16 +231,9 @@ type
     function  Encode(const S: PWideChar; const Length: Integer;
               out ProcessedChars: Integer): RawByteString; virtual; abstract;
 
-    {$IFDEF SupportWideString}
-    procedure DecodeStrW(const Buf: Pointer; const BufSize: Integer;
-              var Dest: WideString);
-    function  EncodeStrW(const S: WideString): RawByteString;
-    {$ENDIF}
-    {$IFDEF SupportUnicodeString}
-    procedure DecodeStrU(const Buf: Pointer; const BufSize: Integer;
+    procedure DecodeStr(const Buf: Pointer; const BufSize: Integer;
               var Dest: UnicodeString);
-    function  EncodeStrU(const S: UnicodeString): RawByteString;
-    {$ENDIF}
+    function  EncodeStr(const S: UnicodeString): RawByteString;
 
     procedure ReadUCS4Char(out C: UCS4Char; out ByteCount: Integer);
     procedure WriteUCS4Char(const C: UCS4Char; out ByteCount: Integer); virtual;
@@ -303,24 +295,6 @@ function  DetectUTFEncoding(const Buf: Pointer; const BufSize: Integer;
 {                                                                              }
 { Encoding conversion functions                                                }
 {                                                                              }
-{$IFDEF SupportWideString}
-function  EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
-          const Buf: Pointer; const BufSize: Integer): WideString; overload;
-function  EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
-          const S: RawByteString): WideString; overload;
-
-function  EncodingToUTF16W(const CodecAlias: String;
-          const Buf: Pointer; const BufSize: Integer): WideString; overload;
-function  EncodingToUTF16W(const CodecAlias: String;
-          const S: RawByteString): WideString; overload;
-
-function  UTF16ToEncodingW(const CodecClass: TUnicodeCodecClass;
-          const S: WideString): RawByteString; overload;
-function  UTF16ToEncodingW(const CodecAlias: String;
-          const S: WideString): RawByteString; overload;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function  EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
           const Buf: Pointer; const BufSize: Integer): UnicodeString; overload;
 function  EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
@@ -335,7 +309,6 @@ function  UTF16ToEncodingU(const CodecClass: TUnicodeCodecClass;
           const S: UnicodeString): RawByteString; overload;
 function  UTF16ToEncodingU(const CodecAlias: String;
           const S: UnicodeString): RawByteString; overload;
-{$ENDIF}
 
 
 
@@ -1607,78 +1580,6 @@ end;
 {                                                                              }
 { Unicode conversion functions                                                 }
 {                                                                              }
-{$IFDEF SupportWideString}
-function EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
-    const Buf: Pointer; const BufSize: Integer): WideString;
-var C : TCustomUnicodeCodec;
-begin
-  if not Assigned(CodecClass) then
-    begin
-      Result := '';
-      exit;
-    end;
-  C := CodecClass.Create;
-  try
-    C.DecodeStrW(Buf, BufSize, Result);
-  finally
-    C.Free;
-  end;
-end;
-
-function EncodingToUTF16W(const CodecClass: TUnicodeCodecClass;
-    const S: RawByteString): WideString;
-var C : TCustomUnicodeCodec;
-begin
-  if not Assigned(CodecClass) then
-    begin
-      Result := '';
-      exit;
-    end;
-  C := CodecClass.Create;
-  try
-    C.DecodeStrW(PAnsiChar(S), Length(S), Result);
-  finally
-    C.Free;
-  end;
-end;
-
-function EncodingToUTF16W(const CodecAlias: String;
-    const Buf: Pointer; const BufSize: Integer): WideString;
-begin
-  Result := EncodingToUTF16W(GetCodecClassByAlias(CodecAlias),
-      Buf, BufSize);
-end;
-
-function EncodingToUTF16W(const CodecAlias: String; const S: RawByteString): WideString;
-begin
-  Result := EncodingToUTF16W(GetCodecClassByAlias(CodecAlias), S);
-end;
-
-function UTF16ToEncodingW(const CodecClass: TUnicodeCodecClass;
-    const S: WideString): RawByteString;
-var C : TCustomUnicodeCodec;
-    I : Integer;
-begin
-  if not Assigned(CodecClass) then
-    begin
-      SetLength(Result, 0);
-      exit;
-    end;
-  C := CodecClass.Create;
-  try
-    Result := C.Encode(Pointer(S), Length(S), I);
-  finally
-    C.Free;
-  end;
-end;
-
-function UTF16ToEncodingW(const CodecAlias: String; const S: WideString): RawByteString;
-begin
-  Result := UTF16ToEncodingW(GetCodecClassByAlias(CodecAlias), S);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function EncodingToUTF16U(const CodecClass: TUnicodeCodecClass;
     const Buf: Pointer; const BufSize: Integer): UnicodeString;
 var C : TCustomUnicodeCodec;
@@ -1690,7 +1591,7 @@ begin
     end;
   C := CodecClass.Create;
   try
-    C.DecodeStrU(Buf, BufSize, Result);
+    C.DecodeStr(Buf, BufSize, Result);
   finally
     C.Free;
   end;
@@ -1707,7 +1608,7 @@ begin
     end;
   C := CodecClass.Create;
   try
-    C.DecodeStrU(PByteChar(S), Length(S), Result);
+    C.DecodeStr(PByteChar(S), Length(S), Result);
   finally
     C.Free;
   end;
@@ -1747,7 +1648,6 @@ function UTF16ToEncodingU(const CodecAlias: String; const S: UnicodeString): Raw
 begin
   Result := UTF16ToEncodingU(GetCodecClassByAlias(CodecAlias), S);
 end;
-{$ENDIF}
 
 
 
@@ -1821,14 +1721,12 @@ begin
   Result := False;
 end;
 
-{$IFDEF SupportAnsiString}
 class function TCustomUnicodeCodec.IsAliasA(const Alias: AnsiString): Boolean;
 var S : String;
 begin
   S := String(Alias);
   Result := IsAlias(S);
 end;
-{$ENDIF}
 
 class function TCustomUnicodeCodec.IsAliasU(const Alias: UnicodeString): Boolean;
 var S : String;
@@ -1872,47 +1770,7 @@ begin
     end;
 end;
 
-{$IFDEF SupportWideString}
-procedure TCustomUnicodeCodec.DecodeStrW(const Buf: Pointer; const BufSize: Integer;
-    var Dest: WideString);
-var P    : PAnsiChar;
-    Q    : PWideChar;
-    L, M : Integer;
-    I, J : Integer;
-begin
-  P := Buf;
-  L := BufSize;
-  if not Assigned(P) or (L <= 0) then
-    begin
-      Dest := '';
-      exit;
-    end;
-  SetLength(Dest, BufSize);
-  M := 0;
-  repeat
-    Q := Pointer(Dest);
-    Inc(Q, M);
-    Decode(P, L, Q, BufSize * Sizeof(WideChar), I, J);
-    Dec(L, I);
-    Inc(P, I);
-    Inc(M, J);
-    if (J < BufSize) or (L <= 0) then
-      break;
-    SetLength(Dest, M + BufSize);
-  until False;
-  if Length(Dest) <> M then
-    SetLength(Dest, M);
-end;
-
-function TCustomUnicodeCodec.EncodeStrW(const S: WideString): RawByteString;
-var I : Integer;
-begin
-  Result := Encode(Pointer(S), Length(S), I);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
-procedure TCustomUnicodeCodec.DecodeStrU(const Buf: Pointer; const BufSize: Integer;
+procedure TCustomUnicodeCodec.DecodeStr(const Buf: Pointer; const BufSize: Integer;
     var Dest: UnicodeString);
 var P    : PByteChar;
     Q    : PWideChar;
@@ -1943,12 +1801,11 @@ begin
     SetLength(Dest, M);
 end;
 
-function TCustomUnicodeCodec.EncodeStrU(const S: UnicodeString): RawByteString;
+function TCustomUnicodeCodec.EncodeStr(const S: UnicodeString): RawByteString;
 var I : Integer;
 begin
   Result := Encode(Pointer(S), Length(S), I);
 end;
-{$ENDIF}
 
 function TCustomUnicodeCodec.ReadBuffer(var Buf; Count: Integer): Boolean;
 begin
@@ -2828,7 +2685,7 @@ begin
     case Ord(P^) of
       $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
         begin
-          if P = N - 1 then // End of WideString?
+          if P = N - 1 then // End of UnicodeString?
             raise EConvertError.Create(SLowSurrogateNotFound);
           HighSurrogate := Ord(P^);
           Inc(P);
@@ -3076,7 +2933,7 @@ begin
     case Ord(P^) of
       $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
         begin
-          if P = N - 1 then // End of WideString?
+          if P = N - 1 then // End of UnicodeString?
             raise EConvertError.Create(SLowSurrogateNotFound);
           HighSurrogate := Ord(P^);
           Inc(P);
@@ -3322,7 +3179,7 @@ begin
       case Ord(P^) of
         $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
           begin
-            if P = N - 1 then // End of WideString?
+            if P = N - 1 then // End of UnicodeString?
               raise EConvertError.Create(SLowSurrogateNotFound);
             HighSurrogate := Ord(P^);
             Inc(P);
@@ -3570,7 +3427,7 @@ begin
     case Ord(P^) of
       $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
         begin
-          if P = N - 1 then // End of WideString?
+          if P = N - 1 then // End of UnicodeString?
             raise EConvertError.Create(SLowSurrogateNotFound);
           HighSurrogate := Ord(P^);
           Inc(P);

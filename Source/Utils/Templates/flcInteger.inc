@@ -1,7 +1,7 @@
 {*******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.16                                                     }
+{   File version:     5.17                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -49,6 +49,7 @@
 {   2016/01/09  5.14  Revised for Fundamentals 5.                              }
 {   2016/01/10  5.15  Bug fix in 32-bit assembly routine.                      }
 {   2018/07/17  5.16  Word32/Int32 changes.                                    }
+{   2018/08/12  5.17  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -301,172 +302,161 @@ const
 
 
 {                                                                              }
-{ UnicodeString                                                                }
-{                                                                              }
-{$IFNDEF SupportUnicodeString}
-type
-  UnicodeString = WideString;
-  PUnicodeString = ^UnicodeString;
-{$ENDIF}
-
-
-
-{                                                                              }
 { Word8                                                                        }
 {                                                                              }
-function  Word8Min(const A, B: Byte): Byte; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word8Max(const A, B: Byte): Byte; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word8Min(const A, B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word8Max(const A, B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word8IsInt8Range(const A: Byte): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8IsInt8Range(const A: Byte): Boolean;
 
-function  Word8Compare(const A, B: Byte): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8Compare(const A, B: Byte): Integer;
 
-function  Word8IsBitSet(const A: Byte; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8SetBit(var A: Byte; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8ClearBit(var A: Byte; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8ToggleBit(var A: Byte; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word8IsBitSet(const A: Byte; const B: Integer): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8SetBit(var A: Byte; const B: Integer);              {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8ClearBit(var A: Byte; const B: Integer);            {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8ToggleBit(var A: Byte; const B: Integer);           {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word8SetBitScanForward(const A: Byte): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word8SetBitScanReverse(const A: Byte): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word8ClearBitScanForward(const A: Byte): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word8ClearBitScanReverse(const A: Byte): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8SetBitScanForward(const A: Byte): Integer;
+function  Word8SetBitScanReverse(const A: Byte): Integer;
+function  Word8ClearBitScanForward(const A: Byte): Integer;
+function  Word8ClearBitScanReverse(const A: Byte): Integer;
 
-procedure Word8Shl(var A: Byte; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Shr(var A: Byte; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Rol(var A: Byte; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Ror(var A: Byte; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word8Shl(var A: Byte; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Shr(var A: Byte; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Rol(var A: Byte; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Ror(var A: Byte; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure Word8Shl1(var A: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Shr1(var A: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Rol1(var A: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word8Ror1(var A: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word8Shl1(var A: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Shr1(var A: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Rol1(var A: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word8Ror1(var A: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word8BitCount(const A: Byte): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8BitCount(const A: Byte): Integer;
 
-function  Word8GCD(const A, B: Byte): Byte;                                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word8ExtendedEuclid(const A, B: Byte; var X, Y: SmallInt): Byte; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8GCD(const A, B: Byte): Byte;
+function  Word8ExtendedEuclid(const A, B: Byte; var X, Y: SmallInt): Byte;
 
-function  Word8IsPrime(const A: Byte): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word8NextPrime(const A: Byte): Byte;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8IsPrime(const A: Byte): Boolean;
+function  Word8NextPrime(const A: Byte): Byte;
 
-function  Word8Hash(const A: Byte): Byte; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word8Hash(const A: Byte): Byte;
 
 
 
 {                                                                              }
 { Word16                                                                       }
 {                                                                              }
-function  Word16Lo(const A: Word): Byte; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word16Hi(const A: Word): Byte; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word16Lo(const A: Word): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word16Hi(const A: Word): Byte; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word16Min(const A, B: Word): Word; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word16Max(const A, B: Word): Word; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word16Min(const A, B: Word): Word; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word16Max(const A, B: Word): Word; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word16IsWord8Range(const A: Word): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16IsInt8Range(const A: Word): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16IsInt16Range(const A: Word): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16IsWord8Range(const A: Word): Boolean;
+function  Word16IsInt8Range(const A: Word): Boolean;
+function  Word16IsInt16Range(const A: Word): Boolean;
 
-function  Word16Compare(const A, B: Word): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16Compare(const A, B: Word): Integer;
 
-function  Word16IsBitSet(const A: Word; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16SetBit(var A: Word; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16ClearBit(var A: Word; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16ToggleBit(var A: Word; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word16IsBitSet(const A: Word; const B: Integer): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16SetBit(var A: Word; const B: Integer);              {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16ClearBit(var A: Word; const B: Integer);            {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16ToggleBit(var A: Word; const B: Integer);           {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word16SetBitScanForward(const A: Word): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16SetBitScanReverse(const A: Word): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16ClearBitScanForward(const A: Word): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16ClearBitScanReverse(const A: Word): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16SetBitScanForward(const A: Word): Integer;
+function  Word16SetBitScanReverse(const A: Word): Integer;
+function  Word16ClearBitScanForward(const A: Word): Integer;
+function  Word16ClearBitScanReverse(const A: Word): Integer;
 
-procedure Word16Shl(var A: Word; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Shr(var A: Word; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Rol(var A: Word; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Ror(var A: Word; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word16Shl(var A: Word; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Shr(var A: Word; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Rol(var A: Word; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Ror(var A: Word; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure Word16Shl1(var A: Word); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Shr1(var A: Word); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Rol1(var A: Word); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word16Ror1(var A: Word); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word16Shl1(var A: Word); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Shr1(var A: Word); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Rol1(var A: Word); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word16Ror1(var A: Word); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word16BitCount(const A: Word): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16BitCount(const A: Word): Integer;
 
-function  Word16SwapEndian(const A: Word): Word; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16SwapEndian(const A: Word): Word;
 
-function  Word16GCD(const A, B: Word): Word;                               {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16ExtendedEuclid(const A, B: Word; var X, Y: Int32): Word; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16GCD(const A, B: Word): Word;
+function  Word16ExtendedEuclid(const A, B: Word; var X, Y: Int32): Word;
 
-function  Word16IsPrime(const A: Word): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word16NextPrime(const A: Word): Word;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16IsPrime(const A: Word): Boolean;
+function  Word16NextPrime(const A: Word): Word;
 
-function  Word16Hash(const A: Word): Word; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word16Hash(const A: Word): Word;
 
 
 
 {                                                                              }
 { Word32                                                                       }
 {                                                                              }
-function  Word32IsOdd(const A: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word32IsOdd(const A: Word32): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word32Lo(const A: Word32): Word; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word32Hi(const A: Word32): Word; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word32Lo(const A: Word32): Word; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32Hi(const A: Word32): Word; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word32Min(const A, B: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word32Max(const A, B: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word32Min(const A, B: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32Max(const A, B: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word32IsWord8Range(const A: Word32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32IsWord16Range(const A: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32IsInt8Range(const A: Word32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32IsInt16Range(const A: Word32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32IsInt32Range(const A: Word32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32IsWord8Range(const A: Word32): Boolean;
+function  Word32IsWord16Range(const A: Word32): Boolean;
+function  Word32IsInt8Range(const A: Word32): Boolean;
+function  Word32IsInt16Range(const A: Word32): Boolean;
+function  Word32IsInt32Range(const A: Word32): Boolean;
 
-function  Word32Compare(const A, B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32Compare(const A, B: Word32): Integer;
 
-function  Word32IsBitSet(const A: Word32; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32SetBit(var A: Word32; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32ClearBit(var A: Word32; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32ToggleBit(var A: Word32; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word32IsBitSet(const A: Word32; const B: Integer): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32SetBit(var A: Word32; const B: Integer);              {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32ClearBit(var A: Word32; const B: Integer);            {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32ToggleBit(var A: Word32; const B: Integer);           {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word32SetBitScanForward(const A: Word32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32SetBitScanReverse(const A: Word32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32ClearBitScanForward(const A: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32ClearBitScanReverse(const A: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32SetBitScanForward(const A: Word32): Integer;
+function  Word32SetBitScanReverse(const A: Word32): Integer;
+function  Word32ClearBitScanForward(const A: Word32): Integer;
+function  Word32ClearBitScanReverse(const A: Word32): Integer;
 
-procedure Word32Shl(var A: Word32; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Shr(var A: Word32; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Rol(var A: Word32; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Ror(var A: Word32; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word32Shl(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Shr(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Rol(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Ror(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure Word32Shl1(var A: Word32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Shr1(var A: Word32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Rol1(var A: Word32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word32Ror1(var A: Word32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word32Shl1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Shr1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Rol1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32Ror1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word32BitCount(const A: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32BitCount(const A: Word32): Integer;
 
-function  Word32SwapEndian(const A: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32SwapEndian(const A: Word32): Word32;
 
-procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);                        {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64; var R: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);
+procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64; var R: Word32);
 
-function  Word32GCD(const A, B: Word32): Word32;                             {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32ExtendedEuclid(const A, B: Word32; var X, Y: Int64): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32GCD(const A, B: Word32): Word32;
+function  Word32ExtendedEuclid(const A, B: Word32; var X, Y: Int64): Word32;
 
-function  Word32PowerAndMod(const A, E, M: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32PowerAndMod(const A, E, M: Word32): Word32;
 
-function  Word32IsPrime(const A: Word32): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32IsPrimeMR(const A: Word32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word32NextPrime(const A: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32IsPrime(const A: Word32): Boolean;
+function  Word32IsPrimeMR(const A: Word32): Boolean;
+function  Word32NextPrime(const A: Word32): Word32;
 
-function  Word32Hash(const A: Word32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word32Hash(const A: Word32): Word32;
 
 
 
 {                                                                              }
 { Word32Pair                                                                   }
 {                                                                              }
-procedure Word32PairInitZero(var A: Word32Pair);                         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word32PairInitWord32(var C: Word32Pair; const A, B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word32PairToWord32(const C: Word32Pair; var A, B: Word32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word32PairInitZero(var A: Word32Pair);
+procedure Word32PairInitWord32(var C: Word32Pair; const A, B: Word32);
+procedure Word32PairToWord32(const C: Word32Pair; var A, B: Word32);
 
 
 
@@ -479,134 +469,132 @@ const
   Word64ConstMinimum : Word64 = (Word32s: ($00000000, $00000000));
   Word64ConstMaximum : Word64 = (Word32s: ($FFFFFFFF, $FFFFFFFF));
 
-procedure Word64InitZero(var A: Word64);    {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64InitOne(var A: Word64);     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64InitMinimum(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64InitMaximum(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word64InitZero(var A: Word64);    {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitOne(var A: Word64);     {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitMinimum(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitMaximum(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsZero(const A: Word64): Boolean;    {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsOne(const A: Word64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsMinimum(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsMaximum(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsOdd(const A: Word64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word64IsZero(const A: Word64): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsOne(const A: Word64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsMinimum(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsMaximum(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsOdd(const A: Word64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsWord8Range(const A: Word64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsWord16Range(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsWord32Range(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsInt8Range(const A: Word64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsInt16Range(const A: Word64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsInt32Range(const A: Word64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64IsInt64Range(const A: Word64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word64IsWord8Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsWord16Range(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsWord32Range(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt8Range(const A: Word64): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt16Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt32Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt64Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure Word64InitWord32(var A: Word64; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64InitInt32(var A: Word64; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64InitInt64(var A: Word64; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64InitFloat(var A: Word64; const B: Extended);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64InitWord32(var A: Word64; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitInt32(var A: Word64; const B: Int32);
+procedure Word64InitInt64(var A: Word64; const B: Int64);
+procedure Word64InitFloat(var A: Word64; const B: Extended);
 
-function  Word64ToWord32(const A: Word64): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToInt32(const A: Word64): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToInt64(const A: Word64): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToFloat(const A: Word64): Extended;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64ToWord32(const A: Word64): Word32;
+function  Word64ToInt32(const A: Word64): Int32;
+function  Word64ToInt64(const A: Word64): Int64;
+function  Word64ToFloat(const A: Word64): Extended;
 
-function  Word64Lo(const A: Word64): Word32; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word64Hi(const A: Word64): Word32; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word64Lo(const A: Word64): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64Hi(const A: Word64): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64EqualsWord32(const A: Word64; const B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64EqualsWord64(const A, B: Word64): Boolean;                 {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64EqualsInt32(const A: Word64; const B: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64EqualsInt64(const A: Word64; const B: Int64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64EqualsFloat(const A: Word64; const B: Extended): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64EqualsWord32(const A: Word64; const B: Word32): Boolean;
+function  Word64EqualsWord64(const A, B: Word64): Boolean;
+function  Word64EqualsInt32(const A: Word64; const B: Int32): Boolean;
+function  Word64EqualsInt64(const A: Word64; const B: Int64): Boolean;
+function  Word64EqualsFloat(const A: Word64; const B: Extended): Boolean;
 
-function  Word64CompareWord32(const A: Word64; const B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64CompareWord64(const A, B: Word64): Integer;                 {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64CompareInt32(const A: Word64; const B: Int32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64CompareInt64(const A: Word64; const B: Int64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64CompareFloat(const A: Word64; const B: Extended): Integer;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64CompareWord32(const A: Word64; const B: Word32): Integer;
+function  Word64CompareWord64(const A, B: Word64): Integer;
+function  Word64CompareInt32(const A: Word64; const B: Int32): Integer;
+function  Word64CompareInt64(const A: Word64; const B: Int64): Integer;
+function  Word64CompareFloat(const A: Word64; const B: Extended): Integer;
 
-function  Word64Min(const A, B: Word64): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64Max(const A, B: Word64): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64Min(const A, B: Word64): Word64;
+function  Word64Max(const A, B: Word64): Word64;
 
-procedure Word64Not(var A: Word64);                        {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64OrWord64(var A: Word64; const B: Word64);  {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure Word64Not(var A: Word64);                        {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64OrWord64(var A: Word64; const B: Word64);  {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsBitSet(const A: Word64; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64SetBit(var A: Word64; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64ClearBit(var A: Word64; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64ToggleBit(var A: Word64; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64IsBitSet(const A: Word64; const B: Integer): Boolean;
+procedure Word64SetBit(var A: Word64; const B: Integer);
+procedure Word64ClearBit(var A: Word64; const B: Integer);
+procedure Word64ToggleBit(var A: Word64; const B: Integer);
 
-function  Word64SetBitScanForward(const A: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64SetBitScanReverse(const A: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ClearBitScanForward(const A: Word64): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ClearBitScanReverse(const A: Word64): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64SetBitScanForward(const A: Word64): Integer;
+function  Word64SetBitScanReverse(const A: Word64): Integer;
+function  Word64ClearBitScanForward(const A: Word64): Integer;
+function  Word64ClearBitScanReverse(const A: Word64): Integer;
 
-procedure Word64Shl(var A: Word64; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Shr(var A: Word64; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Rol(var A: Word64; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Ror(var A: Word64; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Shl(var A: Word64; const B: Byte);
+procedure Word64Shr(var A: Word64; const B: Byte);
+procedure Word64Rol(var A: Word64; const B: Byte);
+procedure Word64Ror(var A: Word64; const B: Byte);
 
-procedure Word64Shl1(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Shr1(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Rol1(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64Ror1(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Shl1(var A: Word64);
+procedure Word64Shr1(var A: Word64);
+procedure Word64Rol1(var A: Word64);
+procedure Word64Ror1(var A: Word64);
 
-procedure Word64Swap(var A, B: Word64);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64ReverseBits(var A: Word64);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64ReverseBytes(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Swap(var A, B: Word64);
+procedure Word64ReverseBits(var A: Word64);
+procedure Word64ReverseBytes(var A: Word64);
 
-function  Word64BitCount(const A: Word64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64IsPowerOfTwo(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64BitCount(const A: Word64): Integer;
+function  Word64IsPowerOfTwo(const A: Word64): Boolean;
 
-procedure Word64SwapEndian(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64SwapEndian(var A: Word64);
 
-procedure Word64Inc(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Inc(var A: Word64);
 
-procedure Word64AddWord8(var A: Word64; const B: Byte);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64AddWord16(var A: Word64; const B: Word);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64AddWord32(var A: Word64; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64AddWord64(var A: Word64; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64AddWord8(var A: Word64; const B: Byte);
+procedure Word64AddWord16(var A: Word64; const B: Word);
+procedure Word64AddWord32(var A: Word64; const B: Word32);
+procedure Word64AddWord64(var A: Word64; const B: Word64);
 
-procedure Word64SubtractWord32(var A: Word64; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64SubtractWord64(var A: Word64; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64SubtractWord32(var A: Word64; const B: Word32);
+procedure Word64SubtractWord64(var A: Word64; const B: Word64);
 
-procedure Word64MultiplyWord8(var A: Word64; const B: Byte);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64MultiplyWord16(var A: Word64; const B: Word);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64MultiplyWord32(var A: Word64; const B: Word32);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64MultiplyWord64InPlace(var A: Word64; const B: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64MultiplyWord64(const A, B: Word64; var R: Word128);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64MultiplyWord8(var A: Word64; const B: Byte);
+procedure Word64MultiplyWord16(var A: Word64; const B: Word);
+procedure Word64MultiplyWord32(var A: Word64; const B: Word32);
+procedure Word64MultiplyWord64InPlace(var A: Word64; const B: Word64);
+procedure Word64MultiplyWord64(const A, B: Word64; var R: Word128);
 
-procedure Word64Sqr(var A: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Sqr(var A: Word64);
 
-procedure Word64DivideWord8(const A: Word64; const B: Byte; out Q: Word64; out R: Byte);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64DivideWord16(const A: Word64; const B: Word; out Q: Word64; out R: Word);         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64DivideWord32(const A: Word64; const B: Word32; out Q: Word64; out R: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64DivideWord64(const A, B: Word64; var Q, R: Word64);                               {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64DivideWord8(const A: Word64; const B: Byte; out Q: Word64; out R: Byte);
+procedure Word64DivideWord16(const A: Word64; const B: Word; out Q: Word64; out R: Word);
+procedure Word64DivideWord32(const A: Word64; const B: Word32; out Q: Word64; out R: Word32);
+procedure Word64DivideWord64(const A, B: Word64; var Q, R: Word64);
 
-procedure Word64ModWord64(const A, B: Word64; var R: Word64); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64ModWord64(const A, B: Word64; var R: Word64);
 
-function  Word64ToStr(const A: Word64): String;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToStrA(const A: Word64): AnsiString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToStrW(const A: Word64): WideString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ToStrU(const A: Word64): UnicodeString; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord64(const A: String): Word64;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord64A(const A: AnsiString): Word64;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord64W(const A: WideString): Word64;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord64U(const A: UnicodeString): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64ToStr(const A: Word64): String;
+function  Word64ToStrA(const A: Word64): RawByteString;
+function  Word64ToStrU(const A: Word64): UnicodeString;
+function  StrToWord64(const A: String): Word64;
+function  StrToWord64A(const A: RawByteString): Word64;
+function  StrToWord64U(const A: UnicodeString): Word64;
 
-function  Word64GCD(const A, B: Word64): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64ExtendedEuclid(const A, B: Word64; var X, Y: Int128): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64GCD(const A, B: Word64): Word64;
+function  Word64ExtendedEuclid(const A, B: Word64; var X, Y: Int128): Word64;
 
-procedure Word64ISqrt(var A: Word64);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64Sqrt(const A: Word64): Extended; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64ISqrt(var A: Word64);
+function  Word64Sqrt(const A: Word64): Extended;
 
-procedure Word64Power(var A: Word64; const B: Word32);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word64PowerAndMod(const A, E, M: Word64): Word64; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word64Power(var A: Word64; const B: Word32);
+function  Word64PowerAndMod(const A, E, M: Word64): Word64;
 
-function  Word64IsPrime(const A: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word64NextPrime(var A: Word64);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64IsPrime(const A: Word64): Boolean;
+procedure Word64NextPrime(var A: Word64);
 
-function  Word64Hash(const A: Word64): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word64Hash(const A: Word64): Word32;
 
 
 
@@ -619,139 +607,137 @@ const
   Word128ConstMinimum : Word128 = (Word32s: ($00000000, $00000000, $00000000, $00000000));
   Word128ConstMaximum : Word128 = (Word32s: ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF));
 
-procedure Word128InitZero(var A: Word128);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitOne(var A: Word128);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitMinimum(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitMaximum(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128InitZero(var A: Word128);
+procedure Word128InitOne(var A: Word128);
+procedure Word128InitMinimum(var A: Word128);
+procedure Word128InitMaximum(var A: Word128);
 
-function  Word128IsZero(const A: Word128): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsOne(const A: Word128): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsMinimum(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsMaximum(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsOdd(const A: Word128): Boolean;     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word128IsZero(const A: Word128): Boolean;
+function  Word128IsOne(const A: Word128): Boolean;
+function  Word128IsMinimum(const A: Word128): Boolean;
+function  Word128IsMaximum(const A: Word128): Boolean;
+function  Word128IsOdd(const A: Word128): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word128IsWord8Range(const A: Word128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsWord16Range(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsWord32Range(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsWord64Range(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsInt8Range(const A: Word128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsInt16Range(const A: Word128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsInt32Range(const A: Word128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsInt64Range(const A: Word128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsInt128Range(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128IsWord8Range(const A: Word128): Boolean;
+function  Word128IsWord16Range(const A: Word128): Boolean;
+function  Word128IsWord32Range(const A: Word128): Boolean;
+function  Word128IsWord64Range(const A: Word128): Boolean;
+function  Word128IsInt8Range(const A: Word128): Boolean;
+function  Word128IsInt16Range(const A: Word128): Boolean;
+function  Word128IsInt32Range(const A: Word128): Boolean;
+function  Word128IsInt64Range(const A: Word128): Boolean;
+function  Word128IsInt128Range(const A: Word128): Boolean;
 
-procedure Word128InitWord32(var A: Word128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitWord64(var A: Word128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitInt32(var A: Word128; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitInt64(var A: Word128; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128InitFloat(var A: Word128; const B: Extended);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128InitWord32(var A: Word128; const B: Word32);
+procedure Word128InitWord64(var A: Word128; const B: Word64);
+procedure Word128InitInt32(var A: Word128; const B: Int32);
+procedure Word128InitInt64(var A: Word128; const B: Int64);
+procedure Word128InitFloat(var A: Word128; const B: Extended);
 
-function  Word128ToWord32(const A: Word128): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToWord64(const A: Word128): Word64;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToInt32(const A: Word128): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToInt64(const A: Word128): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToFloat(const A: Word128): Extended;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128ToWord32(const A: Word128): Word32;
+function  Word128ToWord64(const A: Word128): Word64;
+function  Word128ToInt32(const A: Word128): Int32;
+function  Word128ToInt64(const A: Word128): Int64;
+function  Word128ToFloat(const A: Word128): Extended;
 
-function  Word128Lo(const A: Word128): Word64; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  Word128Hi(const A: Word128): Word64; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word128Lo(const A: Word128): Word64; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word128Hi(const A: Word128): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word128EqualsWord32(const A: Word128; const B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128EqualsWord64(const A: Word128; const B: Word64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128EqualsWord128(const A, B: Word128): Boolean;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128EqualsInt32(const A: Word128; const B: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128EqualsInt64(const A: Word128; const B: Int64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128EqualsWord32(const A: Word128; const B: Word32): Boolean;
+function  Word128EqualsWord64(const A: Word128; const B: Word64): Boolean;
+function  Word128EqualsWord128(const A, B: Word128): Boolean;
+function  Word128EqualsInt32(const A: Word128; const B: Int32): Boolean;
+function  Word128EqualsInt64(const A: Word128; const B: Int64): Boolean;
 
-function  Word128CompareWord32(const A: Word128; const B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128CompareWord64(const A: Word128; const B: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128CompareWord128(const A, B: Word128): Integer;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128CompareInt32(const A: Word128; const B: Int32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128CompareInt64(const A: Word128; const B: Int64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128CompareWord32(const A: Word128; const B: Word32): Integer;
+function  Word128CompareWord64(const A: Word128; const B: Word64): Integer;
+function  Word128CompareWord128(const A, B: Word128): Integer;
+function  Word128CompareInt32(const A: Word128; const B: Int32): Integer;
+function  Word128CompareInt64(const A: Word128; const B: Int64): Integer;
 
-function  Word128Min(const A, B: Word128): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128Max(const A, B: Word128): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128Min(const A, B: Word128): Word128;
+function  Word128Max(const A, B: Word128): Word128;
 
-procedure Word128Not(var A: Word128);                          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128OrWord128(var A: Word128; const B: Word128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128AndWord128(var A: Word128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128XorWord128(var A: Word128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Not(var A: Word128);
+procedure Word128OrWord128(var A: Word128; const B: Word128);
+procedure Word128AndWord128(var A: Word128; const B: Word128);
+procedure Word128XorWord128(var A: Word128; const B: Word128);
 
-function  Word128IsBitSet(const A: Word128; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128SetBit(var A: Word128; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128ClearBit(var A: Word128; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128ToggleBit(var A: Word128; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128IsBitSet(const A: Word128; const B: Integer): Boolean;
+procedure Word128SetBit(var A: Word128; const B: Integer);
+procedure Word128ClearBit(var A: Word128; const B: Integer);
+procedure Word128ToggleBit(var A: Word128; const B: Integer);
 
-function  Word128SetBitScanForward(const A: Word128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128SetBitScanReverse(const A: Word128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ClearBitScanForward(const A: Word128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ClearBitScanReverse(const A: Word128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128SetBitScanForward(const A: Word128): Integer;
+function  Word128SetBitScanReverse(const A: Word128): Integer;
+function  Word128ClearBitScanForward(const A: Word128): Integer;
+function  Word128ClearBitScanReverse(const A: Word128): Integer;
 
-procedure Word128Shl(var A: Word128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Shr(var A: Word128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Rol(var A: Word128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Ror(var A: Word128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Shl(var A: Word128; const B: Byte);
+procedure Word128Shr(var A: Word128; const B: Byte);
+procedure Word128Rol(var A: Word128; const B: Byte);
+procedure Word128Ror(var A: Word128; const B: Byte);
 
-procedure Word128Shl1(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Shr1(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Rol1(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128Ror1(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Shl1(var A: Word128);
+procedure Word128Shr1(var A: Word128);
+procedure Word128Rol1(var A: Word128);
+procedure Word128Ror1(var A: Word128);
 
-procedure Word128Swap(var A, B: Word128);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128ReverseBits(var A: Word128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128ReverseBytes(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Swap(var A, B: Word128);
+procedure Word128ReverseBits(var A: Word128);
+procedure Word128ReverseBytes(var A: Word128);
 
-function  Word128BitCount(const A: Word128): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128IsPowerOfTwo(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128BitCount(const A: Word128): Integer;
+function  Word128IsPowerOfTwo(const A: Word128): Boolean;
 
-procedure Word128Inc(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Inc(var A: Word128);
 
-procedure Word128AddWord8(var A: Word128; const B: Byte);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128AddWord16(var A: Word128; const B: Word);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128AddWord32(var A: Word128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128AddWord64(var A: Word128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128AddWord128(var A: Word128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128AddWord8(var A: Word128; const B: Byte);
+procedure Word128AddWord16(var A: Word128; const B: Word);
+procedure Word128AddWord32(var A: Word128; const B: Word32);
+procedure Word128AddWord64(var A: Word128; const B: Word64);
+procedure Word128AddWord128(var A: Word128; const B: Word128);
 
-procedure Word128SubtractWord32(var A: Word128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128SubtractWord64(var A: Word128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128SubtractWord128(var A: Word128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128SubtractWord32(var A: Word128; const B: Word32);
+procedure Word128SubtractWord64(var A: Word128; const B: Word64);
+procedure Word128SubtractWord128(var A: Word128; const B: Word128);
 
-procedure Word128MultiplyWord8(var A: Word128; const B: Byte);         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128MultiplyWord16(var A: Word128; const B: Word);        {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128MultiplyWord32(var A: Word128; const B: Word32);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128MultiplyWord64(var A: Word128; const B: Word64);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128MultiplyWord128Low(var A: Word128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128MultiplyWord128(const A, B: Word128; var R: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128MultiplyWord8(var A: Word128; const B: Byte);
+procedure Word128MultiplyWord16(var A: Word128; const B: Word);
+procedure Word128MultiplyWord32(var A: Word128; const B: Word32);
+procedure Word128MultiplyWord64(var A: Word128; const B: Word64);
+procedure Word128MultiplyWord128Low(var A: Word128; const B: Word128);
+procedure Word128MultiplyWord128(const A, B: Word128; var R: Word256);
 
-procedure Word128Sqr(var A: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Sqr(var A: Word128);
 
-procedure Word128DivideWord8(const A: Word128; const B: Byte; var Q: Word128; var R: Byte);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128DivideWord16(const A: Word128; const B: Word; var Q: Word128; var R: Word);         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128DivideWord32(const A: Word128; const B: Word32; var Q: Word128; var R: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128DivideWord64(const A: Word128; const B: Word64; var Q: Word128; var R: Word64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128DivideWord128(const A, B: Word128; var Q, R: Word128);                              {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128DivideWord8(const A: Word128; const B: Byte; var Q: Word128; var R: Byte);
+procedure Word128DivideWord16(const A: Word128; const B: Word; var Q: Word128; var R: Word);
+procedure Word128DivideWord32(const A: Word128; const B: Word32; var Q: Word128; var R: Word32);
+procedure Word128DivideWord64(const A: Word128; const B: Word64; var Q: Word128; var R: Word64);
+procedure Word128DivideWord128(const A, B: Word128; var Q, R: Word128);
 
-procedure Word128ModWord128(const A, B: Word128; var R: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128ModWord128(const A, B: Word128; var R: Word128);
 
-function  Word128ToStr(const A: Word128): String;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToStrA(const A: Word128): AnsiString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToStrW(const A: Word128): WideString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128ToStrU(const A: Word128): UnicodeString; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord128(const A: String): Word128;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord128A(const A: AnsiString): Word128;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord128W(const A: WideString): Word128;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToWord128U(const A: UnicodeString): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128ToStr(const A: Word128): String;
+function  Word128ToStrA(const A: Word128): RawByteString;
+function  Word128ToStrU(const A: Word128): UnicodeString;
+function  StrToWord128(const A: String): Word128;
+function  StrToWord128A(const A: RawByteString): Word128;
+function  StrToWord128U(const A: UnicodeString): Word128;
 
-function  Word128GCD(const A, B: Word128): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128GCD(const A, B: Word128): Word128;
 
-procedure Word128ISqrt(var A: Word128);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128Sqrt(const A: Word128): Extended; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128ISqrt(var A: Word128);
+function  Word128Sqrt(const A: Word128): Extended;
 
-procedure Word128Power(var A: Word128; const B: Word32);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word128PowerAndMod(const A, E, M: Word128): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word128Power(var A: Word128; const B: Word32);
+function  Word128PowerAndMod(const A, E, M: Word128): Word128;
 
-function  Word128IsPrime(const A: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word128NextPrime(var A: Word128);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128IsPrime(const A: Word128): Boolean;
+procedure Word128NextPrime(var A: Word128);
 
-function  Word128Hash(const A: Word128): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word128Hash(const A: Word128): Word32;
 
 
 
@@ -772,183 +758,183 @@ const
       $FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF,
       $FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF));
 
-procedure Word256InitZero(var A: Word256);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitOne(var A: Word256);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitMinimum(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitMaximum(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256InitZero(var A: Word256);
+procedure Word256InitOne(var A: Word256);
+procedure Word256InitMinimum(var A: Word256);
+procedure Word256InitMaximum(var A: Word256);
 
-function  Word256IsZero(const A: Word256): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsOne(const A: Word256): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsMinimum(const A: Word256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsMaximum(const A: Word256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsOdd(const A: Word256): Boolean;     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word256IsZero(const A: Word256): Boolean;
+function  Word256IsOne(const A: Word256): Boolean;
+function  Word256IsMinimum(const A: Word256): Boolean;
+function  Word256IsMaximum(const A: Word256): Boolean;
+function  Word256IsOdd(const A: Word256): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word256IsWord32Range(const A: Word256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsWord64Range(const A: Word256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsWord128Range(const A: Word256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsInt32Range(const A: Word256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsInt64Range(const A: Word256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256IsInt128Range(const A: Word256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256IsWord32Range(const A: Word256): Boolean;
+function  Word256IsWord64Range(const A: Word256): Boolean;
+function  Word256IsWord128Range(const A: Word256): Boolean;
+function  Word256IsInt32Range(const A: Word256): Boolean;
+function  Word256IsInt64Range(const A: Word256): Boolean;
+function  Word256IsInt128Range(const A: Word256): Boolean;
 
-procedure Word256InitWord32(var A: Word256; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitWord64(var A: Word256; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitWord128(var A: Word256; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitInt32(var A: Word256; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitInt64(var A: Word256; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256InitInt128(var A: Word256; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256InitWord32(var A: Word256; const B: Word32);
+procedure Word256InitWord64(var A: Word256; const B: Word64);
+procedure Word256InitWord128(var A: Word256; const B: Word128);
+procedure Word256InitInt32(var A: Word256; const B: Int32);
+procedure Word256InitInt64(var A: Word256; const B: Int64);
+procedure Word256InitInt128(var A: Word256; const B: Int128);
 
-function  Word256ToWord32(const A: Word256): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToWord64(const A: Word256): Word64;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToWord128(const A: Word256): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToInt32(const A: Word256): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToInt64(const A: Word256): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToInt128(const A: Word256): Int128;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256ToFloat(const A: Word256): Extended;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256ToWord32(const A: Word256): Word32;
+function  Word256ToWord64(const A: Word256): Word64;
+function  Word256ToWord128(const A: Word256): Word128;
+function  Word256ToInt32(const A: Word256): Int32;
+function  Word256ToInt64(const A: Word256): Int64;
+function  Word256ToInt128(const A: Word256): Int128;
+function  Word256ToFloat(const A: Word256): Extended;
 
-function  Word256Lo(const A: Word256): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256Hi(const A: Word256): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256Lo(const A: Word256): Word128;
+function  Word256Hi(const A: Word256): Word128;
 
-function  Word256EqualsWord32(const A: Word256; const B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsWord64(const A: Word256; const B: Word64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsWord128(const A: Word256; const B: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsWord256(const A, B: Word256): Boolean;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsInt32(const A: Word256; const B: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsInt64(const A: Word256; const B: Int64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256EqualsInt128(const A: Word256; const B: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256EqualsWord32(const A: Word256; const B: Word32): Boolean;
+function  Word256EqualsWord64(const A: Word256; const B: Word64): Boolean;
+function  Word256EqualsWord128(const A: Word256; const B: Word128): Boolean;
+function  Word256EqualsWord256(const A, B: Word256): Boolean;
+function  Word256EqualsInt32(const A: Word256; const B: Int32): Boolean;
+function  Word256EqualsInt64(const A: Word256; const B: Int64): Boolean;
+function  Word256EqualsInt128(const A: Word256; const B: Int128): Boolean;
 
-function  Word256CompareWord32(const A: Word256; const B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareWord64(const A: Word256; const B: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareWord128(const A: Word256; const B: Word128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareWord256(const A, B: Word256): Integer;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareInt32(const A: Word256; const B: Int32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareInt64(const A: Word256; const B: Int64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256CompareInt128(const A: Word256; const B: Int128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256CompareWord32(const A: Word256; const B: Word32): Integer;
+function  Word256CompareWord64(const A: Word256; const B: Word64): Integer;
+function  Word256CompareWord128(const A: Word256; const B: Word128): Integer;
+function  Word256CompareWord256(const A, B: Word256): Integer;
+function  Word256CompareInt32(const A: Word256; const B: Int32): Integer;
+function  Word256CompareInt64(const A: Word256; const B: Int64): Integer;
+function  Word256CompareInt128(const A: Word256; const B: Int128): Integer;
 
-function  Word256Min(const A, B: Word256): Word256; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word256Max(const A, B: Word256): Word256; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256Min(const A, B: Word256): Word256;
+function  Word256Max(const A, B: Word256): Word256;
 
-procedure Word256Not(var A: Word256);                          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256OrWord256(var A: Word256; const B: Word256);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256AndWord256(var A: Word256; const B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256XorWord256(var A: Word256; const B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256Not(var A: Word256);
+procedure Word256OrWord256(var A: Word256; const B: Word256);
+procedure Word256AndWord256(var A: Word256; const B: Word256);
+procedure Word256XorWord256(var A: Word256; const B: Word256);
 
-function  Word256IsBitSet(const A: Word256; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256SetBit(var A: Word256; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256ClearBit(var A: Word256; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256ToggleBit(var A: Word256; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256IsBitSet(const A: Word256; const B: Integer): Boolean;
+procedure Word256SetBit(var A: Word256; const B: Integer);
+procedure Word256ClearBit(var A: Word256; const B: Integer);
+procedure Word256ToggleBit(var A: Word256; const B: Integer);
 
-procedure Word256Shl1(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256Shr1(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256Rol1(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256Ror1(var A: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256Shl1(var A: Word256);
+procedure Word256Shr1(var A: Word256);
+procedure Word256Rol1(var A: Word256);
+procedure Word256Ror1(var A: Word256);
 
-procedure Word256Swap(var A, B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256Swap(var A, B: Word256);
 
-procedure Word256AddWord32(var A: Word256; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256AddWord64(var A: Word256; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256AddWord128(var A: Word256; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256AddWord256(var A: Word256; const B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256AddWord32(var A: Word256; const B: Word32);
+procedure Word256AddWord64(var A: Word256; const B: Word64);
+procedure Word256AddWord128(var A: Word256; const B: Word128);
+procedure Word256AddWord256(var A: Word256; const B: Word256);
 
-procedure Word256SubtractWord32(var A: Word256; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256SubtractWord64(var A: Word256; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256SubtractWord128(var A: Word256; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256SubtractWord256(var A: Word256; const B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256SubtractWord32(var A: Word256; const B: Word32);
+procedure Word256SubtractWord64(var A: Word256; const B: Word64);
+procedure Word256SubtractWord128(var A: Word256; const B: Word128);
+procedure Word256SubtractWord256(var A: Word256; const B: Word256);
 
-procedure Word256MultiplyWord8(var A: Word256; const B: Byte);         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256MultiplyWord16(var A: Word256; const B: Word);        {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256MultiplyWord32(var A: Word256; const B: Word32);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256MultiplyWord64(var A: Word256; const B: Word64);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256MultiplyWord128(var A: Word256; const B: Word128);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word256MultiplyWord256(const A, B: Word256; var R: Word512); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256MultiplyWord8(var A: Word256; const B: Byte);
+procedure Word256MultiplyWord16(var A: Word256; const B: Word);
+procedure Word256MultiplyWord32(var A: Word256; const B: Word32);
+procedure Word256MultiplyWord64(var A: Word256; const B: Word64);
+procedure Word256MultiplyWord128(var A: Word256; const B: Word128);
+procedure Word256MultiplyWord256(const A, B: Word256; var R: Word512);
 
-procedure Word256Sqr(const A: Word256; var R: Word512); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256Sqr(const A: Word256; var R: Word512);
 
-procedure Word256DivideWord128(const A: Word256; const B: Word128; var Q: Word256; var R: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word256DivideWord128(const A: Word256; const B: Word128; var Q: Word256; var R: Word128);
 
-function  Word256Hash(const A: Word256): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word256Hash(const A: Word256): Word32;
 
 
 {%DEFINE WordBufIntf}
 {                                                                              }
 {-Word%1%                                                                      }
 {                                                                              }
-procedure Word%1%InitZero(var A: Word%1%);    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitOne(var A: Word%1%);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitMinimum(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitMaximum(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%InitZero(var A: Word%1%);
+procedure Word%1%InitOne(var A: Word%1%);
+procedure Word%1%InitMinimum(var A: Word%1%);
+procedure Word%1%InitMaximum(var A: Word%1%);
 
-function  Word%1%IsZero(const A: Word%1%): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsOne(const A: Word%1%): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsMinimum(const A: Word%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsMaximum(const A: Word%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsOdd(const A: Word%1%): Boolean;     {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Word%1%IsZero(const A: Word%1%): Boolean;
+function  Word%1%IsOne(const A: Word%1%): Boolean;
+function  Word%1%IsMinimum(const A: Word%1%): Boolean;
+function  Word%1%IsMaximum(const A: Word%1%): Boolean;
+function  Word%1%IsOdd(const A: Word%1%): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word%1%IsWord32Range(const A: Word%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsWord64Range(const A: Word%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsWord128Range(const A: Word%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsInt32Range(const A: Word%1%): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsInt64Range(const A: Word%1%): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%IsInt128Range(const A: Word%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%IsWord32Range(const A: Word%1%): Boolean;
+function  Word%1%IsWord64Range(const A: Word%1%): Boolean;
+function  Word%1%IsWord128Range(const A: Word%1%): Boolean;
+function  Word%1%IsInt32Range(const A: Word%1%): Boolean;
+function  Word%1%IsInt64Range(const A: Word%1%): Boolean;
+function  Word%1%IsInt128Range(const A: Word%1%): Boolean;
 
-procedure Word%1%InitWord32(var A: Word%1%; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitWord64(var A: Word%1%; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitWord128(var A: Word%1%; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitInt32(var A: Word%1%; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitInt64(var A: Word%1%; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%InitInt128(var A: Word%1%; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%InitWord32(var A: Word%1%; const B: Word32);
+procedure Word%1%InitWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%InitWord128(var A: Word%1%; const B: Word128);
+procedure Word%1%InitInt32(var A: Word%1%; const B: Int32);
+procedure Word%1%InitInt64(var A: Word%1%; const B: Int64);
+procedure Word%1%InitInt128(var A: Word%1%; const B: Int128);
 
-function  Word%1%ToWord32(const A: Word%1%): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToWord64(const A: Word%1%): Word64;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToWord128(const A: Word%1%): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToInt32(const A: Word%1%): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToInt64(const A: Word%1%): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToInt128(const A: Word%1%): Int128;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%ToFloat(const A: Word%1%): Extended;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%ToWord32(const A: Word%1%): Word32;
+function  Word%1%ToWord64(const A: Word%1%): Word64;
+function  Word%1%ToWord128(const A: Word%1%): Word128;
+function  Word%1%ToInt32(const A: Word%1%): Int32;
+function  Word%1%ToInt64(const A: Word%1%): Int64;
+function  Word%1%ToInt128(const A: Word%1%): Int128;
+function  Word%1%ToFloat(const A: Word%1%): Extended;
 
-function  Word%1%Lo(const A: Word%1%): Word256; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%Hi(const A: Word%1%): Word256; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%Lo(const A: Word%1%): Word256;
+function  Word%1%Hi(const A: Word%1%): Word256;
 
-function  Word%1%EqualsWord32(const A: Word%1%; const B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsWord128(const A: Word%1%; const B: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsWord%1%(const A, B: Word%1%): Boolean;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsInt32(const A: Word%1%; const B: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsInt64(const A: Word%1%; const B: Int64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%EqualsInt128(const A: Word%1%; const B: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%EqualsWord32(const A: Word%1%; const B: Word32): Boolean;
+function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64): Boolean;
+function  Word%1%EqualsWord128(const A: Word%1%; const B: Word128): Boolean;
+function  Word%1%EqualsWord%1%(const A, B: Word%1%): Boolean;
+function  Word%1%EqualsInt32(const A: Word%1%; const B: Int32): Boolean;
+function  Word%1%EqualsInt64(const A: Word%1%; const B: Int64): Boolean;
+function  Word%1%EqualsInt128(const A: Word%1%; const B: Int128): Boolean;
 
-function  Word%1%CompareWord32(const A: Word%1%; const B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareWord64(const A: Word%1%; const B: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareWord128(const A: Word%1%; const B: Word128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareWord%1%(const A, B: Word%1%): Integer;                {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareInt32(const A: Word%1%; const B: Int32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareInt64(const A: Word%1%; const B: Int64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%CompareInt128(const A: Word%1%; const B: Int128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%CompareWord32(const A: Word%1%; const B: Word32): Integer;
+function  Word%1%CompareWord64(const A: Word%1%; const B: Word64): Integer;
+function  Word%1%CompareWord128(const A: Word%1%; const B: Word128): Integer;
+function  Word%1%CompareWord%1%(const A, B: Word%1%): Integer;
+function  Word%1%CompareInt32(const A: Word%1%; const B: Int32): Integer;
+function  Word%1%CompareInt64(const A: Word%1%; const B: Int64): Integer;
+function  Word%1%CompareInt128(const A: Word%1%; const B: Int128): Integer;
 
-function  Word%1%Min(const A, B: Word%1%): Word%1%; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Word%1%Max(const A, B: Word%1%): Word%1%; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%Min(const A, B: Word%1%): Word%1%;
+function  Word%1%Max(const A, B: Word%1%): Word%1%;
 
-procedure Word%1%Not(var A: Word%1%);                          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%OrWord%1%(var A: Word%1%; const B: Word%1%);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%AndWord%1%(var A: Word%1%; const B: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%XorWord%1%(var A: Word%1%; const B: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%Not(var A: Word%1%);
+procedure Word%1%OrWord%1%(var A: Word%1%; const B: Word%1%);
+procedure Word%1%AndWord%1%(var A: Word%1%; const B: Word%1%);
+procedure Word%1%XorWord%1%(var A: Word%1%; const B: Word%1%);
 
-function  Word%1%IsBitSet(const A: Word%1%; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%SetBit(var A: Word%1%; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%ClearBit(var A: Word%1%; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%ToggleBit(var A: Word%1%; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Word%1%IsBitSet(const A: Word%1%; const B: Integer): Boolean;
+procedure Word%1%SetBit(var A: Word%1%; const B: Integer);
+procedure Word%1%ClearBit(var A: Word%1%; const B: Integer);
+procedure Word%1%ToggleBit(var A: Word%1%; const B: Integer);
 
-procedure Word%1%Shl1(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%Shr1(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%Rol1(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%Ror1(var A: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%Shl1(var A: Word%1%);
+procedure Word%1%Shr1(var A: Word%1%);
+procedure Word%1%Rol1(var A: Word%1%);
+procedure Word%1%Ror1(var A: Word%1%);
 
-procedure Word%1%Swap(var A, B: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%Swap(var A, B: Word%1%);
 
-procedure Word%1%AddWord32(var A: Word%1%; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%AddWord64(var A: Word%1%; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%AddWord128(var A: Word%1%; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%AddWord256(var A: Word%1%; const B: Word256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Word%1%AddWord%1%(var A: Word%1%; const B: Word%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Word%1%AddWord32(var A: Word%1%; const B: Word32);
+procedure Word%1%AddWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%AddWord128(var A: Word%1%; const B: Word128);
+procedure Word%1%AddWord256(var A: Word%1%; const B: Word256);
+procedure Word%1%AddWord%1%(var A: Word%1%; const B: Word%1%);
 
 
 {%ENDDEF}
@@ -959,68 +945,68 @@ procedure Word%1%AddWord%1%(var A: Word%1%; const B: Word%1%); {$IFDEF UseStdCal
 {                                                                              }
 { Int8                                                                         }
 {                                                                              }
-function  Int8Sign(const A: ShortInt): Integer;             {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int8Abs(const A: ShortInt; var B: Byte): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int8Sign(const A: ShortInt): Integer;
+function  Int8Abs(const A: ShortInt; var B: Byte): Boolean;
 
-function  Int8IsWord8Range(const A: ShortInt): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int8IsWord8Range(const A: ShortInt): Boolean;
 
-function  Int8Compare(const A, B: ShortInt): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int8Compare(const A, B: ShortInt): Integer;
 
-function  Int8Hash(const A: ShortInt): Byte; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int8Hash(const A: ShortInt): Byte;
 
 
 
 {                                                                              }
 { Int16                                                                        }
 {                                                                              }
-function  Int16Sign(const A: SmallInt): Integer;             {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int16Abs(const A: SmallInt; var B: Word): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int16Sign(const A: SmallInt): Integer;
+function  Int16Abs(const A: SmallInt; var B: Word): Boolean;
 
-function  Int16IsInt8Range(const A: SmallInt): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int16IsWord8Range(const A: SmallInt): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int16IsWord16Range(const A: SmallInt): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int16IsInt8Range(const A: SmallInt): Boolean;
+function  Int16IsWord8Range(const A: SmallInt): Boolean;
+function  Int16IsWord16Range(const A: SmallInt): Boolean;
 
-function  Int16Compare(const A, B: SmallInt): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int16Compare(const A, B: SmallInt): Integer;
 
-function  Int16Hash(const A: SmallInt): Word; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int16Hash(const A: SmallInt): Word;
 
 
 
 {                                                                              }
 { Int32                                                                        }
 {                                                                              }
-function  Int32Sign(const A: Int32): Integer;                 {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int32Abs(const A: Int32; var B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int32Sign(const A: Int32): Integer;
+function  Int32Abs(const A: Int32; var B: Word32): Boolean;
 
-function  Int32IsInt8Range(const A: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int32IsInt16Range(const A: Int32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int32IsWord8Range(const A: Int32): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int32IsWord16Range(const A: Int32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int32IsWord32Range(const A: Int32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int32IsInt8Range(const A: Int32): Boolean;
+function  Int32IsInt16Range(const A: Int32): Boolean;
+function  Int32IsWord8Range(const A: Int32): Boolean;
+function  Int32IsWord16Range(const A: Int32): Boolean;
+function  Int32IsWord32Range(const A: Int32): Boolean;
 
-function  Int32Compare(const A, B: Int32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int32Compare(const A, B: Int32): Integer;
 
-function  Int32Hash(const A: Int32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int32Hash(const A: Int32): Word32;
 
 
 
 {                                                                              }
 { Int64                                                                        }
 {                                                                              }
-function  Int64Sign(const A: Int64): Integer;               {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64Abs(const A: Int64; var B: Word64): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int64Sign(const A: Int64): Integer;
+function  Int64Abs(const A: Int64; var B: Word64): Boolean;
 
-function  Int64IsInt8Range(const A: Int64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsInt16Range(const A: Int64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsInt32Range(const A: Int64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsWord8Range(const A: Int64): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsWord16Range(const A: Int64): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsWord32Range(const A: Int64): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int64IsWord64Range(const A: Int64): Boolean; {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Int64IsInt8Range(const A: Int64): Boolean;
+function  Int64IsInt16Range(const A: Int64): Boolean;
+function  Int64IsInt32Range(const A: Int64): Boolean;
+function  Int64IsWord8Range(const A: Int64): Boolean;
+function  Int64IsWord16Range(const A: Int64): Boolean;
+function  Int64IsWord32Range(const A: Int64): Boolean;
+function  Int64IsWord64Range(const A: Int64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Int64Compare(const A, B: Int64): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int64Compare(const A, B: Int64): Integer;
 
-function  Int64Hash(const A: Int64): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int64Hash(const A: Int64): Word32;
 
 
 
@@ -1034,153 +1020,151 @@ const
   Int128ConstMinimum  : Int128 = (Word32s: ($00000000, $00000000, $00000000, $80000000));
   Int128ConstMaximum  : Int128 = (Word32s: ($FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $7FFFFFFF));
 
-procedure Int128InitZero(var A: Int128);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitOne(var A: Int128);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitMinusOne(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitMinimum(var A: Int128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitMaximum(var A: Int128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128InitZero(var A: Int128);
+procedure Int128InitOne(var A: Int128);
+procedure Int128InitMinusOne(var A: Int128);
+procedure Int128InitMinimum(var A: Int128);
+procedure Int128InitMaximum(var A: Int128);
 
-function  Int128IsNegative(const A: Int128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsZero(const A: Int128): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsOne(const A: Int128): Boolean;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsMinusOne(const A: Int128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsMinimum(const A: Int128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsMaximum(const A: Int128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsOdd(const A: Int128): Boolean;      {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+function  Int128IsNegative(const A: Int128): Boolean;
+function  Int128IsZero(const A: Int128): Boolean;
+function  Int128IsOne(const A: Int128): Boolean;
+function  Int128IsMinusOne(const A: Int128): Boolean;
+function  Int128IsMinimum(const A: Int128): Boolean;
+function  Int128IsMaximum(const A: Int128): Boolean;
+function  Int128IsOdd(const A: Int128): Boolean;      {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Int128Sign(const A: Int128): Integer;                  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Negate(var A: Int128);                           {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitNegWord128(var A: Int128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128AbsInPlace(var A: Int128): Boolean;              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128Abs(const A: Int128; var B: Word128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128Sign(const A: Int128): Integer;
+procedure Int128Negate(var A: Int128);
+procedure Int128InitNegWord128(var A: Int128; const B: Word128);
+function  Int128AbsInPlace(var A: Int128): Boolean;
+function  Int128Abs(const A: Int128; var B: Word128): Boolean;
 
-function  Int128IsWord8Range(const A: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsWord16Range(const A: Int128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsWord32Range(const A: Int128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsWord64Range(const A: Int128): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsWord128Range(const A: Int128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsInt8Range(const A: Int128): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsInt16Range(const A: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsInt32Range(const A: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsInt64Range(const A: Int128): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128IsWord8Range(const A: Int128): Boolean;
+function  Int128IsWord16Range(const A: Int128): Boolean;
+function  Int128IsWord32Range(const A: Int128): Boolean;
+function  Int128IsWord64Range(const A: Int128): Boolean;
+function  Int128IsWord128Range(const A: Int128): Boolean;
+function  Int128IsInt8Range(const A: Int128): Boolean;
+function  Int128IsInt16Range(const A: Int128): Boolean;
+function  Int128IsInt32Range(const A: Int128): Boolean;
+function  Int128IsInt64Range(const A: Int128): Boolean;
 
-procedure Int128InitWord32(var A: Int128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitWord64(var A: Int128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitWord128(var A: Int128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitInt32(var A: Int128; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitInt64(var A: Int128; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128InitFloat(var A: Int128; const B: Extended);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128InitWord32(var A: Int128; const B: Word32);
+procedure Int128InitWord64(var A: Int128; const B: Word64);
+procedure Int128InitWord128(var A: Int128; const B: Word128);
+procedure Int128InitInt32(var A: Int128; const B: Int32);
+procedure Int128InitInt64(var A: Int128; const B: Int64);
+procedure Int128InitFloat(var A: Int128; const B: Extended);
 
-function  Int128ToWord32(const A: Int128): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToWord64(const A: Int128): Word64;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToWord128(const A: Int128): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToInt32(const A: Int128): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToInt64(const A: Int128): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToFloat(const A: Int128): Extended;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128ToWord32(const A: Int128): Word32;
+function  Int128ToWord64(const A: Int128): Word64;
+function  Int128ToWord128(const A: Int128): Word128;
+function  Int128ToInt32(const A: Int128): Int32;
+function  Int128ToInt64(const A: Int128): Int64;
+function  Int128ToFloat(const A: Int128): Extended;
 
-function  Int128EqualsWord32(const A: Int128; const B: Word32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128EqualsWord64(const A: Int128; const B: Word64): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128EqualsWord128(const A: Int128; const B: Word128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128EqualsInt32(const A: Int128; const B: Int32): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128EqualsInt64(const A: Int128; const B: Int64): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128EqualsInt128(const A, B: Int128): Boolean;                 {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128EqualsWord32(const A: Int128; const B: Word32): Boolean;
+function  Int128EqualsWord64(const A: Int128; const B: Word64): Boolean;
+function  Int128EqualsWord128(const A: Int128; const B: Word128): Boolean;
+function  Int128EqualsInt32(const A: Int128; const B: Int32): Boolean;
+function  Int128EqualsInt64(const A: Int128; const B: Int64): Boolean;
+function  Int128EqualsInt128(const A, B: Int128): Boolean;
 
-function  Int128CompareWord32(const A: Int128; const B: Word32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128CompareWord64(const A: Int128; const B: Word64): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128CompareWord128(const A: Int128; const B: Word128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128CompareInt32(const A: Int128; const B: Int32): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128CompareInt64(const A: Int128; const B: Int64): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128CompareInt128(const A, B: Int128): Integer;                 {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128CompareWord32(const A: Int128; const B: Word32): Integer;
+function  Int128CompareWord64(const A: Int128; const B: Word64): Integer;
+function  Int128CompareWord128(const A: Int128; const B: Word128): Integer;
+function  Int128CompareInt32(const A: Int128; const B: Int32): Integer;
+function  Int128CompareInt64(const A: Int128; const B: Int64): Integer;
+function  Int128CompareInt128(const A, B: Int128): Integer;
 
-function  Int128Min(const A, B: Int128): Int128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128Max(const A, B: Int128): Int128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128Min(const A, B: Int128): Int128;
+function  Int128Max(const A, B: Int128): Int128;
 
-procedure Int128Not(var A: Int128);                        {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128OrInt128(var A: Int128; const B: Int128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AndInt128(var A: Int128; const B: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128XorInt128(var A: Int128; const B: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Not(var A: Int128);
+procedure Int128OrInt128(var A: Int128; const B: Int128);
+procedure Int128AndInt128(var A: Int128; const B: Int128);
+procedure Int128XorInt128(var A: Int128; const B: Int128);
 
-function  Int128IsBitSet(const A: Int128; const B: Integer): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SetBit(var A: Int128; const B: Integer);              {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128ClearBit(var A: Int128; const B: Integer);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128ToggleBit(var A: Int128; const B: Integer);           {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128IsBitSet(const A: Int128; const B: Integer): Boolean;
+procedure Int128SetBit(var A: Int128; const B: Integer);
+procedure Int128ClearBit(var A: Int128; const B: Integer);
+procedure Int128ToggleBit(var A: Int128; const B: Integer);
 
-function  Int128SetBitScanForward(const A: Int128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128SetBitScanReverse(const A: Int128): Integer;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ClearBitScanForward(const A: Int128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ClearBitScanReverse(const A: Int128): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128SetBitScanForward(const A: Int128): Integer;
+function  Int128SetBitScanReverse(const A: Int128): Integer;
+function  Int128ClearBitScanForward(const A: Int128): Integer;
+function  Int128ClearBitScanReverse(const A: Int128): Integer;
 
-procedure Int128Shl(var A: Int128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Shr(var A: Int128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Rol(var A: Int128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Ror(var A: Int128; const B: Byte); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Shl(var A: Int128; const B: Byte);
+procedure Int128Shr(var A: Int128; const B: Byte);
+procedure Int128Rol(var A: Int128; const B: Byte);
+procedure Int128Ror(var A: Int128; const B: Byte);
 
-procedure Int128Shl1(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Shr1(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Rol1(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128Ror1(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Shl1(var A: Int128);
+procedure Int128Shr1(var A: Int128);
+procedure Int128Rol1(var A: Int128);
+procedure Int128Ror1(var A: Int128);
 
-procedure Int128Swap(var A, B: Int128);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128ReverseBits(var A: Int128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128ReverseBytes(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Swap(var A, B: Int128);
+procedure Int128ReverseBits(var A: Int128);
+procedure Int128ReverseBytes(var A: Int128);
 
-function  Int128BitCount(const A: Int128): Integer;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128IsPowerOfTwo(const A: Int128): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128BitCount(const A: Int128): Integer;
+function  Int128IsPowerOfTwo(const A: Int128): Boolean;
 
-procedure Int128AddWord32(var A: Int128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AddWord64(var A: Int128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AddWord128(var A: Int128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AddInt32(var A: Int128; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AddInt64(var A: Int128; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128AddInt128(var A: Int128; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128AddWord32(var A: Int128; const B: Word32);
+procedure Int128AddWord64(var A: Int128; const B: Word64);
+procedure Int128AddWord128(var A: Int128; const B: Word128);
+procedure Int128AddInt32(var A: Int128; const B: Int32);
+procedure Int128AddInt64(var A: Int128; const B: Int64);
+procedure Int128AddInt128(var A: Int128; const B: Int128);
 
-procedure Int128SubtractWord32(var A: Int128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SubtractWord64(var A: Int128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SubtractWord128(var A: Int128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SubtractInt32(var A: Int128; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SubtractInt64(var A: Int128; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128SubtractInt128(var A: Int128; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128SubtractWord32(var A: Int128; const B: Word32);
+procedure Int128SubtractWord64(var A: Int128; const B: Word64);
+procedure Int128SubtractWord128(var A: Int128; const B: Word128);
+procedure Int128SubtractInt32(var A: Int128; const B: Int32);
+procedure Int128SubtractInt64(var A: Int128; const B: Int64);
+procedure Int128SubtractInt128(var A: Int128; const B: Int128);
 
-procedure Int128MultiplyWord8(var A: Int128; const B: Byte);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyWord16(var A: Int128; const B: Word);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyWord32(var A: Int128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyWord64(var A: Int128; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyWord128(var A: Int128; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyInt8(var A: Int128; const B: ShortInt);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyInt16(var A: Int128; const B: SmallInt);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyInt32(var A: Int128; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyInt64(var A: Int128; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128MultiplyInt128(var A: Int128; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128MultiplyWord8(var A: Int128; const B: Byte);
+procedure Int128MultiplyWord16(var A: Int128; const B: Word);
+procedure Int128MultiplyWord32(var A: Int128; const B: Word32);
+procedure Int128MultiplyWord64(var A: Int128; const B: Word64);
+procedure Int128MultiplyWord128(var A: Int128; const B: Word128);
+procedure Int128MultiplyInt8(var A: Int128; const B: ShortInt);
+procedure Int128MultiplyInt16(var A: Int128; const B: SmallInt);
+procedure Int128MultiplyInt32(var A: Int128; const B: Int32);
+procedure Int128MultiplyInt64(var A: Int128; const B: Int64);
+procedure Int128MultiplyInt128(var A: Int128; const B: Int128);
 
-procedure Int128Sqr(var A: Int128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Sqr(var A: Int128);
 
-procedure Int128DivideWord8(const A: Int128; const B: Byte; var Q: Int128; var R: Byte);          {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideWord16(const A: Int128; const B: Word; var Q: Int128; var R: Word);         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideWord32(const A: Int128; const B: Word32; var Q: Int128; var R: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideWord64(const A: Int128; const B: Word64; var Q: Int128; var R: Word64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideWord128(const A: Int128; const B: Word128; var Q: Int128; var R: Word128);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128DivideWord8(const A: Int128; const B: Byte; var Q: Int128; var R: Byte);
+procedure Int128DivideWord16(const A: Int128; const B: Word; var Q: Int128; var R: Word);
+procedure Int128DivideWord32(const A: Int128; const B: Word32; var Q: Int128; var R: Word32);
+procedure Int128DivideWord64(const A: Int128; const B: Word64; var Q: Int128; var R: Word64);
+procedure Int128DivideWord128(const A: Int128; const B: Word128; var Q: Int128; var R: Word128);
 
-procedure Int128DivideInt8(const A: Int128; const B: ShortInt; var Q: Int128; var R: ShortInt);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideInt16(const A: Int128; const B: SmallInt; var Q: Int128; var R: SmallInt); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideInt32(const A: Int128; const B: Int32; var Q: Int128; var R: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideInt64(const A: Int128; const B: Int64; var Q: Int128; var R: Int64);       {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int128DivideInt128(const A, B: Int128; var Q, R: Int128);                              {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128DivideInt8(const A: Int128; const B: ShortInt; var Q: Int128; var R: ShortInt);
+procedure Int128DivideInt16(const A: Int128; const B: SmallInt; var Q: Int128; var R: SmallInt);
+procedure Int128DivideInt32(const A: Int128; const B: Int32; var Q: Int128; var R: Int32);
+procedure Int128DivideInt64(const A: Int128; const B: Int64; var Q: Int128; var R: Int64);
+procedure Int128DivideInt128(const A, B: Int128; var Q, R: Int128);
 
-function  Int128ToStr(const A: Int128): String;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToStrA(const A: Int128): AnsiString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToStrW(const A: Int128): WideString;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128ToStrU(const A: Int128): UnicodeString; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToInt128(const A: String): Int128;         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToInt128A(const A: AnsiString): Int128;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToInt128W(const A: WideString): Int128;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  StrToInt128U(const A: UnicodeString): Int128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128ToStr(const A: Int128): String;
+function  Int128ToStrA(const A: Int128): RawByteString;
+function  Int128ToStrU(const A: Int128): UnicodeString;
+function  StrToInt128(const A: String): Int128;
+function  StrToInt128A(const A: RawByteString): Int128;
+function  StrToInt128U(const A: UnicodeString): Int128;
 
-procedure Int128ISqrt(var A: Int128);            {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int128Sqrt(const A: Int128): Extended; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128ISqrt(var A: Int128);
+function  Int128Sqrt(const A: Int128): Extended;
 
-procedure Int128Power(var A: Int128; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int128Power(var A: Int128; const B: Word32);
 
-function  Int128Hash(const A: Int128): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int128Hash(const A: Int128): Word32;
 
 
 
@@ -1204,85 +1188,85 @@ const
       $FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $FFFFFFFF,
       $FFFFFFFF, $FFFFFFFF, $FFFFFFFF, $7FFFFFFF));
 
-procedure Int256InitZero(var A: Int256);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitOne(var A: Int256);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitMinusOne(var A: Int256); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitMinimum(var A: Int256);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitMaximum(var A: Int256);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int256InitZero(var A: Int256);
+procedure Int256InitOne(var A: Int256);
+procedure Int256InitMinusOne(var A: Int256);
+procedure Int256InitMinimum(var A: Int256);
+procedure Int256InitMaximum(var A: Int256);
 
-function  Int256IsNegative(const A: Int256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsZero(const A: Int256): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsOne(const A: Int256): Boolean;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsMinusOne(const A: Int256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsMinimum(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsMaximum(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsOdd(const A: Int256): Boolean;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int256IsNegative(const A: Int256): Boolean;
+function  Int256IsZero(const A: Int256): Boolean;
+function  Int256IsOne(const A: Int256): Boolean;
+function  Int256IsMinusOne(const A: Int256): Boolean;
+function  Int256IsMinimum(const A: Int256): Boolean;
+function  Int256IsMaximum(const A: Int256): Boolean;
+function  Int256IsOdd(const A: Int256): Boolean;
 
-function  Int256Sign(const A: Int256): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int256Sign(const A: Int256): Integer;
 
-function  Int256IsWord8Range(const A: Int256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsWord16Range(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsWord32Range(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsWord64Range(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsWord128Range(const A: Int256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsWord256Range(const A: Int256): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsInt8Range(const A: Int256): Boolean;    {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsInt16Range(const A: Int256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsInt32Range(const A: Int256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsInt64Range(const A: Int256): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256IsInt128Range(const A: Int256): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int256IsWord8Range(const A: Int256): Boolean;
+function  Int256IsWord16Range(const A: Int256): Boolean;
+function  Int256IsWord32Range(const A: Int256): Boolean;
+function  Int256IsWord64Range(const A: Int256): Boolean;
+function  Int256IsWord128Range(const A: Int256): Boolean;
+function  Int256IsWord256Range(const A: Int256): Boolean;
+function  Int256IsInt8Range(const A: Int256): Boolean;
+function  Int256IsInt16Range(const A: Int256): Boolean;
+function  Int256IsInt32Range(const A: Int256): Boolean;
+function  Int256IsInt64Range(const A: Int256): Boolean;
+function  Int256IsInt128Range(const A: Int256): Boolean;
 
-procedure Int256InitWord32(var A: Int256; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitWord64(var A: Int256; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitWord128(var A: Int256; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitInt32(var A: Int256; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitInt64(var A: Int256; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int256InitInt128(var A: Int256; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int256InitWord32(var A: Int256; const B: Word32);
+procedure Int256InitWord64(var A: Int256; const B: Word64);
+procedure Int256InitWord128(var A: Int256; const B: Word128);
+procedure Int256InitInt32(var A: Int256; const B: Int32);
+procedure Int256InitInt64(var A: Int256; const B: Int64);
+procedure Int256InitInt128(var A: Int256; const B: Int128);
 
-function  Int256ToWord32(const A: Int256): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256ToWord128(const A: Int256): Word128; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256ToInt32(const A: Int256): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256ToInt64(const A: Int256): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int256ToInt128(const A: Int256): Int128;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int256ToWord32(const A: Int256): Word32;
+function  Int256ToWord128(const A: Int256): Word128;
+function  Int256ToInt32(const A: Int256): Int32;
+function  Int256ToInt64(const A: Int256): Int64;
+function  Int256ToInt128(const A: Int256): Int128;
 
 
 {%DEFINE IntIntf}
 {                                                                              }
 {-Int%1%                                                                       }
 {                                                                              }
-procedure Int%1%InitZero(var A: Int%1%);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitOne(var A: Int%1%);      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitMinusOne(var A: Int%1%); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitMinimum(var A: Int%1%);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitMaximum(var A: Int%1%);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int%1%InitZero(var A: Int%1%);
+procedure Int%1%InitOne(var A: Int%1%);
+procedure Int%1%InitMinusOne(var A: Int%1%);
+procedure Int%1%InitMinimum(var A: Int%1%);
+procedure Int%1%InitMaximum(var A: Int%1%);
 
-function  Int%1%IsNegative(const A: Int%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsZero(const A: Int%1%): Boolean;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsOne(const A: Int%1%): Boolean;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsMinusOne(const A: Int%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsMinimum(const A: Int%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsMaximum(const A: Int%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsOdd(const A: Int%1%): Boolean;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int%1%IsNegative(const A: Int%1%): Boolean;
+function  Int%1%IsZero(const A: Int%1%): Boolean;
+function  Int%1%IsOne(const A: Int%1%): Boolean;
+function  Int%1%IsMinusOne(const A: Int%1%): Boolean;
+function  Int%1%IsMinimum(const A: Int%1%): Boolean;
+function  Int%1%IsMaximum(const A: Int%1%): Boolean;
+function  Int%1%IsOdd(const A: Int%1%): Boolean;
 
-function  Int%1%Sign(const A: Int%1%): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int%1%Sign(const A: Int%1%): Integer;
 
-function  Int%1%IsWord32Range(const A: Int%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsWord64Range(const A: Int%1%): Boolean;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsWord128Range(const A: Int%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsWord256Range(const A: Int%1%): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsInt32Range(const A: Int%1%): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%IsInt64Range(const A: Int%1%): Boolean;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int%1%IsWord32Range(const A: Int%1%): Boolean;
+function  Int%1%IsWord64Range(const A: Int%1%): Boolean;
+function  Int%1%IsWord128Range(const A: Int%1%): Boolean;
+function  Int%1%IsWord256Range(const A: Int%1%): Boolean;
+function  Int%1%IsInt32Range(const A: Int%1%): Boolean;
+function  Int%1%IsInt64Range(const A: Int%1%): Boolean;
 
-procedure Int%1%InitWord32(var A: Int%1%; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitWord64(var A: Int%1%; const B: Word64);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitWord128(var A: Int%1%; const B: Word128); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitInt32(var A: Int%1%; const B: Int32);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitInt64(var A: Int%1%; const B: Int64);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure Int%1%InitInt128(var A: Int%1%; const B: Int128);   {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure Int%1%InitWord32(var A: Int%1%; const B: Word32);
+procedure Int%1%InitWord64(var A: Int%1%; const B: Word64);
+procedure Int%1%InitWord128(var A: Int%1%; const B: Word128);
+procedure Int%1%InitInt32(var A: Int%1%; const B: Int32);
+procedure Int%1%InitInt64(var A: Int%1%; const B: Int64);
+procedure Int%1%InitInt128(var A: Int%1%; const B: Int128);
 
-function  Int%1%ToWord32(const A: Int%1%): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%ToInt32(const A: Int%1%): Int32;   {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  Int%1%ToInt64(const A: Int%1%): Int64;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  Int%1%ToWord32(const A: Int%1%): Word32;
+function  Int%1%ToInt32(const A: Int%1%): Int32;
+function  Int%1%ToInt64(const A: Int%1%): Int64;
 
 
 {%ENDDEF}
@@ -1306,21 +1290,21 @@ type
     2 : (DataWord32 : Word32);
   end;
 
-procedure VarWord32InitZero(var A: VarWord32);    {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure VarWord32InitMaximum(var A: VarWord32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarWord32InitZero(var A: VarWord32);    {$IFDEF UseInline}inline;{$ENDIF}
+procedure VarWord32InitMaximum(var A: VarWord32);
 
-function  VarWord32IsZero(const A: VarWord32): Boolean;    {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-function  VarWord32IsMaximum(const A: VarWord32): Boolean; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarWord32IsZero(const A: VarWord32): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  VarWord32IsMaximum(const A: VarWord32): Boolean;
 
-procedure VarWord32InitWord8(var A: VarWord32; const B: Byte);      {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure VarWord32InitWord16(var A: VarWord32; const B: Word);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarWord32InitWord32(var A: VarWord32; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarWord32InitWord8(var A: VarWord32; const B: Byte);      {$IFDEF UseInline}inline;{$ENDIF}
+procedure VarWord32InitWord16(var A: VarWord32; const B: Word);
+procedure VarWord32InitWord32(var A: VarWord32; const B: Word32);
 
-function  VarWord32ToWord8(const A: VarWord32): Byte;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarWord32ToWord16(const A: VarWord32): Word;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarWord32ToWord32(const A: VarWord32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarWord32ToWord8(const A: VarWord32): Byte;
+function  VarWord32ToWord16(const A: VarWord32): Word;
+function  VarWord32ToWord32(const A: VarWord32): Word32;
 
-function  VarWord32Size(const A: VarWord32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarWord32Size(const A: VarWord32): Integer;
 
 
 
@@ -1339,25 +1323,25 @@ type
     5 : (DataInt32  : Int32);
   end;
 
-procedure VarInt32InitZero(var A: VarInt32); {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
+procedure VarInt32InitZero(var A: VarInt32); {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure VarInt32InitWord8(var A: VarInt32; const B: Byte);      {$IFDEF UseStdCall}stdcall;{$ELSE}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
-procedure VarInt32InitWord16(var A: VarInt32; const B: Word);     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarInt32InitWord32(var A: VarInt32; const B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarInt32InitWord8(var A: VarInt32; const B: Byte);      {$IFDEF UseInline}inline;{$ENDIF}
+procedure VarInt32InitWord16(var A: VarInt32; const B: Word);
+procedure VarInt32InitWord32(var A: VarInt32; const B: Word32);
 
-procedure VarInt32InitInt8(var A: VarInt32; const B: ShortInt);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarInt32InitInt16(var A: VarInt32; const B: SmallInt); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarInt32InitInt32(var A: VarInt32; const B: Int32);  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarInt32InitInt8(var A: VarInt32; const B: ShortInt);
+procedure VarInt32InitInt16(var A: VarInt32; const B: SmallInt);
+procedure VarInt32InitInt32(var A: VarInt32; const B: Int32);
 
-function  VarInt32ToWord8(const A: VarWord32): Byte;      {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarInt32ToWord16(const A: VarWord32): Word;     {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarInt32ToWord32(const A: VarWord32): Word32; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarInt32ToWord8(const A: VarWord32): Byte;
+function  VarInt32ToWord16(const A: VarWord32): Word;
+function  VarInt32ToWord32(const A: VarWord32): Word32;
 
-function  VarInt32ToInt8(const A: VarInt32): ShortInt;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarInt32ToInt16(const A: VarInt32): SmallInt; {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarInt32ToInt32(const A: VarInt32): Int32;  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarInt32ToInt8(const A: VarInt32): ShortInt;
+function  VarInt32ToInt16(const A: VarInt32): SmallInt;
+function  VarInt32ToInt32(const A: VarInt32): Int32;
 
-function  VarInt32Size(const A: VarInt32): Integer; {$IFDEF UseStdCall}stdcall;{$ENDIF}
+function  VarInt32Size(const A: VarInt32): Integer;
 
 
 
@@ -1373,10 +1357,10 @@ type
     2 : (DataWord32s : array[0..1] of Word32);
   end;
 
-procedure VarWord32PairInitZero(var A: VarWord32Pair);                         {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarWord32PairInitWord32(var C: VarWord32Pair; const A, B: Word32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarWord32PairToWord32Pair(const A: VarWord32Pair): Word32Pair;       {$IFDEF UseStdCall}stdcall;{$ENDIF}
-function  VarWord32PairSize(const A: VarWord32Pair): Integer;                  {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarWord32PairInitZero(var A: VarWord32Pair);
+procedure VarWord32PairInitWord32(var C: VarWord32Pair; const A, B: Word32);
+function  VarWord32PairToWord32Pair(const A: VarWord32Pair): Word32Pair;
+function  VarWord32PairSize(const A: VarWord32Pair): Integer;
 
 
 
@@ -1395,8 +1379,8 @@ type
     5 : (DataInt32s  : array[0..1] of Int32);
   end;
 
-procedure VarInt32PairInitZero(var A: VarInt32Pair);                       {$IFDEF UseStdCall}stdcall;{$ENDIF}
-procedure VarInt32PairInitInt32(var C: VarInt32Pair; const A, B: Int32); {$IFDEF UseStdCall}stdcall;{$ENDIF}
+procedure VarInt32PairInitZero(var A: VarInt32Pair);
+procedure VarInt32PairInitInt32(var C: VarInt32Pair; const A, B: Int32);
 
 
 
@@ -3968,7 +3952,7 @@ begin
     Result[I] := Char(S[L - I + 1]);
 end;
 
-function Word64ToStrA(const A: Word64): AnsiString;
+function Word64ToStrA(const A: Word64): RawByteString;
 var S : ShortString;
     I, L : Integer;
 begin
@@ -3977,17 +3961,6 @@ begin
   SetLength(Result, L);
   for I := 1 to L do
     Result[I] := AnsiChar(S[L - I + 1]);
-end;
-
-function Word64ToStrW(const A: Word64): WideString;
-var S : ShortString;
-    I, L : Integer;
-begin
-  Word64ToShortStrR(A, S);
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := WideChar(S[L - I + 1]);
 end;
 
 function Word64ToStrU(const A: Word64): UnicodeString;
@@ -4022,7 +3995,7 @@ begin
     end;
 end;
 
-function StrToWord64A(const A: AnsiString): Word64;
+function StrToWord64A(const A: RawByteString): Word64;
 var I : Integer;
     B : AnsiChar;
     C : Word32;
@@ -4034,27 +4007,6 @@ begin
     begin
       B := A[I];
       if not (B in ['0'..'9']) then
-        RaiseConvertError;
-      C := Ord(A[I]) - Ord('0');
-      Word64MultiplyWord8(Result, 10);
-      Word64AddWord32(Result, C);
-    end;
-end;
-
-function StrToWord64W(const A: WideString): Word64;
-var I : Integer;
-    B : WideChar;
-    C : Word32;
-begin
-  if A = '' then
-    RaiseConvertError;
-  Word64InitZero(Result);
-  for I := 1 to Length(A) do
-    begin
-      B := A[I];
-      if Ord(B) > $7F then
-        RaiseConvertError;
-      if not (AnsiChar(Ord(B)) in ['0'..'9']) then
         RaiseConvertError;
       C := Ord(A[I]) - Ord('0');
       Word64MultiplyWord8(Result, 10);
@@ -6305,7 +6257,7 @@ begin
     Result[I] := Char(S[L - I + 1]);
 end;
 
-function Word128ToStrA(const A: Word128): AnsiString;
+function Word128ToStrA(const A: Word128): RawByteString;
 var S : ShortString;
     I, L : Integer;
 begin
@@ -6314,17 +6266,6 @@ begin
   SetLength(Result, L);
   for I := 1 to L do
     Result[I] := AnsiChar(S[L - I + 1]);
-end;
-
-function Word128ToStrW(const A: Word128): WideString;
-var S : ShortString;
-    I, L : Integer;
-begin
-  Word128ToShortStrR(A, S);
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := WideChar(S[L - I + 1]);
 end;
 
 function Word128ToStrU(const A: Word128): UnicodeString;
@@ -6359,7 +6300,7 @@ begin
     end;
 end;
 
-function StrToWord128A(const A: AnsiString): Word128;
+function StrToWord128A(const A: RawByteString): Word128;
 var I : Integer;
     B : AnsiChar;
     C : Word32;
@@ -6371,27 +6312,6 @@ begin
     begin
       B := A[I];
       if not (B in ['0'..'9']) then
-        RaiseConvertError;
-      C := Ord(A[I]) - Ord('0');
-      Word128MultiplyWord8(Result, 10);
-      Word128AddWord32(Result, C);
-    end;
-end;
-
-function StrToWord128W(const A: WideString): Word128;
-var I : Integer;
-    B : WideChar;
-    C : Word32;
-begin
-  if A = '' then
-    RaiseConvertError;
-  Word128InitZero(Result);
-  for I := 1 to Length(A) do
-    begin
-      B := A[I];
-      if Ord(B) > $7F then
-        RaiseConvertError;
-      if not (AnsiChar(Ord(B)) in ['0'..'9']) then
         RaiseConvertError;
       C := Ord(A[I]) - Ord('0');
       Word128MultiplyWord8(Result, 10);
@@ -12369,7 +12289,7 @@ begin
     Result[1] := '-';
 end;
 
-function Int128ToStrA(const A: Int128): AnsiString;
+function Int128ToStrA(const A: Int128): RawByteString;
 var B : Word128;
     N : Boolean;
     S : ShortString;
@@ -12385,26 +12305,6 @@ begin
   SetLength(Result, L + K);
   for I := 1 to L do
     Result[I + K] := AnsiChar(S[L - I + 1]);
-  if N then
-    Result[1] := '-';
-end;
-
-function Int128ToStrW(const A: Int128): WideString;
-var B : Word128;
-    N : Boolean;
-    S : ShortString;
-    I, L, K : Integer;
-begin
-  N := Int128Abs(A, B);
-  if N then
-    K := 1
-  else
-    K := 0;
-  Word128ToShortStrR(B, S);
-  L := Length(S);
-  SetLength(Result, L + K);
-  for I := 1 to L do
-    Result[I + K] := WideChar(S[L - I + 1]);
   if N then
     Result[1] := '-';
 end;
@@ -12459,7 +12359,7 @@ begin
     Int128Negate(Result);
 end;
 
-function StrToInt128A(const A: AnsiString): Int128;
+function StrToInt128A(const A: RawByteString): Int128;
 var I : Integer;
     B : AnsiChar;
     C : Word32;
@@ -12478,36 +12378,6 @@ begin
     begin
       B := A[I];
       if not (B in ['0'..'9']) then
-        RaiseConvertError;
-      C := Ord(A[I]) - Ord('0');
-      Int128MultiplyWord8(Result, 10);
-      Int128AddWord32(Result, C);
-    end;
-  if N then
-    Int128Negate(Result);
-end;
-
-function StrToInt128W(const A: WideString): Int128;
-var I : Integer;
-    B : WideChar;
-    C : Word32;
-    D : Integer;
-    N : Boolean;
-begin
-  if A = '' then
-    RaiseConvertError;
-  N := (A[1] = '-');
-  if N then
-    D := 1
-  else
-    D := 0;
-  Int128InitZero(Result);
-  for I := 1 + D to Length(A) do
-    begin
-      B := A[I];
-      if Ord(B) > $7F then
-        RaiseConvertError;
-      if not (AnsiChar(Ord(B)) in ['0'..'9']) then
         RaiseConvertError;
       C := Ord(A[I]) - Ord('0');
       Int128MultiplyWord8(Result, 10);

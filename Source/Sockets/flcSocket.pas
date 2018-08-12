@@ -1338,14 +1338,14 @@ begin
     Assert(T.SendBufferSize > 0);
 
     R := True; W := True; E := True;
-    Assert(S.Select(15, R, W, E));
+    Assert(S.Select(20, R, W, E));
     Assert(R and not W and not E);
 
     S.Accept(C, A);
     Assert(Assigned(C));
 
     R := True; W := True; E := True;
-    Assert(C.Select(15, R, W, E));
+    Assert(C.Select(20, R, W, E));
     Assert(not R and W and not E);
 
     Assert(T.GetRemoteAddressStr = '127.0.0.1');

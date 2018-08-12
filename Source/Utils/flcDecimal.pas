@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcDecimal.pas                                           }
-{   File version:     5.09                                                     }
+{   File version:     5.10                                                     }
 {   Description:      Decimal number functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 2014-2018, David J Butler                  }
@@ -42,6 +42,7 @@
 {   2016/01/09  5.07  Revised for Fundamentals 5.                              }
 {   2016/01/10  5.08  Make rounding same under 32/64-bit compilers.            }
 {   2018/07/17  5.09  Word32/Int32 changes.                                    }
+{   2018/08/12  5.10  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -233,7 +234,6 @@ procedure Decimal32DivideDecimal32(var A: Decimal32; const B: Decimal32);
 
 function  Decimal32ToStr(const A: Decimal32): String;
 function  Decimal32ToStrA(const A: Decimal32): RawByteString;
-function  Decimal32ToStrW(const A: Decimal32): WideString;
 function  Decimal32ToStrU(const A: Decimal32): UnicodeString;
 
 function  TryStrToDecimal32(const A: String; out B: Decimal32): TDecimalConvertErrorType;
@@ -337,7 +337,6 @@ procedure Decimal64DivideDecimal64(var A: Decimal64; const B: Decimal64);
 
 function  Decimal64ToStr(const A: Decimal64): String;
 function  Decimal64ToStrA(const A: Decimal64): AnsiString;
-function  Decimal64ToStrW(const A: Decimal64): WideString;
 function  Decimal64ToStrU(const A: Decimal64): UnicodeString;
 
 function  TryStrToDecimal64(const A: String; out B: Decimal64): TDecimalConvertErrorType;
@@ -445,7 +444,6 @@ procedure Decimal128DivideDecimal128(var A: Decimal128; const B: Decimal128);
 
 function  Decimal128ToStr(const A: Decimal128): String;
 function  Decimal128ToStrA(const A: Decimal128): RawByteString;
-function  Decimal128ToStrW(const A: Decimal128): WideString;
 function  Decimal128ToStrU(const A: Decimal128): UnicodeString;
 
 function  TryStrToDecimal128(const A: String; out B: Decimal128): TDecimalConvertErrorType;
@@ -620,7 +618,6 @@ procedure SDecimal32DivideSDecimal32(var A: SDecimal32; const B: SDecimal32);
 
 function  SDecimal32ToStr(const A: SDecimal32): String;
 function  SDecimal32ToStrA(const A: SDecimal32): RawByteString;
-function  SDecimal32ToStrW(const A: SDecimal32): WideString;
 function  SDecimal32ToStrU(const A: SDecimal32): UnicodeString;
 
 function  TryStrToSDecimal32(const A: String; out B: SDecimal32): TDecimalConvertErrorType;
@@ -723,7 +720,6 @@ procedure SDecimal64DivideSDecimal64(var A: SDecimal64; const B: SDecimal64);
 
 function  SDecimal64ToStr(const A: SDecimal64): String;
 function  SDecimal64ToStrA(const A: SDecimal64): RawByteString;
-function  SDecimal64ToStrW(const A: SDecimal64): WideString;
 function  SDecimal64ToStrU(const A: SDecimal64): UnicodeString;
 
 function  TryStrToSDecimal64(const A: String; out B: SDecimal64): TDecimalConvertErrorType;
@@ -824,7 +820,6 @@ procedure SDecimal128DivideSDecimal128(var A: SDecimal128; const B: SDecimal128)
 
 function  SDecimal128ToStr(const A: SDecimal128): String;
 function  SDecimal128ToStrA(const A: SDecimal128): AnsiString;
-function  SDecimal128ToStrW(const A: SDecimal128): WideString;
 function  SDecimal128ToStrU(const A: SDecimal128): UnicodeString;
 
 function  TryStrToSDecimal128(const A: String; out B: SDecimal128): TDecimalConvertErrorType;
@@ -1384,26 +1379,6 @@ begin
   Result := S;
 end;
 
-function Decimal32ToStrW(const A: Decimal32): WideString;
-var
-  S : WideString;
-  T : Word64;
-  L : Integer;
-begin
-  if A.Value32 = 0 then
-    begin
-      Result := '0.0000';
-      exit;
-    end;
-  Word64InitWord32(T, A.Value32);
-  S := StrPadLeftW(Word64ToStrW(T), '0', Decimal32Precision + 1, False);
-  L := Length(S);
-  S :=
-    CopyLeftW(S, L - Decimal32Precision) + '.' +
-    CopyRightW(S, Decimal32Precision);
-  Result := S;
-end;
-
 function Decimal32ToStrU(const A: Decimal32): UnicodeString;
 var
   S : UnicodeString;
@@ -1416,7 +1391,7 @@ begin
       exit;
     end;
   Word64InitWord32(T, A.Value32);
-  S := StrPadLeftU(Word64ToStrW(T), '0', Decimal32Precision + 1, False);
+  S := StrPadLeftU(Word64ToStrU(T), '0', Decimal32Precision + 1, False);
   L := Length(S);
   S :=
     CopyLeftU(S, L - Decimal32Precision) + '.' +
@@ -3078,23 +3053,6 @@ begin
     CopyRightA(S, Decimal64Precision);
 end;
 
-function Decimal64ToStrW(const A: Decimal64): WideString;
-var
-  S : WideString;
-  L : Integer;
-begin
-  if Word64IsZero(A.Value64) then
-    begin
-      Result := '0.000000000';
-      exit;
-    end;
-  S := StrPadLeftW(Word64ToStrW(A.Value64), '0', Decimal64Precision + 1, False);
-  L := Length(S);
-  Result :=
-    CopyLeftW(S, L - Decimal64Precision) + '.' +
-    CopyRightW(S, Decimal64Precision);
-end;
-
 function Decimal64ToStrU(const A: Decimal64): UnicodeString;
 var
   S : UnicodeString;
@@ -4236,23 +4194,6 @@ begin
   Result :=
     CopyLeftB(S, L - Decimal128Precision) + '.' +
     CopyRightB(S, Decimal128Precision);
-end;
-
-function Decimal128ToStrW(const A: Decimal128): WideString;
-var
-  S : WideString;
-  L : Integer;
-begin
-  if Word128IsZero(A.Value128) then
-    begin
-      Result := '0.0000000000000000000';
-      exit;
-    end;
-  S := StrPadLeftW(Word128ToStrW(A.Value128), '0', Decimal128Precision + 1, False);
-  L := Length(S);
-  Result :=
-    CopyLeftW(S, L - Decimal128Precision) + '.' +
-    CopyRightW(S, Decimal128Precision);
 end;
 
 function Decimal128ToStrU(const A: Decimal128): UnicodeString;
@@ -6926,17 +6867,6 @@ begin
   Result := S;
 end;
 
-function SDecimal32ToStrW(const A: SDecimal32): WideString;
-var S : WideString;
-begin
-  if A.Sign < 0 then
-    S := '-'
-  else
-    S := '';
-  S := S + Decimal32ToStrW(A.Value);
-  Result := S;
-end;
-
 function SDecimal32ToStrU(const A: SDecimal32): UnicodeString;
 var S : UnicodeString;
 begin
@@ -7882,17 +7812,6 @@ begin
   else
     S := '';
   S := S + Decimal64ToStrA(A.Value);
-  Result := S;
-end;
-
-function SDecimal64ToStrW(const A: SDecimal64): WideString;
-var S : WideString;
-begin
-  if A.Sign < 0 then
-    S := '-'
-  else
-    S := '';
-  S := S + Decimal64ToStrW(A.Value);
   Result := S;
 end;
 
@@ -8958,17 +8877,6 @@ begin
   else
     S := '';
   S := S + Decimal128ToStrA(A.Value);
-  Result := S;
-end;
-
-function SDecimal128ToStrW(const A: SDecimal128): WideString;
-var S : WideString;
-begin
-  if A.Sign < 0 then
-    S := '-'
-  else
-    S := '';
-  S := S + Decimal128ToStrW(A.Value);
   Result := S;
 end;
 
@@ -12116,7 +12024,6 @@ begin
   Assert(SDecimal128ToInt32(A) = 1);
   Assert(SDecimal128ToStr(A) = '1.0000000000000000000');
   Assert(SDecimal128ToStrA(A) = '1.0000000000000000000');
-  Assert(SDecimal128ToStrW(A) = '1.0000000000000000000');
   Assert(SDecimal128ToStrU(A) = '1.0000000000000000000');
   Assert(SDecimal128EqualsWord8(A, 1));
   Assert(not SDecimal128EqualsWord8(A, 0));

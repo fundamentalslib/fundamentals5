@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStringPatternMatcher.pas                              }
-{   File version:     5.05                                                     }
+{   File version:     5.06                                                     }
 {   Description:      String pattern matchers.                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -39,6 +39,7 @@
 {   2002/02/14  2.03  Added MatchPattern.                                      }
 {   2016/04/13  5.04  Change pattern match functions to RawByteString.         }
 {   2017/10/07  5.05  Move from flcStrings unit.                               }
+{   2018/08/12  5.06  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -65,6 +66,7 @@ unit flcStringPatternMatcher;
 interface
 
 uses
+  { Fundamentals }
   flcStdTypes;
 
 
@@ -99,24 +101,17 @@ function  StrZMatchPatternA(M, S: PAnsiChar; const G: TMatchPatternGreed = mpgLa
 function  StrZMatchPatternW(M, S: PWideChar; const G: TMatchPatternGreed = mpgLazy): Integer;
 
 {$IFDEF SupportAnsiString}
-function  StrEqualPatternA(const M, S: AnsiString; const G: TMatchPatternGreed = mpgLazy): Boolean;
+function  StrEqualPatternA(const M, S: RawByteString; const G: TMatchPatternGreed = mpgLazy): Boolean;
 {$ENDIF}
-function  StrEqualPatternW(const M, S: WideString; const G: TMatchPatternGreed = mpgLazy): Boolean;
-{$IFDEF SupportUnicodeString}
 function  StrEqualPatternU(const M, S: UnicodeString; const G: TMatchPatternGreed = mpgLazy): Boolean;
-{$ENDIF}
 function  StrEqualPattern(const M, S: String; const G: TMatchPatternGreed = mpgLazy): Boolean;
 
 {$IFDEF SupportAnsiString}
-function  StrPosPatternA(const F, S: AnsiString; var Len: Integer;
+function  StrPosPatternA(const F, S: RawByteString; var Len: Integer;
           const StartIndex: Integer = 1; const G: TMatchPatternGreed = mpgLazy): Integer;
 {$ENDIF}
-function  StrPosPatternW(const F, S: WideString; var Len: Integer;
-          const StartIndex: Integer = 1; const G: TMatchPatternGreed = mpgLazy): Integer;
-{$IFDEF SupportUnicodeString}
 function  StrPosPatternU(const F, S: UnicodeString; var Len: Integer;
           const StartIndex: Integer = 1; const G: TMatchPatternGreed = mpgLazy): Integer;
-{$ENDIF}
 
 
 
@@ -816,23 +811,16 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrEqualPatternA(const M, S: AnsiString; const G: TMatchPatternGreed): Boolean;
+function StrEqualPatternA(const M, S: RawByteString; const G: TMatchPatternGreed): Boolean;
 begin
   Result := StrZMatchPatternA(PAnsiChar(M), PAnsiChar(S), G) = Length(S);
 end;
 {$ENDIF}
 
-function StrEqualPatternW(const M, S: WideString; const G: TMatchPatternGreed): Boolean;
-begin
-  Result := StrZMatchPatternW(PWideChar(M), PWideChar(S), G) = Length(S);
-end;
-
-{$IFDEF SupportUnicodeString}
 function StrEqualPatternU(const M, S: UnicodeString; const G: TMatchPatternGreed): Boolean;
 begin
   Result := StrZMatchPatternW(PWideChar(M), PWideChar(S), G) = Length(S);
 end;
-{$ENDIF}
 
 function StrEqualPattern(const M, S: String; const G: TMatchPatternGreed): Boolean;
 begin
@@ -844,7 +832,7 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function StrPosPatternA(const F, S: AnsiString; var Len: Integer; const StartIndex: Integer; const G: TMatchPatternGreed): Integer;
+function StrPosPatternA(const F, S: RawByteString; var Len: Integer; const StartIndex: Integer; const G: TMatchPatternGreed): Integer;
 var P : PAnsiChar;
     M : PAnsiChar;
     I : Integer;
@@ -867,29 +855,6 @@ begin
 end;
 {$ENDIF}
 
-function StrPosPatternW(const F, S: WideString; var Len: Integer; const StartIndex: Integer; const G: TMatchPatternGreed): Integer;
-var P : PWideChar;
-    M : PWideChar;
-    I : Integer;
-begin
-  P := PWideChar(S);
-  M := PWideChar(F);
-  for I := MaxInt(1, StartIndex) to Length(S) do
-    begin
-      Len := StrZMatchPatternW(M, P, G);
-      if Len >= 0 then
-        begin
-          Result := I;
-          exit;
-        end
-      else
-        Inc(P);
-    end;
-  Len := 0;
-  Result := 0;
-end;
-
-{$IFDEF SupportUnicodeString}
 function StrPosPatternU(const F, S: UnicodeString; var Len: Integer; const StartIndex: Integer; const G: TMatchPatternGreed): Integer;
 var P : PWideChar;
     M : PWideChar;
@@ -911,7 +876,6 @@ begin
   Len := 0;
   Result := 0;
 end;
-{$ENDIF}
 
 
 
@@ -1303,21 +1267,12 @@ begin
   Assert(StrPosPatternA('a*b', 'xa', I, 1, mpgGreedy) = 0);       Assert(I = 0);
   {$ENDIF}
 
-  Assert(StrPosPatternW('', '', I, 1, mpgGreedy) = 0);            Assert(I = 0);
-  Assert(StrPosPatternW('', 'a', I, 1, mpgGreedy) = 1);           Assert(I = 0);
-  Assert(StrPosPatternW('a', '', I, 1, mpgGreedy) = 0);           Assert(I = 0);
-  Assert(StrPosPatternW('a*b', 'xacb', I, 1, mpgGreedy) = 2);     Assert(I = 3);
-  Assert(StrPosPatternW('a*b', 'xaccbd', I, 1, mpgGreedy) = 2);   Assert(I = 4);
-  Assert(StrPosPatternW('a*b', 'xa', I, 1, mpgGreedy) = 0);       Assert(I = 0);
-
-  {$IFDEF SupportUnicodeString}
   Assert(StrPosPatternU('', '', I, 1, mpgGreedy) = 0);            Assert(I = 0);
   Assert(StrPosPatternU('', 'a', I, 1, mpgGreedy) = 1);           Assert(I = 0);
   Assert(StrPosPatternU('a', '', I, 1, mpgGreedy) = 0);           Assert(I = 0);
   Assert(StrPosPatternU('a*b', 'xacb', I, 1, mpgGreedy) = 2);     Assert(I = 3);
   Assert(StrPosPatternU('a*b', 'xaccbd', I, 1, mpgGreedy) = 2);   Assert(I = 4);
   Assert(StrPosPatternU('a*b', 'xa', I, 1, mpgGreedy) = 0);       Assert(I = 0);
-  {$ENDIF}
 end;
 
 procedure Test_MatchQuantSeq;

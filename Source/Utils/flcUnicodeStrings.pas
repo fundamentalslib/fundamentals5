@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeStrings.pas                                    }
-{   File version:     5.01                                                     }
+{   File version:     5.02                                                     }
 {   Description:      Unicode string utility functions                         }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
@@ -35,6 +35,7 @@
 { Revision history:                                                            }
 {                                                                              }
 {   2018/08/11  5.01  Split from flcString unit.                               }
+{   2018/08/12  5.02  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -56,47 +57,16 @@ function  StrPCompareNoUnicodeCaseW(const A, B: PWideChar; const Len: Integer): 
 
 function  StrPMatchNoUnicodeCaseW(const A, B: PWideChar; const Len: Integer): Boolean;
 
-{$IFDEF SupportWideString}
-function  StrCompareNoUnicodeCaseW(const A, B: WideString): Integer;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  StrCompareNoUnicodeCaseU(const A, B: UnicodeString): Integer;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function  StrMatchNoUnicodeCaseW(const S, M: WideString; const Index: Integer = 1): Boolean;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer = 1): Boolean;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function StrZMatchStrNoUnicodeCaseW(const P: PWideChar; const M: WideString): Boolean;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
-function StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
-{$ENDIF}
+function  StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 
-{$IFDEF SupportWideString}
-function  StrEqualNoUnicodeCaseW(const A, B: WideString): Boolean;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function  UnicodeUpperCaseW(const S: WideString): WideString;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  UnicodeUpperCaseU(const S: UnicodeString): UnicodeString;
-{$ENDIF}
-
-{$IFDEF SupportWideString}
-function  UnicodeLowerCaseW(const S: WideString): WideString;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  UnicodeLowerCaseU(const S: UnicodeString): UnicodeString;
-{$ENDIF}
 
 
 
@@ -173,29 +143,6 @@ begin
   Result := True;
 end;
 
-{$IFDEF SupportWideString}
-function StrCompareNoUnicodeCaseW(const A, B: WideString): Integer;
-var L, M, I: Integer;
-begin
-  L := Length(A);
-  M := Length(B);
-  if L < M then
-    I := L
-  else
-    I := M;
-  Result := StrPCompareNoUnicodeCaseW(Pointer(A), Pointer(B), I);
-  if Result <> 0 then
-    exit;
-  if L = M then
-    Result := 0 else
-  if L < M then
-    Result := -1
-  else
-    Result := 1;
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function StrCompareNoUnicodeCaseU(const A, B: UnicodeString): Integer;
 var L, M, I: Integer;
 begin
@@ -215,27 +162,7 @@ begin
   else
     Result := 1;
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function StrMatchNoUnicodeCaseW(const S, M: WideString; const Index: Integer): Boolean;
-var N, T : Integer;
-    Q    : PWideChar;
-begin
-  N := Length(M);
-  T := Length(S);
-  if (N = 0) or (T = 0) or (Index < 1) or (Index + N - 1 > T) then
-    begin
-      Result := False;
-      exit;
-    end;
-  Q := Pointer(S);
-  Inc(Q, Index - 1);
-  Result := StrPMatchNoUnicodeCaseW(Pointer(M), Q, N);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer): Boolean;
 var N, T : Integer;
     Q    : PWideChar;
@@ -251,44 +178,7 @@ begin
   Inc(Q, Index - 1);
   Result := StrPMatchNoUnicodeCaseW(Pointer(M), Q, N);
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function StrZMatchStrNoUnicodeCaseW(const P: PWideChar; const M: WideString): Boolean;
-var T, Q : PWideChar;
-    I, L : Integer;
-    C, D : WideChar;
-begin
-  L := Length(M);
-  if L = 0 then
-    begin
-      Result := False;
-      exit;
-    end;
-  T := P;
-  Q := Pointer(M);
-  for I := 1 to L do
-    begin
-      C := T^;
-      if C = #0 then
-        begin
-          Result := False;
-          exit;
-        end;
-      D := Q^;
-      if not UnicodeCharIsEqualNoCase(C, D) then
-        begin
-          Result := False;
-          exit;
-        end;
-      Inc(T);
-      Inc(Q);
-    end;
-  Result := True;
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 var T, Q : PWideChar;
     I, L : Integer;
@@ -321,22 +211,7 @@ begin
     end;
   Result := True;
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function StrEqualNoUnicodeCaseW(const A, B: WideString): Boolean;
-var L, M : Integer;
-begin
-  L := Length(A);
-  M := Length(B);
-  Result := L = M;
-  if not Result or (L = 0) then
-    exit;
-  Result := StrPMatchNoUnicodeCaseW(Pointer(A), Pointer(B), L);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
 var L, M : Integer;
 begin
@@ -347,20 +222,7 @@ begin
     exit;
   Result := StrPMatchNoUnicodeCaseW(Pointer(A), Pointer(B), L);
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function UnicodeUpperCaseW(const S: WideString): WideString;
-var L, I : Integer;
-begin
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := UnicodeUpCase(S[I]);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeUpperCaseU(const S: UnicodeString): UnicodeString;
 var L, I : Integer;
 begin
@@ -369,20 +231,7 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeUpCase(S[I]);
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function UnicodeLowerCaseW(const S: WideString): WideString;
-var L, I : Integer;
-begin
-  L := Length(S);
-  SetLength(Result, L);
-  for I := 1 to L do
-    Result[I] := UnicodeLowCase(S[I]);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeLowerCaseU(const S: UnicodeString): UnicodeString;
 var L, I : Integer;
 begin
@@ -391,8 +240,8 @@ begin
   for I := 1 to L do
     Result[I] := UnicodeLowCase(S[I]);
 end;
-{$ENDIF}
 
 
 
 end.
+

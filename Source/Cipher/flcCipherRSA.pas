@@ -114,11 +114,9 @@ procedure RSAPublicKeyAssignBufStr(var Key: TRSAPublicKey;
 procedure RSAPrivateKeyInit(var Key: TRSAPrivateKey);
 procedure RSAPrivateKeyFinalise(var Key: TRSAPrivateKey);
 procedure RSAPrivateKeyAssign(var KeyD: TRSAPrivateKey; const KeyS: TRSAPrivateKey);
-{$IFDEF SupportRawByteString}
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const HexMod, HexExp: RawByteString);
-{$ENDIF}
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const ModBuf; const ModBufSize: Integer;
@@ -352,7 +350,6 @@ begin
   HugeWordAssign(KeyD.Coefficient, KeyS.Coefficient);
 end;
 
-{$IFDEF SupportRawByteString}
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const HexMod, HexExp: RawByteString);
@@ -367,7 +364,6 @@ begin
      (HugeWordGetBitCount(Key.Exponent) > KeySize) then
     raise ERSA.Create(SRSAInvalidKeySize);
 end;
-{$ENDIF}
 
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
           const KeySize: Integer;
@@ -1540,13 +1536,13 @@ begin
   T := GetTickCount - T;
   Writeln('GenerateKeys: ', T / 1000.0:0:2, 's');
   Writeln('Pri.Mod:');
-  Writeln(HugeWordToHexA(Pri.Modulus));
+  Writeln(HugeWordToHexB(Pri.Modulus));
   Writeln('Pri.Exp:');
-  Writeln(HugeWordToHexA(Pri.Exponent));
+  Writeln(HugeWordToHexB(Pri.Exponent));
   Writeln('Pub.Mod:');
-  Writeln(HugeWordToHexA(Pub.Modulus));
+  Writeln(HugeWordToHexB(Pub.Modulus));
   Writeln('Pub.Exp:');
-  Writeln(HugeWordToHexA(Pub.Exponent));
+  Writeln(HugeWordToHexB(Pub.Exponent));
 
   T := GetTickCount;
   Pln := '123456';

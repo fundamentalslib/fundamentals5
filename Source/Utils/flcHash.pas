@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.21                                                     }
+{   File version:     5.22                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
@@ -57,6 +57,7 @@
 {   2016/01/09  5.19  Revised for Fundamentals 5.                              }
 {   2016/01/29  5.20  Fix in SecureClear for constant string references.       }
 {   2018/07/11  5.21  Word32 type changes.                                     }
+{   2018/08/12  5.22  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -206,21 +207,17 @@ const
 {$IFDEF SupportAnsiString}
 procedure DigestToHexBufA(const Digest; const Size: Integer; const Buf);
 {$ENDIF}
-procedure DigestToHexBufW(const Digest; const Size: Integer; const Buf);
+procedure DigestToHexBufU(const Digest; const Size: Integer; const Buf);
 
 {$IFDEF SupportAnsiString}
 function  DigestToHexA(const Digest; const Size: Integer): RawByteString;
 {$ENDIF}
-{$IFDEF SupportWideString}
-function  DigestToHexW(const Digest; const Size: Integer): WideString;
-{$ENDIF}
+function  DigestToHexU(const Digest; const Size: Integer): UnicodeString;
 {$IFDEF StringIsUnicode}
 function  DigestToHex(const Digest; const Size: Integer): String;
 {$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  DigestToBufB(const Digest; const Size: Integer): RawByteString;
-{$ENDIF}
 
 function  Digest128Equal(const Digest1, Digest2: T128BitDigest): Boolean;
 function  Digest160Equal(const Digest1, Digest2: T160BitDigest): Boolean;
@@ -277,15 +274,8 @@ procedure SecureClear512(var Buf: T512BitBuf);
 procedure SecureClear1024(var Buf: T1024BitBuf);
 procedure SecureClearStr(var S: String);
 procedure SecureClearBytes(var B: TBytes);
-{$IFDEF SupportRawByteString}
 procedure SecureClearStrB(var S: RawByteString);
-{$ENDIF}
-{$IFDEF SupportWideString}
-procedure SecureClearStrW(var S: WideString);
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 procedure SecureClearStrU(var S: UnicodeString);
-{$ENDIF}
 
 
 
@@ -293,9 +283,7 @@ procedure SecureClearStrU(var S: UnicodeString);
 { Checksum hashing                                                             }
 {                                                                              }
 function  CalcChecksum32(const Buf; const BufSize: Integer): Word32; overload;
-{$IFDEF SupportRawByteString}
 function  CalcChecksum32B(const Buf: RawByteString): Word32;
-{$ENDIF}
 function  CalcChecksum32(const Buf: TBytes): Word32; overload;
 
 
@@ -304,19 +292,13 @@ function  CalcChecksum32(const Buf: TBytes): Word32; overload;
 { XOR hashing                                                                  }
 {                                                                              }
 function  CalcXOR8(const Buf; const BufSize: Integer): Byte; overload;
-{$IFDEF SupportRawByteString}
 function  CalcXOR8(const Buf: RawByteString): Byte; overload;
-{$ENDIF}
 
 function  CalcXOR16(const Buf; const BufSize: Integer): Word; overload;
-{$IFDEF SupportRawByteString}
 function  CalcXOR16(const Buf: RawByteString): Word; overload;
-{$ENDIF}
 
 function  CalcXOR32(const Buf; const BufSize: Integer): Word32; overload;
-{$IFDEF SupportRawByteString}
 function  CalcXOR32(const Buf: RawByteString): Word32; overload;
-{$ENDIF}
 
 
 
@@ -359,9 +341,7 @@ function  CRC16Byte(const CRC16: Word; const Octet: Byte): Word;
 function  CRC16Buf(const CRC16: Word; const Buf; const BufSize: Integer): Word;
 
 function  CalcCRC16(const Buf; const BufSize: Integer): Word; overload;
-{$IFDEF SupportRawByteString}
 function  CalcCRC16(const Buf: RawByteString): Word; overload;
-{$ENDIF}
 
 
 
@@ -376,9 +356,7 @@ function  CRC32Buf(const CRC32: Word32; const Buf; const BufSize: Integer): Word
 function  CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
 
 function  CalcCRC32(const Buf; const BufSize: Integer): Word32; overload;
-{$IFDEF SupportRawByteString}
 function  CalcCRC32(const Buf: RawByteString): Word32; overload;
-{$ENDIF}
 
 
 
@@ -390,9 +368,7 @@ function  Adler32Byte(const Adler32: Word32; const Octet: Byte): Word32;
 function  Adler32Buf(const Adler32: Word32; const Buf; const BufSize: Integer): Word32;
 
 function  CalcAdler32(const Buf; const BufSize: Integer): Word32; overload;
-{$IFDEF SupportRawByteString}
 function  CalcAdler32(const Buf: RawByteString): Word32; overload;
-{$ENDIF}
 
 
 
@@ -403,9 +379,7 @@ procedure ELFInit(var Digest: Word32);
 function  ELFBuf(const Digest: Word32; const Buf; const BufSize: Integer): Word32;
 
 function  CalcELF(const Buf; const BufSize: Integer): Word32; overload;
-{$IFDEF SupportRawByteString}
 function  CalcELF(const Buf: RawByteString): Word32; overload;
-{$ENDIF}
 
 
 
@@ -432,9 +406,7 @@ function  IsValidLUHN(const S: RawByteString): Boolean;
 { 'The Art of Computer Programming Vol 3'.                                     }
 {                                                                              }
 function  KnuthHashA(const S: RawByteString): Word32;
-{$IFDEF SupportWideString}
-function  KnuthHashW(const S: WideString): Word32;
-{$ENDIF}
+function  KnuthHashU(const S: UnicodeString): Word32;
 
 
 
@@ -455,17 +427,11 @@ procedure MD5FinalBuf(var Digest: T128BitDigest; const Buf; const BufSize: Integ
           const TotalSize: Int64);
 
 function  CalcMD5(const Buf; const BufSize: Integer): T128BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcMD5(const Buf: RawByteString): T128BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  MD5DigestToStrA(const Digest: T128BitDigest): RawByteString;
 function  MD5DigestToHexA(const Digest: T128BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  MD5DigestToHexW(const Digest: T128BitDigest): WideString;
-{$ENDIF}
+function  MD5DigestToHexU(const Digest: T128BitDigest): UnicodeString;
 
 
 
@@ -490,17 +456,11 @@ procedure SHA1FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Inte
           const TotalSize: Int64);
 
 function  CalcSHA1(const Buf; const BufSize: Integer): T160BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcSHA1(const Buf: RawByteString): T160BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  SHA1DigestToStrA(const Digest: T160BitDigest): RawByteString;
 function  SHA1DigestToHexA(const Digest: T160BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  SHA1DigestToHexW(const Digest: T160BitDigest): WideString;
-{$ENDIF}
+function  SHA1DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 
 
 
@@ -517,17 +477,11 @@ procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: In
           var OutDigest: T224BitDigest);
 
 function  CalcSHA224(const Buf; const BufSize: Integer): T224BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcSHA224(const Buf: RawByteString): T224BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  SHA224DigestToStrA(const Digest: T224BitDigest): RawByteString;
 function  SHA224DigestToHexA(const Digest: T224BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  SHA224DigestToHexW(const Digest: T224BitDigest): WideString;
-{$ENDIF}
+function  SHA224DigestToHexU(const Digest: T224BitDigest): UnicodeString;
 
 
 
@@ -540,17 +494,11 @@ procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer
 procedure SHA256FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
 
 function  CalcSHA256(const Buf; const BufSize: Integer): T256BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcSHA256(const Buf: RawByteString): T256BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  SHA256DigestToStrA(const Digest: T256BitDigest): RawByteString;
 function  SHA256DigestToHexA(const Digest: T256BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  SHA256DigestToHexW(const Digest: T256BitDigest): WideString;
-{$ENDIF}
+function  SHA256DigestToHexU(const Digest: T256BitDigest): UnicodeString;
 
 
 
@@ -564,17 +512,11 @@ procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer
 procedure SHA384FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64; var OutDigest: T384BitDigest);
 
 function  CalcSHA384(const Buf; const BufSize: Integer): T384BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcSHA384(const Buf: RawByteString): T384BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  SHA384DigestToStrA(const Digest: T384BitDigest): RawByteString;
 function  SHA384DigestToHexA(const Digest: T384BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  SHA384DigestToHexW(const Digest: T384BitDigest): WideString;
-{$ENDIF}
+function  SHA384DigestToHexU(const Digest: T384BitDigest): UnicodeString;
 
 
 
@@ -587,17 +529,11 @@ procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer
 procedure SHA512FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
 
 function  CalcSHA512(const Buf; const BufSize: Integer): T512BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcSHA512(const Buf: RawByteString): T512BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  SHA512DigestToStrA(const Digest: T512BitDigest): RawByteString;
 function  SHA512DigestToHexA(const Digest: T512BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  SHA512DigestToHexW(const Digest: T512BitDigest): WideString;
-{$ENDIF}
+function  SHA512DigestToHexU(const Digest: T512BitDigest): UnicodeString;
 
 
 
@@ -617,17 +553,11 @@ procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: Inte
 procedure RipeMD160FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
 
 function  CalcRipeMD160(const Buf; const BufSize: Integer): T160BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcRipeMD160(const Buf: RawByteString): T160BitDigest; overload;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function  RipeMD160DigestToStrA(const Digest: T160BitDigest): RawByteString;
 function  RipeMD160DigestToHexA(const Digest: T160BitDigest): RawByteString;
-{$ENDIF}
-{$IFDEF SupportWideString}
-function  RipeMD160DigestToHexW(const Digest: T160BitDigest): WideString;
-{$ENDIF}
+function  RipeMD160DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 
 
 
@@ -649,10 +579,8 @@ procedure HMAC_MD5FinalBuf(const K: T512BitBuf; var Digest: T128BitDigest;
 
 function  CalcHMAC_MD5(const Key: Pointer; const KeySize: Integer;
           const Buf; const BufSize: Integer): T128BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcHMAC_MD5(const Key: RawByteString; const Buf; const BufSize: Integer): T128BitDigest; overload;
 function  CalcHMAC_MD5(const Key, Buf: RawByteString): T128BitDigest; overload;
-{$ENDIF}
 
 
 
@@ -667,10 +595,8 @@ procedure HMAC_SHA1FinalBuf(const K: T512BitBuf; var Digest: T160BitDigest;
 
 function  CalcHMAC_SHA1(const Key: Pointer; const KeySize: Integer;
           const Buf; const BufSize: Integer): T160BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcHMAC_SHA1(const Key: RawByteString; const Buf; const BufSize: Integer): T160BitDigest; overload;
 function  CalcHMAC_SHA1(const Key, Buf: RawByteString): T160BitDigest; overload;
-{$ENDIF}
 
 
 
@@ -685,10 +611,8 @@ procedure HMAC_SHA256FinalBuf(const K: T512BitBuf; var Digest: T256BitDigest;
 
 function  CalcHMAC_SHA256(const Key: Pointer; const KeySize: Integer;
           const Buf; const BufSize: Integer): T256BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcHMAC_SHA256(const Key: RawByteString; const Buf; const BufSize: Integer): T256BitDigest; overload;
 function  CalcHMAC_SHA256(const Key, Buf: RawByteString): T256BitDigest; overload;
-{$ENDIF}
 
 
 
@@ -701,10 +625,8 @@ procedure HMAC_SHA512FinalBuf(const K: T1024BitBuf; var Digest: T512BitDigest; c
 
 function  CalcHMAC_SHA512(const Key: Pointer; const KeySize: Integer;
           const Buf; const BufSize: Integer): T512BitDigest; overload;
-{$IFDEF SupportRawByteString}
 function  CalcHMAC_SHA512(const Key: RawByteString; const Buf; const BufSize: Integer): T512BitDigest; overload;
 function  CalcHMAC_SHA512(const Key, Buf: RawByteString): T512BitDigest; overload;
-{$ENDIF}
 
 
 
@@ -996,10 +918,8 @@ procedure CalculateHash(const HashType: THashType;
 {                                                                              }
 function  HashStringP(const StrBuf: Pointer; const StrLength: Integer;
           const Slots: Word32 = 0; const CaseSensitive: Boolean = True): Word32;
-{$IFDEF SupportRawByteString}
 function  HashStringB(const S: RawByteString; const Slots: Word32 = 0;
           const CaseSensitive: Boolean = True): Word32; overload;
-{$ENDIF}
 
 
 
@@ -1157,7 +1077,6 @@ begin
   SetLength(B, 0);
 end;
 
-{$IFDEF SupportRawByteString}
 procedure SecureClearStrB(var S: RawByteString);
 var L : Integer;
 begin
@@ -1168,21 +1087,7 @@ begin
     SecureClear(PByteChar(S)^, L);
   SetLength(S, 0);
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-procedure SecureClearStrW(var S: WideString);
-var L : Integer;
-begin
-  L := Length(S);
-  if L = 0 then
-    exit;
-  SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
-  SetLength(S, 0);
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 procedure SecureClearStrU(var S: UnicodeString);
 var L : Integer;
 begin
@@ -1193,7 +1098,6 @@ begin
     SecureClear(PWideChar(S)^, L * SizeOf(WideChar));
   S := '';
 end;
-{$ENDIF}
 
 
 
@@ -1239,12 +1143,10 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function CalcChecksum32B(const Buf: RawByteString): Word32;
 begin
   Result := CalcChecksum32(Pointer(Buf)^, Length(Buf));
 end;
-{$ENDIF}
 
 function CalcChecksum32(const Buf: TBytes): Word32; overload;
 begin
@@ -1724,8 +1626,7 @@ begin
   Result := H;
 end;
 
-{$IFDEF SupportWideString}
-function KnuthHashW(const S: WideString): Word32;
+function KnuthHashU(const S: UnicodeString): Word32;
 var
   I, L : Integer;
   H : Word32;
@@ -1736,7 +1637,6 @@ begin
     H := ((H shr 5) xor (H shl 27)) xor Ord(S[I]);
   Result := H;
 end;
-{$ENDIF}
 
 
 
@@ -1744,12 +1644,9 @@ end;
 { Digests                                                                      }
 {                                                                              }
 const
-  {$IFDEF SupportRawByteString}
-  s_HexDigitsLowerA : RawByteString = '0123456789abcdef';
-  {$ENDIF}
+  s_HexDigitsLowerB : RawByteString = '0123456789abcdef';
   s_HexDigitsLower : String = '0123456789abcdef';
 
-{$IFDEF SupportRawByteString}
 procedure DigestToHexBufA(const Digest; const Size: Integer; const Buf);
 var I : Integer;
     P : PByteChar;
@@ -1761,16 +1658,15 @@ begin
   Assert(Assigned(Q));
   for I := 0 to Size - 1 do
     begin
-      P^ := s_HexDigitsLowerA[Q^ shr 4 + 1];
+      P^ := s_HexDigitsLowerB[Q^ shr 4 + 1];
       Inc(P);
-      P^ := s_HexDigitsLowerA[Q^ and 15 + 1];
+      P^ := s_HexDigitsLowerB[Q^ and 15 + 1];
       Inc(P);
       Inc(Q);
     end;
 end;
-{$ENDIF}
 
-procedure DigestToHexBufW(const Digest; const Size: Integer; const Buf);
+procedure DigestToHexBufU(const Digest; const Size: Integer; const Buf);
 var I : Integer;
     P : PWideChar;
     Q : PByte;
@@ -1789,31 +1685,26 @@ begin
     end;
 end;
 
-{$IFDEF SupportRawByteString}
 function DigestToHexA(const Digest; const Size: Integer): RawByteString;
 begin
   SetLength(Result, Size * 2);
   DigestToHexBufA(Digest, Size, Pointer(Result)^);
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function DigestToHexW(const Digest; const Size: Integer): WideString;
+function DigestToHexU(const Digest; const Size: Integer): UnicodeString;
 begin
   SetLength(Result, Size * 2);
-  DigestToHexBufW(Digest, Size, Pointer(Result)^);
+  DigestToHexBufU(Digest, Size, Pointer(Result)^);
 end;
-{$ENDIF}
 
 {$IFDEF StringIsUnicode}
 function DigestToHex(const Digest; const Size: Integer): String;
 begin
   SetLength(Result, Size * 2);
-  DigestToHexBufW(Digest, Size, Pointer(Result)^);
+  DigestToHexBufU(Digest, Size, Pointer(Result)^);
 end;
 {$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function DigestToBufB(const Digest; const Size: Integer): RawByteString;
 var S : RawByteString;
 begin
@@ -1822,7 +1713,6 @@ begin
     Move(Digest, S[1], Size);
   Result := S;
 end;
-{$ENDIF}
 
 function Digest128Equal(const Digest1, Digest2: T128BitDigest): Boolean;
 var I : Integer;
@@ -2394,19 +2284,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function MD5DigestToHexA(const Digest: T128BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function MD5DigestToHexW(const Digest: T128BitDigest): WideString;
+function MD5DigestToHexU(const Digest: T128BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -2567,19 +2453,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function SHA1DigestToHexA(const Digest: T160BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function SHA1DigestToHexW(const Digest: T160BitDigest): WideString;
+function SHA1DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -2646,19 +2528,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function SHA224DigestToHexA(const Digest: T224BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function  SHA224DigestToHexW(const Digest: T224BitDigest): WideString;
+function  SHA224DigestToHexU(const Digest: T224BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -2815,19 +2693,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function SHA256DigestToHexA(const Digest: T256BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function SHA256DigestToHexW(const Digest: T256BitDigest): WideString;
+function SHA256DigestToHexU(const Digest: T256BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -2896,19 +2770,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function SHA384DigestToHexA(const Digest: T384BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function SHA384DigestToHexW(const Digest: T384BitDigest): WideString;
+function SHA384DigestToHexU(const Digest: T384BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -3171,19 +3041,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function SHA512DigestToHexA(const Digest: T512BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function SHA512DigestToHexW(const Digest: T512BitDigest): WideString;
+function SHA512DigestToHexU(const Digest: T512BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -3498,19 +3364,15 @@ begin
   Move(Digest, Pointer(Result)^, Sizeof(Digest));
 end;
 
-{$IFDEF SupportRawByteString}
 function RipeMD160DigestToHexA(const Digest: T160BitDigest): RawByteString;
 begin
   Result := DigestToHexA(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
-{$IFDEF SupportWideString}
-function RipeMD160DigestToHexW(const Digest: T160BitDigest): WideString;
+function RipeMD160DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 begin
-  Result := DigestToHexW(Digest, Sizeof(Digest));
+  Result := DigestToHexU(Digest, Sizeof(Digest));
 end;
-{$ENDIF}
 
 
 
@@ -4777,23 +4639,19 @@ var
   S, T : RawByteString;
   U : UnicodeString;
 begin
-  {$IFDEF SupportRawByteString}
   // SecureClear allocated string reference
   SetLength(S, 5);
   FillChar(S[1], 5, #1);
   SecureClearStrB(S);
   Assert(Length(S) = 0);
-  {$ENDIF}
   //
   SetLength(U, 5);
   FillChar(U[1], 10, #1);
   SecureClearStrU(U);
   Assert(U = '');
   // SecureClear constant string reference
-  {$IFDEF SupportRawByteString}
   S := 'ABC';
   SecureClearStrB(S);
-  {$ENDIF}
   //
   U := 'ABC';
   SecureClearStrU(U);
@@ -4803,7 +4661,6 @@ begin
   SetLength(TenThousandA, 10000);
   FillChar(TenThousandA[1], 10000, Ord('a'));
 
-  {$IFDEF SupportRawByteString}
   Assert(CalcChecksum32B('') = 0);
   Assert(CalcChecksum32B('A') = 65);
   Assert(CalcChecksum32B('Fundamentals') = 1250);
@@ -4840,48 +4697,36 @@ begin
 
   Assert(HashStringB('Fundamentals', 0, False) = HashStringB('fundamentalS', 0, False));
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(MD5DigestToHexA(CalcMD5(''))) = MD5DigestToHexW(CalcMD5('')));
-  {$ENDIF}
+  Assert(UnicodeString(MD5DigestToHexA(CalcMD5(''))) = MD5DigestToHexU(CalcMD5('')));
   Assert(MD5DigestToHexA(CalcMD5(''))                    = 'd41d8cd98f00b204e9800998ecf8427e');
   Assert(MD5DigestToHexA(CalcMD5('Delphi Fundamentals')) = 'ea98b65da23d19756d46a36faa481dd8');
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(SHA1DigestToHexA(CalcSHA1(''))) = SHA1DigestToHexW(CalcSHA1('')));
-  {$ENDIF}
+  Assert(UnicodeString(SHA1DigestToHexA(CalcSHA1(''))) = SHA1DigestToHexU(CalcSHA1('')));
   Assert(SHA1DigestToHexA(CalcSHA1(''))               = 'da39a3ee5e6b4b0d3255bfef95601890afd80709');
   Assert(SHA1DigestToHexA(CalcSHA1('Fundamentals'))   = '052d8ad81d99f33b2eb06e6d194282b8675fb201');
   Assert(SHA1DigestToHexA(CalcSHA1(QuickBrownFoxStr)) = '2fd4e1c67a2d28fced849ee1bb76e7391b93eb12');
   Assert(SHA1DigestToHexA(CalcSHA1(TenThousandA))     = 'a080cbda64850abb7b7f67ee875ba068074ff6fe');
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(SHA224DigestToHexA(CalcSHA224(''))) = SHA224DigestToHexW(CalcSHA224('')));
-  {$ENDIF}
+  Assert(UnicodeString(SHA224DigestToHexA(CalcSHA224(''))) = SHA224DigestToHexU(CalcSHA224('')));
   Assert(SHA224DigestToHexA(CalcSHA224(''))               = 'd14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f');
   Assert(SHA224DigestToHexA(CalcSHA224('Fundamentals'))   = '1cccba6b3c6b08494733efb3a77fe8baef5bf6eeae89ec303ef4660e');
   Assert(SHA224DigestToHexA(CalcSHA224(QuickBrownFoxStr)) = '730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525');
   Assert(SHA224DigestToHexA(CalcSHA224(TenThousandA))     = '00568fba93e8718c2f7dcd82fa94501d59bb1bbcba2c7dc2ba5882db');
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(SHA256DigestToHexA(CalcSHA256(''))) = SHA256DigestToHexW(CalcSHA256('')));
-  {$ENDIF}
+  Assert(UnicodeString(SHA256DigestToHexA(CalcSHA256(''))) = SHA256DigestToHexU(CalcSHA256('')));
   Assert(SHA256DigestToHexA(CalcSHA256(''))               = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855');
   Assert(SHA256DigestToHexA(CalcSHA256('Fundamentals'))   = '915ff7435daeac2f66aa866e59bf293f101b79403dbdde2b631fd37fa524f26b');
   Assert(SHA256DigestToHexA(CalcSHA256(QuickBrownFoxStr)) = 'd7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592');
   Assert(SHA256DigestToHexA(CalcSHA256(TenThousandA))     = '27dd1f61b867b6a0f6e9d8a41c43231de52107e53ae424de8f847b821db4b711');
   Assert(SHA256DigestToHexA(CalcSHA256(MillionA))         = 'cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0');
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(SHA384DigestToHexA(CalcSHA384(''))) = SHA384DigestToHexW(CalcSHA384('')));
-  {$ENDIF}
+  Assert(UnicodeString(SHA384DigestToHexA(CalcSHA384(''))) = SHA384DigestToHexU(CalcSHA384('')));
   Assert(SHA384DigestToHexA(CalcSHA384(''))               = '38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b');
   Assert(SHA384DigestToHexA(CalcSHA384('Fundamentals'))   = 'cf9380b7d2e0237296093a0f5f09066f0cea0742ba752a1e6c60aed92998eda2c86c1549879007a94e9d75a4a7bdb6e8');
   Assert(SHA384DigestToHexA(CalcSHA384(QuickBrownFoxStr)) = 'ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1');
   Assert(SHA384DigestToHexA(CalcSHA384(TenThousandA))     = '2bca3b131bb7e922bcd1de98c44786d32e6b6b2993e69c4987edf9dd49711eb501f0e98ad248d839f6bf9e116e25a97c');
 
-  {$IFDEF SupportWideString}
-  Assert(WideString(SHA512DigestToHexA(CalcSHA512(''))) = SHA512DigestToHexW(CalcSHA512('')));
-  {$ENDIF}
+  Assert(UnicodeString(SHA512DigestToHexA(CalcSHA512(''))) = SHA512DigestToHexU(CalcSHA512('')));
   Assert(SHA512DigestToHexA(CalcSHA512(''))               = 'cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e');
   Assert(SHA512DigestToHexA(CalcSHA512('Fundamentals'))   = 'f430fed95ff285843bc68a5e2a1ad8275d7c242a504a5d0b23deb7f8252774a132c3672aeeffa9bf5c25449e8905cdb6f89097a3c88f20a6e0d8945bf4310dd6');
   Assert(SHA512DigestToHexA(CalcSHA512(QuickBrownFoxStr)) = '07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6');
@@ -4956,7 +4801,6 @@ begin
   Assert(RipeMD160DigestToHexA(CalcRipeMD160('123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890')) = '65aaa2d6fb77e63b02a56ed9eced04fe47da43c1');         // 120 bytes
   Assert(RipeMD160DigestToHexA(CalcRipeMD160('1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567')) = '5ef3b16743e09d8ac8410d03e72bb2fabb507749');  // 127 bytes
   Assert(RipeMD160DigestToHexA(CalcRipeMD160('12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678')) = 'e6841f68c8fe1a94cbb8b53d79056d139434b49a'); // 128 bytes
-  {$ENDIF}
 end;
 {$ENDIF}
 

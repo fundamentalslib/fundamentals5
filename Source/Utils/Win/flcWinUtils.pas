@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcWinUtils.pas                                          }
-{   File version:     5.12                                                     }
+{   File version:     5.13                                                     }
 {   Description:      MS Windows utility functions                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -46,6 +46,7 @@
 {   2009/03/27  4.10  Updates for Delphi 2009.                                 }
 {   2016/01/21  4.11  String changes.                                          }
 {   2016/01/22  5.12  Revised for Fundamentals 5.                              }
+{   2018/08/12  5.13  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -71,6 +72,7 @@ uses
   SysUtils,
 
   { Fundamentals }
+  flcStdTypes,
   flcUtils;
 
 
@@ -86,12 +88,10 @@ type
 function  GetLastWinError: LongWord;
 
 function  WinErrorMessageA(const ErrorCode: LongWord): AnsiString;
-function  WinErrorMessageW(const ErrorCode: LongWord): WideString;
 function  WinErrorMessageU(const ErrorCode: LongWord): UnicodeString;
 function  WinErrorMessage(const ErrorCode: LongWord): String;
 
 function  GetLastWinErrorMessageA: AnsiString;
-function  GetLastWinErrorMessageW: WideString;
 function  GetLastWinErrorMessageU: UnicodeString;
 function  GetLastWinErrorMessage: String;
 
@@ -104,12 +104,10 @@ procedure RaiseLastWinError; {$IFDEF UseInline}inline;{$ENDIF}
 { Environment variables                                                        }
 {                                                                              }
 function  GetEnvironmentVariableA(const Name: AnsiString): AnsiString;
-function  GetEnvironmentVariableW(const Name: WideString): WideString;
 function  GetEnvironmentVariableU(const Name: UnicodeString): UnicodeString;
 function  GetEnvironmentVariable(const Name: String): String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetEnvironmentStringsA: AnsiStringArray;
-function  GetEnvironmentStringsW: WideStringArray;
 function  GetEnvironmentStringsU: UnicodeStringArray;
 function  GetEnvironmentStrings: StringArray; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -121,26 +119,20 @@ function  GetEnvironmentStrings: StringArray; {$IFDEF UseInline}inline;{$ENDIF}
 
 { SplitRegName                                                                 }
 procedure SplitRegNameA(const Name: AnsiString; var Key, ValueName: AnsiString);
-procedure SplitRegNameW(const Name: WideString; var Key, ValueName: WideString);
 procedure SplitRegNameU(const Name: UnicodeString; var Key, ValueName: UnicodeString);
 procedure SplitRegName(const Name: String; var Key, ValueName: String); {$IFDEF UseInline}inline;{$ENDIF}
 
 { Exists                                                                       }
 function  RegKeyExistsA(const RootKey: HKEY; const Key: AnsiString): Boolean;
-function  RegKeyExistsW(const RootKey: HKEY; const Key: WideString): Boolean;
 function  RegKeyExistsU(const RootKey: HKEY; const Key: UnicodeString): Boolean;
 function  RegKeyExists(const RootKey: HKEY; const Key: String): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  RegValueExistsA(const RootKey: HKEY; const Key, Name: AnsiString): Boolean;
-function  RegValueExistsW(const RootKey: HKEY; const Key, Name: WideString): Boolean;
 function  RegValueExistsU(const RootKey: HKEY; const Key, Name: UnicodeString): Boolean;
 function  RegValueExists(const RootKey: HKEY; const Key, Name: String): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
 { Set                                                                          }
 function  RegSetValueA(const RootKey: HKEY; const Key, Name: AnsiString;
-          const ValueType: Cardinal; const Value: Pointer;
-          const ValueSize: Integer): Boolean; overload;
-function  RegSetValueW(const RootKey: HKEY; const Key, Name: WideString;
           const ValueType: Cardinal; const Value: Pointer;
           const ValueSize: Integer): Boolean; overload;
 function  RegSetValueU(const RootKey: HKEY; const Key, Name: UnicodeString;
@@ -153,9 +145,6 @@ function  RegSetValue(const RootKey: HKEY; const Key, Name: String;
 function  RegSetValueA(const RootKey: HKEY; const Name: AnsiString;
           const ValueType: Cardinal; const Value: Pointer;
           const ValueSize: Integer): Boolean; overload;
-function  RegSetValueW(const RootKey: HKEY; const Name: WideString;
-          const ValueType: Cardinal; const Value: Pointer;
-          const ValueSize: Integer): Boolean; overload;
 function  RegSetValueU(const RootKey: HKEY; const Name: UnicodeString;
           const ValueType: Cardinal; const Value: Pointer;
           const ValueSize: Integer): Boolean; overload;
@@ -165,8 +154,6 @@ function  RegSetValue(const RootKey: HKEY; const Name: String;
 
 function  SetRegistryStringA(const RootKey: HKEY; const Key: AnsiString;
           const Name: AnsiString; const Value: AnsiString): Boolean; overload;
-function  SetRegistryStringW(const RootKey: HKEY; const Key: WideString;
-          const Name: WideString; const Value: WideString): Boolean; overload;
 function  SetRegistryStringU(const RootKey: HKEY; const Key: UnicodeString;
           const Name: UnicodeString; const Value: UnicodeString): Boolean; overload;
 function  SetRegistryString(const RootKey: HKEY; const Key: String;
@@ -174,16 +161,12 @@ function  SetRegistryString(const RootKey: HKEY; const Key: String;
 
 function  SetRegistryStringA(const RootKey: HKEY; const Name: AnsiString;
           const Value: AnsiString): Boolean; overload;
-function  SetRegistryStringW(const RootKey: HKEY; const Name: WideString;
-          const Value: WideString): Boolean; overload;
 function  SetRegistryStringU(const RootKey: HKEY; const Name: UnicodeString;
           const Value: UnicodeString): Boolean; overload;
 function  SetRegistryString(const RootKey: HKEY; const Name: String;
           const Value: String): Boolean; overload; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  SetRegistryDWordA(const RootKey: HKEY; const Name: AnsiString;
-          const Value: LongWord): Boolean;
-function  SetRegistryDWordW(const RootKey: HKEY; const Name: WideString;
           const Value: LongWord): Boolean;
 function  SetRegistryDWordU(const RootKey: HKEY; const Name: UnicodeString;
           const Value: LongWord): Boolean;
@@ -196,11 +179,6 @@ function  SetRegistryBinaryA(const RootKey: HKEY; const Name: AnsiString;
 { Get                                                                          }
 function  RegGetValueA(
           const RootKey: HKEY; const Key, Name: AnsiString;
-          const ValueType: Cardinal;
-          var RegValueType: Cardinal;
-          var ValueBuf: Pointer; var ValueSize: Integer): Boolean; overload;
-function  RegGetValueW(
-          const RootKey: HKEY; const Key, Name: WideString;
           const ValueType: Cardinal;
           var RegValueType: Cardinal;
           var ValueBuf: Pointer; var ValueSize: Integer): Boolean; overload;
@@ -221,35 +199,28 @@ function  RegGetValueA(
           var ValueBuf: Pointer; var ValueSize: Integer): Boolean; overload;
 
 function  GetRegistryStringA(const RootKey: HKEY; const Key, Name: AnsiString): AnsiString; overload;
-function  GetRegistryStringW(const RootKey: HKEY; const Key, Name: WideString): WideString; overload;
 function  GetRegistryStringU(const RootKey: HKEY; const Key, Name: UnicodeString): UnicodeString; overload;
 function  GetRegistryString(const RootKey: HKEY; const Key, Name: String): String; overload; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetRegistryStringA(const RootKey: HKEY; const Name: AnsiString): AnsiString; overload;
-function  GetRegistryStringW(const RootKey: HKEY; const Name: WideString): WideString; overload;
 function  GetRegistryStringU(const RootKey: HKEY; const Name: UnicodeString): UnicodeString; overload;
 function  GetRegistryString(const RootKey: HKEY; const Name: String): String; overload; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetRegistryDWordA(const RootKey: HKEY; const Key, Name: AnsiString): LongWord;
-function  GetRegistryDWordW(const RootKey: HKEY; const Key, Name: WideString): LongWord;
 function  GetRegistryDWordU(const RootKey: HKEY; const Key, Name: UnicodeString): LongWord;
 function  GetRegistryDWord(const RootKey: HKEY; const Key, Name: String): LongWord; {$IFDEF UseInline}inline;{$ENDIF}
 
 { Delete                                                                       }
 function  DeleteRegistryValueA(const RootKey: HKEY; const Key, Name: AnsiString): Boolean;
-function  DeleteRegistryValueW(const RootKey: HKEY; const Key, Name: WideString): Boolean;
 function  DeleteRegistryValueU(const RootKey: HKEY; const Key, Name: UnicodeString): Boolean;
 function  DeleteRegistryValue(const RootKey: HKEY; const Key, Name: String): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  DeleteRegistryKeyA(const RootKey: HKEY; const Key: AnsiString): Boolean;
-function  DeleteRegistryKeyW(const RootKey: HKEY; const Key: WideString): Boolean;
 function  DeleteRegistryKeyU(const RootKey: HKEY; const Key: UnicodeString): Boolean;
 function  DeleteRegistryKey(const RootKey: HKEY; const Key: String): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
 { Remote Registries                                                            }
 function  ConnectRegistryA(const MachineName: AnsiString; const RootKey: HKEY;
-          var RemoteKey: HKEY): Boolean;
-function  ConnectRegistryW(const MachineName: WideString; const RootKey: HKEY;
           var RemoteKey: HKEY): Boolean;
 function  ConnectRegistryU(const MachineName: UnicodeString; const RootKey: HKEY;
           var RemoteKey: HKEY): Boolean;
@@ -259,8 +230,6 @@ function  DisconnectRegistry(const RemoteKey: HKEY): Boolean;
 { Enumerate                                                                    }
 function  EnumRegistryValuesA(const RootKey: HKEY; const Name: AnsiString;
           var ValueList: AnsiStringArray): Boolean;
-function  EnumRegistryValuesW(const RootKey: HKEY; const Name: WideString;
-          var ValueList: WideStringArray): Boolean;
 function  EnumRegistryValuesU(const RootKey: HKEY; const Name: UnicodeString;
           var ValueList: UnicodeStringArray): Boolean;
 function  EnumRegistryValues(const RootKey: HKEY; const Name: String;
@@ -268,8 +237,6 @@ function  EnumRegistryValues(const RootKey: HKEY; const Name: String;
 
 function  EnumRegistryKeysA(const RootKey: HKEY; const Name: AnsiString;
           var KeyList: AnsiStringArray): Boolean;
-function  EnumRegistryKeysW(const RootKey: HKEY; const Name: WideString;
-          var KeyList: WideStringArray): Boolean;
 function  EnumRegistryKeysU(const RootKey: HKEY; const Name: UnicodeString;
           var KeyList: UnicodeStringArray): Boolean;
 function  EnumRegistryKeys(const RootKey: HKEY; const Name: String;
@@ -312,12 +279,10 @@ function  IsWinPlatform95: Boolean;
 function  IsWinPlatformNT: Boolean;
 
 function  GetWindowsProductIDA: AnsiString;
-function  GetWindowsProductIDW: WideString;
 function  GetWindowsProductIDU: UnicodeString;
 function  GetWindowsProductID: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetWindowsProductNameA: AnsiString;
-function  GetWindowsProductNameW: WideString;
 function  GetWindowsProductNameU: UnicodeString;
 function  GetWindowsProductName: String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -327,49 +292,40 @@ function  GetWindowsProductName: String; {$IFDEF UseInline}inline;{$ENDIF}
 { Windows Paths                                                                }
 {                                                                              }
 procedure EnsurePathSuffixA(var Path: AnsiString);
-procedure EnsurePathSuffixW(var Path: WideString);
 procedure EnsurePathSuffixU(var Path: UnicodeString);
 procedure EnsurePathSuffix(var Path: String);
 
 function  GetWindowsTemporaryPathA: AnsiString;
-function  GetWindowsTemporaryPathW: WideString;
 function  GetWindowsTemporaryPathU: UnicodeString;
 function  GetWindowsTemporaryPath: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetWindowsPathA: AnsiString;
-function  GetWindowsPathW: WideString;
 function  GetWindowsPathU: UnicodeString;
 function  GetWindowsPath: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetWindowsSystemPathA: AnsiString;
-function  GetWindowsSystemPathW: WideString;
 function  GetWindowsSystemPathU: UnicodeString;
 function  GetWindowsSystemPath: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetProgramFilesPathA: AnsiString;
-function  GetProgramFilesPathW: WideString;
 function  GetProgramFilesPathU: UnicodeString;
 function  GetProgramFilesPath: String;
 
 function  GetCommonFilesPathA: AnsiString;
-function  GetCommonFilesPathW: WideString;
 function  GetCommonFilesPathU: UnicodeString;
 function  GetCommonFilesPath: String;
 
 function  GetApplicationFileNameA: AnsiString;
-function  GetApplicationFileNameW: WideString;
 function  GetApplicationFileNameU: UnicodeString;
 function  GetApplicationFileName: String;
 
 function  GetApplicationPath: String;
 
 function  GetHomePathA: AnsiString;
-function  GetHomePathW: WideString;
 function  GetHomePathU: UnicodeString;
 function  GetHomePath: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetLocalAppDataPathA: AnsiString;
-function  GetLocalAppDataPathW: WideString;
 function  GetLocalAppDataPathU: UnicodeString;
 function  GetLocalAppDataPath: String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -379,12 +335,10 @@ function  GetLocalAppDataPath: String; {$IFDEF UseInline}inline;{$ENDIF}
 { Identification                                                               }
 {                                                                              }
 function  GetUserNameA: AnsiString;
-function  GetUserNameW: WideString;
 function  GetUserNameU: UnicodeString;
 function  GetUserName: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetLocalComputerNameA: AnsiString;
-function  GetLocalComputerNameW: WideString;
 function  GetLocalComputerNameU: UnicodeString;
 function  GetLocalComputerName: String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -400,7 +354,6 @@ type
                   viProductVersion);
 
 function  GetAppVersionInfoA(const VersionInfo: TVersionInfo): AnsiString;
-function  GetAppVersionInfoW(const VersionInfo: TVersionInfo): WideString;
 function  GetAppVersionInfoU(const VersionInfo: TVersionInfo): UnicodeString;
 function  GetAppVersionInfo(const VersionInfo: TVersionInfo): String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -413,10 +366,6 @@ function  WinExecuteA(const ExeName, Params: AnsiString;
           const ShowWin: Word = SW_SHOWNORMAL;
           const WaitTime: Integer = -1;
           const DefaultPath: AnsiString = ''): LongWord;
-function  WinExecuteW(const ExeName, Params: WideString;
-          const ShowWin: Word = SW_SHOWNORMAL;
-          const WaitTime: Integer = -1;
-          const DefaultPath: WideString = ''): LongWord;
 function  WinExecuteU(const ExeName, Params: UnicodeString;
           const ShowWin: Word = SW_SHOWNORMAL;
           const WaitTime: Integer = -1;
@@ -440,7 +389,6 @@ function  LoadLibraryU(const LibraryName: UnicodeString): TLibraryHandle;
 function  LoadLibrary(const LibraryName: String): TLibraryHandle; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetProcAddressA(const Handle: TLibraryHandle; const ProcName: AnsiString): Pointer;
-function  GetProcAddressW(const Handle: TLibraryHandle; const ProcName: WideString): Pointer;
 function  GetProcAddressU(const Handle: TLibraryHandle; const ProcName: UnicodeString): Pointer;
 function  GetProcAddress(const Handle: TLibraryHandle; const ProcName: String): Pointer; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -490,17 +438,14 @@ function  ShutDown(const Force: Boolean = False): Boolean;
 { Locale information                                                           }
 {                                                                              }
 function  GetCountryCode1A: AnsiString;
-function  GetCountryCode1W: WideString;
 function  GetCountryCode1U: UnicodeString;
 function  GetCountryCode1: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetCountryCode2A: AnsiString;
-function  GetCountryCode2W: WideString;
 function  GetCountryCode2U: UnicodeString;
 function  GetCountryCode2: String; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetCountryNameA: AnsiString;
-function  GetCountryNameW: WideString;
 function  GetCountryNameU: UnicodeString;
 function  GetCountryName: String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -510,7 +455,6 @@ function  GetCountryName: String; {$IFDEF UseInline}inline;{$ENDIF}
 { Miscelleaneous Windows API                                                   }
 {                                                                              }
 function  ContentTypeFromExtentionA(const Extention: AnsiString): AnsiString;
-function  ContentTypeFromExtentionW(const Extention: WideString): WideString;
 function  ContentTypeFromExtentionU(const Extention: UnicodeString): UnicodeString;
 function  ContentTypeFromExtention(const Extention: String): String; {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -527,7 +471,6 @@ procedure SetApplicationAutoRunA(const Name: AnsiString; const AutoRun: Boolean)
 function  GetKeyPressed(const VKeyCode: Integer): Boolean;
 
 function  GetHardDiskSerialNumberA(const DriveLetter: AnsiChar): AnsiString;
-function  GetHardDiskSerialNumberW(const DriveLetter: WideChar): WideString;
 function  GetHardDiskSerialNumberU(const DriveLetter: WideChar): UnicodeString;
 function  GetHardDiskSerialNumber(const DriveLetter: Char): String;
 
@@ -625,19 +568,6 @@ begin
     Result := StrZPasA(PAnsiChar(@Buf));
 end;
 
-function WinErrorMessageW(const ErrorCode: LongWord): WideString;
-var Buf: array[0..MAX_ERRORMESSAGE_LENGTH + 1] of WideChar;
-    Len: LongWord;
-begin
-  FillChar(Buf, Sizeof(Buf), 0);
-  Len := Windows.FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, nil, ErrorCode, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := 'WindowsError#' + IntToStringW(ErrorCode)
-  else
-    Result := StrZPasW(PWideChar(@Buf));
-end;
-
 function WinErrorMessageU(const ErrorCode: LongWord): UnicodeString;
 var Buf: array[0..MAX_ERRORMESSAGE_LENGTH + 1] of WideChar;
     Len: LongWord;
@@ -674,11 +604,6 @@ begin
   Result := WinErrorMessageA(GetLastWinError);
 end;
 
-function GetLastWinErrorMessageW: WideString;
-begin
-  Result := WinErrorMessageW(GetLastWinError);
-end;
-
 function GetLastWinErrorMessageU: UnicodeString;
 begin
   Result := WinErrorMessageU(GetLastWinError);
@@ -713,14 +638,6 @@ begin
   FillChar(Buf, Sizeof(Buf), 0);
   Windows.GetEnvironmentVariableA(PAnsiChar(Name), @Buf[0], MAX_ENVIRONMENTVARIABLE_LEN);
   Result := StrZPasA(@Buf[0]);
-end;
-
-function GetEnvironmentVariableW(const Name: WideString): WideString;
-var Buf: array[0..MAX_ENVIRONMENTVARIABLE_LEN] of WideChar;
-begin
-  FillChar(Buf, Sizeof(Buf), 0);
-  Windows.GetEnvironmentVariableW(PWideChar(Name), @Buf[0], MAX_ENVIRONMENTVARIABLE_LEN);
-  Result := StrZPasW(@Buf[0]);
 end;
 
 function GetEnvironmentVariableU(const Name: UnicodeString): UnicodeString;
@@ -766,35 +683,6 @@ begin
       until P^ = #0;
   finally
     FreeEnvironmentStringsA(H);
-  end;
-end;
-
-function GetEnvironmentStringsW: WideStringArray;
-var P, Q, H : PWideChar;
-    I : Integer;
-    S : WideString;
-begin
-  H := PWideChar(Windows.GetEnvironmentStringsW);
-  try
-    P := H;
-    if P^ <> #0 then
-      repeat
-        Q := P;
-        I := 0;
-        while Q^ <> #0 do
-          begin
-            Inc(Q);
-            Inc(I);
-          end;
-        SetLength(S, I);
-        if I > 0 then
-          MoveMem(P^, PWideChar(S)^, I * SizeOf(WideChar));
-        DynArrayAppendW(Result, S);
-        P := Q;
-        Inc(P);
-      until P^ = #0;
-  finally
-    FreeEnvironmentStringsW(H);
   end;
 end;
 
@@ -857,22 +745,6 @@ begin
   ValueName := CopyFromA(S, I + 1);
 end;
 
-procedure SplitRegNameW(const Name: WideString; var Key, ValueName: WideString);
-var S : WideString;
-    I : Integer;
-begin
-  S := StrExclSuffixW(StrExclPrefixW(Name, '\'), '\');
-  I := PosCharW('\', S);
-  if I <= 0 then
-    begin
-      Key := S;
-      ValueName := '';
-      exit;
-    end;
-  Key := CopyLeftW(S, I - 1);
-  ValueName := CopyFromW(S, I + 1);
-end;
-
 procedure SplitRegNameU(const Name: UnicodeString; var Key, ValueName: UnicodeString);
 var S : UnicodeString;
     I : Integer;
@@ -911,18 +783,6 @@ begin
     Result := False;
 end;
 
-function RegKeyExistsW(const RootKey: HKEY; const Key: WideString): Boolean;
-var Handle : HKEY;
-begin
-  if RegOpenKeyExW(RootKey, PWideChar(Key), 0, KEY_READ, Handle) = ERROR_SUCCESS then
-    begin
-      RegCloseKey(Handle);
-      Result := True;
-    end
-  else
-    Result := False;
-end;
-
 function RegKeyExistsU(const RootKey: HKEY; const Key: UnicodeString): Boolean;
 var Handle : HKEY;
 begin
@@ -950,18 +810,6 @@ begin
   if Windows.RegOpenKeyExA(RootKey, PAnsiChar(Key), 0, KEY_READ, Handle) = ERROR_SUCCESS then
     begin
       Result := Windows.RegQueryValueExA(Handle, PAnsiChar(Name), nil, nil, nil, nil) = ERROR_SUCCESS;
-      RegCloseKey(Handle);
-    end
-  else
-    Result := False;
-end;
-
-function RegValueExistsW(const RootKey: HKEY; const Key, Name: WideString): Boolean;
-var Handle : HKEY;
-begin
-  if Windows.RegOpenKeyExW(RootKey, PWideChar(Key), 0, KEY_READ, Handle) = ERROR_SUCCESS then
-    begin
-      Result := Windows.RegQueryValueExW(Handle, PWideChar(Name), nil, nil, nil, nil) = ERROR_SUCCESS;
       RegCloseKey(Handle);
     end
   else
@@ -1006,22 +854,6 @@ begin
   RegCloseKey(Handle);
 end;
 
-function RegSetValueW(const RootKey: HKEY; const Key, Name: WideString;
-         const ValueType: Cardinal; const Value: Pointer;
-         const ValueSize: Integer): Boolean;
-var D : DWORD;
-    Handle : HKEY;
-begin
-  Result := False;
-  if ValueSize < 0 then
-    exit;
-  if RegCreateKeyExW(RootKey, PWideChar(Key), 0, nil, REG_OPTION_NON_VOLATILE,
-      KEY_WRITE, nil, Handle, @D) <> ERROR_SUCCESS then
-    exit;
-  Result := RegSetValueExW(Handle, PWideChar(Name), 0, ValueType, Value, ValueSize) = ERROR_SUCCESS;
-  RegCloseKey(Handle);
-end;
-
 function RegSetValueU(const RootKey: HKEY; const Key, Name: UnicodeString;
          const ValueType: Cardinal; const Value: Pointer;
          const ValueSize: Integer): Boolean;
@@ -1058,15 +890,6 @@ begin
   Result := RegSetValueA(RootKey, K, N, ValueType, Value, ValueSize);
 end;
 
-function RegSetValueW(const RootKey: HKEY; const Name: WideString;
-         const ValueType: Cardinal; const Value: Pointer;
-         const ValueSize: Integer): Boolean;
-var K, N : WideString;
-begin
-  SplitRegNameW(Name, K, N);
-  Result := RegSetValueW(RootKey, K, N, ValueType, Value, ValueSize);
-end;
-
 function RegSetValueU(const RootKey: HKEY; const Name: UnicodeString;
          const ValueType: Cardinal; const Value: Pointer;
          const ValueSize: Integer): Boolean;
@@ -1093,12 +916,6 @@ begin
   Result := RegSetValueA(RootKey, Key, Name, REG_SZ, PAnsiChar(Value), Length(Value) + 1);
 end;
 
-function SetRegistryStringW(const RootKey: HKEY; const Key: WideString;
-    const Name: WideString; const Value: WideString): Boolean;
-begin
-  Result := RegSetValueW(RootKey, Key, Name, REG_SZ, PWideChar(Value), (Length(Value) + 1) * SizeOf(WideChar));
-end;
-
 function SetRegistryStringU(const RootKey: HKEY; const Key: UnicodeString;
     const Name: UnicodeString; const Value: UnicodeString): Boolean;
 begin
@@ -1121,12 +938,6 @@ begin
   Result := RegSetValueA(RootKey, Name, REG_SZ, PAnsiChar(Value), Length(Value) + 1);
 end;
 
-function  SetRegistryStringW(const RootKey: HKEY; const Name: WideString;
-    const Value: WideString): Boolean;
-begin
-  Result := RegSetValueW(RootKey, Name, REG_SZ, PWideChar(Value), (Length(Value) + 1) * SizeOf(WideChar));
-end;
-
 function  SetRegistryStringU(const RootKey: HKEY; const Name: UnicodeString;
           const Value: UnicodeString): Boolean;
 begin
@@ -1147,12 +958,6 @@ function SetRegistryDWordA(const RootKey: HKEY; const Name: AnsiString;
     const Value: LongWord): Boolean;
 begin
   Result := RegSetValueA(RootKey, Name, REG_DWORD, @Value, Sizeof(LongWord));
-end;
-
-function SetRegistryDWordW(const RootKey: HKEY; const Name: WideString;
-    const Value: LongWord): Boolean;
-begin
-  Result := RegSetValueW(RootKey, Name, REG_DWORD, @Value, Sizeof(LongWord));
 end;
 
 function SetRegistryDWordU(const RootKey: HKEY; const Name: UnicodeString;
@@ -1197,37 +1002,6 @@ begin
       exit;
     GetMem(Buf, BufSize);
     if RegQueryValueExA(Handle, PAnsiChar(Name), nil, @RegValueType, Buf, @BufSize) = ERROR_SUCCESS then
-      begin
-        ValueBuf := Buf;
-        ValueSize := Integer(BufSize);
-        Result := True;
-      end;
-    if not Result then
-      FreeMem(Buf);
-  finally
-    RegCloseKey(Handle);
-  end;
-end;
-
-function RegGetValueW(const RootKey: HKEY; const Key, Name: WideString;
-         const ValueType: Cardinal; var RegValueType: Cardinal;
-         var ValueBuf: Pointer; var ValueSize: Integer): Boolean;
-var Handle  : HKEY;
-    Buf     : Pointer;
-    BufSize : Cardinal;
-begin
-  Result := False;
-  ValueSize := 0;
-  ValueBuf := nil;
-  if RegOpenKeyExW(RootKey, PWideChar(Key), 0, KEY_READ, Handle) <> ERROR_SUCCESS then
-    exit;
-  try
-    BufSize := 0;
-    RegQueryValueExW(Handle, PWideChar(Name), nil, @RegValueType, nil, @BufSize);
-    if BufSize <= 0 then
-      exit;
-    GetMem(Buf, BufSize);
-    if RegQueryValueExW(Handle, PWideChar(Name), nil, @RegValueType, Buf, @BufSize) = ERROR_SUCCESS then
       begin
         ValueBuf := Buf;
         ValueSize := Integer(BufSize);
@@ -1311,24 +1085,6 @@ begin
   FreeMem(Buf);
 end;
 
-function GetRegistryStringW(const RootKey: HKEY; const Key, Name: WideString): WideString;
-var Buf   : Pointer;
-    Size  : Integer;
-    VType : Cardinal;
-begin
-  Result := '';
-  if not RegGetValueW(RootKey, Key, Name, REG_SZ, VType, Buf, Size) then
-    exit;
-  if (VType = REG_DWORD) and (Size >= Sizeof(LongWord)) then
-    Result := IntToStringW(PLongWord(Buf)^) else
-  if Size > 0 then
-    begin
-      SetLength(Result, (Size div SizeOf(WideChar)) - 1);
-      MoveMem(Buf^, PWideChar(Result)^, Size - 1);
-    end;
-  FreeMem(Buf);
-end;
-
 function GetRegistryStringU(const RootKey: HKEY; const Key, Name: UnicodeString): UnicodeString;
 var Buf   : Pointer;
     Size  : Integer;
@@ -1363,13 +1119,6 @@ begin
   Result := GetRegistryStringA(RootKey, K, N);
 end;
 
-function GetRegistryStringW(const RootKey: HKEY; const Name: WideString): WideString;
-var K, N : WideString;
-begin
-  SplitRegNameW(Name, K, N);
-  Result := GetRegistryStringW(RootKey, K, N);
-end;
-
 function GetRegistryStringU(const RootKey: HKEY; const Name: UnicodeString): UnicodeString;
 var K, N : UnicodeString;
 begin
@@ -1393,19 +1142,6 @@ var Buf   : Pointer;
 begin
   Result := 0;
   if not RegGetValueA(RootKey, Key, Name, REG_DWORD, VType, Buf, Size) then
-    exit;
-  if (VType = REG_DWORD) and (Size >= Sizeof(LongWord)) then
-    Result := PLongWord(Buf)^;
-  FreeMem(Buf);
-end;
-
-function GetRegistryDWordW(const RootKey: HKEY; const Key, Name: WideString): LongWord;
-var Buf   : Pointer;
-    Size  : Integer;
-    VType : Cardinal;
-begin
-  Result := 0;
-  if not RegGetValueW(RootKey, Key, Name, REG_DWORD, VType, Buf, Size) then
     exit;
   if (VType = REG_DWORD) and (Size >= Sizeof(LongWord)) then
     Result := PLongWord(Buf)^;
@@ -1447,18 +1183,6 @@ begin
     Result := False;
 end;
 
-function DeleteRegistryValueW(const RootKey: HKEY; const Key, Name: WideString): Boolean;
-var Handle : HKEY;
-begin
-  if RegOpenKeyExW(RootKey, PWideChar(Key), 0, KEY_WRITE, Handle) = ERROR_SUCCESS then
-    begin
-      Result := RegDeleteValueW(Handle, PWideChar(Name)) = ERROR_SUCCESS;
-      RegCloseKey(Handle);
-    end
-  else
-    Result := False;
-end;
-
 function DeleteRegistryValueU(const RootKey: HKEY; const Key, Name: UnicodeString): Boolean;
 var Handle : HKEY;
 begin
@@ -1494,20 +1218,6 @@ begin
     Result := False;
 end;
 
-function DeleteRegistryKeyW(const RootKey: HKEY; const Key: WideString): Boolean;
-var Handle : HKEY;
-    K, N   : WideString;
-begin
-  SplitRegNameW(Key, K, N);
-  if RegOpenKeyExW(RootKey, PWideChar(K), 0, KEY_WRITE, Handle) = ERROR_SUCCESS then
-    begin
-      Result := RegDeleteKeyW(Handle, PWideChar(N)) = ERROR_SUCCESS;
-      RegCloseKey(Handle);
-    end
-  else
-    Result := False;
-end;
-
 function DeleteRegistryKeyU(const RootKey: HKEY; const Key: UnicodeString): Boolean;
 var Handle : HKEY;
     K, N   : UnicodeString;
@@ -1536,12 +1246,6 @@ function ConnectRegistryA(const MachineName: AnsiString; const RootKey: HKEY;
          var RemoteKey: HKEY): Boolean;
 begin
   Result := RegConnectRegistryA(PAnsiChar(MachineName), RootKey, RemoteKey) = ERROR_SUCCESS;
-end;
-
-function ConnectRegistryW(const MachineName: WideString; const RootKey: HKEY;
-         var RemoteKey: HKEY): Boolean;
-begin
-  Result := RegConnectRegistryW(PWideChar(MachineName), RootKey, RemoteKey) = ERROR_SUCCESS;
 end;
 
 function ConnectRegistryU(const MachineName: UnicodeString; const RootKey: HKEY;
@@ -1590,40 +1294,6 @@ begin
   RegCloseKey(Handle);
 end;
 
-function RegEnumW(const RootKey: HKEY; const Name: WideString;
-         var ResultList: WideStringArray; const DoKeys: Boolean): Boolean;
-const
-  BufCharCount = 2048;
-var Buf    : array[0..BufCharCount] of WideChar;
-    BufLen : LongWord;
-    I      : Integer;
-    Res    : Integer;
-    S      : WideString;
-    Handle : HKEY;
-begin
-  ResultList := nil;
-  Result := RegOpenKeyExW(RootKey, PWideChar(Name), 0, KEY_READ, Handle) = ERROR_SUCCESS;
-  if not Result then
-    exit;
-  I := 0;
-  repeat
-    BufLen := BufCharCount;
-    if DoKeys then
-      Res := RegEnumKeyExW(Handle, I, @Buf[0], BufLen, nil, nil, nil, nil)
-    else
-      Res := RegEnumValueW(Handle, I, @Buf[0], BufLen, nil, nil, nil, nil);
-    if Res = ERROR_SUCCESS then
-      begin
-        SetLength(S, BufLen);
-        if BufLen > 0 then
-          MoveMem(Buf[0], PWideChar(S)^, BufLen * SizeOf(WideChar));
-        DynArrayAppendW(ResultList, S);
-        Inc(I);
-      end;
-  until Res <> ERROR_SUCCESS;
-  RegCloseKey(Handle);
-end;
-
 function RegEnumU(const RootKey: HKEY; const Name: UnicodeString;
          var ResultList: UnicodeStringArray; const DoKeys: Boolean): Boolean;
 const
@@ -1632,7 +1302,7 @@ var Buf    : array[0..BufCharCount] of WideChar;
     BufLen : LongWord;
     I      : Integer;
     Res    : Integer;
-    S      : WideString;
+    S      : UnicodeString;
     Handle : HKEY;
 begin
   ResultList := nil;
@@ -1664,12 +1334,6 @@ begin
   Result := RegEnumA(RootKey, Name, ValueList, False);
 end;
 
-function EnumRegistryValuesW(const RootKey: HKEY; const Name: WideString;
-    var ValueList: WideStringArray): Boolean;
-begin
-  Result := RegEnumW(RootKey, Name, ValueList, False);
-end;
-
 function EnumRegistryValuesU(const RootKey: HKEY; const Name: UnicodeString;
          var ValueList: UnicodeStringArray): Boolean;
 begin
@@ -1690,12 +1354,6 @@ function EnumRegistryKeysA(const RootKey: HKEY; const Name: AnsiString;
     var KeyList: AnsiStringArray): Boolean;
 begin
   Result := RegEnumA(RootKey, Name, KeyList, True);
-end;
-
-function EnumRegistryKeysW(const RootKey: HKEY; const Name: WideString;
-    var KeyList: WideStringArray): Boolean;
-begin
-  Result := RegEnumW(RootKey, Name, KeyList, True);
 end;
 
 function EnumRegistryKeysU(const RootKey: HKEY; const Name: UnicodeString;
@@ -1858,13 +1516,6 @@ begin
     Result := GetRegistryStringA(HKEY_LOCAL_MACHINE, CurrentVersionKey2, 'ProductId');
 end;
 
-function GetWindowsProductIDW: WideString;
-begin
-  Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionKey1, 'ProductId');
-  if Result = '' then
-    Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionKey2, 'ProductId');
-end;
-
 function GetWindowsProductIDU: UnicodeString;
 begin
   Result := GetRegistryStringU(HKEY_LOCAL_MACHINE, CurrentVersionKey1, 'ProductId');
@@ -1888,13 +1539,6 @@ begin
     Result := GetRegistryStringA(HKEY_LOCAL_MACHINE, CurrentVersionKey2, 'ProductName');
 end;
 
-function GetWindowsProductNameW: WideString;
-begin
-  Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionKey1, 'ProductName');
-  if Result = '' then
-    Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionKey2, 'ProductName');
-end;
-
 function GetWindowsProductNameU: UnicodeString;
 begin
   Result := GetRegistryStringU(HKEY_LOCAL_MACHINE, CurrentVersionKey1, 'ProductName');
@@ -1916,17 +1560,6 @@ end;
 { Windows Paths                                                                }
 {                                                                              }
 procedure EnsurePathSuffixA(var Path: AnsiString);
-var L : Integer;
-begin
-  L := Length(Path);
-  if (L > 0) and (Path[L] <> '\') then
-    begin
-      SetLength(Path, L + 1);
-      Path[L + 1] := '\';
-    end;
-end;
-
-procedure EnsurePathSuffixW(var Path: WideString);
 var L : Integer;
 begin
   L := Length(Path);
@@ -1974,18 +1607,6 @@ begin
   EnsurePathSuffixA(Result);
 end;
 
-function GetWindowsTemporaryPathW: WideString;
-var I : LongWord;
-begin
-  SetLength(Result, MaxTempPathLen);
-  I := GetTempPathW(MaxTempPathLen, PWideChar(Result));
-  if I > 0 then
-    SetLength(Result, I)
-  else
-    Result := GetEnvironmentVariableW('TEMP');
-  EnsurePathSuffixW(Result);
-end;
-
 function GetWindowsTemporaryPathU: UnicodeString;
 var I : LongWord;
 begin
@@ -1994,7 +1615,7 @@ begin
   if I > 0 then
     SetLength(Result, I)
   else
-    Result := GetEnvironmentVariableW('TEMP');
+    Result := GetEnvironmentVariableU('TEMP');
   EnsurePathSuffixU(Result);
 end;
 
@@ -2020,18 +1641,6 @@ begin
   else
     Result := GetEnvironmentVariableA('SystemRoot');
   EnsurePathSuffixA(Result);
-end;
-
-function GetWindowsPathW: WideString;
-var I : LongWord;
-begin
-  SetLength(Result, MaxWinPathLen);
-  I := Windows.GetWindowsDirectoryW(PWideChar(Result), MaxWinPathLen);
-  if I > 0 then
-    SetLength(Result, I)
-  else
-    Result := GetEnvironmentVariableW('SystemRoot');
-  EnsurePathSuffixW(Result);
 end;
 
 function GetWindowsPathU: UnicodeString;
@@ -2070,18 +1679,6 @@ begin
   EnsurePathSuffixA(Result);
 end;
 
-function GetWindowsSystemPathW: WideString;
-var I : LongWord;
-begin
-  SetLength(Result, MaxWinSysPathLen);
-  I := Windows.GetSystemDirectoryW(PWideChar(Result), MaxWinSysPathLen);
-  if I > 0 then
-    SetLength(Result, I)
-  else
-    Result := '';
-  EnsurePathSuffixW(Result);
-end;
-
 function GetWindowsSystemPathU: UnicodeString;
 var I : LongWord;
 begin
@@ -2113,13 +1710,6 @@ begin
   EnsurePathSuffixA(Result);
 end;
 
-function GetProgramFilesPathW: WideString;
-begin
-  Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionRegistryKey,
-      'ProgramFilesDir');
-  EnsurePathSuffixW(Result);
-end;
-
 function GetProgramFilesPathU: UnicodeString;
 begin
   Result := GetRegistryStringU(HKEY_LOCAL_MACHINE, CurrentVersionRegistryKey,
@@ -2141,13 +1731,6 @@ begin
   EnsurePathSuffixA(Result);
 end;
 
-function GetCommonFilesPathW: WideString;
-begin
-  Result := GetRegistryStringW(HKEY_LOCAL_MACHINE, CurrentVersionRegistryKey,
-      'CommonFilesDir');
-  EnsurePathSuffixW(Result);
-end;
-
 function GetCommonFilesPathU: UnicodeString;
 begin
   Result := GetRegistryStringU(HKEY_LOCAL_MACHINE, CurrentVersionRegistryKey,
@@ -2165,11 +1748,6 @@ end;
 function GetApplicationFileNameA: AnsiString;
 begin
   Result := ToAnsiString(ParamStr(0));
-end;
-
-function GetApplicationFileNameW: WideString;
-begin
-  Result := ToWideString(ParamStr(0));
 end;
 
 function GetApplicationFileNameU: UnicodeString;
@@ -2198,16 +1776,6 @@ begin
   EnsurePathSuffixA(Result);
 end;
 
-function GetHomePathW: WideString;
-begin
-  Result :=
-      GetEnvironmentVariableW('HOMEDRIVE') +
-      GetEnvironmentVariableW('HOMEPATH');
-  if Result = '' then
-    Result := GetEnvironmentVariableW('USERPROFILE');
-  EnsurePathSuffixW(Result);
-end;
-
 function GetHomePathU: UnicodeString;
 begin
   Result :=
@@ -2231,12 +1799,6 @@ function GetLocalAppDataPathA: AnsiString;
 begin
   Result := GetEnvironmentVariableA('LOCALAPPDATA');
   EnsurePathSuffixA(Result);
-end;
-
-function GetLocalAppDataPathW: WideString;
-begin
-  Result := GetEnvironmentVariableW('LOCALAPPDATA');
-  EnsurePathSuffixW(Result);
 end;
 
 function GetLocalAppDataPathU: UnicodeString;
@@ -2271,17 +1833,6 @@ begin
     Result := GetEnvironmentVariableA('USERNAME');
 end;
 
-function GetUserNameW: WideString;
-var L : LongWord;
-begin
-  L := MAX_USERNAME_LENGTH;
-  SetLength(Result, L + 1);
-  if Windows.GetUserNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrZLenW(PWideChar(Result)))
-  else
-    Result := GetEnvironmentVariableW('USERNAME');
-end;
-
 function GetUserNameU: UnicodeString;
 var L : LongWord;
 begin
@@ -2313,17 +1864,6 @@ begin
     Result := GetEnvironmentVariableA('COMPUTERNAME');
 end;
 
-function GetLocalComputerNameW: WideString;
-var L : LongWord;
-begin
-  L := MAX_COMPUTERNAME_LENGTH + 2;
-  SetLength(Result, L);
-  if Windows.GetComputerNameW(PWideChar(Result), L) and (L > 0) then
-    SetLength(Result, StrZLenW(PWideChar(Result)))
-  else
-    Result := GetEnvironmentVariableW('COMPUTERNAME');
-end;
-
 function GetLocalComputerNameU: UnicodeString;
 var L : LongWord;
 begin
@@ -2338,7 +1878,7 @@ end;
 function GetLocalComputerName: String;
 begin
   {$IFDEF StringIsUnicode}
-  Result := GetLocalComputerNameW;
+  Result := GetLocalComputerNameU;
   {$ELSE}
   Result := GetLocalComputerNameA;
   {$ENDIF}
@@ -2377,13 +1917,13 @@ begin
     end;
   VerQueryValueA(VersionInfoBufA, PAnsiChar('\VarFileInfo\Translation'),
                  Pointer(Trans), Size);
-  VerTransStrA := LongWordToHexA(Trans^[1], 4, True) + LongWordToHexA(Trans^[2], 4, True);
+  VerTransStrA := Word32ToHexA(Trans^[1], 4, True) + Word32ToHexA(Trans^[2], 4, True);
   Result := True;
 end;
 
 var
   VersionInfoBufW : Pointer = nil;
-  VerTransStrW    : WideString;
+  VerTransStrU    : UnicodeString;
 
 // Returns True if VersionInfo is available
 function LoadAppVersionInfoW: Boolean;
@@ -2392,13 +1932,13 @@ type
   PTransBuffer = ^TTransBuffer;
 var InfoSize : Integer;
     Size, H  : LongWord;
-    EXEName  : WideString;
+    EXEName  : UnicodeString;
     Trans    : PTransBuffer;
 begin
   Result := Assigned(VersionInfoBufW);
   if Result then
     exit;
-  EXEName := GetApplicationFileNameW;
+  EXEName := GetApplicationFileNameU;
   InfoSize := GetFileVersionInfoSizeW(PWideChar(EXEName), H);
   if InfoSize = 0 then
     exit;
@@ -2411,7 +1951,7 @@ begin
     end;
   VerQueryValueW(VersionInfoBufW, PWideChar('\VarFileInfo\Translation'),
                  Pointer(Trans), Size);
-  VerTransStrW := LongWordToHexW(Trans^[1], 4, True) + LongWordToHexW(Trans^[2], 4, True);
+  VerTransStrU := Word32ToHexU(Trans^[1], 4, True) + Word32ToHexU(Trans^[2], 4, True);
   Result := True;
 end;
 
@@ -2443,7 +1983,7 @@ begin
 end;
 
 const
-  VersionInfoStrW: array [TVersionInfo] of WideString = (
+  VersionInfoStrW: array [TVersionInfo] of UnicodeString = (
     'FileVersion',
     'FileDescription',
     'LegalCopyright',
@@ -2456,28 +1996,15 @@ const
     'ProductVersion'
     );
 
-function GetAppVersionInfoW(const VersionInfo: TVersionInfo): WideString;
-var S     : WideString;
-    Size  : LongWord;
-    Value : PWideChar;
-begin
-  Result := '';
-  if not LoadAppVersionInfoW then
-    exit;
-  S := 'StringFileInfo\' + VerTransStrW + '\' + VersionInfoStrW[VersionInfo];
-  if VerQueryValueW(VersionInfoBufW, PWideChar(S), Pointer(Value), Size) then
-    Result := Value;
-end;
-
 function GetAppVersionInfoU(const VersionInfo: TVersionInfo): UnicodeString;
-var S     : WideString;
+var S     : UnicodeString;
     Size  : LongWord;
     Value : PWideChar;
 begin
   Result := '';
   if not LoadAppVersionInfoW then
     exit;
-  S := 'StringFileInfo\' + VerTransStrW + '\' + VersionInfoStrW[VersionInfo];
+  S := 'StringFileInfo\' + VerTransStrU + '\' + VersionInfoStrW[VersionInfo];
   if VerQueryValueW(VersionInfoBufW, PWideChar(S), Pointer(Value), Size) then
     Result := Value;
 end;
@@ -2564,63 +2091,6 @@ begin
       end;
 end;
 
-function WinExecuteW(const ExeName, Params: WideString; const ShowWin: Word;
-    const WaitTime: Integer; const DefaultPath: WideString): LongWord;
-var StartUpInfo : TStartupInfoW;
-    ProcessInfo	: TProcessInformation;
-    Cmd         : WideString;
-    CmdBuf      : array[0..WINEXECUTE_MAXCMDBUFLEN + 2] of WideChar;
-    DefDir      : PWideChar;
-    TimeOut     : LongWord;
-begin
-  if ExeName = '' then
-    raise EOSError.Create(SInvalidParameter);
-  if Params = '' then
-    Cmd := ExeName
-  else
-    Cmd := ExeName + ' ' + Params;
-  if PosStrW('%', Cmd) > 0 then
-    begin
-      FillChar(CmdBuf, Sizeof(CmdBuf), 0);
-      if ExpandEnvironmentStringsW(PWideChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
-        Cmd := StrZPasW(PWideChar(@CmdBuf));
-    end;
-  FillChar(StartUpInfo, SizeOf(StartUpInfo), 0);
-  StartUpInfo.cb := SizeOf(StartUpInfo);
-  StartUpInfo.dwFlags := STARTF_USESHOWWINDOW;
-  StartUpInfo.wShowWindow := ShowWin;
-  if DefaultPath = '' then
-    DefDir := nil
-  else
-    DefDir := PWideChar(DefaultPath);
-  FillChar(ProcessInfo, Sizeof(ProcessInfo), 0);
-  if not CreateProcessW(
-        nil, PWideChar(Cmd), nil, nil, False,
-        CREATE_NEW_CONSOLE or NORMAL_PRIORITY_CLASS, nil, DefDir,
-        StartUpInfo, ProcessInfo) then
-    RaiseLastWinError;
-  if ProcessInfo.hThread <> 0 then
-    CloseHandle(ProcessInfo.hThread);
-  if WaitTime < 0 then
-    TimeOut := INFINITE
-  else
-    TimeOut := WaitTime;
-  if WaitTime = 0 then
-    Result := 0
-  else
-    if Windows.WaitForSingleObject(ProcessInfo.hProcess, TimeOut) = WAIT_TIMEOUT then
-      begin
-        TerminateProcess(ProcessInfo.hProcess, 1);
-        CloseHandle(ProcessInfo.hProcess);
-        raise EOSError.Create(SProcessTimedOut)
-      end
-    else
-      begin
-        GetExitCodeProcess(ProcessInfo.hProcess, Result);
-        CloseHandle(ProcessInfo.hProcess);
-      end;
-end;
-
 function WinExecuteU(const ExeName, Params: UnicodeString; const ShowWin: Word;
     const WaitTime: Integer; const DefaultPath: UnicodeString): LongWord;
 var StartUpInfo : TStartupInfoW;
@@ -2636,7 +2106,7 @@ begin
     Cmd := ExeName
   else
     Cmd := ExeName + ' ' + Params;
-  if PosStrW('%', Cmd) > 0 then
+  if PosStrU('%', Cmd) > 0 then
     begin
       FillChar(CmdBuf, Sizeof(CmdBuf), 0);
       if ExpandEnvironmentStringsW(PWideChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
@@ -2739,11 +2209,6 @@ end;
 function GetProcAddressA(const Handle: TLibraryHandle; const ProcName: AnsiString): Pointer;
 begin
   Result := Windows.GetProcAddress(Cardinal(Handle), LPCSTR(PAnsiChar(ProcName)));
-end;
-
-function GetProcAddressW(const Handle: TLibraryHandle; const ProcName: WideString): Pointer;
-begin
-  Result := Windows.GetProcAddress(Cardinal(Handle), LPCWSTR(PWideChar(ProcName)));
 end;
 
 function GetProcAddressU(const Handle: TLibraryHandle; const ProcName: UnicodeString): Pointer;
@@ -2875,16 +2340,6 @@ begin
     Result := '';
 end;
 
-function GetLocaleStringW(const LocaleType: LongWord): WideString;
-var Buf : array[0..LOCALE_MAXSIZE] of WideChar;
-begin
-  FillChar(Buf[0], SizeOf(Buf), 0);
-  if GetLocaleInfoW(LOCALE_USER_DEFAULT, LocaleType, @Buf[0], LOCALE_MAXSIZE) <> 0 then
-    Result := StrZPasW(PWideChar(@Buf[0]))
-  else
-    Result := '';
-end;
-
 function GetLocaleStringU(const LocaleType: LongWord): UnicodeString;
 var Buf : array[0..LOCALE_MAXSIZE] of WideChar;
 begin
@@ -2898,11 +2353,6 @@ end;
 function GetCountryCode1A: AnsiString;
 begin
   Result := GetLocaleStringA(LOCALE_ICOUNTRY);
-end;
-
-function GetCountryCode1W: WideString;
-begin
-  Result := GetLocaleStringW(LOCALE_ICOUNTRY);
 end;
 
 function GetCountryCode1U: UnicodeString;
@@ -2924,11 +2374,6 @@ begin
   Result := GetLocaleStringA(LOCALE_SISO3166CTRYNAME);
 end;
 
-function GetCountryCode2W: WideString;
-begin
-  Result := GetLocaleStringW(LOCALE_SISO3166CTRYNAME);
-end;
-
 function GetCountryCode2U: UnicodeString;
 begin
   Result := GetLocaleStringU(LOCALE_SISO3166CTRYNAME);
@@ -2946,11 +2391,6 @@ end;
 function GetCountryNameA: AnsiString;
 begin
   Result := GetLocaleStringA(LOCALE_SENGCOUNTRY);
-end;
-
-function GetCountryNameW: WideString;
-begin
-  Result := GetLocaleStringW(LOCALE_SENGCOUNTRY);
 end;
 
 function GetCountryNameU: UnicodeString;
@@ -2975,11 +2415,6 @@ end;
 function ContentTypeFromExtentionA(const Extention: AnsiString): AnsiString;
 begin
   Result := GetRegistryStringA(HKEY_CLASSES_ROOT, Extention, 'Content Type');
-end;
-
-function ContentTypeFromExtentionW(const Extention: WideString): WideString;
-begin
-  Result := GetRegistryStringW(HKEY_CLASSES_ROOT, Extention, 'Content Type');
 end;
 
 function ContentTypeFromExtentionU(const Extention: UnicodeString): UnicodeString;
@@ -3050,18 +2485,7 @@ begin
   T := DriveLetter + AnsiString(':\');
   GetVolumeInformationA(PAnsiChar(T), nil, MAX_PATH + 1, @S,
       N, F, nil, 0);
-  Result := LongWordToHexA(S, 8, False);
-end;
-
-function GetHardDiskSerialNumberW(const DriveLetter: WideChar): WideString;
-var N, F, S : DWORD;
-    T : WideString;
-begin
-  S := 0;
-  T := DriveLetter + WideString(':\');
-  GetVolumeInformationW(PWideChar(T), nil, MAX_PATH + 1, @S,
-      N, F, nil, 0);
-  Result := LongWordToHexW(S, 8, False);
+  Result := Word32ToHexA(S, 8, False);
 end;
 
 function GetHardDiskSerialNumberU(const DriveLetter: WideChar): UnicodeString;
@@ -3069,10 +2493,10 @@ var N, F, S : DWORD;
     T : UnicodeString;
 begin
   S := 0;
-  T := DriveLetter + WideString(':\');
+  T := DriveLetter + UnicodeString(':\');
   GetVolumeInformationW(PWideChar(T), nil, MAX_PATH + 1, @S,
       N, F, nil, 0);
-  Result := LongWordToHexU(S, 8, False);
+  Result := Word32ToHexU(S, 8, False);
 end;
 
 function GetHardDiskSerialNumber(const DriveLetter: Char): String;
@@ -3189,126 +2613,92 @@ procedure Test;
 var
   A : AnsiStringArray;
   B : UnicodeStringArray;
-  C : WideStringArray;
   I : Integer;
 begin
   Assert(Length(WinErrorMessageA(2)) > 5);
-  Assert(Length(WinErrorMessageW(2)) > 5);
   Assert(Length(WinErrorMessageU(2)) > 5);
   Assert(Length(WinErrorMessage(2)) > 5);
   Assert(WinErrorMessageU(2) = WinErrorMessageA(2));
-  Assert(WinErrorMessageU(2) = WinErrorMessageW(2));
 
   Assert(GetEnvironmentVariableA('PATH') <> '', 'GetEnvironmentVariable');
-  Assert(GetEnvironmentVariableW('PATH') <> '', 'GetEnvironmentVariable');
   Assert(GetEnvironmentVariableU('PATH') <> '', 'GetEnvironmentVariable');
   Assert(GetEnvironmentVariable('PATH') <> '',  'GetEnvironmentVariable');
   Assert(GetEnvironmentVariableU('PATH') = GetEnvironmentVariableA('PATH'));
-  Assert(GetEnvironmentVariableU('PATH') = GetEnvironmentVariableW('PATH'));
 
   A := GetEnvironmentStringsA;
   B := GetEnvironmentStringsU;
-  C := GetEnvironmentStringsW;
   Assert(Length(A) > 0);
   Assert(Length(B) > 0);
-  Assert(Length(C) > 0);
   Assert(Length(A) = Length(B));
-  Assert(Length(A) = Length(C));
   for I := 0 to Length(A) - 1 do
     Assert(A[I] = B[I]);
-  for I := 0 to Length(A) - 1 do
-    Assert(A[I] = C[I]);
 
   Assert(GetWindowsVersionString <> '', 'GetWindowsVersionString');
 
   Assert(GetWindowsProductNameA <> '', 'GetWindowsProductName');
-  Assert(GetWindowsProductNameW <> '', 'GetWindowsProductName');
   Assert(GetWindowsProductNameU <> '', 'GetWindowsProductName');
-  Assert(GetWindowsProductNameA = GetWindowsProductNameW);
-  Assert(GetWindowsProductNameU = GetWindowsProductNameW);
+  Assert(GetWindowsProductNameA = GetWindowsProductNameU);
 
   {$IFNDEF WIN32}
   // Win32 returns empty string
   Assert(GetWindowsProductIDA <> '', 'GetWindowsProductID');
-  Assert(GetWindowsProductIDW <> '', 'GetWindowsProductID');
-  Assert(GetWindowsProductIDA = GetWindowsProductIDW);
+  Assert(GetWindowsProductIDU <> '', 'GetWindowsProductID');
+  Assert(GetWindowsProductIDA = GetWindowsProductIDU);
   {$ENDIF}
 
   Assert(GetUserNameA <> '',          'GetUserName');
-  Assert(GetUserNameW <> '',          'GetUserName');
   Assert(GetUserNameU <> '',          'GetUserName');
   Assert(GetUserName <> '',           'GetUserName');
-  Assert(GetUserNameA = GetUserNameW, 'GetUserName');
-  Assert(GetUserNameU = GetUserNameW, 'GetUserName');
+  Assert(GetUserNameA = GetUserNameU, 'GetUserName');
 
   Assert(GetWindowsTemporaryPathA <> '', 'GetWindowsTemporaryPath');
-  Assert(GetWindowsTemporaryPathW <> '', 'GetWindowsTemporaryPath');
   Assert(GetWindowsTemporaryPathU <> '', 'GetWindowsTemporaryPath');
-  Assert(GetWindowsTemporaryPathU = GetWindowsTemporaryPathW);
   Assert(GetWindowsTemporaryPathU = GetWindowsTemporaryPathA);
 
   Assert(GetWindowsPathA <> '',             'GetWindowsPath');
-  Assert(GetWindowsPathW <> '',             'GetWindowsPath');
   Assert(GetWindowsPathU <> '',             'GetWindowsPath');
-  Assert(GetWindowsPathA = GetWindowsPathW, 'GetWindowsPath');
-  Assert(GetWindowsPathU = GetWindowsPathW, 'GetWindowsPath');
+  Assert(GetWindowsPathA = GetWindowsPathU, 'GetWindowsPath');
 
   Assert(GetWindowsSystemPathA <> '', 'GetWindowsSystemPath');
-  Assert(GetWindowsSystemPathW <> '', 'GetWindowsSystemPath');
   Assert(GetWindowsSystemPathU <> '', 'GetWindowsSystemPath');
-  Assert(GetWindowsSystemPathA = GetWindowsSystemPathW);
-  Assert(GetWindowsSystemPathU = GetWindowsSystemPathW);
+  Assert(GetWindowsSystemPathA = GetWindowsSystemPathU);
 
   Assert(GetProgramFilesPathA <> '', 'GetProgramFilesPath');
-  Assert(GetProgramFilesPathW <> '', 'GetProgramFilesPath');
   Assert(GetProgramFilesPathU <> '', 'GetProgramFilesPath');
   Assert(GetProgramFilesPathU = GetProgramFilesPathA);
-  Assert(GetProgramFilesPathU = GetProgramFilesPathW);
 
   Assert(GetCommonFilesPathA <> '', 'GetCommonFilesPath');
-  Assert(GetCommonFilesPathW <> '', 'GetCommonFilesPath');
   Assert(GetCommonFilesPathU <> '', 'GetCommonFilesPath');
   Assert(GetCommonFilesPathU = GetCommonFilesPathA);
-  Assert(GetCommonFilesPathU = GetCommonFilesPathW);
 
   Assert(GetApplicationPath <> '', 'GetApplicationPath');
 
   Assert(GetHomePathA <> '',          'GetHomePath');
-  Assert(GetHomePathW <> '',          'GetHomePath');
   Assert(GetHomePathU <> '',          'GetHomePath');
   Assert(GetHomePathA = GetHomePathU, 'GetHomePath');
-  Assert(GetHomePathW = GetHomePathU, 'GetHomePath');
 
   Assert(GetCountryCode1A <> '',    'GetCountryCode1');
-  Assert(GetCountryCode1W <> '',    'GetCountryCode1');
   Assert(GetCountryCode1U <> '',    'GetCountryCode1');
   Assert(GetCountryCode1A = GetCountryCode1U);
-  Assert(GetCountryCode1W = GetCountryCode1U);
 
   Assert(GetCountryCode2A <> '',    'GetCountryCode2');
-  Assert(GetCountryCode2W <> '',    'GetCountryCode2');
   Assert(GetCountryCode2U <> '',    'GetCountryCode2');
 
   Assert(GetCountryNameA <> '',     'GetCountryName');
   Assert(GetCountryNameU <> '',     'GetCountryName');
-  Assert(GetCountryNameW <> '',     'GetCountryName');
 
   {$IFDEF TEST_APPVERSIONINFO}
   Assert(GetAppVersionInfoA(viFileVersion) <> '');
-  Assert(GetAppVersionInfoW(viFileVersion) <> '');
   Assert(GetAppVersionInfoU(viFileVersion) <> '');
   Assert(GetAppVersionInfoA(viFileVersion) = GetAppVersionInfoU(viFileVersion));
-  Assert(GetAppVersionInfoW(viFileVersion) = GetAppVersionInfoU(viFileVersion));
   {$ENDIF}
 
   {$IFDEF TEST_DRIVEC_VALID}
   Assert(GetHardDiskSerialNumberA('C') <> '');
-  Assert(GetHardDiskSerialNumberW('C') <> '');
   Assert(GetHardDiskSerialNumberU('C') = GetHardDiskSerialNumberA('C'));
   {$ENDIF}
 
   Assert(ContentTypeFromExtentionA('.html') <> '');
-  Assert(ContentTypeFromExtentionW('.html') <> '');
   Assert(ContentTypeFromExtentionU('.html') <> '');
   Assert(ContentTypeFromExtentionA('.html') = ContentTypeFromExtentionU('.html'));
 end;

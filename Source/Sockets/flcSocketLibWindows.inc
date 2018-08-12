@@ -362,10 +362,10 @@ const
   RES_SERVICE     = $00000004;
 
   // Well known service type names
-  SERVICE_TYPE_VALUE_TCPPORTA              = 'TcpPort';
-  SERVICE_TYPE_VALUE_TCPPORTW : WideString = 'TcpPort';
-  SERVICE_TYPE_VALUE_UDPPORTA              = 'UdpPort';
-  SERVICE_TYPE_VALUE_UDPPORTW : WideString = 'UdpPort';
+  SERVICE_TYPE_VALUE_TCPPORTA                 = 'TcpPort';
+  SERVICE_TYPE_VALUE_TCPPORTW : UnicodeString = 'TcpPort';
+  SERVICE_TYPE_VALUE_UDPPORTA                 = 'UdpPort';
+  SERVICE_TYPE_VALUE_UDPPORTW : UnicodeString = 'UdpPort';
 
   // Limits
   MAXGETHOSTSTRUCT = 1024;

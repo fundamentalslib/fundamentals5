@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUTF.pas                                               }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      UTF encoding and decoing functions.                      }
 {                                                                              }
 {   Copyright:        Copyright (c) 2015-2018, David J Butler                  }
@@ -36,6 +36,7 @@
 {                                                                              }
 {   2015/05/06  4.01  Add UTF functions from unit cUnicodeCodecs.              }
 {   2017/10/07  5.02  Move to flcUTF unit.                                     }
+{   2018/08/12  5.03  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -109,45 +110,23 @@ function  DetectUTF8BOM(const P: Pointer; const Size: Integer): Boolean;
 
 function  UTF8CharSize(const P: Pointer; const Size: Integer): Integer;
 function  UTF8BufLength(const P: Pointer; const Size: Integer): Integer;
-{$IFDEF SupportRawByteString}
 function  UTF8StringLength(const S: RawByteString): Integer;
-{$IFDEF SupportWideString}
-function  UTF8StringToWideString(const S: RawByteString): WideString;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
 function  UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
-{$ENDIF}
 function  UTF8StringToLongString(const S: RawByteString): RawByteString;
 function  UTF8StringToString(const S: RawByteString): String;
-{$ENDIF}
 
 function  UCS4CharToUTF8CharSize(const Ch: UCS4Char): Integer;
 function  WideBufToUTF8Size(const Buf: PWideChar; const Len: Integer): Integer;
-{$IFDEF SupportWideString}
-function  WideStringToUTF8Size(const S: WideString): Integer;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
-{$ENDIF}
-{$IFDEF SupportRawByteString}
 function  WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
-{$IFDEF SupportWideString}
-function  WideStringToUTF8String(const S: WideString): RawByteString;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
 function  UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
-{$IFDEF SupportWideString}
-function  UnicodeStringToWideString(const S: UnicodeString): WideString;
-{$ENDIF}
-{$ENDIF}
 function  RawByteBufToUTF8Size(const Buf: Pointer; const Len: Integer): Integer;
 function  RawByteStringToUTF8Size(const S: RawByteString): Integer;
 function  RawByteStringToUTF8String(const S: RawByteString): RawByteString;
 function  UCS4CharToUTF8String(const Ch: UCS4Char): RawByteString;
 function  ISO8859_1StringToUTF8String(const S: RawByteString): RawByteString;
 function  StringToUTF8String(const S: String): RawByteString;
-{$ENDIF}
 
 
 
@@ -562,12 +541,10 @@ begin
     end;
 end;
 
-{$IFDEF SupportRawByteString}
 function UTF8StringLength(const S: RawByteString): Integer;
 begin
   Result := UTF8BufLength(Pointer(S), Length(S));
 end;
-{$ENDIF}
 
 function UCS4CharToUTF8CharSize(const Ch: UCS4Char): Integer;
 begin
@@ -617,66 +594,16 @@ begin
     end;
 end;
 
-{$IFDEF SupportWideString}
-function WideStringToUTF8Size(const S: WideString): Integer;
-begin
-  Result := WideBufToUTF8Size(Pointer(S), Length(S));
-end;
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
 begin
   Result := WideBufToUTF8Size(Pointer(S), Length(S));
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function RawByteStringToUTF8Size(const S: RawByteString): Integer;
 begin
   Result := RawByteBufToUTF8Size(Pointer(S), Length(S));
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
-{$IFDEF SupportWideString}
-function UTF8StringToWideString(const S: RawByteString): WideString;
-var P       : PAnsiChar;
-    Q       : PWideChar;
-    L, M, I : Integer;
-    C       : WideChar;
-begin
-  L := Length(S);
-  if L = 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  if IsAsciiStringA(S) then // optimize for US-ASCII strings
-    begin
-      Result := RawByteStringToWideString(S);
-      exit;
-    end;
-  // Decode UTF-8
-  P := Pointer(S);
-  SetLength(Result, L); // maximum size
-  Q := Pointer(Result);
-  M := 0;
-  repeat
-    UTF8ToWideChar(P, L, I, C);
-    Assert(I > 0, 'I > 0');
-    Q^ := C;
-    Inc(Q);
-    Inc(M);
-    Inc(P, I);
-    Dec(L, I);
-  until L <= 0;
-  SetLength(Result, M); // actual size
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
 var P       : PByte;
     Q       : PWideChar;
@@ -710,16 +637,12 @@ begin
   until L <= 0;
   SetLength(Result, M); // actual size
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
 function UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
 begin
   Result := UTF8StringToUnicodeStringP(Pointer(S), Length(S));
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function UTF8StringToLongString(const S: RawByteString): RawByteString;
 var P       : PByte;
     Q       : PByte;
@@ -755,9 +678,7 @@ begin
   until L <= 0;
   SetLength(Result, M); // actual size
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function UTF8StringToString(const S: RawByteString): String;
 begin
   {$IFDEF StringIsUnicode}
@@ -766,9 +687,7 @@ begin
   Result := S;
   {$ENDIF}
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
 function WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
 var P     : PWideChar;
     Q     : PByte;
@@ -834,24 +753,10 @@ begin
   SetLength(Result, M); // actual size
 end;
 
-{$IFDEF SupportWideString}
-function WideStringToUTF8String(const S: WideString): RawByteString;
-begin
-  Result := WideBufToUTF8String(Pointer(S), Length(S));
-end;
-{$ENDIF}
-
 function UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
 begin
   Result := WideBufToUTF8String(Pointer(S), Length(S));
 end;
-
-{$IFDEF SupportWideString}
-function UnicodeStringToWideString(const S: UnicodeString): WideString;
-begin
-  Result := S;
-end;
-{$ENDIF}
 
 const
   MaxUTF8SequenceSize = 4;
@@ -925,7 +830,6 @@ begin
   Result := S;
   {$ENDIF}
 end;
-{$ENDIF}
 
 
 
@@ -984,7 +888,6 @@ end;
 {                                                                              }
 {$IFDEF UTF_TEST}
 {$ASSERTIONS ON}
-{$IFDEF SupportUTF8String}
 procedure Test_UTF8;
 const
   W1 : array[0..3] of WideChar = (#$0041, #$2262, #$0391, #$002E);
@@ -995,25 +898,20 @@ const
   S3 = RawByteString(#$E6#$97#$A5#$E6#$9C#$AC#$E8#$AA#$9E);
 begin
   // UTF-8 test cases from RFC 2279
-  {$IFDEF SupportWideString}
-  Assert(WideStringToUTF8String(W1) = #$41#$E2#$89#$A2#$CE#$91#$2E, 'WideStringToUTF8String');
-  Assert(WideStringToUTF8String(W2) = #$ED#$95#$9C#$EA#$B5#$AD#$EC#$96#$B4, 'WideStringToUTF8String');
-  Assert(WideStringToUTF8String(W3) = #$E6#$97#$A5#$E6#$9C#$AC#$E8#$AA#$9E, 'WideStringToUTF8String');
-  Assert(UTF8StringToWideString(S1) = W1, 'UTF8StringToWideString');
-  Assert(UTF8StringToWideString(S2) = W2, 'UTF8StringToWideString');
-  Assert(UTF8StringToWideString(S3) = W3, 'UTF8StringToWideString');
-  {$ENDIF}
+  Assert(UnicodeStringToUTF8String(W1) = #$41#$E2#$89#$A2#$CE#$91#$2E, 'UnicodeStringToUTF8String');
+  Assert(UnicodeStringToUTF8String(W2) = #$ED#$95#$9C#$EA#$B5#$AD#$EC#$96#$B4, 'UnicodeStringToUTF8String');
+  Assert(UnicodeStringToUTF8String(W3) = #$E6#$97#$A5#$E6#$9C#$AC#$E8#$AA#$9E, 'UnicodeStringToUTF8String');
+  Assert(UTF8StringToUnicodeString(S1) = W1, 'UTF8StringToUnicodeString');
+  Assert(UTF8StringToUnicodeString(S2) = W2, 'UTF8StringToUnicodeString');
+  Assert(UTF8StringToUnicodeString(S3) = W3, 'UTF8StringToUnicodeString');
   Assert(UTF8StringLength(S1) = 4, 'UTF8StringLength');
   Assert(UTF8StringLength(S2) = 3, 'UTF8StringLength');
   Assert(UTF8StringLength(S3) = 3, 'UTF8StringLength');
 end;
-{$ENDIF}
 
 procedure Test;
 begin
-  {$IFDEF SupportUTF8String}
   Test_UTF8;
-  {$ENDIF}
 end;
 {$ENDIF}
 

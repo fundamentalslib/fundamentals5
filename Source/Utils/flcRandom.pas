@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcRandom.pas                                            }
-{   File version:     5.17                                                     }
+{   File version:     5.18                                                     }
 {   Description:      Random number functions                                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2017, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -51,6 +51,7 @@
 {   2015/04/20  4.15  Revise RandomSeed                                        }
 {   2015/05/06  4.16  Prevent mwcRandom32 overflow error.                      }
 {   2016/01/09  5.17  Revised for Fundamentals 5.                              }
+{   2018/08/12  5.18  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -112,26 +113,15 @@ function  RandomInt64: Int64; overload;
 function  RandomInt64(const N: Int64): Int64; overload;
 
 function  RandomHex(const Digits: Integer; const UpperCase: Boolean = True): String;
-{$IFDEF SupportRawByteString}
-function  RandomHexA(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function  RandomHexW(const Digits: Integer; const UpperCase: Boolean = True): WideString;
-{$ENDIF}
-{$ENDIF}
-{$IFDEF SupportUnicodeString}
+function  RandomHexB(const Digits: Integer; const UpperCase: Boolean = True): UTF8String;
 function  RandomHexU(const Digits: Integer; const UpperCase: Boolean = True): UnicodeString;
-{$ENDIF}
 
 function  RandomFloat: Extended;
 
-{$IFDEF SupportRawByteString}
-function  RandomUpperAlphaStrA(const Length: Integer): RawByteString;
-function  RandomPseudoWordA(const Length: Integer): RawByteString;
-function  RandomPasswordA(const MinLength, MaxLength: Integer;
-          const CaseSensitive, UseSymbols, UseNumbers: Boolean): RawByteString;
-{$ENDIF}
+function  RandomUpperAlphaStrB(const Length: Integer): UTF8String;
+function  RandomPseudoWordB(const Length: Integer): UTF8String;
+function  RandomPasswordB(const MinLength, MaxLength: Integer;
+          const CaseSensitive, UseSymbols, UseNumbers: Boolean): UTF8String;
 
 
 
@@ -310,7 +300,6 @@ begin
     end;
 end;
 
-{$IFDEF SupportRawByteString}
 function StrHashB(const S: RawByteString): Word32;
 var
   L : Integer;
@@ -321,7 +310,6 @@ begin
     exit;
   Result := HashBuffer(@S[1], Length(S));
 end;
-{$ENDIF}
 {$ENDIF}
 
 {$IFDEF MSWIN}
@@ -352,8 +340,7 @@ begin
   Result := L;
 end;
 
-{$IFDEF SupportRawByteString}
-function StrPasB(const A: PAnsiChar): RawByteString;
+function StrPasB(const A: PAnsiChar): UTF8String;
 var
   I, L : Integer;
 begin
@@ -368,9 +355,8 @@ begin
       Inc(I);
     end;
 end;
-{$ENDIF}
 
-function GetOSUserName: RawByteString;
+function GetOSUserName: UTF8String;
 var
   L : Word32;
   B : array[0..258] of Byte;
@@ -383,7 +369,7 @@ begin
     Result := '';
 end;
 
-function GetOSComputerName: RawByteString;
+function GetOSComputerName: UTF8String;
 var
   L : Word32;
   B : array[0..258] of Byte;
@@ -399,7 +385,7 @@ end;
 {$ENDIF}
 
 {$IFDEF UNIX}
-function GetOSUserName: RawByteString;
+function GetOSUserName: UTF8String;
 var
   T : RawByteString;
 begin
@@ -409,7 +395,7 @@ begin
   Result := T;
 end;
 
-function GetOSComputerName: RawByteString;
+function GetOSComputerName: UTF8String;
 begin
   Result := GetEnvironmentVariable('HOSTNAME');
 end;
@@ -562,9 +548,7 @@ end;
 procedure InitFixedSeed;
 var
   S : Int64;
-  {$IFNDEF ManagedCode}
   Q : Pointer;
-  {$ENDIF}
 begin
   { Startup Seed }
   S := StartupSeed;
@@ -574,7 +558,6 @@ begin
   S := S xor WinRandomState;
   {$ENDIF}
   { Pointer Values }
-  {$IFNDEF ManagedCode}
   Q := @FixedSeed; // Global variable
   S := Int64(S + Int64(NativeUInt(Q)));
   Q := @S; // Local variable
@@ -582,16 +565,13 @@ begin
   GetMem(Q, 17); // Heap memory
   S := Int64(S + Int64(NativeUInt(Q)));
   FreeMem(Q);
-  {$ENDIF}
   {$IFDEF MSWIN}
   { CPU Frequency }
   S := S xor GetCPUFrequency;
-  {$IFNDEF ManagedCode}
   { OS User Name }
   S := Int64(S + HashStrB(GetOSUserName));
   { OS Computer Name }
   S := Int64(S + HashStrB(GetOSComputerName));
-  {$ENDIF}
   {$ENDIF}
   {$IFDEF UNIX}
   { OS User Name }
@@ -972,19 +952,11 @@ end;
 
 const
   HexDigitsHi  : String        = '0123456789ABCDEF';
-  {$IFDEF SupportRawByteString}
-  HexDigitsHiA : RawByteString = '0123456789ABCDEF';
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
+  HexDigitsHiA : UTF8String    = '0123456789ABCDEF';
   HexDigitsHiU : UnicodeString = '0123456789ABCDEF';
-  {$ENDIF}
   HexDigitsLo  : String        = '0123456789abcdef';
-  {$IFDEF SupportRawByteString}
-  HexDigitsLoA : RawByteString = '0123456789abcdef';
-  {$ENDIF}
-  {$IFDEF SupportUnicodeString}
+  HexDigitsLoA : UTF8String    = '0123456789abcdef';
   HexDigitsLoU : UnicodeString = '0123456789abcdef';
-  {$ENDIF}
 
 function RandomHex(const Digits: Integer; const UpperCase: Boolean): String;
 var
@@ -1009,12 +981,11 @@ begin
     end;
 end;
 
-{$IFDEF SupportRawByteString}
-function RandomHexA(const Digits: Integer; const UpperCase: Boolean): RawByteString;
+function RandomHexB(const Digits: Integer; const UpperCase: Boolean): UTF8String;
 var
   I : Integer;
   D : Integer;
-  C : AnsiChar;
+  C : UTF8Char;
 begin
   if Digits <= 0 then
     begin
@@ -1032,36 +1003,7 @@ begin
       Result[I] := C;
     end;
 end;
-{$ENDIF}
 
-{$IFDEF SupportUnicodeString}
-{$IFDEF SupportWideString}
-function RandomHexW(const Digits: Integer; const UpperCase: Boolean): WideString;
-var
-  I : Integer;
-  D : Integer;
-  C : WideChar;
-begin
-  if Digits <= 0 then
-    begin
-      Result := '';
-      exit;
-    end;
-  SetLength(Result, Digits);
-  for I := 1 to Digits do
-    begin
-      D := 1 + RandomUniform(16);
-      if UpperCase then
-        C := HexDigitsHiU[D]
-      else
-        C := HexDigitsLoU[D];
-      Result[I] := C;
-    end;
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF SupportUnicodeString}
 function RandomHexU(const Digits: Integer; const UpperCase: Boolean): UnicodeString;
 var
   I : Integer;
@@ -1084,10 +1026,8 @@ begin
       Result[I] := C;
     end;
 end;
-{$ENDIF}
 
-{$IFDEF SupportRawByteString}
-function RandomUpperAlphaStrA(const Length: Integer): RawByteString;
+function RandomUpperAlphaStrB(const Length: Integer): UTF8String;
 var
   I : Integer;
 begin
@@ -1100,7 +1040,6 @@ begin
   for I := 1 to Length do
     Result[I] := AnsiChar(Ord('A') + RandomUniform(26));
 end;
-{$ENDIF}
 
 const
   Vowels         = 'AEIOUY';
@@ -1108,8 +1047,7 @@ const
   Consonants     = 'BCDFGHJKLMNPQRSTVWXZ';
   ConsonantCount = Length(Consonants);
 
-{$IFDEF SupportRawByteString}
-function RandomPseudoWordA(const Length: Integer): RawByteString;
+function RandomPseudoWordB(const Length: Integer): UTF8String;
 var
   I, A, P, T : Integer;
 begin
@@ -1135,7 +1073,6 @@ begin
       P := T;
     end;
 end;
-{$ENDIF}
 
 const
   PasswordSymbolChars = '!?@%$&-*#';
@@ -1143,9 +1080,8 @@ const
   PasswordNumberChars = '0123456789';
   PasswordNumberCharCount = Length(PasswordNumberChars);
 
-{$IFDEF SupportRawByteString}
-function RandomPasswordA(const MinLength, MaxLength: Integer;
-         const CaseSensitive, UseSymbols, UseNumbers: Boolean): RawByteString;
+function RandomPasswordB(const MinLength, MaxLength: Integer;
+         const CaseSensitive, UseSymbols, UseNumbers: Boolean): UTF8String;
 var
   I, J, K, N, Length : Integer;
   C : AnsiChar;
@@ -1159,7 +1095,7 @@ begin
     Length := MinLength
   else
     Length := MinLength + RandomUniform(MaxLength - MinLength + 1);
-  Result := RandomPseudoWordA(Length);
+  Result := RandomPseudoWordB(Length);
   if CaseSensitive then
     begin
       N := RandomUniform(1 + Length div 2);
@@ -1192,7 +1128,6 @@ begin
         end;
     end;
 end;
-{$ENDIF}
 
 
 
@@ -1246,16 +1181,14 @@ var I, L : Integer;
     V, W : Int64;
     T1, T2 : Int64;
 begin
-  {$IFDEF SupportRawByteString}
-  Assert(Length(RandomPasswordA(0, 0, True, True, True)) = 0);
-  Assert(Length(RandomPasswordA(1, 1, True, True, True)) = 1);
+  Assert(Length(RandomPasswordB(0, 0, True, True, True)) = 0);
+  Assert(Length(RandomPasswordB(1, 1, True, True, True)) = 1);
   for I := 1 to 100 do
     begin
-      L := Length(RandomPasswordA(5, 16, True, True, True));
+      L := Length(RandomPasswordB(5, 16, True, True, True));
       Assert((L >= 5) and (L <= 16));
     end;
-  Assert(Length(RandomHexA(32)) = 32);
-  {$ENDIF}
+  Assert(Length(RandomHexB(32)) = 32);
   // Note: These are simple sanity tests that may fail occasionally
   // RandomSeed/RandomUniform
   // - Check for unique numbers

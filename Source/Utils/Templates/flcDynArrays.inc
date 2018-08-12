@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.30                                                     }
+{   File version:     5.31                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -68,6 +68,7 @@
 {   2016/01/09  5.28  Revised for Fundamentals 5.                              }
 {   2016/04/16  5.29  Changes for FreePascal 3.0.0.                            }
 {   2018/07/17  5.30  Int32/Word32 functions.                                  }
+{   2018/08/12  5.31  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -130,14 +131,11 @@ function  DynArrayAppend%1%(var V: %2%Array; const R: %3%): Integer; overload; {
 {%TEMPLATE DynArrayAppend ''  'Boolean'       'Boolean'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayAppend 'A' 'AnsiString'    'AnsiString'}
-{%TEMPLATE DynArrayAppend 'B' 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayAppend 'W' 'WideString'    'WideString'}
+{%TEMPLATE DynArrayAppend 'B' 'RawByteString' 'RawByteString'}
 {%TEMPLATE DynArrayAppend 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayAppend ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayAppend ''  'Pointer'    'Pointer'}
-{$ENDIF}
 {%TEMPLATE DynArrayAppend ''  'Object'      'TObject'}
 {%TEMPLATE DynArrayAppend ''  'Interface'   'IInterface'}
 {%TEMPLATE DynArrayAppend ''  'ByteSet'     'ByteSet'}
@@ -161,17 +159,14 @@ function  DynArrayAppend%1%Array(var V: %1%Array; const R: %2%): Integer; overlo
 {%TEMPLATE DynArrayAppendArray 'Extended'      'array of Extended'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayAppendArray 'AnsiString'    'array of AnsiString'}
-{%TEMPLATE DynArrayAppendArray 'RawByteString' 'array of RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayAppendArray 'WideString'    'array of WideString'}
+{%TEMPLATE DynArrayAppendArray 'RawByteString' 'array of RawByteString'}
 {%TEMPLATE DynArrayAppendArray 'UnicodeString' 'array of UnicodeString'}
 {%TEMPLATE DynArrayAppendArray 'String'        'array of String'}
-{$IFNDEF CLR}
 {%TEMPLATE DynArrayAppendArray 'Currency'      'array of Currency'}
 {%TEMPLATE DynArrayAppendArray 'Pointer'       'array of Pointer'}
 {%TEMPLATE DynArrayAppendArray 'ByteCharSet'   'array of ByteCharSet'}
 {%TEMPLATE DynArrayAppendArray 'ByteSet'       'array of ByteSet'}
-{$ENDIF}
 {%TEMPLATE DynArrayAppendArray 'Object'        'ObjectArray'}
 
 {%DEFINE DynArrayRemove}
@@ -192,17 +187,12 @@ function  DynArrayRemove%1%(var V: %2%Array; const Idx: Integer; const Count: In
 {%TEMPLATE DynArrayRemove ''  'Extended'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayRemove 'A' 'AnsiString'}
-{%TEMPLATE DynArrayRemove 'B' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayRemove 'W' 'WideString'}
+{%TEMPLATE DynArrayRemove 'B' 'RawByteString'}
 {%TEMPLATE DynArrayRemove 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayRemove ''  'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayRemove ''  'Pointer'}
-{$ENDIF}
-{$IFNDEF CLR}
 {%TEMPLATE DynArrayRemove ''  'Currency'}
-{$ENDIF}
 function  DynArrayRemove(var V: ObjectArray; const Idx: Integer; const Count: Integer = 1;
           const FreeObjects: Boolean = False): Integer; overload;
 {%TEMPLATE DynArrayRemove ''  'Interface'}
@@ -222,12 +212,9 @@ procedure DynArrayRemoveDuplicates%1%(var V: %2%Array; const IsSorted: Boolean);
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayRemoveDuplicates 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayRemoveDuplicates 'W' 'WideString'}
 {%TEMPLATE DynArrayRemoveDuplicates 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'Pointer'}
-{$ENDIF}
 
 {%DEFINE DynArrayTrimLeft}
 procedure DynArrayTrimLeft%1%(var S: %2%Array; const TrimList: array of %3%); overload;{%ENDDEF}
@@ -244,11 +231,8 @@ procedure DynArrayTrimLeft%1%(var S: %2%Array; const TrimList: array of %3%); ov
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayTrimLeft 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayTrimLeft 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayTrimLeft 'U' 'UnicodeString' 'UnicodeString'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayTrimLeft ''  'Pointer'    'Pointer'}
-{$ENDIF}
 
 {%DEFINE DynArrayTrimRight}
 procedure DynArrayTrimRight%1%(var S: %2%Array; const TrimList: array of %3%); overload;{%ENDDEF}
@@ -265,12 +249,9 @@ procedure DynArrayTrimRight%1%(var S: %2%Array; const TrimList: array of %3%); o
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayTrimRight 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayTrimRight 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayTrimRight 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayTrimRight ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayTrimRight ''  'Pointer'       'Pointer'}
-{$ENDIF}
 
 {%DEFINE DynArrayInsert}
 function  DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: Integer): Integer; overload;{%ENDDEF}
@@ -291,15 +272,12 @@ function  DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: In
 {%TEMPLATE DynArrayInsert ''  'Currency'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayInsert 'A' 'AnsiString'}
-{%TEMPLATE DynArrayInsert 'B' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayInsert 'W' 'WideString'}
+{%TEMPLATE DynArrayInsert 'B' 'RawByteString'}
 {%TEMPLATE DynArrayInsert 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayInsert ''  'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayInsert ''  'Pointer'}
 {%TEMPLATE DynArrayInsert ''  'Object'}
-{$ENDIF}
 {%TEMPLATE DynArrayInsert ''  'Interface'}
 
 {%DEFINE DynArrayPosNext}
@@ -322,15 +300,12 @@ function  DynArrayPosNext%1%(const Find: %3%; const V: %2%Array; const PrevPos: 
 {%TEMPLATE DynArrayPosNext ''  'Boolean'       'Boolean'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPosNext 'A' 'AnsiString'    'AnsiString'}
-{%TEMPLATE DynArrayPosNext 'B' 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayPosNext 'W' 'WideString'    'WideString'}
+{%TEMPLATE DynArrayPosNext 'B' 'RawByteString' 'RawByteString'}
 {%TEMPLATE DynArrayPosNext 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayPosNext ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 function  DynArrayPosNext(const Find: Pointer; const V: PointerArray;
           const PrevPos: Integer = -1): Integer; overload;
-{$ENDIF}
 function  DynArrayPosNext(const Find: TObject; const V: ObjectArray;
           const PrevPos: Integer = -1): Integer; overload;
 function  DynArrayPosNext(const ClassType: TClass; const V: ObjectArray;
@@ -353,9 +328,8 @@ function  DynArrayCount%1%(const Find: %3%; const V: %2%Array;
 {%TEMPLATE DynArrayCount ''  'Extended'      'Extended'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayCount 'A' 'AnsiString'    'AnsiString'}
-{%TEMPLATE DynArrayCount 'B' 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayCount 'W' 'WideString'    'WideString'}
+{%TEMPLATE DynArrayCount 'B' 'RawByteString' 'RawByteString'}
 {%TEMPLATE DynArrayCount 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayCount ''  'String'        'String'}
 {%TEMPLATE DynArrayCount ''  'Boolean'       'Boolean'}
@@ -376,7 +350,6 @@ procedure DynArrayRemoveAll%1%(const Find: %3%; var V: %2%Array;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayRemoveAll 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayRemoveAll 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayRemoveAll 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayRemoveAll ''  'String'        'String'}
 
@@ -396,7 +369,6 @@ function  DynArrayIntersection%1%(const V1, V2: %2%Array;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayIntersection 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayIntersection 'W' 'WideString'}
 {%TEMPLATE DynArrayIntersection 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayIntersection ''  'String'}
 
@@ -416,7 +388,6 @@ function  DynArrayDifference%1%(const V1, V2: %2%Array;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayDifference 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayDifference 'W' 'WideString'}
 {%TEMPLATE DynArrayDifference 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayDifference ''  'String'}
 
@@ -435,12 +406,9 @@ procedure DynArrayReverse%1%(var V: %2%Array); overload;{%ENDDEF}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayReverse 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayReverse 'W' 'WideString'}
 {%TEMPLATE DynArrayReverse 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayReverse ''  'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayReverse ''  'Pointer'}
-{$ENDIF}
 {%TEMPLATE DynArrayReverse ''  'Object'}
 
 {%DEFINE OpenArrayAsDynArray}
@@ -465,15 +433,12 @@ function  As%1%Array(const V: array of %2%): %1%Array; overload;{%ENDDEF}
 {%TEMPLATE OpenArrayAsDynArray 'Currency'      'Currency'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE OpenArrayAsDynArray 'AnsiString'    'AnsiString'}
-{%TEMPLATE OpenArrayAsDynArray 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE OpenArrayAsDynArray 'WideString'    'WideString'}
+{%TEMPLATE OpenArrayAsDynArray 'RawByteString' 'RawByteString'}
 {%TEMPLATE OpenArrayAsDynArray 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE OpenArrayAsDynArray 'String'        'String'}
-{$IFNDEF ManagedCode}
-{%TEMPLATE OpenArrayAsDynArray 'Pointer'    'Pointer'}
-{$ENDIF}
-{%TEMPLATE OpenArrayAsDynArray 'ByteCharSet'    'ByteCharSet'}
+{%TEMPLATE OpenArrayAsDynArray 'Pointer'       'Pointer'}
+{%TEMPLATE OpenArrayAsDynArray 'ByteCharSet'   'ByteCharSet'}
 function  AsObjectArray(const V: array of TObject): ObjectArray; overload;
 function  AsInterfaceArray(const V: array of IInterface): InterfaceArray; overload;
 
@@ -513,7 +478,6 @@ function  DynArrayDup%1%(const V: %2%; const Count: Integer): %1%Array;{%ENDDEF}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayDup 'AnsiString'    'AnsiString' }
 {$ENDIF}
-{%TEMPLATE DynArrayDup 'WideString'    'WideString' }
 {%TEMPLATE DynArrayDup 'UnicodeString' 'UnicodeString' }
 {%TEMPLATE DynArrayDup 'String'        'String'     }
 {%TEMPLATE DynArrayDup 'ByteCharSet'   'ByteCharSet'    }
@@ -538,9 +502,7 @@ procedure SetLengthAndZero(var V: %1%Array; const NewLength: Integer); overload;
 {%TEMPLATE SetLengthAndZero 'Currency'   }
 {%TEMPLATE SetLengthAndZero 'ByteCharSet'}
 {%TEMPLATE SetLengthAndZero 'Boolean'    }
-{$IFNDEF ManagedCode}
 {%TEMPLATE SetLengthAndZero 'Pointer'    }
-{$ENDIF}
 procedure SetLengthAndZero(var V: ObjectArray; const NewLength: Integer;
           const FreeObjects: Boolean = False); overload;
 
@@ -559,9 +521,8 @@ function  DynArrayIsEqual%1%(const V1, V2: %2%Array): Boolean; overload;{%ENDDEF
 {%TEMPLATE DynArrayIsEqual ''  'Currency'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayIsEqual 'A' 'AnsiString'}
-{%TEMPLATE DynArrayIsEqual 'B' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayIsEqual 'W' 'WideString'}
+{%TEMPLATE DynArrayIsEqual 'B' 'RawByteString'}
 {%TEMPLATE DynArrayIsEqual 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayIsEqual ''  'String'}
 {%TEMPLATE DynArrayIsEqual ''  'ByteCharSet'}
@@ -622,9 +583,8 @@ procedure DynArraySort%1%(const V: %2%Array); overload;{%ENDDEF}
 {%TEMPLATE DynArraySort ''  'Extended'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArraySort 'A' 'AnsiString'}
-{%TEMPLATE DynArraySort 'B' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArraySort 'W' 'WideString'}
+{%TEMPLATE DynArraySort 'B' 'RawByteString'}
 {%TEMPLATE DynArraySort 'U' 'UnicodeString'}
 {%TEMPLATE DynArraySort ''  'String'}
 
@@ -634,17 +594,13 @@ procedure DynArraySort(const Key: %1%Array; const Data: %2%Array); overload;{%EN
 {%TEMPLATE DynArrayPairSort 'Integer' 'Int64'}
 {%TEMPLATE DynArrayPairSort 'Integer' 'AnsiString'}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Extended'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Pointer'}
-{$ENDIF}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPairSort 'AnsiString' 'Integer'}
 {%TEMPLATE DynArrayPairSort 'AnsiString' 'Int64'}
 {%TEMPLATE DynArrayPairSort 'AnsiString' 'AnsiString'}
 {%TEMPLATE DynArrayPairSort 'AnsiString' 'Extended'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayPairSort 'AnsiString' 'Pointer'}
-{$ENDIF}
 {$ENDIF}
 {%TEMPLATE DynArrayPairSort 'Extended' 'Integer'}
 {%TEMPLATE DynArrayPairSort 'Extended' 'Int64'}
@@ -652,9 +608,7 @@ procedure DynArraySort(const Key: %1%Array; const Data: %2%Array); overload;{%EN
 {%TEMPLATE DynArrayPairSort 'Extended' 'AnsiString'}
 {$ENDIF}
 {%TEMPLATE DynArrayPairSort 'Extended' 'Extended'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayPairSort 'Extended' 'Pointer'}
-{$ENDIF}
 
 
 
@@ -700,14 +654,11 @@ end;
 {%TEMPLATE DynArrayAppendImpl ''  'Boolean'       'Boolean'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayAppendImpl 'A' 'AnsiString'    'AnsiString'}
-{%TEMPLATE DynArrayAppendImpl 'B' 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayAppendImpl 'W' 'WideString'    'WideString'}
+{%TEMPLATE DynArrayAppendImpl 'B' 'RawByteString' 'RawByteString'}
 {%TEMPLATE DynArrayAppendImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayAppendImpl ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayAppendImpl ''  'Pointer'    'Pointer'}
-{$ENDIF}
 {%TEMPLATE DynArrayAppendImpl ''  'Object'     'TObject'}
 {%TEMPLATE DynArrayAppendImpl ''  'Interface'  'IInterface'}
 {%TEMPLATE DynArrayAppendImpl ''  'ByteSet'    'ByteSet'}
@@ -715,20 +666,6 @@ end;
 
 
 {%DEFINE DynArrayAppendArrayImpl}
-{$IFDEF ManagedCode}
-function DynArrayAppend%2%Array(var V: %2%Array; const R: array of %1%): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppend%2%Array(var V: %2%Array; const R: array of %1%): Integer;
 var L : Integer;
 begin
@@ -740,7 +677,6 @@ begin
       Move(R[0], V[Result], Sizeof(%1%) * L);
     end;
 end;
-{$ENDIF}
 {%ENDDEF}
 {%TEMPLATE DynArrayAppendArrayImpl 'Byte'       'Byte'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Word'       'Word'}
@@ -756,12 +692,10 @@ end;
 {%TEMPLATE DynArrayAppendArrayImpl 'Single'     'Single'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Double'     'Double'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Extended'   'Extended'}
-{$IFNDEF CLR}
 {%TEMPLATE DynArrayAppendArrayImpl 'Currency'   'Currency'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Pointer'    'Pointer'}
 {%TEMPLATE DynArrayAppendArrayImpl 'ByteCharSet' 'ByteCharSet'}
 {%TEMPLATE DynArrayAppendArrayImpl 'ByteSet'    'ByteSet'}
-{$ENDIF}
 
 function DynArrayAppendObjectArray(var V: ObjectArray; const R: ObjectArray): Integer;
 var I, LR : Integer;
@@ -789,22 +723,9 @@ begin
         V[Result + I] := R[I];
     end;
 end;
-
-function DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer;
-var I, LR : Integer;
-begin
-  Result := Length(V);
-  LR := Length(R);
-  if LR > 0 then
-    begin
-      SetLength(V, Result + LR);
-      for I := 0 to LR - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
 {$ENDIF}
 
-function DynArrayAppendWideStringArray(var V: WideStringArray; const R: array of WideString): Integer;
+function DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer;
 var I, LR : Integer;
 begin
   Result := Length(V);
@@ -850,7 +771,7 @@ end;
 {                                                                              }
 {%DEFINE DynArrayRemoveMemImpl}
 function DynArrayRemove(var V: %1%Array; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -861,13 +782,8 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(%2%));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
@@ -886,10 +802,8 @@ end;
 {%TEMPLATE DynArrayRemoveMemImpl 'Single'     'Single'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Double'     'Double'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Extended'   'Extended'}
-{$IFNDEF CLR}
 {%TEMPLATE DynArrayRemoveMemImpl 'Currency'   'Currency'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Pointer'    'Pointer'}
-{$ENDIF}
 
 function DynArrayRemove(var V: ObjectArray; const Idx: Integer; const Count: Integer;
     const FreeObjects: Boolean): Integer;
@@ -947,23 +861,6 @@ begin
   Result := J;
 end;
 
-function DynArrayRemoveW(var V: WideStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, K, L : Integer;
-begin
-  L := Length(V);
-  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
-    begin
-      Result := 0;
-      exit;
-    end;
-  I := MaxInt(Idx, 0);
-  J := MinInt(Count, L - I);
-  for K := I to L - J - 1 do
-    V[K] := V[K + J];
-  SetLength(V, L - J);
-  Result := J;
-end;
-
 function DynArrayRemoveU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
 begin
@@ -998,29 +895,6 @@ begin
   Result := J;
 end;
 
-{$IFDEF ManagedCode}
-function DynArrayRemove(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, K, L, M, F : Integer;
-begin
-  L := Length(V);
-  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
-    begin
-      Result := 0;
-      exit;
-    end;
-  I := MaxInt(Idx, 0);
-  J := MinInt(Count, L - I);
-  for K := I to I + J - 1 do
-    V[K] := nil;
-  M := L - J - I;
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  for F := 0 to J - 1 do
-    V[L - J + F] := nil;
-  SetLength(V, L - J);
-  Result := J;
-end;
-{$ELSE}
 function DynArrayRemove(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L, M : Integer;
 begin
@@ -1041,7 +915,6 @@ begin
   SetLength(V, L - J);
   Result := J;
 end;
-{$ENDIF}
 
 
 
@@ -1102,12 +975,9 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayRemoveDuplicatesImpl 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayRemoveDuplicatesImpl 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayRemoveDuplicatesImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'String'        'String'    }
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'Pointer'       'Pointer'   }
-{$ENDIF}
 
 
 {%DEFINE DynArrayTrimLeftImpl}
@@ -1145,12 +1015,9 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayTrimLeftImpl 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayTrimLeftImpl 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayTrimLeftImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'Pointer'       'Pointer'}
-{$ENDIF}
 
 {%DEFINE DynArrayTrimRightImpl}
 procedure DynArrayTrimRight%1%(var S: %2%Array; const TrimList: array of %3%); overload;
@@ -1187,38 +1054,14 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayTrimRightImpl 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayTrimRightImpl 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayTrimRightImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayTrimRightImpl ''  'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayTrimRightImpl ''  'Pointer'       'Pointer'}
-{$ENDIF}
 
 {                                                                              }
 { DynArrayInsert                                                               }
 {                                                                              }
 {%DEFINE DynArrayInsertImpl}
-{$IFDEF ManagedCode}
-function DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := %4%;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -1239,7 +1082,6 @@ begin
   FillChar(P^, Count * Sizeof(%3%), #0);
   Result := I;
 end;
-{$ENDIF}
 {%ENDDEF}
 {%TEMPLATE DynArrayInsertImpl ''  'Byte'          'Byte'          '0'}
 {%TEMPLATE DynArrayInsertImpl ''  'Word'          'Word'          '0'}
@@ -1258,15 +1100,12 @@ end;
 {%TEMPLATE DynArrayInsertImpl ''  'Currency'      'Currency'      '0.0'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayInsertImpl 'A' 'AnsiString'    'AnsiString'    ''''''}
-{%TEMPLATE DynArrayInsertImpl 'B' 'RawByteString' 'RawByteString' ''''''}
 {$ENDIF}
-{%TEMPLATE DynArrayInsertImpl 'W' 'WideString'    'WideString'    ''''''}
+{%TEMPLATE DynArrayInsertImpl 'B' 'RawByteString' 'RawByteString' ''''''}
 {%TEMPLATE DynArrayInsertImpl 'U' 'UnicodeString' 'UnicodeString' ''''''}
 {%TEMPLATE DynArrayInsertImpl ''  'String'        'String'        ''''''}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayInsertImpl ''  'Pointer'       'Pointer'       'nil'}
 {%TEMPLATE DynArrayInsertImpl ''  'Object'        'Pointer'       'nil'}
-{$ENDIF}
 {%TEMPLATE DynArrayInsertImpl ''  'Interface'     'IInterface'    'nil'}
 
 {%DEFINE ArrayValue}%1%{%ENDDEF}
@@ -1346,9 +1185,8 @@ end;
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'Boolean'       'Boolean'    }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPosNextArrayImpl 'A' 'AnsiString'    'AnsiString' }
-{%TEMPLATE DynArrayPosNextArrayImpl 'B' 'RawByteString' 'RawByteString' }
 {$ENDIF}
-{%TEMPLATE DynArrayPosNextArrayImpl 'W' 'WideString'    'WideString' }
+{%TEMPLATE DynArrayPosNextArrayImpl 'B' 'RawByteString' 'RawByteString' }
 {%TEMPLATE DynArrayPosNextArrayImpl 'U' 'UnicodeString' 'UnicodeString' }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'String'        'String'     }
 function DynArrayPosNext(const Find: TObject; const V: ObjectArray; const PrevPos: Integer): Integer;
@@ -1391,7 +1229,6 @@ begin
   Result := -1;
 end;
 
-{$IFNDEF ManagedCode}
 function DynArrayPosNext(const Find: Pointer; const V: PointerArray; const PrevPos: Integer): Integer;
 var I : Integer;
 begin
@@ -1403,7 +1240,6 @@ begin
        end;
   Result := -1;
 end;
-{$ENDIF}
 
 
 
@@ -1453,9 +1289,8 @@ end;
 {%TEMPLATE DynArrayCountImpl ''  'Extended'      'Extended'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayCountImpl 'A' 'AnsiString'    'AnsiString'}
-{%TEMPLATE DynArrayCountImpl 'B' 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayCountImpl 'W' 'WideString'    'WideString'}
+{%TEMPLATE DynArrayCountImpl 'B' 'RawByteString' 'RawByteString'}
 {%TEMPLATE DynArrayCountImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayCountImpl ''  'String'        'String'}
 {%TEMPLATE DynArrayCountImpl ''  'Boolean'       'Boolean'}
@@ -1492,7 +1327,6 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayRemoveAllImpl 'A' 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayRemoveAllImpl 'W' 'WideString'    'WideString'}
 {%TEMPLATE DynArrayRemoveAllImpl 'U' 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayRemoveAllImpl ''  'String'        'String'}
 
@@ -1574,7 +1408,6 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayIntersectionImpl 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayIntersectionImpl 'W' 'WideString'}
 {%TEMPLATE DynArrayIntersectionImpl 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayIntersectionImpl ''  'String'}
 
@@ -1657,7 +1490,6 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayDifferenceImpl 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayDifferenceImpl 'W' 'WideString'}
 {%TEMPLATE DynArrayDifferenceImpl 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayDifferenceImpl ''  'String'}
 
@@ -1684,12 +1516,9 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayReverseImpl 'A' 'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayReverseImpl 'W' 'WideString'}
 {%TEMPLATE DynArrayReverseImpl 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayReverseImpl ''  'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayReverseImpl ''  'Pointer'}
-{$ENDIF}
 {%TEMPLATE DynArrayReverseImpl ''  'Object'}
 {%TEMPLATE DynArrayReverseImpl ''  'Single'}
 {%TEMPLATE DynArrayReverseImpl ''  'Double'}
@@ -1728,14 +1557,11 @@ end;
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Currency'      'Currency'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'AnsiString'    'AnsiString'}
-{%TEMPLATE OpenArrayAsDynArrayImpl 'RawByteString' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE OpenArrayAsDynArrayImpl 'WideString'    'WideString'}
+{%TEMPLATE OpenArrayAsDynArrayImpl 'RawByteString' 'RawByteString'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'String'        'String'}
-{$IFNDEF ManagedCode}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Pointer'       'Pointer'}
-{$ENDIF}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'ByteCharSet'   'ByteCharSet'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Object'        'TObject'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Interface'     'IInterface'}
@@ -1772,20 +1598,6 @@ end;
 {                                                                              }
 { DynArrayDup                                                                  }
 {                                                                              }
-{$IFDEF ManagedCode}
-function DynArrayDupByte(const V: Byte; const Count: Integer): ByteArray;
-var I : Integer;
-begin
-  if Count <= 0 then
-    begin
-      SetLength(Result, 0);
-      exit;
-    end;
-  SetLength(Result, Count);
-  for I := 0 to Count - 1 do
-    Result[I] := 0;
-end;
-{$ELSE}
 function DynArrayDupByte(const V: Byte; const Count: Integer): ByteArray;
 begin
   if Count <= 0 then
@@ -1796,7 +1608,6 @@ begin
   SetLength(Result, Count);
   FillChar(Result[0], Count, V);
 end;
-{$ENDIF}
 
 {%DEFINE DynArrayDupImpl}
 function DynArrayDup%1%(const V: %2%; const Count: Integer): %1%Array;
@@ -1829,7 +1640,6 @@ end;
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayDupImpl 'AnsiString'    'AnsiString'}
 {$ENDIF}
-{%TEMPLATE DynArrayDupImpl 'WideString'    'WideString'}
 {%TEMPLATE DynArrayDupImpl 'UnicodeString' 'UnicodeString'}
 {%TEMPLATE DynArrayDupImpl 'String'        'String'}
 {%TEMPLATE DynArrayDupImpl 'ByteCharSet'   'ByteCharSet'}
@@ -1840,23 +1650,6 @@ end;
 { SetLengthAndZero                                                             }
 {                                                                              }
 {%DEFINE SetLengthAndZeroImpl}
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: %1%Array; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := %3%;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: %1%Array; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -1871,7 +1664,6 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(%2%) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 {%ENDDEF}
 {%TEMPLATE SetLengthAndZeroImpl 'Byte'       'Byte'       '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'Word'       'Word'       '0'}
@@ -1890,9 +1682,7 @@ end;
 {%TEMPLATE SetLengthAndZeroImpl 'Currency'   'Currency'   '0.0'}
 {%TEMPLATE SetLengthAndZeroImpl 'ByteCharSet' 'ByteCharSet'    '[]'}
 {%TEMPLATE SetLengthAndZeroImpl 'Boolean'    'Boolean'    'False'}
-{$IFNDEF Managedcode}
 {%TEMPLATE SetLengthAndZeroImpl 'Pointer'  'Pointer'   'nil'}
-{$ENDIF}
 procedure SetLengthAndZero(var V: ObjectArray; const NewLength: Integer;
     const FreeObjects: Boolean);
 var I, L : Integer;
@@ -1906,12 +1696,7 @@ begin
   SetLength(V, NewLength);
   if L > NewLength then
     exit;
-  {$IFDEF ManagedCode}
-  for I := 0 to NewLength - L - 1 do
-    V[L + I] := nil;
-  {$ELSE}
   FillChar(V[L], Sizeof(Pointer) * (NewLength - L), #0);
-  {$ENDIF}
 end;
 
 
@@ -1920,25 +1705,6 @@ end;
 { DynArrayIsEqual                                                              }
 {                                                                              }
 {%DEFINE DynArrayIsEqualMemImpl}
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: %1%Array): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: %1%Array): Boolean;
 var L : Integer;
 begin
@@ -1950,7 +1716,6 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(%1%) * L);
 end;
-{$ENDIF}
 {%ENDDEF}
 {%DEFINE DynArrayIsEqualBruteImpl}
 function DynArrayIsEqual%1%(const V1, V2: %2%Array): Boolean;
@@ -1984,9 +1749,8 @@ end;
 {%TEMPLATE DynArrayIsEqualMemImpl   'Currency'}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayIsEqualBruteImpl 'A' 'AnsiString'}
-{%TEMPLATE DynArrayIsEqualBruteImpl 'B' 'RawByteString'}
 {$ENDIF}
-{%TEMPLATE DynArrayIsEqualBruteImpl 'W' 'WideString'}
+{%TEMPLATE DynArrayIsEqualBruteImpl 'B' 'RawByteString'}
 {%TEMPLATE DynArrayIsEqualBruteImpl 'U' 'UnicodeString'}
 {%TEMPLATE DynArrayIsEqualBruteImpl ''  'String'}
 {%TEMPLATE DynArrayIsEqualBruteImpl ''  'ByteCharSet'}
@@ -2121,68 +1885,13 @@ end;
 {%TEMPLATE DynArraySortImpl ''  'Extended'      'Extended'   }
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArraySortImpl 'A' 'AnsiString'    'AnsiString' }
-{%TEMPLATE DynArraySortImpl 'B' 'RawByteString' 'RawByteString' }
 {$ENDIF}
-{%TEMPLATE DynArraySortImpl 'W' 'WideString'    'WideString' }
+{%TEMPLATE DynArraySortImpl 'B' 'RawByteString' 'RawByteString' }
 {%TEMPLATE DynArraySortImpl 'U' 'UnicodeString' 'UnicodeString' }
 {%TEMPLATE DynArraySortImpl ''  'String'        'String'     }
 
 
 {%DEFINE DynArrayPairSortImpl}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: %1%Array; const Data: %2%Array);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : %3%;
-      A       : %4%;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: %1%Array; const Data: %2%Array);
 
   procedure QuickSort(L, R: Integer);
@@ -2246,23 +1955,18 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 {%ENDDEF}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Integer'    'Integer' 'Integer'   }
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Int64'      'Integer' 'Int64'     }
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'AnsiString' 'Integer' 'AnsiString'}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Extended'   'Integer' 'Extended'  }
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Pointer'  'Integer' 'Pointer'   }
-{$ENDIF}
 {$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPairSortImpl 'AnsiString' 'Integer'    'AnsiString' 'Integer'   }
 {%TEMPLATE DynArrayPairSortImpl 'AnsiString' 'Int64'      'AnsiString' 'Int64'     }
 {%TEMPLATE DynArrayPairSortImpl 'AnsiString' 'AnsiString' 'AnsiString' 'AnsiString'}
 {%TEMPLATE DynArrayPairSortImpl 'AnsiString' 'Extended'   'AnsiString' 'Extended'  }
-{$IFNDEF Managedcode}
 {%TEMPLATE DynArrayPairSortImpl 'AnsiString' 'Pointer'   'AnsiString' 'Pointer'   }
-{$ENDIF}
 {$ENDIF}
 {%TEMPLATE DynArrayPairSortImpl 'Extended' 'Integer'    'Extended'   'Integer'   }
 {%TEMPLATE DynArrayPairSortImpl 'Extended' 'Int64'      'Extended'   'Int64'     }
@@ -2270,9 +1974,7 @@ end;
 {%TEMPLATE DynArrayPairSortImpl 'Extended' 'AnsiString' 'Extended'   'AnsiString'}
 {$ENDIF}
 {%TEMPLATE DynArrayPairSortImpl 'Extended' 'Extended'   'Extended'   'Extended'  }
-{$IFNDEF ManagedCode}
 {%TEMPLATE DynArrayPairSortImpl 'Extended' 'Pointer'  'Extended'   'Pointer'   }
-{$ENDIF}
 
 
 

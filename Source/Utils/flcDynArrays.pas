@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.29                                                     }
+{   File version:     5.31                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -67,6 +67,8 @@
 {   2015/03/13  4.27  RawByteString functions.                                 }
 {   2016/01/09  5.28  Revised for Fundamentals 5.                              }
 {   2016/04/16  5.29  Changes for FreePascal 3.0.0.                            }
+{   2018/07/17  5.30  Int32/Word32 functions.                                  }
+{   2018/08/12  5.31  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -127,14 +129,11 @@ function  DynArrayAppend(var V: CurrencyArray; const R: Currency): Integer; over
 function  DynArrayAppend(var V: BooleanArray; const R: Boolean): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayAppendA(var V: AnsiStringArray; const R: AnsiString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
-function  DynArrayAppendB(var V: RawByteStringArray; const R: RawByteString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 {$ENDIF}
-function  DynArrayAppendW(var V: WideStringArray; const R: WideString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+function  DynArrayAppendB(var V: RawByteStringArray; const R: RawByteString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppendU(var V: UnicodeStringArray; const R: UnicodeString): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: StringArray; const R: String): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
-{$IFNDEF ManagedCode}
 function  DynArrayAppend(var V: PointerArray; const R: Pointer): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
-{$ENDIF}
 function  DynArrayAppend(var V: ObjectArray; const R: TObject): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: InterfaceArray; const R: IInterface): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: ByteSetArray; const R: ByteSet): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
@@ -156,17 +155,14 @@ function  DynArrayAppendDoubleArray(var V: DoubleArray; const R: array of Double
 function  DynArrayAppendExtendedArray(var V: ExtendedArray; const R: array of Extended): Integer; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayAppendAnsiStringArray(var V: AnsiStringArray; const R: array of AnsiString): Integer; overload;
-function  DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer; overload;
 {$ENDIF}
-function  DynArrayAppendWideStringArray(var V: WideStringArray; const R: array of WideString): Integer; overload;
+function  DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer; overload;
 function  DynArrayAppendUnicodeStringArray(var V: UnicodeStringArray; const R: array of UnicodeString): Integer; overload;
 function  DynArrayAppendStringArray(var V: StringArray; const R: array of String): Integer; overload;
-{$IFNDEF CLR}
 function  DynArrayAppendCurrencyArray(var V: CurrencyArray; const R: array of Currency): Integer; overload;
 function  DynArrayAppendPointerArray(var V: PointerArray; const R: array of Pointer): Integer; overload;
 function  DynArrayAppendByteCharSetArray(var V: ByteCharSetArray; const R: array of ByteCharSet): Integer; overload;
 function  DynArrayAppendByteSetArray(var V: ByteSetArray; const R: array of ByteSet): Integer; overload;
-{$ENDIF}
 function  DynArrayAppendObjectArray(var V: ObjectArray; const R: ObjectArray): Integer; overload;
 
 function  DynArrayRemove(var V: ByteArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
@@ -185,17 +181,12 @@ function  DynArrayRemove(var V: DoubleArray; const Idx: Integer; const Count: In
 function  DynArrayRemove(var V: ExtendedArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayRemoveA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
-function  DynArrayRemoveB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 {$ENDIF}
-function  DynArrayRemoveW(var V: WideStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
+function  DynArrayRemoveB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemoveU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: StringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
-{$IFNDEF ManagedCode}
 function  DynArrayRemove(var V: PointerArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
-{$ENDIF}
-{$IFNDEF CLR}
 function  DynArrayRemove(var V: CurrencyArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
-{$ENDIF}
 function  DynArrayRemove(var V: ObjectArray; const Idx: Integer; const Count: Integer = 1;
           const FreeObjects: Boolean = False): Integer; overload;
 function  DynArrayRemove(var V: InterfaceArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
@@ -213,12 +204,9 @@ procedure DynArrayRemoveDuplicates(var V: ExtendedArray; const IsSorted: Boolean
 {$IFDEF SupportAnsiString}
 procedure DynArrayRemoveDuplicatesA(var V: AnsiStringArray; const IsSorted: Boolean); overload;
 {$ENDIF}
-procedure DynArrayRemoveDuplicatesW(var V: WideStringArray; const IsSorted: Boolean); overload;
 procedure DynArrayRemoveDuplicatesU(var V: UnicodeStringArray; const IsSorted: Boolean); overload;
 procedure DynArrayRemoveDuplicates(var V: StringArray; const IsSorted: Boolean); overload;
-{$IFNDEF ManagedCode}
 procedure DynArrayRemoveDuplicates(var V: PointerArray; const IsSorted: Boolean); overload;
-{$ENDIF}
 
 procedure DynArrayTrimLeft(var S: ByteArray; const TrimList: array of Byte); overload;
 procedure DynArrayTrimLeft(var S: WordArray; const TrimList: array of Word); overload;
@@ -233,11 +221,8 @@ procedure DynArrayTrimLeft(var S: ExtendedArray; const TrimList: array of Extend
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimLeftA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
 {$ENDIF}
-procedure DynArrayTrimLeftW(var S: WideStringArray; const TrimList: array of WideString); overload;
 procedure DynArrayTrimLeftU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
-{$IFNDEF ManagedCode}
 procedure DynArrayTrimLeft(var S: PointerArray; const TrimList: array of Pointer); overload;
-{$ENDIF}
 
 procedure DynArrayTrimRight(var S: ByteArray; const TrimList: array of Byte); overload;
 procedure DynArrayTrimRight(var S: WordArray; const TrimList: array of Word); overload;
@@ -252,12 +237,9 @@ procedure DynArrayTrimRight(var S: ExtendedArray; const TrimList: array of Exten
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimRightA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
 {$ENDIF}
-procedure DynArrayTrimRightW(var S: WideStringArray; const TrimList: array of WideString); overload;
 procedure DynArrayTrimRightU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
 procedure DynArrayTrimRight(var S: StringArray; const TrimList: array of String); overload;
-{$IFNDEF ManagedCode}
 procedure DynArrayTrimRight(var S: PointerArray; const TrimList: array of Pointer); overload;
-{$ENDIF}
 
 function  DynArrayInsert(var V: ByteArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsert(var V: WordArray; const Idx: Integer; const Count: Integer): Integer; overload;
@@ -276,15 +258,12 @@ function  DynArrayInsert(var V: ExtendedArray; const Idx: Integer; const Count: 
 function  DynArrayInsert(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayInsertA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
-function  DynArrayInsertB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
 {$ENDIF}
-function  DynArrayInsertW(var V: WideStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
+function  DynArrayInsertB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsertU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsert(var V: StringArray; const Idx: Integer; const Count: Integer): Integer; overload;
-{$IFNDEF ManagedCode}
 function  DynArrayInsert(var V: PointerArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsert(var V: ObjectArray; const Idx: Integer; const Count: Integer): Integer; overload;
-{$ENDIF}
 function  DynArrayInsert(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer; overload;
 
 function  DynArrayPosNext(const Find: Byte; const V: ByteArray; const PrevPos: Integer = -1;
@@ -320,19 +299,15 @@ function  DynArrayPosNext(const Find: Boolean; const V: BooleanArray; const Prev
 {$IFDEF SupportAnsiString}
 function  DynArrayPosNextA(const Find: AnsiString; const V: AnsiStringArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
-function  DynArrayPosNextB(const Find: RawByteString; const V: RawByteStringArray; const PrevPos: Integer = -1;
-          const IsSortedAscending: Boolean = False): Integer; overload;
 {$ENDIF}
-function  DynArrayPosNextW(const Find: WideString; const V: WideStringArray; const PrevPos: Integer = -1;
+function  DynArrayPosNextB(const Find: RawByteString; const V: RawByteStringArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNextU(const Find: UnicodeString; const V: UnicodeStringArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: String; const V: StringArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
-{$IFNDEF ManagedCode}
 function  DynArrayPosNext(const Find: Pointer; const V: PointerArray;
           const PrevPos: Integer = -1): Integer; overload;
-{$ENDIF}
 function  DynArrayPosNext(const Find: TObject; const V: ObjectArray;
           const PrevPos: Integer = -1): Integer; overload;
 function  DynArrayPosNext(const ClassType: TClass; const V: ObjectArray;
@@ -363,10 +338,8 @@ function  DynArrayCount(const Find: Extended; const V: ExtendedArray;
 {$IFDEF SupportAnsiString}
 function  DynArrayCountA(const Find: AnsiString; const V: AnsiStringArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
-function  DynArrayCountB(const Find: RawByteString; const V: RawByteStringArray;
-          const IsSortedAscending: Boolean = False): Integer; overload;
 {$ENDIF}
-function  DynArrayCountW(const Find: WideString; const V: WideStringArray;
+function  DynArrayCountB(const Find: RawByteString; const V: RawByteStringArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayCountU(const Find: UnicodeString; const V: UnicodeStringArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
@@ -399,8 +372,6 @@ procedure DynArrayRemoveAll(const Find: Extended; var V: ExtendedArray;
 procedure DynArrayRemoveAllA(const Find: AnsiString; var V: AnsiStringArray;
           const IsSortedAscending: Boolean = False); overload; 
 {$ENDIF}
-procedure DynArrayRemoveAllW(const Find: WideString; var V: WideStringArray;
-          const IsSortedAscending: Boolean = False); overload; 
 procedure DynArrayRemoveAllU(const Find: UnicodeString; var V: UnicodeStringArray;
           const IsSortedAscending: Boolean = False); overload; 
 procedure DynArrayRemoveAll(const Find: String; var V: StringArray;
@@ -430,8 +401,6 @@ function  DynArrayIntersection(const V1, V2: ExtendedArray;
 function  DynArrayIntersectionA(const V1, V2: AnsiStringArray;
           const IsSortedAscending: Boolean = False): AnsiStringArray; overload;
 {$ENDIF}
-function  DynArrayIntersectionW(const V1, V2: WideStringArray;
-          const IsSortedAscending: Boolean = False): WideStringArray; overload;
 function  DynArrayIntersectionU(const V1, V2: UnicodeStringArray;
           const IsSortedAscending: Boolean = False): UnicodeStringArray; overload;
 function  DynArrayIntersection(const V1, V2: StringArray;
@@ -461,8 +430,6 @@ function  DynArrayDifference(const V1, V2: ExtendedArray;
 function  DynArrayDifferenceA(const V1, V2: AnsiStringArray;
           const IsSortedAscending: Boolean = False): AnsiStringArray; overload;
 {$ENDIF}
-function  DynArrayDifferenceW(const V1, V2: WideStringArray;
-          const IsSortedAscending: Boolean = False): WideStringArray; overload;
 function  DynArrayDifferenceU(const V1, V2: UnicodeStringArray;
           const IsSortedAscending: Boolean = False): UnicodeStringArray; overload;
 function  DynArrayDifference(const V1, V2: StringArray;
@@ -481,12 +448,9 @@ procedure DynArrayReverse(var V: ExtendedArray); overload;
 {$IFDEF SupportAnsiString}
 procedure DynArrayReverseA(var V: AnsiStringArray); overload;
 {$ENDIF}
-procedure DynArrayReverseW(var V: WideStringArray); overload;
 procedure DynArrayReverseU(var V: UnicodeStringArray); overload;
 procedure DynArrayReverse(var V: StringArray); overload;
-{$IFNDEF ManagedCode}
 procedure DynArrayReverse(var V: PointerArray); overload;
-{$ENDIF}
 procedure DynArrayReverse(var V: ObjectArray); overload;
 
 function  AsBooleanArray(const V: array of Boolean): BooleanArray; overload;
@@ -509,14 +473,11 @@ function  AsExtendedArray(const V: array of Extended): ExtendedArray; overload;
 function  AsCurrencyArray(const V: array of Currency): CurrencyArray; overload;
 {$IFDEF SupportAnsiString}
 function  AsAnsiStringArray(const V: array of AnsiString): AnsiStringArray; overload;
-function  AsRawByteStringArray(const V: array of RawByteString): RawByteStringArray; overload;
 {$ENDIF}
-function  AsWideStringArray(const V: array of WideString): WideStringArray; overload;
+function  AsRawByteStringArray(const V: array of RawByteString): RawByteStringArray; overload;
 function  AsUnicodeStringArray(const V: array of UnicodeString): UnicodeStringArray; overload;
 function  AsStringArray(const V: array of String): StringArray; overload;
-{$IFNDEF ManagedCode}
 function  AsPointerArray(const V: array of Pointer): PointerArray; overload;
-{$ENDIF}
 function  AsByteCharSetArray(const V: array of ByteCharSet): ByteCharSetArray; overload;
 function  AsObjectArray(const V: array of TObject): ObjectArray; overload;
 function  AsInterfaceArray(const V: array of IInterface): InterfaceArray; overload;
@@ -564,7 +525,6 @@ function  DynArrayDupCurrency(const V: Currency; const Count: Integer): Currency
 {$IFDEF SupportAnsiString}
 function  DynArrayDupAnsiString(const V: AnsiString; const Count: Integer): AnsiStringArray;
 {$ENDIF}
-function  DynArrayDupWideString(const V: WideString; const Count: Integer): WideStringArray;
 function  DynArrayDupUnicodeString(const V: UnicodeString; const Count: Integer): UnicodeStringArray;
 function  DynArrayDupString(const V: String; const Count: Integer): StringArray;
 function  DynArrayDupByteCharSet(const V: ByteCharSet; const Count: Integer): ByteCharSetArray;
@@ -587,9 +547,7 @@ procedure SetLengthAndZero(var V: ExtendedArray; const NewLength: Integer); over
 procedure SetLengthAndZero(var V: CurrencyArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: ByteCharSetArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: BooleanArray; const NewLength: Integer); overload;
-{$IFNDEF ManagedCode}
 procedure SetLengthAndZero(var V: PointerArray; const NewLength: Integer); overload;
-{$ENDIF}
 procedure SetLengthAndZero(var V: ObjectArray; const NewLength: Integer;
           const FreeObjects: Boolean = False); overload;
 
@@ -606,9 +564,8 @@ function  DynArrayIsEqual(const V1, V2: ExtendedArray): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: CurrencyArray): Boolean; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayIsEqualA(const V1, V2: AnsiStringArray): Boolean; overload;
-function  DynArrayIsEqualB(const V1, V2: RawByteStringArray): Boolean; overload;
 {$ENDIF}
-function  DynArrayIsEqualW(const V1, V2: WideStringArray): Boolean; overload;
+function  DynArrayIsEqualB(const V1, V2: RawByteStringArray): Boolean; overload;
 function  DynArrayIsEqualU(const V1, V2: UnicodeStringArray): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: StringArray): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: ByteCharSetArray): Boolean; overload;
@@ -675,9 +632,8 @@ procedure DynArraySort(const V: DoubleArray); overload;
 procedure DynArraySort(const V: ExtendedArray); overload;
 {$IFDEF SupportAnsiString}
 procedure DynArraySortA(const V: AnsiStringArray); overload;
-procedure DynArraySortB(const V: RawByteStringArray); overload;
 {$ENDIF}
-procedure DynArraySortW(const V: WideStringArray); overload;
+procedure DynArraySortB(const V: RawByteStringArray); overload;
 procedure DynArraySortU(const V: UnicodeStringArray); overload;
 procedure DynArraySort(const V: StringArray); overload;
 
@@ -685,17 +641,13 @@ procedure DynArraySort(const Key: IntegerArray; const Data: IntegerArray); overl
 procedure DynArraySort(const Key: IntegerArray; const Data: Int64Array); overload;
 procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray); overload;
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray); overload;
-{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray); overload;
-{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: IntegerArray); overload;
 procedure DynArraySort(const Key: AnsiStringArray; const Data: Int64Array); overload;
 procedure DynArraySort(const Key: AnsiStringArray; const Data: AnsiStringArray); overload;
 procedure DynArraySort(const Key: AnsiStringArray; const Data: ExtendedArray); overload;
-{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: PointerArray); overload;
-{$ENDIF}
 {$ENDIF}
 procedure DynArraySort(const Key: ExtendedArray; const Data: IntegerArray); overload;
 procedure DynArraySort(const Key: ExtendedArray; const Data: Int64Array); overload;
@@ -703,9 +655,7 @@ procedure DynArraySort(const Key: ExtendedArray; const Data: Int64Array); overlo
 procedure DynArraySort(const Key: ExtendedArray; const Data: AnsiStringArray); overload;
 {$ENDIF}
 procedure DynArraySort(const Key: ExtendedArray; const Data: ExtendedArray); overload;
-{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: ExtendedArray; const Data: PointerArray); overload;
-{$ENDIF}
 
 
 
@@ -845,15 +795,8 @@ begin
   V[Result] := R;
 end;
 
-function DynArrayAppendB(var V: RawByteStringArray; const R: RawByteString): Integer;
-begin
-  Result := Length(V);
-  SetLength(V, Result + 1);
-  V[Result] := R;
-end;
-
 {$ENDIF}
-function DynArrayAppendW(var V: WideStringArray; const R: WideString): Integer;
+function DynArrayAppendB(var V: RawByteStringArray; const R: RawByteString): Integer;
 begin
   Result := Length(V);
   SetLength(V, Result + 1);
@@ -874,7 +817,6 @@ begin
   V[Result] := R;
 end;
 
-{$IFNDEF ManagedCode}
 function DynArrayAppend(var V: PointerArray; const R: Pointer): Integer;
 begin
   Result := Length(V);
@@ -882,7 +824,6 @@ begin
   V[Result] := R;
 end;
 
-{$ENDIF}
 function DynArrayAppend(var V: ObjectArray; const R: TObject): Integer;
 begin
   Result := Length(V);
@@ -913,20 +854,6 @@ end;
 
 
 
-{$IFDEF ManagedCode}
-function DynArrayAppendByteArray(var V: ByteArray; const R: array of Byte): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendByteArray(var V: ByteArray; const R: array of Byte): Integer;
 var L : Integer;
 begin
@@ -938,22 +865,7 @@ begin
       Move(R[0], V[Result], Sizeof(Byte) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendWordArray(var V: WordArray; const R: array of Word): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendWordArray(var V: WordArray; const R: array of Word): Integer;
 var L : Integer;
 begin
@@ -965,22 +877,7 @@ begin
       Move(R[0], V[Result], Sizeof(Word) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendWord32Array(var V: Word32Array; const R: array of Word32): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendWord32Array(var V: Word32Array; const R: array of Word32): Integer;
 var L : Integer;
 begin
@@ -992,22 +889,7 @@ begin
       Move(R[0], V[Result], Sizeof(Word32) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendCardinalArray(var V: CardinalArray; const R: array of Cardinal): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendCardinalArray(var V: CardinalArray; const R: array of Cardinal): Integer;
 var L : Integer;
 begin
@@ -1019,22 +901,7 @@ begin
       Move(R[0], V[Result], Sizeof(Cardinal) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendNativeUIntArray(var V: NativeUIntArray; const R: array of NativeUInt): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendNativeUIntArray(var V: NativeUIntArray; const R: array of NativeUInt): Integer;
 var L : Integer;
 begin
@@ -1046,22 +913,7 @@ begin
       Move(R[0], V[Result], Sizeof(NativeUInt) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendShortIntArray(var V: ShortIntArray; const R: array of ShortInt): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendShortIntArray(var V: ShortIntArray; const R: array of ShortInt): Integer;
 var L : Integer;
 begin
@@ -1073,22 +925,7 @@ begin
       Move(R[0], V[Result], Sizeof(ShortInt) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendSmallIntArray(var V: SmallIntArray; const R: array of SmallInt): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendSmallIntArray(var V: SmallIntArray; const R: array of SmallInt): Integer;
 var L : Integer;
 begin
@@ -1100,22 +937,7 @@ begin
       Move(R[0], V[Result], Sizeof(SmallInt) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendInt32Array(var V: Int32Array; const R: array of Int32): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendInt32Array(var V: Int32Array; const R: array of Int32): Integer;
 var L : Integer;
 begin
@@ -1127,22 +949,7 @@ begin
       Move(R[0], V[Result], Sizeof(Int32) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of LongInt): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of LongInt): Integer;
 var L : Integer;
 begin
@@ -1154,22 +961,7 @@ begin
       Move(R[0], V[Result], Sizeof(LongInt) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendInt64Array(var V: Int64Array; const R: array of Int64): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendInt64Array(var V: Int64Array; const R: array of Int64): Integer;
 var L : Integer;
 begin
@@ -1181,22 +973,7 @@ begin
       Move(R[0], V[Result], Sizeof(Int64) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendNativeIntArray(var V: NativeIntArray; const R: array of NativeInt): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendNativeIntArray(var V: NativeIntArray; const R: array of NativeInt): Integer;
 var L : Integer;
 begin
@@ -1208,22 +985,7 @@ begin
       Move(R[0], V[Result], Sizeof(NativeInt) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendSingleArray(var V: SingleArray; const R: array of Single): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendSingleArray(var V: SingleArray; const R: array of Single): Integer;
 var L : Integer;
 begin
@@ -1235,22 +997,7 @@ begin
       Move(R[0], V[Result], Sizeof(Single) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendDoubleArray(var V: DoubleArray; const R: array of Double): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendDoubleArray(var V: DoubleArray; const R: array of Double): Integer;
 var L : Integer;
 begin
@@ -1262,22 +1009,7 @@ begin
       Move(R[0], V[Result], Sizeof(Double) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendExtendedArray(var V: ExtendedArray; const R: array of Extended): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendExtendedArray(var V: ExtendedArray; const R: array of Extended): Integer;
 var L : Integer;
 begin
@@ -1289,23 +1021,7 @@ begin
       Move(R[0], V[Result], Sizeof(Extended) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFNDEF CLR}
-{$IFDEF ManagedCode}
-function DynArrayAppendCurrencyArray(var V: CurrencyArray; const R: array of Currency): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendCurrencyArray(var V: CurrencyArray; const R: array of Currency): Integer;
 var L : Integer;
 begin
@@ -1317,22 +1033,7 @@ begin
       Move(R[0], V[Result], Sizeof(Currency) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendPointerArray(var V: PointerArray; const R: array of Pointer): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendPointerArray(var V: PointerArray; const R: array of Pointer): Integer;
 var L : Integer;
 begin
@@ -1344,22 +1045,7 @@ begin
       Move(R[0], V[Result], Sizeof(Pointer) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendByteCharSetArray(var V: ByteCharSetArray; const R: array of ByteCharSet): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendByteCharSetArray(var V: ByteCharSetArray; const R: array of ByteCharSet): Integer;
 var L : Integer;
 begin
@@ -1371,22 +1057,7 @@ begin
       Move(R[0], V[Result], Sizeof(ByteCharSet) * L);
     end;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayAppendByteSetArray(var V: ByteSetArray; const R: array of ByteSet): Integer;
-var I, L : Integer;
-begin
-  Result := Length(V);
-  L := Length(R);
-  if L > 0 then
-    begin
-      SetLength(V, Result + L);
-      for I := 0 to L - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
-{$ELSE}
 function DynArrayAppendByteSetArray(var V: ByteSetArray; const R: array of ByteSet): Integer;
 var L : Integer;
 begin
@@ -1398,9 +1069,7 @@ begin
       Move(R[0], V[Result], Sizeof(ByteSet) * L);
     end;
 end;
-{$ENDIF}
 
-{$ENDIF}
 
 function DynArrayAppendObjectArray(var V: ObjectArray; const R: ObjectArray): Integer;
 var I, LR : Integer;
@@ -1428,22 +1097,9 @@ begin
         V[Result + I] := R[I];
     end;
 end;
-
-function DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer;
-var I, LR : Integer;
-begin
-  Result := Length(V);
-  LR := Length(R);
-  if LR > 0 then
-    begin
-      SetLength(V, Result + LR);
-      for I := 0 to LR - 1 do
-        V[Result + I] := R[I];
-    end;
-end;
 {$ENDIF}
 
-function DynArrayAppendWideStringArray(var V: WideStringArray; const R: array of WideString): Integer;
+function DynArrayAppendRawByteStringArray(var V: RawByteStringArray; const R: array of RawByteString): Integer;
 var I, LR : Integer;
 begin
   Result := Length(V);
@@ -1488,7 +1144,7 @@ end;
 { DynArrayRemove                                                               }
 {                                                                              }
 function DynArrayRemove(var V: ByteArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1499,19 +1155,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Byte));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: WordArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1522,19 +1173,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Word));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: Word32Array; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1545,19 +1191,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Word32));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: LongWordArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1568,19 +1209,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(LongWord));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: NativeUIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1591,19 +1227,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(NativeUInt));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: ShortIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1614,19 +1245,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(ShortInt));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: SmallIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1637,19 +1263,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(SmallInt));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: LongIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1660,19 +1281,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(LongInt));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: Int32Array; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1683,19 +1299,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Int32));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: Int64Array; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1706,19 +1317,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Int64));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: NativeIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1729,19 +1335,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(NativeInt));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: SingleArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1752,19 +1353,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Single));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: DoubleArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1775,19 +1371,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Double));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1798,20 +1389,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Extended));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
-{$IFNDEF CLR}
 function DynArrayRemove(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1822,19 +1407,14 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Currency));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
 function DynArrayRemove(var V: PointerArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, L, M{$IFDEF CLR}, F{$ENDIF}: Integer;
+var I, J, L, M: Integer;
 begin
   L := Length(V);
   if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
@@ -1845,18 +1425,12 @@ begin
   I := MaxInt(Idx, 0);
   J := MinInt(Count, L - I);
   M := L - J - I;
-  {$IFDEF CLR}
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  {$ELSE}
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(Pointer));
-  {$ENDIF}
   SetLength(V, L - J);
   Result := J;
 end;
 
-{$ENDIF}
 
 function DynArrayRemove(var V: ObjectArray; const Idx: Integer; const Count: Integer;
     const FreeObjects: Boolean): Integer;
@@ -1914,23 +1488,6 @@ begin
   Result := J;
 end;
 
-function DynArrayRemoveW(var V: WideStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, K, L : Integer;
-begin
-  L := Length(V);
-  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
-    begin
-      Result := 0;
-      exit;
-    end;
-  I := MaxInt(Idx, 0);
-  J := MinInt(Count, L - I);
-  for K := I to L - J - 1 do
-    V[K] := V[K + J];
-  SetLength(V, L - J);
-  Result := J;
-end;
-
 function DynArrayRemoveU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
 begin
@@ -1965,29 +1522,6 @@ begin
   Result := J;
 end;
 
-{$IFDEF ManagedCode}
-function DynArrayRemove(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
-var I, J, K, L, M, F : Integer;
-begin
-  L := Length(V);
-  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
-    begin
-      Result := 0;
-      exit;
-    end;
-  I := MaxInt(Idx, 0);
-  J := MinInt(Count, L - I);
-  for K := I to I + J - 1 do
-    V[K] := nil;
-  M := L - J - I;
-  for F := 0 to M - 1 do
-    V[I + F] := V[I + J + F];
-  for F := 0 to J - 1 do
-    V[L - J + F] := nil;
-  SetLength(V, L - J);
-  Result := J;
-end;
-{$ELSE}
 function DynArrayRemove(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L, M : Integer;
 begin
@@ -2008,7 +1542,6 @@ begin
   SetLength(V, L - J);
   Result := J;
 end;
-{$ENDIF}
 
 
 
@@ -2457,46 +1990,6 @@ begin
 end;
 
 {$ENDIF}
-procedure DynArrayRemoveDuplicatesW(var V: WideStringArray; const IsSorted: Boolean);
-var I, C, J, L : Integer;
-    F          : WideString;
-begin
-  L := Length(V);
-  if L = 0 then
-    exit;
-
-  if IsSorted then
-    begin
-      J := 0;
-      repeat
-        F := V[J];
-        I := J + 1;
-        while (I < L) and (V[I] = F) do
-          Inc(I);
-        C := I - J;
-        if C > 1 then
-          begin
-            DynArrayRemoveW(V, J + 1, C - 1);
-            Dec(L, C - 1);
-            Inc(J);
-          end
-        else
-          J := I;
-      until J >= L;
-    end else
-    begin
-      J := 0;
-      repeat
-        repeat
-          I := DynArrayPosNextW(V[J], V, J);
-          if I >= 0 then
-            DynArrayRemoveW(V, I, 1);
-        until I < 0;
-        Inc(J);
-      until J >= Length(V);
-    end;
-end;
-
 procedure DynArrayRemoveDuplicatesU(var V: UnicodeStringArray; const IsSorted: Boolean);
 var I, C, J, L : Integer;
     F          : UnicodeString;
@@ -2577,7 +2070,6 @@ begin
     end;
 end;
 
-{$IFNDEF ManagedCode}
 procedure DynArrayRemoveDuplicates(var V: PointerArray; const IsSorted: Boolean);
 var I, C, J, L : Integer;
     F          : Pointer;
@@ -2618,7 +2110,6 @@ begin
     end;
 end;
 
-{$ENDIF}
 
 
 procedure DynArrayTrimLeft(var S: ByteArray; const TrimList: array of Byte); overload;
@@ -2854,27 +2345,6 @@ begin
 end;
 
 {$ENDIF}
-procedure DynArrayTrimLeftW(var S: WideStringArray; const TrimList: array of WideString); overload;
-var I, J : Integer;
-    R    : Boolean;
-begin
-  I := 0;
-  R := True;
-  while R and (I < Length(S)) do
-    begin
-      R := False;
-      for J := 0 to High(TrimList) do
-        if S[I] = TrimList[J] then
-          begin
-            R := True;
-            Inc(I);
-            break;
-          end;
-    end;
-  if I > 0 then
-    DynArrayRemoveW(S, 0, I - 1);
-end;
-
 procedure DynArrayTrimLeftU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -2917,7 +2387,6 @@ begin
     DynArrayRemove(S, 0, I - 1);
 end;
 
-{$IFNDEF ManagedCode}
 procedure DynArrayTrimLeft(var S: PointerArray; const TrimList: array of Pointer); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -2939,7 +2408,6 @@ begin
     DynArrayRemove(S, 0, I - 1);
 end;
 
-{$ENDIF}
 
 procedure DynArrayTrimRight(var S: ByteArray; const TrimList: array of Byte); overload;
 var I, J : Integer;
@@ -3174,27 +2642,6 @@ begin
 end;
 
 {$ENDIF}
-procedure DynArrayTrimRightW(var S: WideStringArray; const TrimList: array of WideString); overload;
-var I, J : Integer;
-    R    : Boolean;
-begin
-  I := Length(S) - 1;
-  R := True;
-  while R and (I >= 0) do
-    begin
-      R := False;
-      for J := 0 to High(TrimList) do
-        if S[I] = TrimList[J] then
-          begin
-            R := True;
-            Dec(I);
-            break;
-          end;
-    end;
-  if I < Length(S) - 1 then
-    SetLength(S, I + 1);
-end;
-
 procedure DynArrayTrimRightU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -3237,7 +2684,6 @@ begin
     SetLength(S, I + 1);
 end;
 
-{$IFNDEF ManagedCode}
 procedure DynArrayTrimRight(var S: PointerArray; const TrimList: array of Pointer); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -3259,32 +2705,10 @@ begin
     SetLength(S, I + 1);
 end;
 
-{$ENDIF}
 
 {                                                                              }
 { DynArrayInsert                                                               }
 {                                                                              }
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: ByteArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: ByteArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3305,29 +2729,7 @@ begin
   FillChar(P^, Count * Sizeof(Byte), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: WordArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: WordArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3348,29 +2750,7 @@ begin
   FillChar(P^, Count * Sizeof(Word), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: Word32Array; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: Word32Array; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3391,29 +2771,7 @@ begin
   FillChar(P^, Count * Sizeof(Word32), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: LongWordArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: LongWordArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3434,29 +2792,7 @@ begin
   FillChar(P^, Count * Sizeof(LongWord), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: NativeUIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: NativeUIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3477,29 +2813,7 @@ begin
   FillChar(P^, Count * Sizeof(NativeUInt), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: ShortIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: ShortIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3520,29 +2834,7 @@ begin
   FillChar(P^, Count * Sizeof(ShortInt), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: SmallIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: SmallIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3563,29 +2855,7 @@ begin
   FillChar(P^, Count * Sizeof(SmallInt), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: LongIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: LongIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3606,29 +2876,7 @@ begin
   FillChar(P^, Count * Sizeof(LongInt), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: Int32Array; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: Int32Array; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3649,29 +2897,7 @@ begin
   FillChar(P^, Count * Sizeof(Int32), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: Int64Array; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: Int64Array; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3692,29 +2918,7 @@ begin
   FillChar(P^, Count * Sizeof(Int64), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: NativeIntArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: NativeIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3735,29 +2939,7 @@ begin
   FillChar(P^, Count * Sizeof(NativeInt), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: SingleArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0.0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: SingleArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3778,29 +2960,7 @@ begin
   FillChar(P^, Count * Sizeof(Single), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: DoubleArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0.0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: DoubleArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3821,29 +2981,7 @@ begin
   FillChar(P^, Count * Sizeof(Double), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0.0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3864,29 +3002,7 @@ begin
   FillChar(P^, Count * Sizeof(Extended), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := 0.0;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3907,30 +3023,8 @@ begin
   FillChar(P^, Count * Sizeof(Currency), #0);
   Result := I;
 end;
-{$ENDIF}
 
 {$IFDEF SupportAnsiString}
-{$IFDEF ManagedCode}
-function DynArrayInsertA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := '';
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsertA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3951,29 +3045,8 @@ begin
   FillChar(P^, Count * Sizeof(AnsiString), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsertB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := '';
-  Result := I;
-end;
-{$ELSE}
+{$ENDIF}
 function DynArrayInsertB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3994,73 +3067,7 @@ begin
   FillChar(P^, Count * Sizeof(RawByteString), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$ENDIF}
-{$IFDEF ManagedCode}
-function DynArrayInsertW(var V: WideStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := '';
-  Result := I;
-end;
-{$ELSE}
-function DynArrayInsertW(var V: WideStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L : Integer;
-    P    : Pointer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  P := @V[I];
-  if I < L then
-    Move(P^, V[I + Count], (L - I) * Sizeof(WideString));
-  FillChar(P^, Count * Sizeof(WideString), #0);
-  Result := I;
-end;
-{$ENDIF}
-
-{$IFDEF ManagedCode}
-function DynArrayInsertU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := '';
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsertU(var V: UnicodeStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4081,29 +3088,7 @@ begin
   FillChar(P^, Count * Sizeof(UnicodeString), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: StringArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := '';
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: StringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4124,30 +3109,7 @@ begin
   FillChar(P^, Count * Sizeof(String), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFNDEF ManagedCode}
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: PointerArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := nil;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: PointerArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4168,29 +3130,7 @@ begin
   FillChar(P^, Count * Sizeof(Pointer), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: ObjectArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := nil;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: ObjectArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4211,30 +3151,7 @@ begin
   FillChar(P^, Count * Sizeof(Pointer), #0);
   Result := I;
 end;
-{$ENDIF}
 
-{$ENDIF}
-{$IFDEF ManagedCode}
-function DynArrayInsert(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
-var I, L, J : Integer;
-begin
-  L := Length(V);
-  if (Idx > L) or (Idx + Count <= 0) or (Count <= 0) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  SetLength(V, L + Count);
-  I := Idx;
-  if I < 0 then
-    I := 0;
-  for J := 0 to L - I - 1 do
-    V[I + Count + J] := V[I + J];
-  for J := 0 to Count - 1 do
-    V[I + J] := nil;
-  Result := I;
-end;
-{$ELSE}
 function DynArrayInsert(var V: InterfaceArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4255,7 +3172,6 @@ begin
   FillChar(P^, Count * Sizeof(IInterface), #0);
   Result := I;
 end;
-{$ENDIF}
 
 
 
@@ -5066,61 +3982,11 @@ begin
     end;
 end;
 
+{$ENDIF}
 function DynArrayPosNextB(const Find: RawByteString; const V: RawByteStringArray; const PrevPos: Integer;
     const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
     D       : RawByteString;
-begin
-  if IsSortedAscending then // binary search
-    begin
-      if MaxInt(PrevPos + 1, 0) = 0 then // find first
-        begin
-          L := 0;
-          H := Length(V) - 1;
-          while L <= H do
-            begin
-              I := (L + H) div 2;
-              D := V[I];
-              if Find = D then
-                begin
-                  while (I > 0) and (V[I - 1] = Find) do
-                    Dec(I);
-                  Result := I;
-                  exit;
-                end else
-              if D > Find then
-                H := I - 1
-              else
-                L := I + 1;
-            end;
-          Result := -1;
-        end
-      else // find next
-        if PrevPos >= Length(V) - 1 then
-          Result := -1
-        else
-          if V[PrevPos + 1] = Find then
-            Result := PrevPos + 1
-          else
-            Result := -1;
-    end
-  else
-    begin // linear search
-      for I := MaxInt(PrevPos + 1, 0) to Length(V) - 1 do
-        if V[I] = Find then
-          begin
-            Result := I;
-            exit;
-          end;
-      Result := -1;
-    end;
-end;
-
-{$ENDIF}
-function DynArrayPosNextW(const Find: WideString; const V: WideStringArray; const PrevPos: Integer;
-    const IsSortedAscending: Boolean): Integer;
-var I, L, H : Integer;
-    D       : WideString;
 begin
   if IsSortedAscending then // binary search
     begin
@@ -5307,7 +4173,6 @@ begin
   Result := -1;
 end;
 
-{$IFNDEF ManagedCode}
 function DynArrayPosNext(const Find: Pointer; const V: PointerArray; const PrevPos: Integer): Integer;
 var I : Integer;
 begin
@@ -5319,7 +4184,6 @@ begin
        end;
   Result := -1;
 end;
-{$ENDIF}
 
 
 
@@ -5657,6 +4521,7 @@ begin
     end;
 end;
 
+{$ENDIF}
 function DynArrayCountB(const Find: RawByteString; const V: RawByteStringArray; const IsSortedAscending: Boolean = False): Integer;
 var I, J : Integer;
 begin
@@ -5678,37 +4543,6 @@ begin
       Result := 0;
       repeat
         I := DynArrayPosNextB(Find, V, J, False);
-        if I >= 0 then
-          begin
-            Inc(Result);
-            J := I;
-          end;
-      until I < 0;
-    end;
-end;
-
-{$ENDIF}
-function DynArrayCountW(const Find: WideString; const V: WideStringArray; const IsSortedAscending: Boolean = False): Integer;
-var I, J : Integer;
-begin
-  if IsSortedAscending then
-    begin
-      I := DynArrayPosNextW(Find, V, -1, True);
-      if I = -1 then
-        Result := 0 else
-        begin
-          Result := 1;
-          J := Length(V);
-          while (I + Result < J) and (V[I + Result] = Find) do
-            Inc(Result);
-        end;
-    end
-  else
-    begin
-      J := -1;
-      Result := 0;
-      repeat
-        I := DynArrayPosNextW(Find, V, J, False);
         if I >= 0 then
           begin
             Inc(Result);
@@ -5969,20 +4803,6 @@ begin
 end;
 
 {$ENDIF}
-procedure DynArrayRemoveAllW(const Find: WideString; var V: WideStringArray; const IsSortedAscending: Boolean = False);
-var I, J : Integer;
-begin
-  I := DynArrayPosNextW(Find, V, -1, IsSortedAscending);
-  while I >= 0 do
-    begin
-      J := 1;
-      while (I + J < Length(V)) and (V[I + J] = Find) do
-        Inc(J);
-      DynArrayRemoveW(V, I, J);
-      I := DynArrayPosNextW(Find, V, I, IsSortedAscending);
-    end;
-end;
-
 procedure DynArrayRemoveAllU(const Find: UnicodeString; var V: UnicodeStringArray; const IsSortedAscending: Boolean = False);
 var I, J : Integer;
 begin
@@ -6338,35 +5158,6 @@ begin
 end;
 
 {$ENDIF}
-function DynArrayIntersectionW(const V1, V2: WideStringArray; const IsSortedAscending: Boolean): WideStringArray;
-var I, J, L, LV : Integer;
-begin
-  SetLength(Result, 0);
-  if IsSortedAscending then
-    begin
-      I := 0;
-      J := 0;
-      L := Length(V1);
-      LV := Length(V2);
-      while (I < L) and (J < LV) do
-        begin
-          while (I < L) and (V1[I] < V2[J]) do
-            Inc(I);
-          if I < L then
-            begin
-              if V1[I] = V2[J] then
-                DynArrayAppendW(Result, V1[I]);
-              while (J < LV) and (V2[J] <= V1[I]) do
-                Inc(J);
-            end;
-        end;
-    end
-  else
-    for I := 0 to Length(V1) - 1 do
-      if (DynArrayPosNextW(V1[I], V2) >= 0) and (DynArrayPosNextW(V1[I], Result) = -1) then
-        DynArrayAppendW(Result, V1[I]);
-end;
-
 function DynArrayIntersectionU(const V1, V2: UnicodeStringArray; const IsSortedAscending: Boolean): UnicodeStringArray;
 var I, J, L, LV : Integer;
 begin
@@ -6753,35 +5544,6 @@ begin
 end;
 
 {$ENDIF}
-function DynArrayDifferenceW(const V1, V2: WideStringArray; const IsSortedAscending: Boolean): WideStringArray;
-var I, J, L, LV : Integer;
-begin
-  SetLength(Result, 0);
-  if IsSortedAscending then
-    begin
-      I := 0;
-      J := 0;
-      L := Length(V1);
-      LV := Length(V2);
-      while (I < L) and (J < LV) do
-        begin
-          while (I < L) and (V1[I] < V2[J]) do
-            Inc(I);
-          if I < L then
-            begin
-              if V1[I] <> V2[J] then
-                DynArrayAppendW(Result, V1[I]);
-              while (J < LV) and (V2[J] <= V1[I]) do
-                Inc(J);
-            end;
-        end;
-    end
-  else
-    for I := 0 to Length(V1) - 1 do
-      if (DynArrayPosNextW(V1[I], V2) = -1) and (DynArrayPosNextW(V1[I], Result) = -1) then
-        DynArrayAppendW(Result, V1[I]);
-end;
-
 function DynArrayDifferenceU(const V1, V2: UnicodeStringArray; const IsSortedAscending: Boolean): UnicodeStringArray;
 var I, J, L, LV : Integer;
 begin
@@ -6911,14 +5673,6 @@ begin
 end;
 
 {$ENDIF}
-procedure DynArrayReverseW(var V: WideStringArray);
-var I, L : Integer;
-begin
-  L := Length(V);
-  for I := 1 to L div 2 do
-    SwapW(V[I - 1], V[L - I]);
-end;
-
 procedure DynArrayReverseU(var V: UnicodeStringArray);
 var I, L : Integer;
 begin
@@ -6935,7 +5689,6 @@ begin
     Swap(V[I - 1], V[L - I]);
 end;
 
-{$IFNDEF ManagedCode}
 procedure DynArrayReverse(var V: PointerArray);
 var I, L : Integer;
 begin
@@ -6944,7 +5697,6 @@ begin
     Swap(V[I - 1], V[L - I]);
 end;
 
-{$ENDIF}
 procedure DynArrayReverse(var V: ObjectArray);
 var I, L : Integer;
 begin
@@ -7135,16 +5887,8 @@ begin
     Result[I] := V[I];
 end;
 
-function AsRawByteStringArray(const V: array of RawByteString): RawByteStringArray;
-var I : Integer;
-begin
-  SetLength(Result, High(V) + 1);
-  for I := 0 to High(V) do
-    Result[I] := V[I];
-end;
-
 {$ENDIF}
-function AsWideStringArray(const V: array of WideString): WideStringArray;
+function AsRawByteStringArray(const V: array of RawByteString): RawByteStringArray;
 var I : Integer;
 begin
   SetLength(Result, High(V) + 1);
@@ -7168,7 +5912,6 @@ begin
     Result[I] := V[I];
 end;
 
-{$IFNDEF ManagedCode}
 function AsPointerArray(const V: array of Pointer): PointerArray;
 var I : Integer;
 begin
@@ -7177,7 +5920,6 @@ begin
     Result[I] := V[I];
 end;
 
-{$ENDIF}
 function AsByteCharSetArray(const V: array of ByteCharSet): ByteCharSetArray;
 var I : Integer;
 begin
@@ -7365,20 +6107,6 @@ end;
 {                                                                              }
 { DynArrayDup                                                                  }
 {                                                                              }
-{$IFDEF ManagedCode}
-function DynArrayDupByte(const V: Byte; const Count: Integer): ByteArray;
-var I : Integer;
-begin
-  if Count <= 0 then
-    begin
-      SetLength(Result, 0);
-      exit;
-    end;
-  SetLength(Result, Count);
-  for I := 0 to Count - 1 do
-    Result[I] := 0;
-end;
-{$ELSE}
 function DynArrayDupByte(const V: Byte; const Count: Integer): ByteArray;
 begin
   if Count <= 0 then
@@ -7389,7 +6117,6 @@ begin
   SetLength(Result, Count);
   FillChar(Result[0], Count, V);
 end;
-{$ENDIF}
 
 function DynArrayDupWord(const V: Word; const Count: Integer): WordArray;
 var I : Integer;
@@ -7588,19 +6315,6 @@ begin
 end;
 
 {$ENDIF}
-function DynArrayDupWideString(const V: WideString; const Count: Integer): WideStringArray;
-var I : Integer;
-begin
-  if Count <= 0 then
-    begin
-      SetLength(Result, 0);
-      exit;
-    end;
-  SetLength(Result, Count);
-  for I := 0 to Count - 1 do
-    Result[I] := V;
-end;
-
 function DynArrayDupUnicodeString(const V: UnicodeString; const Count: Integer): UnicodeStringArray;
 var I : Integer;
 begin
@@ -7658,23 +6372,6 @@ end;
 {                                                                              }
 { SetLengthAndZero                                                             }
 {                                                                              }
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: ByteArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: ByteArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7689,25 +6386,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Byte) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: WordArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: WordArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7722,25 +6401,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Word) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: Word32Array; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: Word32Array; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7755,25 +6416,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Word32) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: LongWordArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: LongWordArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7788,25 +6431,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(LongWord) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: NativeUIntArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: NativeUIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7821,25 +6446,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(NativeUInt) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: ShortIntArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: ShortIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7854,25 +6461,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(ShortInt) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: SmallIntArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: SmallIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7887,25 +6476,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(SmallInt) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: LongIntArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: LongIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7920,25 +6491,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(LongInt) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: Int32Array; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: Int32Array; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7953,25 +6506,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Int32) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: Int64Array; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: Int64Array; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -7986,25 +6521,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Int64) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: NativeIntArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: NativeIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8019,25 +6536,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(NativeInt) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: SingleArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0.0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: SingleArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8052,25 +6551,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Single) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: DoubleArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0.0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: DoubleArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8085,25 +6566,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Double) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: ExtendedArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0.0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: ExtendedArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8118,25 +6581,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Extended) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: CurrencyArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := 0.0;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: CurrencyArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8151,25 +6596,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Currency) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: ByteCharSetArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := [];
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: ByteCharSetArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8184,25 +6611,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(ByteCharSet) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: BooleanArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := False;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: BooleanArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8217,26 +6626,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Boolean) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$IFNDEF Managedcode}
-{$IFDEF ManagedCode}
-procedure SetLengthAndZero(var V: PointerArray; const NewLength: Integer);
-var OldLen, NewLen, I : Integer;
-begin
-  NewLen := NewLength;
-  if NewLen < 0 then
-    NewLen := 0;
-  OldLen := Length(V);
-  if OldLen = NewLen then
-    exit;
-  SetLength(V, NewLen);
-  if OldLen > NewLen then
-    exit;
-  for I := 0 to NewLen - OldLen - 1 do
-    V[OldLen + I] := nil;
-end;
-{$ELSE}
 procedure SetLengthAndZero(var V: PointerArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -8251,9 +6641,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Pointer) * (NewLen - OldLen), #0);
 end;
-{$ENDIF}
 
-{$ENDIF}
 procedure SetLengthAndZero(var V: ObjectArray; const NewLength: Integer;
     const FreeObjects: Boolean);
 var I, L : Integer;
@@ -8267,12 +6655,7 @@ begin
   SetLength(V, NewLength);
   if L > NewLength then
     exit;
-  {$IFDEF ManagedCode}
-  for I := 0 to NewLength - L - 1 do
-    V[L + I] := nil;
-  {$ELSE}
   FillChar(V[L], Sizeof(Pointer) * (NewLength - L), #0);
-  {$ENDIF}
 end;
 
 
@@ -8280,25 +6663,6 @@ end;
 {                                                                              }
 { DynArrayIsEqual                                                              }
 {                                                                              }
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: ByteArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: ByteArray): Boolean;
 var L : Integer;
 begin
@@ -8310,27 +6674,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Byte) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: WordArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: WordArray): Boolean;
 var L : Integer;
 begin
@@ -8342,27 +6686,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Word) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: LongWordArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: LongWordArray): Boolean;
 var L : Integer;
 begin
@@ -8374,27 +6698,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(LongWord) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: ShortIntArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: ShortIntArray): Boolean;
 var L : Integer;
 begin
@@ -8406,27 +6710,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(ShortInt) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: SmallIntArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: SmallIntArray): Boolean;
 var L : Integer;
 begin
@@ -8438,27 +6722,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(SmallInt) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: LongIntArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: LongIntArray): Boolean;
 var L : Integer;
 begin
@@ -8470,27 +6734,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(LongInt) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: Int64Array): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: Int64Array): Boolean;
 var L : Integer;
 begin
@@ -8502,27 +6746,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Int64) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: SingleArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: SingleArray): Boolean;
 var L : Integer;
 begin
@@ -8534,27 +6758,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Single) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: DoubleArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: DoubleArray): Boolean;
 var L : Integer;
 begin
@@ -8566,27 +6770,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Double) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: ExtendedArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: ExtendedArray): Boolean;
 var L : Integer;
 begin
@@ -8598,27 +6782,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Extended) * L);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-function DynArrayIsEqual(const V1, V2: CurrencyArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-{$ELSE}
 function DynArrayIsEqual(const V1, V2: CurrencyArray): Boolean;
 var L : Integer;
 begin
@@ -8630,7 +6794,6 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Currency) * L);
 end;
-{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function DynArrayIsEqualA(const V1, V2: AnsiStringArray): Boolean;
@@ -8651,26 +6814,8 @@ begin
   Result := True;
 end;
 
-function DynArrayIsEqualB(const V1, V2: RawByteStringArray): Boolean;
-var I, L : Integer;
-begin
-  L := Length(V1);
-  if L <> Length(V2) then
-    begin
-      Result := False;
-      exit;
-    end;
-  for I := 0 to L - 1 do
-    if V1[I] <> V2[I] then
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
-end;
-
 {$ENDIF}
-function DynArrayIsEqualW(const V1, V2: WideStringArray): Boolean;
+function DynArrayIsEqualB(const V1, V2: RawByteStringArray): Boolean;
 var I, L : Integer;
 begin
   L := Length(V1);
@@ -9679,60 +7824,12 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$ENDIF}
 procedure DynArraySortB(const V: RawByteStringArray);
 
   procedure QuickSort(L, R: Integer);
   var I, J, M : Integer;
       W, T    : RawByteString;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := V[M];
-      repeat
-        while V[I] < W do
-          Inc(I);
-        while V[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := V[I];
-            V[I] := V[J];
-            V[J] := T;
-            if M = I then
-              begin
-                M := J;
-                W := V[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := V[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  I := Length(V);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-
-{$ENDIF}
-procedure DynArraySortW(const V: WideStringArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : WideString;
   begin
     repeat
       I := L;
@@ -9874,60 +7971,6 @@ end;
 
 
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: IntegerArray; const Data: IntegerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Integer;
-      A       : Integer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: IntegerArray; const Data: IntegerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9991,62 +8034,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: IntegerArray; const Data: Int64Array);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Integer;
-      A       : Int64;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: IntegerArray; const Data: Int64Array);
 
   procedure QuickSort(L, R: Integer);
@@ -10110,62 +8098,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Integer;
-      A       : AnsiString;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10229,62 +8162,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Integer;
-      A       : Extended;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10348,63 +8226,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFNDEF ManagedCode}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Integer;
-      A       : Pointer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10468,64 +8290,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$ENDIF}
 {$IFDEF SupportAnsiString}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: AnsiStringArray; const Data: IntegerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      A       : Integer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: IntegerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10589,62 +8355,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: AnsiStringArray; const Data: Int64Array);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      A       : Int64;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: Int64Array);
 
   procedure QuickSort(L, R: Integer);
@@ -10708,62 +8419,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: AnsiStringArray; const Data: AnsiStringArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      A       : AnsiString;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: AnsiStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10827,62 +8483,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: AnsiStringArray; const Data: ExtendedArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      A       : Extended;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -10946,63 +8547,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFNDEF Managedcode}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: AnsiStringArray; const Data: PointerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : AnsiString;
-      A       : Pointer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -11066,64 +8611,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
 {$ENDIF}
-{$ENDIF}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: ExtendedArray; const Data: IntegerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      A       : Integer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: ExtendedArray; const Data: IntegerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -11187,62 +8676,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: ExtendedArray; const Data: Int64Array);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      A       : Int64;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: ExtendedArray; const Data: Int64Array);
 
   procedure QuickSort(L, R: Integer);
@@ -11306,63 +8740,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
 {$IFDEF SupportAnsiString}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: ExtendedArray; const Data: AnsiStringArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      A       : AnsiString;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: ExtendedArray; const Data: AnsiStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -11426,63 +8805,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
 {$ENDIF}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: ExtendedArray; const Data: ExtendedArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      A       : Extended;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: ExtendedArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -11546,63 +8870,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$IFNDEF ManagedCode}
-{$IFDEF ManagedCode}
-procedure DynArraySort(const Key: ExtendedArray; const Data: PointerArray);
-
-  procedure QuickSort(L, R: Integer);
-  var I, J, M : Integer;
-      W, T    : Extended;
-      A       : Pointer;
-  begin
-    repeat
-      I := L;
-      J := R;
-      M := (L + R) shr 1;
-      W := Key[M];
-      repeat
-        while Key[I] < W do
-          Inc(I);
-        while Key[J] > W do
-          Dec(J);
-        if I <= J then
-          begin
-            T := Key[I];
-            Key[I] := Key[J];
-            Key[J] := T;
-            A := Data[I];
-            Data[I] := Data[J];
-            Data[J] := A;
-            if M = I then
-              begin
-                M := J;
-                W := Key[J];
-              end else
-              if M = J then
-                begin
-                  M := I;
-                  W := Key[I];
-                end;
-            Inc(I);
-            Dec(J);
-          end;
-      until I > J;
-      if L < J then
-        QuickSort(L, J);
-      L := I;
-    until I >= R;
-  end;
-
-var I : Integer;
-begin
-  Assert(Length(Key) = Length(Data));
-  I := Length(Key);
-  if I > 0 then
-    QuickSort(0, I - 1);
-end;
-{$ELSE}
 procedure DynArraySort(const Key: ExtendedArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -11666,9 +8934,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-{$ENDIF}
 
-{$ENDIF}
 
 
 

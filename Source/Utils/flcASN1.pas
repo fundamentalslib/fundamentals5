@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        cASN1.pas                                                }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      Abstract Syntax Notation One (ASN.1)                     }
 {                     BER (Basic Encoding Routines)                            }
 {                                                                              }
@@ -50,6 +50,7 @@
 {   2010/11/23  0.02  Initial development: decoding routines.                  }
 {   2011/04/02  0.03  Compilable with Delphi 5.                                }
 {   2018/07/17  5.04  Revised for Fundamentals 5.                              }
+{   2018/08/12  5.05  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -141,9 +142,7 @@ type
   TASN1ObjectIdentifier = array of Integer;
 
 procedure ASN1OIDInit(var A: TASN1ObjectIdentifier; const B: array of Integer);
-{$IFDEF SupportRawByteString}
 function  ASN1OIDToStrB(const A: TASN1ObjectIdentifier): RawByteString;
-{$ENDIF}
 function  ASN1OIDToStr(const A: TASN1ObjectIdentifier): String;
 function  ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Integer): Boolean;
 
@@ -231,10 +230,8 @@ function ASN1EncodeVisibleString(const A: RawByteString): RawByteString;
 function ASN1EncodeNumericString(const A: RawByteString): RawByteString;
 function ASN1EncodePrintableString(const A: RawByteString): RawByteString;
 function ASN1EncodeTeletexString(const A: RawByteString): RawByteString;
-{$IFDEF SupportWideString}
-function ASN1EncodeUniversalString(const A: WideString): RawByteString;
-function ASN1EncodeBMPString(const A: WideString): RawByteString;
-{$ENDIF}
+function ASN1EncodeUniversalString(const A: UnicodeString): RawByteString;
+function ASN1EncodeBMPString(const A: UnicodeString): RawByteString;
 function ASN1EncodeUTCTime(const A: TDateTime): RawByteString;
 function ASN1EncodeGeneralizedTime(const A: TDateTime): RawByteString;
 function ASN1EncodeOID(const OID: array of Integer): RawByteString;
@@ -376,7 +373,6 @@ begin
     A[I] := B[I];
 end;
 
-{$IFDEF SupportRawByteString}
 function ASN1OIDToStrB(const A: TASN1ObjectIdentifier): RawByteString;
 var I : Integer;
     S : RawByteString;
@@ -390,7 +386,6 @@ begin
     end;
   Result := S;
 end;
-{$ENDIF}
 
 function ASN1OIDToStr(const A: TASN1ObjectIdentifier): String;
 var I : Integer;
@@ -664,21 +659,19 @@ begin
   Result := ASN1EncodeObj(ASN1_ID_T61STRING, A);
 end;
 
-{$IFDEF SupportWideString}
-function ASN1EncodeUniversalString(const A: WideString): RawByteString;
+function ASN1EncodeUniversalString(const A: UnicodeString): RawByteString;
 var S : RawByteString;
 begin
-  S := UTF16ToEncodingW(TUCS4LECodec, A);
+  S := UTF16ToEncodingU(TUCS4LECodec, A);
   Result := ASN1EncodeObj(ASN1_ID_UNIVERSALSTRING, S);
 end;
 
-function ASN1EncodeBMPString(const A: WideString): RawByteString;
+function ASN1EncodeBMPString(const A: UnicodeString): RawByteString;
 var S : RawByteString;
 begin
-  S := UTF16ToEncodingW(TUCS2Codec, A);
+  S := UTF16ToEncodingU(TUCS2Codec, A);
   Result := ASN1EncodeObj(ASN1_ID_UNIVERSALSTRING, S);
 end;
-{$ENDIF}
 
 function ASN1EncodeUTCTime(const A: TDateTime): RawByteString;
 begin

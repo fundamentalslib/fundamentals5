@@ -114,9 +114,7 @@ function  StrToCharSetA(const S: AnsiString): ByteCharSet;
 {$IFDEF SupportAnsiString}
 function  CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
 {$ENDIF}
-{$IFNDEF CLR}
 // function  CharClassStrToCharSet(const S: AnsiString): CharSet;
-{$ENDIF}
 
 
 
@@ -818,7 +816,6 @@ begin
 end;
 {$ENDIF}
 
-{$IFNDEF CLR}
 (*
 function CharClassStrToCharSet(const S: AnsiString): CharSet;
 var I, L : Integer;
@@ -895,7 +892,6 @@ begin
     end;
 end;
 *)
-{$ENDIF}
 
 
 
@@ -918,7 +914,6 @@ begin
   Assert(CharSetToCharClassStr(['a'..'b']) = '[ab]', 'CharClassStr');
   Assert(CharSetToCharClassStr([]) = '[]', 'CharClassStr');
   {$ENDIF}
-  {$IFNDEF CLR}
   (*
   Assert(CharClassStrToCharSet('[a]') = ['a'], 'CharClassStr');
   Assert(CharClassStrToCharSet('[]') = [], 'CharClassStr');
@@ -934,7 +929,6 @@ begin
   Assert(CharClassStrToCharSet('[\x10-\x1f]') = [#$10..#$1f], 'CharClassStr');
   Assert(CharClassStrToCharSet('[\x10-\xf]') = [], 'CharClassStr');
   *)
-  {$ENDIF}
 end;
 {$ENDIF}
 

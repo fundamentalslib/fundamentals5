@@ -522,12 +522,8 @@ implementation
 
 uses
   { System }
-  {$IFDEF CLR}
-  Borland.Vcl.Windows,
-  {$ELSE}
   {$IFDEF MSWIN}
   Windows,
-  {$ENDIF}
   {$ENDIF}
 
   {$IFDEF DELPHI6_UP}
