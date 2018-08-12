@@ -92,10 +92,10 @@ uses
 { Path functions                                                               }
 {                                                                              }
 const
-  UnixPathSeparator = '/';
+  PosixPathSeparator = '/';
   WinPathSeparator  = '\';
-  PathSeparator = {$IFDEF UNIX}  UnixPathSeparator {$ENDIF}
-                  {$IFDEF MSWIN} WinPathSeparator  {$ENDIF};
+  PathSeparator = {$IFDEF POSIX} PosixPathSeparator {$ENDIF}
+                  {$IFDEF MSWIN} WinPathSeparator   {$ENDIF};
 
 function  WinPathHasDriveLetterA(const Path: AnsiString): Boolean;
 function  WinPathHasDriveLetterB(const Path: RawByteString): Boolean;

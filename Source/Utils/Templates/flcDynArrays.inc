@@ -592,7 +592,9 @@ procedure DynArraySort%1%(const V: %2%Array); overload;{%ENDDEF}
 procedure DynArraySort(const Key: %1%Array; const Data: %2%Array); overload;{%ENDDEF}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Integer'}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Int64'}
+{$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPairSort 'Integer' 'AnsiString'}
+{$ENDIF}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Extended'}
 {%TEMPLATE DynArrayPairSort 'Integer' 'Pointer'}
 {$IFDEF SupportAnsiString}
@@ -827,6 +829,7 @@ begin
   Result := J;
 end;
 
+{$IFDEF SupportAnsiString}
 function DynArrayRemoveA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
 begin
@@ -843,6 +846,7 @@ begin
   SetLength(V, L - J);
   Result := J;
 end;
+{$ENDIF}
 
 function DynArrayRemoveB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
@@ -1958,7 +1962,9 @@ end;
 {%ENDDEF}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Integer'    'Integer' 'Integer'   }
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Int64'      'Integer' 'Int64'     }
+{$IFDEF SupportAnsiString}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'AnsiString' 'Integer' 'AnsiString'}
+{$ENDIF}
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Extended'   'Integer' 'Extended'  }
 {%TEMPLATE DynArrayPairSortImpl 'Integer' 'Pointer'  'Integer' 'Pointer'   }
 {$IFDEF SupportAnsiString}

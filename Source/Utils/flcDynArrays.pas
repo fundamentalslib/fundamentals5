@@ -639,7 +639,9 @@ procedure DynArraySort(const V: StringArray); overload;
 
 procedure DynArraySort(const Key: IntegerArray; const Data: IntegerArray); overload;
 procedure DynArraySort(const Key: IntegerArray; const Data: Int64Array); overload;
+{$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray); overload;
+{$ENDIF}
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray); overload;
 procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray); overload;
 {$IFDEF SupportAnsiString}
@@ -1454,6 +1456,7 @@ begin
   Result := J;
 end;
 
+{$IFDEF SupportAnsiString}
 function DynArrayRemoveA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
 begin
@@ -1470,6 +1473,7 @@ begin
   SetLength(V, L - J);
   Result := J;
 end;
+{$ENDIF}
 
 function DynArrayRemoveB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, K, L : Integer;
@@ -8099,6 +8103,7 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8163,6 +8168,7 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$ENDIF}
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);

@@ -195,7 +195,9 @@ function  FloatApproxCompare(const A, B: Float;
 {                                                                              }
 { Float-String conversions                                                     }
 {                                                                              }
+{$IFDEF SupportAnsiString}
 function  FloatToStringA(const A: Extended): AnsiString;
+{$ENDIF}
 function  FloatToStringB(const A: Extended): RawByteString;
 function  FloatToStringU(const A: Extended): UnicodeString;
 function  FloatToString(const A: Extended): String;
@@ -637,10 +639,12 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF SupportAnsiString}
 function FloatToStringA(const A: Extended): AnsiString;
 begin
   Result := AnsiString(FloatToStringS(A));
 end;
+{$ENDIF}
 
 function FloatToStringB(const A: Extended): RawByteString;
 begin
@@ -661,7 +665,7 @@ function TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Valu
 var Len : Integer;
     DigVal : Integer;
     DigValF : Extended;
-    P : PAnsiChar;
+    P : PByteChar;
     Ch : AnsiChar;
     HasDig : Boolean;
     Neg : Boolean;
@@ -1105,7 +1109,7 @@ function TryStringToFloatB(const A: RawByteString; out B: Extended): Boolean;
 var L, N : Integer;
 begin
   L := Length(A);
-  Result := TryStringToFloatPA(PAnsiChar(A), L, B, N) = convertOK;
+  Result := TryStringToFloatPA(PByteChar(A), L, B, N) = convertOK;
   if Result then
     if N < L then
       Result := False;
@@ -1319,11 +1323,12 @@ begin
 end;
 
 procedure Test_FloatStr;
-var A : AnsiString;
+var A : RawByteString;
     E : Extended;
     L : Integer;
 begin
   // FloatToStr
+  {$IFDEF SupportAnsiString}
   {$IFNDEF FREEPASCAL}
   Assert(FloatToStringA(0.0) = ToAnsiString('0'));
   Assert(FloatToStringA(-1.5) = ToAnsiString('-1.5'));
@@ -1351,6 +1356,7 @@ begin
   {$IFNDEF ExtendedIsDouble}
   Assert(FloatToStringA(1.234e+1000) = ToAnsiString('1.234E+1000'));
   Assert(FloatToStringA(-1e-4000) = ToAnsiString('0'));
+  {$ENDIF}
   {$ENDIF}
 
   Assert(FloatToStringB(0.0) = ToRawByteString('0'));
@@ -1396,6 +1402,7 @@ begin
   {$ENDIF}
 
   // StrToFloat
+  {$IFDEF SupportAnsiString}
   A := ToAnsiString('123.456');
   Assert(TryStringToFloatPA(PAnsiChar(A), Length(A), E, L) = convertOK);
   Assert((E = 123.456) and (L = 7));
@@ -1414,6 +1421,7 @@ begin
   Assert(TryStringToFloatPA(PAnsiChar(A), Length(A), E, L) = convertOK);
   {$IFNDEF ExtendedIsDouble}
   Assert(ExtendedApproxEqual(E, 1.2e-300, 1e-2) and (L = 8));
+  {$ENDIF}
   {$ENDIF}
 
   // 9999..9999 overflow
@@ -1464,36 +1472,36 @@ begin
   Assert(ExtendedApproxEqual(E, 1.2e+201, 1e-1) and (L = 106));
   {$ENDIF}
 
-  Assert(StringToFloatB(ToAnsiString('0')) = 0.0);
-  Assert(StringToFloatB(ToAnsiString('1')) = 1.0);
-  Assert(StringToFloatB(ToAnsiString('1.5')) = 1.5);
-  Assert(StringToFloatB(ToAnsiString('+1.5')) = 1.5);
-  Assert(StringToFloatB(ToAnsiString('-1.5')) = -1.5);
-  Assert(StringToFloatB(ToAnsiString('1.1')) = 1.1);
-  Assert(StringToFloatB(ToAnsiString('-00.00')) = 0.0);
-  Assert(StringToFloatB(ToAnsiString('+00.00')) = 0.0);
-  Assert(StringToFloatB(ToAnsiString('0000000000000000000000001.1000000000000000000000000')) = 1.1);
-  Assert(StringToFloatB(ToAnsiString('.5')) = 0.5);
-  Assert(StringToFloatB(ToAnsiString('-.5')) = -0.5);
+  Assert(StringToFloatB(ToRawByteString('0')) = 0.0);
+  Assert(StringToFloatB(ToRawByteString('1')) = 1.0);
+  Assert(StringToFloatB(ToRawByteString('1.5')) = 1.5);
+  Assert(StringToFloatB(ToRawByteString('+1.5')) = 1.5);
+  Assert(StringToFloatB(ToRawByteString('-1.5')) = -1.5);
+  Assert(StringToFloatB(ToRawByteString('1.1')) = 1.1);
+  Assert(StringToFloatB(ToRawByteString('-00.00')) = 0.0);
+  Assert(StringToFloatB(ToRawByteString('+00.00')) = 0.0);
+  Assert(StringToFloatB(ToRawByteString('0000000000000000000000001.1000000000000000000000000')) = 1.1);
+  Assert(StringToFloatB(ToRawByteString('.5')) = 0.5);
+  Assert(StringToFloatB(ToRawByteString('-.5')) = -0.5);
   {$IFNDEF ExtendedIsDouble}
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.123456789')), 1.123456789, 1e-10));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('123456789.123456789')), 123456789.123456789, 1e-10));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.5e500')), 1.5e500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('+1.5e+500')), 1.5e500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('1.2E-500')), 1.2e-500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('-1.2E-500')), -1.2e-500, 1e-2));
-  Assert(ExtendedApproxEqual(StringToFloatB(ToAnsiString('-1.23456789E-500')), -1.23456789e-500, 1e-9));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('1.123456789')), 1.123456789, 1e-10));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('123456789.123456789')), 123456789.123456789, 1e-10));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('1.5e500')), 1.5e500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('+1.5e+500')), 1.5e500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('1.2E-500')), 1.2e-500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('-1.2E-500')), -1.2e-500, 1e-2));
+  Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('-1.23456789E-500')), -1.23456789e-500, 1e-9));
   {$ENDIF}
 
-  Assert(not TryStringToFloatB(ToAnsiString(''), E));
-  Assert(not TryStringToFloatB(ToAnsiString('+'), E));
-  Assert(not TryStringToFloatB(ToAnsiString('-'), E));
-  Assert(not TryStringToFloatB(ToAnsiString('.'), E));
-  Assert(not TryStringToFloatB(ToAnsiString(' '), E));
-  Assert(not TryStringToFloatB(ToAnsiString(' 0'), E));
-  Assert(not TryStringToFloatB(ToAnsiString('0 '), E));
-  Assert(not TryStringToFloatB(ToAnsiString('--0'), E));
-  Assert(not TryStringToFloatB(ToAnsiString('0X'), E));
+  Assert(not TryStringToFloatB(ToRawByteString(''), E));
+  Assert(not TryStringToFloatB(ToRawByteString('+'), E));
+  Assert(not TryStringToFloatB(ToRawByteString('-'), E));
+  Assert(not TryStringToFloatB(ToRawByteString('.'), E));
+  Assert(not TryStringToFloatB(ToRawByteString(' '), E));
+  Assert(not TryStringToFloatB(ToRawByteString(' 0'), E));
+  Assert(not TryStringToFloatB(ToRawByteString('0 '), E));
+  Assert(not TryStringToFloatB(ToRawByteString('--0'), E));
+  Assert(not TryStringToFloatB(ToRawByteString('0X'), E));
 end;
 
 procedure Test;

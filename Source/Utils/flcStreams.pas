@@ -613,7 +613,9 @@ type
 
     procedure WriteCharA(const V: AnsiChar); virtual;
     procedure WriteCharW(const V: WideChar); virtual;
+    {$IFDEF SupportAnsiString}
     procedure WriteStrA(const Buffer: AnsiString); virtual;
+    {$ENDIF}
     procedure WriteStrB(const Buffer: RawByteString); virtual;
     procedure WriteStrU(const Buffer: UnicodeString); virtual;
 
@@ -626,12 +628,16 @@ type
     procedure WriteDouble(const V: Double);
     procedure WriteFloat(const V: Float);
 
+    {$IFDEF SupportAnsiString}
     procedure WritePackedAnsiString(const V: AnsiString);
+    {$ENDIF}
     procedure WritePackedRawByteString(const V: RawByteString);
     procedure WritePackedUnicodeString(const V: UnicodeString);
     procedure WritePackedString(const V: String);
 
+    {$IFDEF SupportAnsiString}
     procedure WritePackedAnsiStringArray(const V: array of AnsiString);
+    {$ENDIF}
     procedure WritePackedUnicodeStringArray(const V: array of UnicodeString);
     procedure WritePackedStringArray(const V: array of String);
 
@@ -1218,7 +1224,7 @@ var S    : Int64;
     I, J : Integer;
     L, N : Integer;
     R    : Boolean;
-    Q    : PAnsiChar;
+    Q    : PByteChar;
 begin
   S := GetSize;
   if S < 0 then // size unknown
@@ -2569,7 +2575,7 @@ end;
 
 function TBufferedReader.PosBuf(const C: ByteCharSet; const LocateNonMatch: Boolean;
     const MaxOffset: Integer): Integer;
-var P : PAnsiChar;
+var P : PByteChar;
     L : Integer;
 begin
   P := FBuffer;
@@ -2922,6 +2928,7 @@ begin
   Write(V, SizeOf(WideChar));
 end;
 
+{$IFDEF SupportAnsiString}
 procedure AWriterEx.WriteStrA(const Buffer: AnsiString);
 var
   I : Integer;
@@ -2929,6 +2936,7 @@ begin
   for I := 1 to Length(Buffer) do
     WriteCharA(Buffer[I]);
 end;
+{$ENDIF}
 
 procedure AWriterEx.WriteStrB(const Buffer: RawByteString);
 var
@@ -2949,7 +2957,7 @@ end;
 procedure AWriterEx.SetAsStringB(const S: RawByteString);
 begin
   Position := 0;
-  WriteStrA(S);
+  WriteStrB(S);
   Truncate;
 end;
 
@@ -3000,11 +3008,13 @@ begin
   WriteBuffer(V, Sizeof(Float));
 end;
 
+{$IFDEF SupportAnsiString}
 procedure AWriterEx.WritePackedAnsiString(const V: AnsiString);
 begin
   WriteLongInt(Length(V));
   WriteStrA(V);
 end;
+{$ENDIF}
 
 procedure AWriterEx.WritePackedRawByteString(const V: RawByteString);
 begin
@@ -3027,6 +3037,7 @@ begin
   {$ENDIF}
 end;
 
+{$IFDEF SupportAnsiString}
 procedure AWriterEx.WritePackedAnsiStringArray(const V: array of AnsiString);
 var I, L : Integer;
 begin
@@ -3035,6 +3046,7 @@ begin
   for I := 0 to L - 1 do
     WritePackedAnsiString(V[I]);
 end;
+{$ENDIF}
 
 procedure AWriterEx.WritePackedUnicodeStringArray(const V: array of UnicodeString);
 var I, L : Integer;
@@ -3258,7 +3270,7 @@ begin
   F := TFileWriter.Create(FileName, fwomCreateIfNotExist);
   try
     F.Append;
-    F.WriteStrA(S);
+    F.WriteStrB(S);
   finally
     F.Free;
   end;
@@ -3356,7 +3368,7 @@ end;
 
 function TRawByteStringWriter.Write(const Buffer; const Size: Integer): Integer;
 var I, J : Integer;
-    P    : PAnsiChar;
+    P    : PByteChar;
 begin
   if Size <= 0 then
     begin
@@ -3388,7 +3400,7 @@ end;
 
 procedure TRawByteStringWriter.WriteByte(const V: Byte);
 var I, J : Integer;
-    P    : PAnsiChar;
+    P    : PByteChar;
 begin
   I := FPos;
   J := I + 1;
@@ -3467,7 +3479,7 @@ end;
 
 function TUnicodeStringWriter.Write(const Buffer; const Size: Integer): Integer;
 var I, J : Integer;
-    P    : PAnsiChar;
+    P    : PByteChar;
 begin
   if Size <= 0 then
     begin
@@ -3502,7 +3514,7 @@ end;
 
 procedure TUnicodeStringWriter.WriteByte(const V: Byte);
 var I, J : Integer;
-    P    : PAnsiChar;
+    P    : PByteChar;
 begin
   I := FPos;
   J := I + 1;
@@ -3516,7 +3528,7 @@ end;
 
 procedure TUnicodeStringWriter.WriteWord(const V: Word);
 var I, J : Integer;
-    P    : PAnsiChar;
+    P    : PByteChar;
 begin
   I := FPos;
   J := I + 2;
@@ -4335,10 +4347,10 @@ var A : TRawByteStringWriter;
     B : TFileWriter;
 begin
   A := TRawByteStringWriter.Create;
-  A.WriteStrA('123');
+  A.WriteStrB('123');
   Assert(A.Size = 3, 'Writer.Size');
   Assert(A.GetAsStringB = '123', 'Writer.GetAsString');
-  A.WriteStrA('ABC');
+  A.WriteStrB('ABC');
   Assert(A.Size = 6, 'Writer.Size');
   Assert(A.GetAsStringB = '123ABC', 'Writer.GetAsString');
   A.Free;
@@ -4346,7 +4358,7 @@ begin
   B := TFileWriter.Create('selftestfile', fwomCreate);
   try
     Assert(B.Size = 0, 'Writer.Size');
-    B.WriteStrA('123');
+    B.WriteStrB('123');
     Assert(B.Size = 3, 'Writer.Size');
     B.WriteByte(65);
     Assert(B.Size = 4, 'Writer.Size');

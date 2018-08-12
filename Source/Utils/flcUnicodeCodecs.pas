@@ -222,7 +222,9 @@ type
     class function GetAlias(const Idx: Integer): String; virtual;
 
     class function IsAlias(const Alias: String): Boolean;
+    {$IFDEF SupportAnsiString}
     class function IsAliasA(const Alias: AnsiString): Boolean;
+    {$ENDIF}
     class function IsAliasU(const Alias: UnicodeString): Boolean;
 
     procedure Decode(const Buf: Pointer; const BufSize: Integer;
@@ -1721,12 +1723,14 @@ begin
   Result := False;
 end;
 
+{$IFDEF SupportAnsiString}
 class function TCustomUnicodeCodec.IsAliasA(const Alias: AnsiString): Boolean;
 var S : String;
 begin
   S := String(Alias);
   Result := IsAlias(S);
 end;
+{$ENDIF}
 
 class function TCustomUnicodeCodec.IsAliasU(const Alias: UnicodeString): Boolean;
 var S : String;

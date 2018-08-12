@@ -2838,6 +2838,7 @@ begin
   else
     Result := StrPMatchNoAsciiCaseAW(Pointer(A), Pointer(B), L1);
 end;
+{$ENDIF}
 
 function StrEqualBU(const A: UnicodeString; const B: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 var L1, L2 : Integer;
@@ -2866,7 +2867,6 @@ begin
   else
     Result := StrPMatchNoAsciiCase(Pointer(A), Pointer(B), L1);
 end;
-{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function StrEqualNoAsciiCaseA(const A, B: AnsiString): Boolean;
@@ -6943,12 +6943,13 @@ begin
   else
     Result := CopyLeftA(S, I - 1);
 end;
+{$ENDIF}
 
 function StrBeforeCharB(const S: RawByteString; const D: ByteCharSet;
     const Optional: Boolean): RawByteString;
 var I : Integer;
 begin
-  I := PosCharSetA(D, S);
+  I := PosCharSetB(D, S);
   if I = 0 then
     if Optional then
       Result := S
@@ -6985,7 +6986,6 @@ begin
   else
     Result := CopyLeftB(S, I - 1);
 end;
-{$ENDIF}
 
 function StrBeforeCharU(const S: UnicodeString; const D: ByteCharSet;
     const Optional: Boolean): UnicodeString;
@@ -7408,11 +7408,11 @@ end;
 function StrCopyFromCharB(const S: RawByteString; const D: AnsiChar): RawByteString;
 var I : Integer;
 begin
-  I := PosCharA(D, S);
+  I := PosCharB(D, S);
   if I = 0 then
     Result := ''
   else
-    Result := CopyFromA(S, I);
+    Result := CopyFromB(S, I);
 end;
 
 function StrCopyFromCharU(const S: UnicodeString; const D: ByteCharSet): UnicodeString;

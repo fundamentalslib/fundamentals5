@@ -3606,10 +3606,10 @@ function THashedRawByteStringArray.LocateItemHash(const Value: RawByteString;
 var I: Integer;
 begin
   // Hash value
-  LookupList := HashStrA(Value, 1, -1, FCaseSensitive, Length(FLookup));
+  LookupList := HashStrB(Value, 1, -1, FCaseSensitive, Length(FLookup));
   // Locate value in hash lookup
   for I := 0 to Length(FLookup[LookupList]) - 1 do
-    if StrEqualA(Value, FData[FLookup[LookupList][I]], FCaseSensitive) then
+    if StrEqualB(Value, FData[FLookup[LookupList][I]], FCaseSensitive) then
       begin
         LookupIdx := I;
         Result := True;
@@ -3628,7 +3628,7 @@ begin
   FLookup := nil;
   SetLength(FLookup, L);
   for I := 0 to C - 1 do
-    DynArrayAppend(FLookup[HashStrA(FData[I], 1, -1, FCaseSensitive, L)], I);
+    DynArrayAppend(FLookup[HashStrB(FData[I], 1, -1, FCaseSensitive, L)], I);
 end;
 
 procedure THashedRawByteStringArray.ExchangeItems(const Idx1, Idx2: Integer);
@@ -3691,7 +3691,7 @@ begin
   // Set array value
   FData[Idx] := Value;
   // Add new hash
-  DynArrayAppend(FLookup[HashStrA(Value, 1, -1, FCaseSensitive, Length(FLookup))], Idx);
+  DynArrayAppend(FLookup[HashStrB(Value, 1, -1, FCaseSensitive, Length(FLookup))], Idx);
 end;
 
 function THashedRawByteStringArray.AppendItem(const Value: RawByteString): Integer;
@@ -3703,7 +3703,7 @@ begin
   FData[Result] := Value;
   // add lookup
   L := Length(FLookup);
-  DynArrayAppend(FLookup[HashStrA(Value, 1, -1, FCaseSensitive, L)], Result);
+  DynArrayAppend(FLookup[HashStrB(Value, 1, -1, FCaseSensitive, L)], Result);
   if (Result + 1) div ArrayAverageHashChainSize > L then
     Rehash;
 end;
@@ -3740,7 +3740,7 @@ begin
   for F := P + 1 to L - 1 do
     begin
       Result := FLookup[I][F];
-      if StrEqualA(Find, FData[Result], FCaseSensitive) then
+      if StrEqualB(Find, FData[Result], FCaseSensitive) then
         // found
         exit;
     end;
