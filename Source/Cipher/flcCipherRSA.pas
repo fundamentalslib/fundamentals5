@@ -203,8 +203,10 @@ function  RSACheckSignature(
 {$IFDEF CIPHER_TEST}
 procedure Test;
 {$ENDIF}
+{$IFDEF OS_WIN}
 {$IFDEF CIPHER_PROFILE}
 procedure Profile;
+{$ENDIF}
 {$ENDIF}
 
 

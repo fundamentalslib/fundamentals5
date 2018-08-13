@@ -128,7 +128,11 @@ const
   MSG_PEEK = Posix.SysSocket.MSG_PEEK;
 
   SOL_SOCKET = Posix.SysSocket.SOL_SOCKET;
+  {$IFNDEF ANDROID}
+  {$IFNDEF OSX}
   SOL_RAW = Posix.SysSocket.SOL_RAW;
+  {$ENDIF}
+  {$ENDIF}
 
   SO_RCVTIMEO = Posix.SysSocket.SO_RCVTIMEO;
   SO_SNDTIMEO = Posix.SysSocket.SO_SNDTIMEO;
@@ -507,6 +511,17 @@ begin
   Posix.Fcntl.fcntl(Integer(S), F_SETFL, Flags);
 end;
 
+{$IFDEF ANDROID}
+function SockAvailableToRecv(const S: TSocket): Integer;
+begin
+  Result := 0;
+end;
+{$ELSE}{$IFDEF OSX}
+function SockAvailableToRecv(const S: TSocket): Integer;
+begin
+  Result := 0;
+end;
+{$ELSE}
 function SockAvailableToRecv(const S: TSocket): Integer;
 var L : Word32;
 begin
@@ -515,6 +530,7 @@ begin
   else
     Result := L;
 end;
+{$ENDIF}{$ENDIF}{$ENDIF}
 
 
 

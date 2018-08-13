@@ -478,7 +478,7 @@ begin
   FileData := GetAsPascal;
   FileStream := TFileStream.Create(FileName, fmCreate);
   try
-    FileStream.WriteBuffer(PAnsiChar(FileData)^, Length(FileData));
+    FileStream.WriteBuffer(Pointer(FileData)^, Length(FileData));
   finally
     FileStream.Free;
   end;

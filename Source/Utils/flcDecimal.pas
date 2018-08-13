@@ -233,14 +233,14 @@ procedure Decimal32DivideWord32(var A: Decimal32; const B: LongWord);
 procedure Decimal32DivideDecimal32(var A: Decimal32; const B: Decimal32);
 
 function  Decimal32ToStr(const A: Decimal32): String;
-function  Decimal32ToStrA(const A: Decimal32): RawByteString;
+function  Decimal32ToStrB(const A: Decimal32): RawByteString;
 function  Decimal32ToStrU(const A: Decimal32): UnicodeString;
 
 function  TryStrToDecimal32(const A: String; out B: Decimal32): TDecimalConvertErrorType;
-function  TryStrToDecimal32A(const A: RawByteString; out B: Decimal32): TDecimalConvertErrorType;
+function  TryStrToDecimal32B(const A: RawByteString; out B: Decimal32): TDecimalConvertErrorType;
 
 function  StrToDecimal32(const A: String): Decimal32;
-function  StrToDecimal32A(const A: RawByteString): Decimal32;
+function  StrToDecimal32B(const A: RawByteString): Decimal32;
 
 
 
@@ -336,14 +336,14 @@ procedure Decimal64DivideWord32(var A: Decimal64; const B: Word32);
 procedure Decimal64DivideDecimal64(var A: Decimal64; const B: Decimal64);
 
 function  Decimal64ToStr(const A: Decimal64): String;
-function  Decimal64ToStrA(const A: Decimal64): AnsiString;
+function  Decimal64ToStrB(const A: Decimal64): RawByteString;
 function  Decimal64ToStrU(const A: Decimal64): UnicodeString;
 
 function  TryStrToDecimal64(const A: String; out B: Decimal64): TDecimalConvertErrorType;
-function  TryStrToDecimal64A(const A: RawByteString; out B: Decimal64): TDecimalConvertErrorType;
+function  TryStrToDecimal64B(const A: RawByteString; out B: Decimal64): TDecimalConvertErrorType;
 
 function  StrToDecimal64(const A: String): Decimal64;
-function  StrToDecimal64A(const A: RawByteString): Decimal64;
+function  StrToDecimal64B(const A: RawByteString): Decimal64;
 
 
 
@@ -443,14 +443,14 @@ procedure Decimal128DivideWord32(var A: Decimal128; const B: Word32);
 procedure Decimal128DivideDecimal128(var A: Decimal128; const B: Decimal128);
 
 function  Decimal128ToStr(const A: Decimal128): String;
-function  Decimal128ToStrA(const A: Decimal128): RawByteString;
+function  Decimal128ToStrB(const A: Decimal128): RawByteString;
 function  Decimal128ToStrU(const A: Decimal128): UnicodeString;
 
 function  TryStrToDecimal128(const A: String; out B: Decimal128): TDecimalConvertErrorType;
-function  TryStrToDecimal128A(const A: RawByteString; out B: Decimal128): TDecimalConvertErrorType;
+function  TryStrToDecimal128B(const A: RawByteString; out B: Decimal128): TDecimalConvertErrorType;
 
 function  StrToDecimal128(const A: String): Decimal128;
-function  StrToDecimal128A(const A: RawByteString): Decimal128;
+function  StrToDecimal128B(const A: RawByteString): Decimal128;
 
 
 
@@ -617,14 +617,14 @@ procedure SDecimal32DivideWord32(var A: SDecimal32; const B: Word32);
 procedure SDecimal32DivideSDecimal32(var A: SDecimal32; const B: SDecimal32);
 
 function  SDecimal32ToStr(const A: SDecimal32): String;
-function  SDecimal32ToStrA(const A: SDecimal32): RawByteString;
+function  SDecimal32ToStrB(const A: SDecimal32): RawByteString;
 function  SDecimal32ToStrU(const A: SDecimal32): UnicodeString;
 
 function  TryStrToSDecimal32(const A: String; out B: SDecimal32): TDecimalConvertErrorType;
-function  TryStrToSDecimal32A(const A: RawByteString; out B: SDecimal32): TDecimalConvertErrorType;
+function  TryStrToSDecimal32B(const A: RawByteString; out B: SDecimal32): TDecimalConvertErrorType;
 
 function  StrToSDecimal32(const A: String): SDecimal32;
-function  StrToSDecimal32A(const A: RawByteString): SDecimal32;
+function  StrToSDecimal32B(const A: RawByteString): SDecimal32;
 
 
 
@@ -719,14 +719,14 @@ procedure SDecimal64DivideWord32(var A: SDecimal64; const B: Word32);
 procedure SDecimal64DivideSDecimal64(var A: SDecimal64; const B: SDecimal64);
 
 function  SDecimal64ToStr(const A: SDecimal64): String;
-function  SDecimal64ToStrA(const A: SDecimal64): RawByteString;
+function  SDecimal64ToStrB(const A: SDecimal64): RawByteString;
 function  SDecimal64ToStrU(const A: SDecimal64): UnicodeString;
 
 function  TryStrToSDecimal64(const A: String; out B: SDecimal64): TDecimalConvertErrorType;
-function  TryStrToSDecimal64A(const A: RawByteString; out B: SDecimal64): TDecimalConvertErrorType;
+function  TryStrToSDecimal64B(const A: RawByteString; out B: SDecimal64): TDecimalConvertErrorType;
 
 function  StrToSDecimal64(const A: String): SDecimal64;
-function  StrToSDecimal64A(const A: RawByteString): SDecimal64;
+function  StrToSDecimal64B(const A: RawByteString): SDecimal64;
 
 
 
@@ -819,14 +819,14 @@ procedure SDecimal128DivideWord64(var A: SDecimal128; const B: Word64);
 procedure SDecimal128DivideSDecimal128(var A: SDecimal128; const B: SDecimal128);
 
 function  SDecimal128ToStr(const A: SDecimal128): String;
-function  SDecimal128ToStrA(const A: SDecimal128): AnsiString;
+function  SDecimal128ToStrB(const A: SDecimal128): RawByteString;
 function  SDecimal128ToStrU(const A: SDecimal128): UnicodeString;
 
 function  TryStrToSDecimal128(const A: String; out B: SDecimal128): TDecimalConvertErrorType;
-function  TryStrToSDecimal128A(const A: RawByteString; out B: SDecimal128): TDecimalConvertErrorType;
+function  TryStrToSDecimal128B(const A: RawByteString; out B: SDecimal128): TDecimalConvertErrorType;
 
 function  StrToSDecimal128(const A: String): SDecimal128;
-function  StrToSDecimal128A(const A: RawByteString): SDecimal128;
+function  StrToSDecimal128B(const A: RawByteString): SDecimal128;
 
 
 
@@ -1359,7 +1359,7 @@ begin
   Result := S;
 end;
 
-function Decimal32ToStrA(const A: Decimal32): RawByteString;
+function Decimal32ToStrB(const A: Decimal32): RawByteString;
 var
   S : RawByteString;
   T : Word64;
@@ -1371,7 +1371,7 @@ begin
       exit;
     end;
   Word64InitWord32(T, A.Value32);
-  S := StrPadLeftB(Word64ToStrA(T), '0', Decimal32Precision + 1, False);
+  S := StrPadLeftB(Word64ToStrB(T), '0', Decimal32Precision + 1, False);
   L := Length(S);
   S :=
     CopyLeftB(S, L - Decimal32Precision) + '.' +
@@ -2227,7 +2227,7 @@ begin
   Result := dceNoError;
 end;
 
-function TryStrToDecimal32A(const A: RawByteString; out B: Decimal32): TDecimalConvertErrorType;
+function TryStrToDecimal32B(const A: RawByteString; out B: Decimal32): TDecimalConvertErrorType;
 var
   ResInt : Word64;
   ResIntDigits : Integer;
@@ -2467,9 +2467,9 @@ begin
   end;
 end;
 
-function StrToDecimal32A(const A: RawByteString): Decimal32;
+function StrToDecimal32B(const A: RawByteString): Decimal32;
 begin
-  case TryStrToDecimal32A(A, Result) of
+  case TryStrToDecimal32B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -3036,9 +3036,9 @@ begin
     CopyRight(S, Decimal64Precision);
 end;
 
-function Decimal64ToStrA(const A: Decimal64): AnsiString;
+function Decimal64ToStrB(const A: Decimal64): RawByteString;
 var
-  S : AnsiString;
+  S : RawByteString;
   L : Integer;
 begin
   if Word64IsZero(A.Value64) then
@@ -3046,11 +3046,11 @@ begin
       Result := '0.000000000';
       exit;
     end;
-  S := StrPadLeftA(Word64ToStrA(A.Value64), '0', Decimal64Precision + 1, False);
+  S := StrPadLeftB(Word64ToStrB(A.Value64), '0', Decimal64Precision + 1, False);
   L := Length(S);
   Result :=
-    CopyLeftA(S, L - Decimal64Precision) + '.' +
-    CopyRightA(S, Decimal64Precision);
+    CopyLeftB(S, L - Decimal64Precision) + '.' +
+    CopyRightB(S, Decimal64Precision);
 end;
 
 function Decimal64ToStrU(const A: Decimal64): UnicodeString;
@@ -3308,7 +3308,7 @@ begin
   Result := dceNoError;
 end;
 
-function TryStrToDecimal64A(const A: RawByteString; out B: Decimal64): TDecimalConvertErrorType;
+function TryStrToDecimal64B(const A: RawByteString; out B: Decimal64): TDecimalConvertErrorType;
 var
   ResInt : Word128;
   ResIntDigits : Integer;
@@ -3555,9 +3555,9 @@ begin
   end;
 end;
 
-function StrToDecimal64A(const A: RawByteString): Decimal64;
+function StrToDecimal64B(const A: RawByteString): Decimal64;
 begin
-  case TryStrToDecimal64A(A, Result) of
+  case TryStrToDecimal64B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -4179,9 +4179,9 @@ begin
     CopyRight(S, Decimal128Precision);
 end;
 
-function Decimal128ToStrA(const A: Decimal128): RawByteString;
+function Decimal128ToStrB(const A: Decimal128): RawByteString;
 var
-  S : AnsiString;
+  S : RawByteString;
   L : Integer;
 begin
   if Word128IsZero(A.Value128) then
@@ -4189,7 +4189,7 @@ begin
       Result := '0.0000000000000000000';
       exit;
     end;
-  S := StrPadLeftB(Word128ToStrA(A.Value128), '0', Decimal128Precision + 1, False);
+  S := StrPadLeftB(Word128ToStrB(A.Value128), '0', Decimal128Precision + 1, False);
   L := Length(S);
   Result :=
     CopyLeftB(S, L - Decimal128Precision) + '.' +
@@ -4349,7 +4349,7 @@ begin
   Result := dceNoError;
 end;
 
-function TryStrToDecimal128A(const A: RawByteString; out B: Decimal128): TDecimalConvertErrorType;
+function TryStrToDecimal128B(const A: RawByteString; out B: Decimal128): TDecimalConvertErrorType;
 var
   ResInt : Word128;
   ResFrac : Word128;
@@ -4494,9 +4494,9 @@ begin
   end;
 end;
 
-function StrToDecimal128A(const A: RawByteString): Decimal128;
+function StrToDecimal128B(const A: RawByteString): Decimal128;
 begin
-  case TryStrToDecimal128A(A, Result) of
+  case TryStrToDecimal128B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -6856,14 +6856,14 @@ begin
   Result := S;
 end;
 
-function SDecimal32ToStrA(const A: SDecimal32): RawByteString;
+function SDecimal32ToStrB(const A: SDecimal32): RawByteString;
 var S : RawByteString;
 begin
   if A.Sign < 0 then
     S := '-'
   else
     S := '';
-  S := S + Decimal32ToStrA(A.Value);
+  S := S + Decimal32ToStrB(A.Value);
   Result := S;
 end;
 
@@ -6907,7 +6907,7 @@ begin
   Result := R;
 end;
 
-function TryStrToSDecimal32A(const A: RawByteString; out B: SDecimal32): TDecimalConvertErrorType;
+function TryStrToSDecimal32B(const A: RawByteString; out B: SDecimal32): TDecimalConvertErrorType;
 var C : AnsiChar;
     T : RawByteString;
     R : TDecimalConvertErrorType;
@@ -6922,7 +6922,7 @@ begin
       C := '+';
       T := A;
     end;
-  R := TryStrToDecimal32A(T, B.Value);
+  R := TryStrToDecimal32B(T, B.Value);
   if R = dceNoError then
     begin
       if Decimal32IsZero(B.Value) then
@@ -6945,9 +6945,9 @@ begin
   end;
 end;
 
-function StrToSDecimal32A(const A: RawByteString): SDecimal32;
+function StrToSDecimal32B(const A: RawByteString): SDecimal32;
 begin
-  case TryStrToSDecimal32A(A, Result) of
+  case TryStrToSDecimal32B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -7804,14 +7804,14 @@ begin
   Result := S;
 end;
 
-function SDecimal64ToStrA(const A: SDecimal64): RawByteString;
-var S : AnsiString;
+function SDecimal64ToStrB(const A: SDecimal64): RawByteString;
+var S : RawByteString;
 begin
   if A.Sign < 0 then
     S := '-'
   else
     S := '';
-  S := S + Decimal64ToStrA(A.Value);
+  S := S + Decimal64ToStrB(A.Value);
   Result := S;
 end;
 
@@ -7855,7 +7855,7 @@ begin
   Result := R;
 end;
 
-function TryStrToSDecimal64A(const A: RawByteString; out B: SDecimal64): TDecimalConvertErrorType;
+function TryStrToSDecimal64B(const A: RawByteString; out B: SDecimal64): TDecimalConvertErrorType;
 var C : AnsiChar;
     T : RawByteString;
     R : TDecimalConvertErrorType;
@@ -7864,13 +7864,13 @@ begin
     raise EDecimalError.Create(SConvertError);
   C := A[1];
   if (C = '+') or (C = '-') then
-    T := CopyFromA(A, 2)
+    T := CopyFromB(A, 2)
   else
     begin
       C := '+';
       T := A;
     end;
-  R := TryStrToDecimal64A(T, B.Value);
+  R := TryStrToDecimal64B(T, B.Value);
   if R = dceNoError then
     begin
       if Decimal64IsZero(B.Value) then
@@ -7893,9 +7893,9 @@ begin
   end;
 end;
 
-function StrToSDecimal64A(const A: RawByteString): SDecimal64;
+function StrToSDecimal64B(const A: RawByteString): SDecimal64;
 begin
-  case TryStrToSDecimal64A(A, Result) of
+  case TryStrToSDecimal64B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -8869,14 +8869,14 @@ begin
   Result := S;
 end;
 
-function SDecimal128ToStrA(const A: SDecimal128): AnsiString;
-var S : AnsiString;
+function SDecimal128ToStrB(const A: SDecimal128): RawByteString;
+var S : RawByteString;
 begin
   if A.Sign < 0 then
     S := '-'
   else
     S := '';
-  S := S + Decimal128ToStrA(A.Value);
+  S := S + Decimal128ToStrB(A.Value);
   Result := S;
 end;
 
@@ -8920,7 +8920,7 @@ begin
   Result := R;
 end;
 
-function TryStrToSDecimal128A(const A: RawByteString; out B: SDecimal128): TDecimalConvertErrorType;
+function TryStrToSDecimal128B(const A: RawByteString; out B: SDecimal128): TDecimalConvertErrorType;
 var C : AnsiChar;
     T : RawByteString;
     R : TDecimalConvertErrorType;
@@ -8935,7 +8935,7 @@ begin
       C := '+';
       T := A;
     end;
-  R := TryStrToDecimal128A(T, B.Value);
+  R := TryStrToDecimal128B(T, B.Value);
   if R = dceNoError then
     begin
       if Decimal128IsZero(B.Value) then
@@ -8958,9 +8958,9 @@ begin
   end;
 end;
 
-function StrToSDecimal128A(const A: RawByteString): SDecimal128;
+function StrToSDecimal128B(const A: RawByteString): SDecimal128;
 begin
-  case TryStrToSDecimal128A(A, Result) of
+  case TryStrToSDecimal128B(A, Result) of
     dceNoError       : ;
     dceConvertError  : raise EDecimalError.Create(SConvertError);
     dceOverflowError : raise EDecimalError.Create(SOverflowError);
@@ -9661,7 +9661,7 @@ begin
   Assert(Decimal32IsOne(A));
   Assert(Decimal32ToWord8(A) = 1);
   Assert(Decimal32ToStr(A) = '1.0000');
-  Assert(Decimal32ToStrA(A) = '1.0000');
+  Assert(Decimal32ToStrB(A) = '1.0000');
   Assert(Decimal32EqualsWord8(A, 1));
   Assert(Decimal32CompareWord8(A, 0) = 1);
   Assert(Decimal32CompareWord8(A, 1) = 0);
@@ -9987,7 +9987,7 @@ begin
   Assert(Decimal64IsOne(A));
   Assert(Decimal64ToWord8(A) = 1);
   Assert(Decimal64ToStr(A) = '1.000000000');
-  Assert(Decimal64ToStrA(A) = '1.000000000');
+  Assert(Decimal64ToStrB(A) = '1.000000000');
   Assert(Decimal64EqualsWord8(A, 1));
   Assert(Decimal64CompareWord8(A, 0) = 1);
   Assert(Decimal64CompareWord8(A, 1) = 0);
@@ -10242,7 +10242,7 @@ begin
   Assert(Decimal128IsOne(A));
   Assert(Decimal128ToWord8(A) = 1);
   Assert(Decimal128ToStr(A) = '1.0000000000000000000');
-  Assert(Decimal128ToStrA(A) = '1.0000000000000000000');
+  Assert(Decimal128ToStrB(A) = '1.0000000000000000000');
   Assert(Decimal128EqualsWord8(A, 1));
   Assert(Decimal128CompareWord8(A, 0) = 1);
   Assert(Decimal128CompareWord8(A, 1) = 0);
@@ -10295,7 +10295,7 @@ begin
   A := StrToDecimal128('9999999999999999999.9999999999999999999');
   Assert(Decimal128IsMaximum(A));
 
-  A := StrToDecimal128A('9999999999999999999.9999999999999999999');
+  A := StrToDecimal128B('9999999999999999999.9999999999999999999');
   Assert(Decimal128IsMaximum(A));
 
   Decimal128InitMax(A);
@@ -11474,7 +11474,7 @@ begin
   Assert(not SDecimal32IsMinusOne(A));
   Assert(SDecimal32ToWord8(A) = 1);
   Assert(SDecimal32ToStr(A) = '1.0000');
-  Assert(SDecimal32ToStrA(A) = '1.0000');
+  Assert(SDecimal32ToStrB(A) = '1.0000');
   Assert(SDecimal32EqualsWord8(A, 1));
   Assert(SDecimal32EqualsInt32(A, 1));
   Assert(not SDecimal32EqualsInt32(A, -1));
@@ -11494,7 +11494,7 @@ begin
   Assert(SDecimal32IsMinusOne(A));
   Assert(SDecimal32ToInt32(A) = -1);
   Assert(SDecimal32ToStr(A) = '-1.0000');
-  Assert(SDecimal32ToStrA(A) = '-1.0000');
+  Assert(SDecimal32ToStrB(A) = '-1.0000');
   Assert(not SDecimal32EqualsWord8(A, 1));
   Assert(SDecimal32EqualsInt32(A, -1));
   Assert(not SDecimal32EqualsInt32(A, 1));
@@ -11761,7 +11761,7 @@ begin
   Assert(not SDecimal64IsMinusOne(A));
   Assert(SDecimal64ToInt32(A) = 1);
   Assert(SDecimal64ToStr(A) = '1.000000000');
-  Assert(SDecimal64ToStrA(A) = '1.000000000');
+  Assert(SDecimal64ToStrB(A) = '1.000000000');
   Assert(SDecimal64EqualsWord8(A, 1));
   Assert(SDecimal64CompareWord8(A, 0) = 1);
   Assert(SDecimal64CompareWord8(A, 1) = 0);
@@ -11779,7 +11779,7 @@ begin
   Assert(SDecimal64IsMinusOne(A));
   Assert(SDecimal64ToInt32(A) = -1);
   Assert(SDecimal64ToStr(A) = '-1.000000000');
-  Assert(SDecimal64ToStrA(A) = '-1.000000000');
+  Assert(SDecimal64ToStrB(A) = '-1.000000000');
   Assert(not SDecimal64EqualsWord8(A, 1));
   Assert(SDecimal64EqualsInt32(A, -1));
   Assert(SDecimal64CompareWord8(A, 0) = -1);
@@ -12023,7 +12023,7 @@ begin
   Assert(SDecimal128Sign(A) = 1);
   Assert(SDecimal128ToInt32(A) = 1);
   Assert(SDecimal128ToStr(A) = '1.0000000000000000000');
-  Assert(SDecimal128ToStrA(A) = '1.0000000000000000000');
+  Assert(SDecimal128ToStrB(A) = '1.0000000000000000000');
   Assert(SDecimal128ToStrU(A) = '1.0000000000000000000');
   Assert(SDecimal128EqualsWord8(A, 1));
   Assert(not SDecimal128EqualsWord8(A, 0));
@@ -12085,7 +12085,7 @@ begin
   Assert(SDecimal128ToInt32(A) = -1);
   Assert(SDecimal128ToInt64(A) = -1);
   Assert(SDecimal128ToStr(A) = '-1.0000000000000000000');
-  Assert(SDecimal128ToStrA(A) = '-1.0000000000000000000');
+  Assert(SDecimal128ToStrB(A) = '-1.0000000000000000000');
   Assert(not SDecimal128EqualsWord8(A, 1));
   Assert(SDecimal128EqualsInt32(A, -1));
   Assert(SDecimal128EqualsInt64(A, -1));
@@ -12172,16 +12172,16 @@ begin
   SDecimal128AddWord32(A, 2);
   Assert(SDecimal128ToFloat(A) = 0.0625);
   SDecimal128AddWord16(A, 123);
-  Assert(SDecimal128ToStrA(A) = '123.0625000000000000000');
+  Assert(SDecimal128ToStrB(A) = '123.0625000000000000000');
   SDecimal128AddWord32(A, 1000000);
-  Assert(SDecimal128ToStrA(A) = '1000123.0625000000000000000');
+  Assert(SDecimal128ToStrB(A) = '1000123.0625000000000000000');
   Word64InitWord32(C, 10000000);
   SDecimal128AddWord64(A, C);
-  Assert(SDecimal128ToStrA(A) = '11000123.0625000000000000000');
+  Assert(SDecimal128ToStrB(A) = '11000123.0625000000000000000');
   SDecimal128SubtractWord64(A, C);
-  Assert(SDecimal128ToStrA(A) = '1000123.0625000000000000000');
+  Assert(SDecimal128ToStrB(A) = '1000123.0625000000000000000');
   SDecimal128SubtractWord32(A, 1000000);
-  Assert(SDecimal128ToStrA(A) = '123.0625000000000000000');
+  Assert(SDecimal128ToStrB(A) = '123.0625000000000000000');
 
   SDecimal128InitFloat(A, -1.9375);
   SDecimal128InitFloat(B, -2.5000);

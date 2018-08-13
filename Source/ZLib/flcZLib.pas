@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcZLib.pas                                              }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      ZLib compression                                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -58,6 +58,7 @@
 {   2015/04/04  4.02  Portable version using zlibpas.                          }
 {   2015/04/04  4.03  Stream implementation.                                   }
 {   2016/01/09  5.04  Revised for Fundamentals 5.                              }
+{   2018/08/13  5.05  Portability changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -153,7 +154,7 @@ const
   ZLIB_VER_SUBREVISION = 0;
   {$ENDIF}
   {$IFDEF ZLIBPAS}
-  ZLIB_VERSION : PAnsiChar = '1.1.2';
+  ZLIB_VERSION : string = '1.1.2';
   ZLIB_VERNUM          = $1120;
   ZLIB_VER_MAJOR       = 1;
   ZLIB_VER_MINOR       = 1;
@@ -452,7 +453,7 @@ const
   z_errmsg: array[0..9] of PAnsiChar = (
   {$ENDIF}
   {$IFDEF ZLIBPAS}
-  z_errmsg: array[0..9] of PAnsiChar = (
+  z_errmsg: array[0..9] of String = (
   {$ENDIF}
     'Need dictionary',      // Z_NEED_DICT      (2)
     'Stream end',           // Z_STREAM_END     (1)
@@ -509,7 +510,7 @@ begin
     -6..2 : Result := String(z_errmsg[2 - Code]);
     {$ENDIF}
     {$IFDEF ZLIBPAS}
-    -6..2 : Result := String(z_errmsg[2 - Code]);
+    -6..2 : Result := z_errmsg[2 - Code];
     {$ENDIF}
   else
     Result := 'error ' + IntToStr(Code);
@@ -665,10 +666,10 @@ var
   OutBuffer : Pointer;
   OutSize   : Integer;
 begin
-  ZLibCompressBuf(PAnsiChar(S), Length(S), OutBuffer, OutSize, Level);
+  ZLibCompressBuf(Pointer(S), Length(S), OutBuffer, OutSize, Level);
   try
     SetLength(Result, OutSize);
-    Move(OutBuffer^, PAnsiChar(Result)^, OutSize);
+    Move(OutBuffer^, Pointer(Result)^, OutSize);
   finally
     FreeMem(OutBuffer);
   end;
@@ -745,11 +746,11 @@ var
   Buffer : Pointer;
   Size   : Integer;
 begin
-  ZLibDecompressBuf(PAnsiChar(S), Length(S), Buffer, Size);
+  ZLibDecompressBuf(Pointer(S), Length(S), Buffer, Size);
   try
     SetLength(Result, Size);
     if Size > 0 then
-      Move(Buffer^, PAnsiChar(Result)^, Size);
+      Move(Buffer^, Pointer(Result)^, Size);
   finally
     FreeMem(Buffer);
   end;
@@ -1007,15 +1008,16 @@ end;
 
 const
   TestStrCount = 8;
-  TestStr : array[1..TestStrCount] of AnsiString = (
+  TestStr : array[1..TestStrCount] of RawByteString = (
       '',
       #0,
       'Fundamentals',
       'ZLIB 1.2.3',
       'Test string with string repetition and string repetition',
       '...........................................................',
-      #$FF#$00#$01#$02#$FE#$F0#$80#$7F,
-      #$78#$9C#$03#$00#$00#$00#$00#$01);
+      RawByteString(#$FF#$00#$01#$02#$FE#$F0#$80#$7F),
+      RawByteString(#$78#$9C#$03#$00#$00#$00#$00#$01)
+      );
 
 procedure Test_TestStrs;
 var
@@ -1049,11 +1051,11 @@ end;
 
 procedure Test_Encoding_EmptyStr;
 const
-  EmptyTestStrCompressed : array[TZLibCompressionLevel] of AnsiString = (
-      #$78#$DA#$01#$00#$00#$FF#$FF#$00#$00#$00#$01, // none
-      #$78#$01#$03#$00#$00#$00#$00#$01,             // best speed
-      #$78#$DA#$03#$00#$00#$00#$00#$01,             // best compression
-      #$78#$9C#$03#$00#$00#$00#$00#$01              // default
+  EmptyTestStrCompressed : array[TZLibCompressionLevel] of RawByteString = (
+      RawByteString(#$78#$DA#$01#$00#$00#$FF#$FF#$00#$00#$00#$01), // none
+      RawByteString(#$78#$01#$03#$00#$00#$00#$00#$01),             // best speed
+      RawByteString(#$78#$DA#$03#$00#$00#$00#$00#$01),             // best compression
+      RawByteString(#$78#$9C#$03#$00#$00#$00#$00#$01)              // default
       );
 var
   L : TZLibCompressionLevel;

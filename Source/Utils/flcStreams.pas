@@ -1095,33 +1095,25 @@ begin
     Result := StrPas(PAnsiChar(@Buf));
 end;
 {$ENDIF}
-{$ELSE}
-{$IFDEF ANDROID}
+{$ENDIF}
+
+{$IFDEF DELPHI}
+{$IFDEF POSIX}
 function GetLastOSErrorMessage: String;
 begin
-  Result := 'Function not implemented';
+  Result := SysErrorMessage(GetLastError);
 end;
 {$ENDIF}
-{$IFDEF UNIX}
+{$ENDIF}
+
 {$IFDEF FREEPASCAL}
+{$IFDEF UNIX}
 function GetLastOSErrorMessage: String;
 begin
   Result := SysErrorMessage(GetLastOSError);
 end;
-{$ELSE}
-function GetLastOSErrorMessage: String;
-var Err: LongWord;
-    Buf: array[0..1023] of AnsiChar;
-begin
-  Err := BaseUnix.fpgeterrno;
-  FillChar(Buf, Sizeof(Buf), #0);
-  libc.strerror_r(Err, @Buf, SizeOf(Buf));
-  if Buf[0] = #0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(@Buf);
-end;
-{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}
+{$ENDIF}
 
 
 
@@ -3212,10 +3204,14 @@ begin
   {$IFDEF ANDROID}
   raise EFileWriter.Create('TruncateFile not implemented');
   {$ELSE}
+  {$IFDEF OSX}
+  raise EFileWriter.Create('TruncateFile not implemented');
+  {$ELSE}
   if not TruncateFile(FHandle, Size) then
     raise EFileWriter.CreateFmt(SFileResizeError, [GetLastOSErrorMessage]);
   {$ENDIF}
   {$ENDIF}{$ENDIF}
+  {$ENDIF}
 end;
 
 function TFileWriter.Write(const Buffer; const Size: Integer): Integer;

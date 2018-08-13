@@ -576,7 +576,7 @@ procedure Word64DivideWord64(const A, B: Word64; var Q, R: Word64);
 procedure Word64ModWord64(const A, B: Word64; var R: Word64);
 
 function  Word64ToStr(const A: Word64): String;
-function  Word64ToStrA(const A: Word64): RawByteString;
+function  Word64ToStrB(const A: Word64): RawByteString;
 function  Word64ToStrU(const A: Word64): UnicodeString;
 function  StrToWord64(const A: String): Word64;
 function  StrToWord64A(const A: RawByteString): Word64;
@@ -720,7 +720,7 @@ procedure Word128DivideWord128(const A, B: Word128; var Q, R: Word128);
 procedure Word128ModWord128(const A, B: Word128; var R: Word128);
 
 function  Word128ToStr(const A: Word128): String;
-function  Word128ToStrA(const A: Word128): RawByteString;
+function  Word128ToStrB(const A: Word128): RawByteString;
 function  Word128ToStrU(const A: Word128): UnicodeString;
 function  StrToWord128(const A: String): Word128;
 function  StrToWord128A(const A: RawByteString): Word128;
@@ -1397,7 +1397,7 @@ procedure Int128DivideInt64(const A: Int128; const B: Int64; var Q: Int128; var 
 procedure Int128DivideInt128(const A, B: Int128; var Q, R: Int128);
 
 function  Int128ToStr(const A: Int128): String;
-function  Int128ToStrA(const A: Int128): RawByteString;
+function  Int128ToStrB(const A: Int128): RawByteString;
 function  Int128ToStrU(const A: Int128): UnicodeString;
 function  StrToInt128(const A: String): Int128;
 function  StrToInt128A(const A: RawByteString): Int128;
@@ -4276,7 +4276,7 @@ begin
   Word64DivideWord64(A, B, Q, R);
 end;
 
-procedure Word64ToShortStrR(const A: Word64; var S: ShortString);
+procedure Word64ToShortStrR(const A: Word64; var S: RawByteString);
 var C : Word64;
     D : Byte;
     I : Integer;
@@ -4286,7 +4286,7 @@ begin
       S := '0';
       exit;
     end;
-  SetLength(S, 255);
+  SetLength(S, 32);
   C := A;
   I := 0;
   repeat
@@ -4298,7 +4298,7 @@ begin
 end;
 
 function Word64ToStr(const A: Word64): String;
-var S : ShortString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word64ToShortStrR(A, S);
@@ -4308,19 +4308,19 @@ begin
     Result[I] := Char(S[L - I + 1]);
 end;
 
-function Word64ToStrA(const A: Word64): RawByteString;
-var S : ShortString;
+function Word64ToStrB(const A: Word64): RawByteString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word64ToShortStrR(A, S);
   L := Length(S);
   SetLength(Result, L);
   for I := 1 to L do
-    Result[I] := AnsiChar(S[L - I + 1]);
+    Result[I] := S[L - I + 1];
 end;
 
 function Word64ToStrU(const A: Word64): UnicodeString;
-var S : ShortString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word64ToShortStrR(A, S);
@@ -6581,7 +6581,7 @@ begin
   Word128DivideWord128(A, B, Q, R);
 end;
 
-procedure Word128ToShortStrR(const A: Word128; var S: ShortString);
+procedure Word128ToShortStrR(const A: Word128; var S: RawByteString);
 var C : Word128;
     D : Byte;
     I : Integer;
@@ -6591,7 +6591,7 @@ begin
       S := '0';
       exit;
     end;
-  SetLength(S, 255);
+  SetLength(S, 64);
   C := A;
   I := 0;
   repeat
@@ -6603,7 +6603,7 @@ begin
 end;
 
 function Word128ToStr(const A: Word128): String;
-var S : ShortString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word128ToShortStrR(A, S);
@@ -6613,19 +6613,19 @@ begin
     Result[I] := Char(S[L - I + 1]);
 end;
 
-function Word128ToStrA(const A: Word128): RawByteString;
-var S : ShortString;
+function Word128ToStrB(const A: Word128): RawByteString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word128ToShortStrR(A, S);
   L := Length(S);
   SetLength(Result, L);
   for I := 1 to L do
-    Result[I] := AnsiChar(S[L - I + 1]);
+    Result[I] := S[L - I + 1];
 end;
 
 function Word128ToStrU(const A: Word128): UnicodeString;
-var S : ShortString;
+var S : RawByteString;
     I, L : Integer;
 begin
   Word128ToShortStrR(A, S);
@@ -13679,7 +13679,7 @@ end;
 function Int128ToStr(const A: Int128): String;
 var B : Word128;
     N : Boolean;
-    S : ShortString;
+    S : RawByteString;
     I, L, K : Integer;
 begin
   N := Int128Abs(A, B);
@@ -13696,10 +13696,10 @@ begin
     Result[1] := '-';
 end;
 
-function Int128ToStrA(const A: Int128): RawByteString;
+function Int128ToStrB(const A: Int128): RawByteString;
 var B : Word128;
     N : Boolean;
-    S : ShortString;
+    S : RawByteString;
     I, L, K : Integer;
 begin
   N := Int128Abs(A, B);
@@ -13719,7 +13719,7 @@ end;
 function Int128ToStrU(const A: Int128): UnicodeString;
 var B : Word128;
     N : Boolean;
-    S : ShortString;
+    S : RawByteString;
     I, L, K : Integer;
 begin
   N := Int128Abs(A, B);
@@ -16836,7 +16836,7 @@ begin
   Assert(Word128ToStr(A) = '0');
   Word128InitInt64(A, 1234);
   Assert(Word128ToStr(A) = '1234');
-  Assert(Word128ToStrA(A) = '1234');
+  Assert(Word128ToStrB(A) = '1234');
   Assert(Word128ToStrU(A) = '1234');
   Word128InitMaximum(A);
   Assert(Word128ToStr(A) = '340282366920938463463374607431768211455');
@@ -17795,11 +17795,11 @@ begin
   // String
   Int128InitInt64(A, 1234567890);
   Assert(Int128ToStr(A) = '1234567890');
-  Assert(Int128ToStrA(A) = '1234567890');
+  Assert(Int128ToStrB(A) = '1234567890');
   Assert(Int128ToStrU(A) = '1234567890');
   Int128InitInt64(A, -1234567890);
   Assert(Int128ToStr(A) = '-1234567890');
-  Assert(Int128ToStrA(A) = '-1234567890');
+  Assert(Int128ToStrB(A) = '-1234567890');
   Assert(Int128ToStrU(A) = '-1234567890');
   A := StrToInt128('-1234567890');
   Assert(Int128ToInt64(A) = -1234567890);

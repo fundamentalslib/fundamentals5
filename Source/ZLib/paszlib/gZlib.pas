@@ -289,7 +289,7 @@ type
     avail_out : uInt;     { remaining free space at next_out }
     total_out : uLong;    { total nb of bytes output so far }
 
-    msg : string[255];       { last error message, '' if no error }
+    msg : string;            { last error message, '' if no error }
     state : pInternal_state; { not visible by applications }
 
     zalloc : alloc_func;  { used to allocate the internal state }
@@ -407,7 +407,7 @@ const
   procedure Tracec(c : boolean; x : string);
   procedure Tracecv(c : boolean; x : string);
 
-function zlibVersion : RawByteString;
+function zlibVersion : string;
 { The application can compare zlibVersion and ZLIB_VERSION for consistency.
   If the first character differs, the library code actually used is
   not compatible with the zlib.h header file used by the application.
@@ -422,11 +422,11 @@ procedure ZFREE (var strm : z_stream; ptr : voidpf);
 procedure TRY_FREE (var strm : z_stream; ptr : voidpf);
 
 const
-  ZLIB_VERSION : string[10] = '1.1.2';
+  ZLIB_VERSION : string = '1.1.2';
 
 const
   z_errbase = Z_NEED_DICT;
-  z_errmsg : Array[0..9] of string[21] = { indexed by 2-zlib_error }
+  z_errmsg : array[0..9] of string = { indexed by 2-zlib_error }
            ('need dictionary',     { Z_NEED_DICT       2  }
             'stream end',          { Z_STREAM_END      1  }
             '',                    { Z_OK              0  }
@@ -451,7 +451,7 @@ begin
   zError := String(z_errmsg[Z_NEED_DICT-err]);
 end;
 
-function zlibVersion : RawByteString;
+function zlibVersion : string;
 begin
   zlibVersion := ZLIB_VERSION;
 end;

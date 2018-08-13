@@ -96,10 +96,8 @@ function  IsComplete(const C: ByteCharSet): Boolean;
 function  CharCount(const C: ByteCharSet): Integer; overload;
 procedure ConvertCaseInsensitive(var C: ByteCharSet);
 function  CaseInsensitiveCharSet(const C: ByteCharSet): ByteCharSet;
-{$IFDEF SupportAnsiString}
-function  CharSetToStrA(const C: ByteCharSet): AnsiString;
-function  StrToCharSetA(const S: AnsiString): ByteCharSet;
-{$ENDIF}
+function  CharSetToStrB(const C: ByteCharSet): RawByteString;
+function  StrToCharSetB(const S: RawByteString): ByteCharSet;
 
 
 
@@ -618,9 +616,8 @@ begin
   ConvertCaseInsensitive(Result);
 end;
 
-{$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
-function CharSetToStrA(const C: ByteCharSet): AnsiString; // Andrew N. Driazgov
+function CharSetToStrB(const C: ByteCharSet): RawByteString; // Andrew N. Driazgov
 asm
       PUSH    EBX
       MOV     ECX, $100
@@ -647,7 +644,7 @@ asm
       JMP     @@nx
 end;
 {$ELSE}
-function CharSetToStrA(const C: ByteCharSet): AnsiString;
+function CharSetToStrB(const C: ByteCharSet): RawByteString;
 // Implemented recursively to avoid multiple memory allocations
   procedure CharMatch(const Start: AnsiChar; const Count: Integer);
   var Ch : AnsiChar;
@@ -668,11 +665,9 @@ begin
   CharMatch(AnsiChar(0), 0);
 end;
 {$ENDIF}
-{$ENDIF}
 
-{$IFDEF SupportAnsiString}
 {$IFDEF ASM386_DELPHI}
-function StrToCharSetA(const S: AnsiString): ByteCharSet; // Andrew N. Driazgov
+function StrToCharSetB(const S: RawByteString): ByteCharSet; // Andrew N. Driazgov
 asm
       XOR     ECX, ECX
       MOV     [EDX], ECX
@@ -729,14 +724,13 @@ asm
 @@qt:
 end;
 {$ELSE}
-function StrToCharSetA(const S: AnsiString): ByteCharSet;
+function StrToCharSetB(const S: RawByteString): ByteCharSet;
 var I : Integer;
 begin
   ClearCharSet(Result);
   for I := 1 to Length(S) do
     Include(Result, S[I]);
 end;
-{$ENDIF}
 {$ENDIF}
 
 

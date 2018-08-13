@@ -640,7 +640,7 @@ const
  }
 
 const
-  Buf_size = (8 * 2*sizeof(AnsiChar));
+  Buf_size = (8 * 2*sizeof(Byte));
 { Number of bits used within bi_buf. (bi_buf might be implemented on
   more than 16 bits on some systems.) }
 

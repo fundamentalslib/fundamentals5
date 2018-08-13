@@ -264,6 +264,13 @@ function GetTick: Word32;
 begin
   Result := Word32(DateTimeToTimeStamp(Now).Time);
 end;
+{$ELSE}
+{$IFDEF POSIX}
+function GetTick: Word32;
+begin
+  Result := Word32(DateTimeToTimeStamp(Now).Time);
+end;
+{$ENDIF}
 {$ENDIF}{$ENDIF}
 
 function RandomState: Int64;

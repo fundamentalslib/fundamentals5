@@ -364,16 +364,6 @@ end;
 {$ENDIF}
 
 {$IFNDEF Defined_GetHighPrecisionCounter}
-{$IFDEF CPU_386}
-{$DEFINE Defined_GetHighPrecisionCounter}
-function GetHighPrecisionCounter: Int64;
-asm
-  rdtsc
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFNDEF Defined_GetHighPrecisionCounter}
 {$DEFINE Defined_GetHighPrecisionCounter}
 const
   HighPrecisionMillisecondFactor = 1000;

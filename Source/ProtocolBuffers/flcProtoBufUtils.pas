@@ -5,7 +5,7 @@
 {   File version:     5.04                                                     }
 {   Description:      Protocol Buffer utilities.                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2012-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2012-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -40,6 +40,7 @@
 {   2012/04/15  0.02  SInt32 encoding and decoding                             }
 {   2012/04/25  0.03  Improvements                                             }
 {   2016/01/14  5.04  Revised for Fundamentals 5.                              }
+{   2018/08/13  5.05  String type changes.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -814,7 +815,7 @@ begin
   if N > 0 then
     begin
       if L >= N then
-        Move(PAnsiChar(Value)^, P^, N);
+        Move(Pointer(Value)^, P^, N);
       Dec(L, N);
     end;
   Result := BufSize - L;
@@ -1206,7 +1207,7 @@ function pbDecodeValueString(const Buf; const BufSize: Integer; var Value: RawBy
 var
   P : PByte;
   L, I, N : Integer;
-  S : AnsiString;
+  S : RawByteString;
 begin
   P := @Buf;
   L := BufSize;
@@ -1218,7 +1219,7 @@ begin
   SetLength(S, N);
   if N > 0 then
     begin
-      Move(P^, PAnsiChar(S)^, N);
+      Move(P^, Pointer(S)^, N);
       Dec(L, N);
     end;
   Value := S;
@@ -1447,7 +1448,7 @@ begin
         L := Field.ValueVarBytesLen;
         SetLength(S, L);
         if L > 0 then
-          Move(Field.ValueVarBytesPtr^, PAnsiChar(S)^, L);
+          Move(Field.ValueVarBytesPtr^, Pointer(S)^, L);
         Value := S;
         Result := L;
       end;

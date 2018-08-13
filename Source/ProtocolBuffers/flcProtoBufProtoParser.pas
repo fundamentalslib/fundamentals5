@@ -146,7 +146,7 @@ type
     FFileNameUsed : String;
     FFileNameName : String;
 
-    FBufPtr    : PAnsiChar;
+    FBufPtr    : PByteChar;
     FBufSize   : Integer;
     FBufPos    : Integer;
     FBufStrRef : RawByteString;
@@ -399,7 +399,7 @@ begin
   FFileName := '';
   FBufStrRef := S;
   FBufSize := Length(S);
-  FBufPtr := PAnsiChar(FBufStrRef);
+  FBufPtr := Pointer(FBufStrRef);
   FBufPos := 0;
 end;
 
@@ -430,7 +430,7 @@ begin
   end;
   FBufStrRef := S;
   FBufSize := Length(S);
-  FBufPtr := PAnsiChar(FBufStrRef);
+  FBufPtr := Pointer(FBufStrRef);
   FBufPos := 0;
 end;
 
@@ -460,7 +460,7 @@ end;
 
 function TpbProtoParser.SkipCh(const C: ByteCharSet): Boolean;
 var N, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   F := FBufPos;
   N := FBufSize - F;
@@ -482,7 +482,7 @@ end;
 
 function TpbProtoParser.ExtractChar(var C: AnsiChar): Boolean;
 var N, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   F := FBufPos;
   N := FBufSize - F;
@@ -501,7 +501,7 @@ end;
 
 function TpbProtoParser.SkipAllCh(const C: ByteCharSet): Boolean;
 var N, L, F : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
 begin
   L := 0;
   F := FBufPos;
@@ -546,7 +546,7 @@ end;
 
 function TpbProtoParser.SkipToStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
 var N, L, F, C : Integer;
-    P : PAnsiChar;
+    P : PByteChar;
     R, T : Boolean;
 begin
   L := Length(S);
@@ -559,7 +559,7 @@ begin
   while N >= L do
     begin
       if CaseSensitive then
-        T := SysUtils.CompareMem(PAnsiChar(S), P, L)
+        T := SysUtils.CompareMem(Pointer(S), P, L)
       else
         T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
       if T then
@@ -575,7 +575,7 @@ end;
 
 function TpbProtoParser.ExtractAllCh(const C: ByteCharSet): RawByteString;
 var N, L : Integer;
-    P, Q : PAnsiChar;
+    P, Q : PByteChar;
     D : AnsiChar;
     R : Boolean;
     S : RawByteString;
@@ -605,7 +605,7 @@ end;
 
 function TpbProtoParser.ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
 var N, L : Integer;
-    P, Q : PAnsiChar;
+    P, Q : PByteChar;
     D : AnsiChar;
     R : Boolean;
 begin
@@ -736,7 +736,7 @@ end;
 
 function TpbProtoParser.GetNextToken: TpbProtoParserToken;
 var C : AnsiChar;
-    P : PAnsiChar;
+    P : PByteChar;
     T : TpbProtoParserToken;
 begin
   repeat

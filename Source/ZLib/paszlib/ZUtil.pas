@@ -15,6 +15,8 @@ interface
 
 {$IFNDEF SupportRawByteString}
 type
+  AnsiChar = Byte;
+  AnsiString = array of AnsiChar;
   RawByteString = AnsiString;
   PRawByteString = ^RawByteString;
 {$ENDIF}
@@ -31,8 +33,10 @@ type
   NativeUInt  = type Cardinal;
   {$ENDIF}
   PNativeUInt = ^NativeUInt;
-  {$ENDIF}
-  {$IFDEF FREEPASCAL}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL}
+type
   PNativeUInt = ^NativeUInt;
 {$ENDIF}
 

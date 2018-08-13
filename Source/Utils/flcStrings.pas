@@ -596,8 +596,8 @@ function  CopyLeft(const S: String; const Count: Integer): String;
 
 {$IFDEF SupportAnsiString}
 function  CopyRightA(const S: AnsiString; const Count: Integer): AnsiString;
-function  CopyRightB(const S: RawByteString; const Count: Integer): RawByteString;
 {$ENDIF}
+function  CopyRightB(const S: RawByteString; const Count: Integer): RawByteString;
 function  CopyRightU(const S: UnicodeString; const Count: Integer): UnicodeString;
 function  CopyRight(const S: String; const Count: Integer): String;
 
@@ -996,9 +996,9 @@ function  StrCopyFromChar(const S: String; const D: Char): String; overload;
 {$IFDEF SupportAnsiString}
 function  StrRemoveCharDelimitedA(var S: AnsiString;
           const FirstDelim, SecondDelim: AnsiChar): AnsiString;
+{$ENDIF}
 function  StrRemoveCharDelimitedB(var S: RawByteString;
           const FirstDelim, SecondDelim: AnsiChar): RawByteString;
-{$ENDIF}
 
 function  StrRemoveCharDelimitedU(var S: UnicodeString;
           const FirstDelim, SecondDelim: WideChar): UnicodeString;
@@ -1125,6 +1125,9 @@ function  StrSplitAtCharSetA(const S: AnsiString; const C: ByteCharSet;
           var Left, Right: AnsiString;
           const Optional: Boolean = True): Boolean;
 {$ENDIF}
+function  StrSplitAtCharSetB(const S: RawByteString; const C: ByteCharSet;
+          var Left, Right: RawByteString;
+          const Optional: Boolean = True): Boolean;
 
 {$IFDEF SupportAnsiString}
 function  StrSplitA(const S, D: AnsiString): AnsiStringArray;
@@ -1203,8 +1206,8 @@ function  StrRemoveSurroundingQuotes(const S: String;
 
 {$IFDEF SupportAnsiString}
 function  StrQuoteA(const S: AnsiString; const Quote: AnsiChar = AnsiChar('"')): AnsiString;
-function  StrQuoteB(const S: RawByteString; const Quote: AnsiChar = AnsiChar('"')): RawByteString;
 {$ENDIF}
+function  StrQuoteB(const S: RawByteString; const Quote: AnsiChar = AnsiChar('"')): RawByteString;
 function  StrQuoteU(const S: UnicodeString; const Quote: WideChar = WideChar('"')): UnicodeString;
 function  StrQuote(const S: String; const Quote: Char = '"'): String;
 
@@ -1232,10 +1235,8 @@ function  StrFindClosingQuoteA(const S: AnsiString;
 {                                                                              }
 { Bracketing                                                                   }
 {                                                                              }
-{$IFDEF SupportAnsiString}
-function  StrFindClosingBracketA(const S: AnsiString;
-          const OpenBracketPos: Integer; const CloseBracket: AnsiChar): Integer;
-{$ENDIF}
+function  StrFindClosingBracketB(const S: RawByteString;
+          const OpenBracketPos: Integer; const CloseBracket: ByteChar): Integer;
 
 
 
@@ -5030,6 +5031,7 @@ begin
     else
       Result := Copy(S, L - Count + 1, Count);
 end;
+{$ENDIF}
 
 function CopyRightB(const S: RawByteString; const Count: Integer): RawByteString;
 var L : Integer;
@@ -5042,7 +5044,6 @@ begin
     else
       Result := Copy(S, L - Count + 1, Count);
 end;
-{$ENDIF}
 
 function CopyRightU(const S: UnicodeString; const Count: Integer): UnicodeString;
 var L : Integer;
@@ -7470,6 +7471,7 @@ begin
   Result := CopyRangeA(S, I + 1, J - 1);
   Delete(S, I, J - I + 1);
 end;
+{$ENDIF}
 
 function StrRemoveCharDelimitedB(var S: RawByteString;
     const FirstDelim, SecondDelim: AnsiChar): RawByteString;
@@ -7485,7 +7487,6 @@ begin
   Result := CopyRangeB(S, I + 1, J - 1);
   Delete(S, I, J - I + 1);
 end;
-{$ENDIF}
 
 function StrRemoveCharDelimitedU(var S: UnicodeString;
     const FirstDelim, SecondDelim: WideChar): UnicodeString;
@@ -9009,7 +9010,31 @@ begin
       Right := '';
     end;
 end;
+{$ENDIF}
 
+function StrSplitAtCharSetB(const S: RawByteString; const C: ByteCharSet;
+         var Left, Right: RawByteString; const Optional: Boolean): Boolean;
+var I : Integer;
+    T : RawByteString;
+begin
+  I := PosCharSetB(C, S);
+  Result := I > 0;
+  if Result then
+    begin
+      T := S;
+      Left := Copy(T, 1, I - 1);
+      Right := CopyFromB(T, I + 1);
+    end else
+    begin
+      if Optional then
+        Left := S
+      else
+        Left := '';
+      Right := '';
+    end;
+end;
+
+{$IFDEF SupportAnsiString}
 function StrSplitA(const S, D: AnsiString): AnsiStringArray;
 var I, J, L, M : Integer;
 begin
@@ -9968,12 +9993,12 @@ function StrQuoteA(const S: AnsiString; const Quote: AnsiChar): AnsiString;
 begin
   Result := Quote + StrReplaceA(Quote, DupCharA(Quote, 2), S) + Quote;
 end;
+{$ENDIF}
 
 function StrQuoteB(const S: RawByteString; const Quote: AnsiChar): RawByteString;
 begin
   Result := Quote + StrReplaceB(Quote, DupCharB(Quote, 2), S) + Quote;
 end;
-{$ENDIF}
 
 function StrQuoteU(const S: UnicodeString; const Quote: WideChar): UnicodeString;
 begin
@@ -10114,10 +10139,9 @@ end;
 {                                                                              }
 { Bracketing                                                                   }
 {                                                                              }
-{$IFDEF SupportAnsiString}
-function StrFindClosingBracketA(const S: AnsiString;
-    const OpenBracketPos: Integer; const CloseBracket: AnsiChar): Integer;
-var OpenBracket : AnsiChar;
+function StrFindClosingBracketB(const S: RawByteString;
+    const OpenBracketPos: Integer; const CloseBracket: ByteChar): Integer;
+var OpenBracket : ByteChar;
     Brackets    : ByteCharSet;
     I, C        : Integer;
 begin
@@ -10129,7 +10153,7 @@ begin
   Brackets := [OpenBracket, CloseBracket];
   C := 1;
   repeat
-    I := PosCharSetA(Brackets, S, I + 1);
+    I := PosCharSetB(Brackets, S, I + 1);
     if I = 0 then
       exit;
     if S[I] = OpenBracket then
@@ -10139,7 +10163,6 @@ begin
   until C = 0;
   Result := I;
 end;
-{$ENDIF}
 
 
 

@@ -70,7 +70,7 @@ uses
 
 function deflateInit_(strm : z_streamp;
                       level : int;
-                      const version : RawByteString;
+                      const version : string;
                       stream_size : int) : int;
 
 
@@ -508,7 +508,7 @@ function deflateInit2_(var strm : z_stream;
                        windowBits : int;
                        memLevel : int;
                        strategy : int;
-                       const version : RawByteString;
+                       const version : string;
                        stream_size : int) : int;
 var
   s : deflate_state_ptr;
@@ -631,7 +631,7 @@ end;
 
 function deflateInit_(strm : z_streamp;
                       level : int;
-                      const version : RawByteString;
+                      const version : string;
                       stream_size : int) : int;
 begin
   if (strm = Z_NULL) then
