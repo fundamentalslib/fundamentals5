@@ -2168,7 +2168,7 @@ begin
   Result := TLibraryHandle(Windows.LoadLibraryA(PAnsiChar(LibraryName)));
   if Result <= HINSTANCE_ERROR then
     raise EOSError.Create('Failed to load library (' +
-        ToStringA(PathExtractFileNameA(LibraryName)) + '): ' + GetLastWinErrorMessage);
+        ToStringB(PathExtractFileNameB(LibraryName)) + '): ' + GetLastWinErrorMessage);
 end;
 
 function LoadLibraryU(const LibraryName: UnicodeString): TLibraryHandle;
@@ -2438,13 +2438,13 @@ end;
 
 function GetFileClassA(const FileName: AnsiString): AnsiString;
 begin
-  Result := FileClassFromExtentionA(PathExtractFileExtA(FileName));
+  Result := FileClassFromExtentionA(PathExtractFileExtB(FileName));
 end;
 
 function GetFileAssociationA(const FileName: AnsiString): AnsiString;
 var S : AnsiString;
 begin
-  S := FileClassFromExtentionA(PathExtractFileExtA(FileName));
+  S := FileClassFromExtentionA(PathExtractFileExtB(FileName));
   if S = '' then
     Result := ''
   else

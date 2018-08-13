@@ -622,7 +622,7 @@ function  DeleteFiles(const FileMask: String): Boolean;
 
 
 
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 {                                                                              }
 { Logical Drive functions                                                      }
 {                                                                              }
@@ -673,7 +673,8 @@ uses
   flcBits32,
   flcDynArrays,
   flcUtils,
-  flcStrings;
+  flcStrings,
+  flcSysUtils;
 
 
 
@@ -1731,63 +1732,6 @@ end;
 {                                                                              }
 { System helper functions                                                      }
 {                                                                              }
-resourcestring
-  SSystemError = 'System error #%s';
-
-{$IFDEF MSWIN}
-{$IFDEF StringIsUnicode}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Word;
-    Len: LongWord;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PWideChar(@Buf));
-end;
-{$ELSE}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Byte;
-    Len: LongWord;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PAnsiChar(@Buf));
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI}
-{$IFDEF POSIX}
-function GetLastOSErrorMessage: String;
-begin
-  Result := SysErrorMessage(GetLastError);
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL}
-{$IFDEF UNIX}
-function GetLastOSErrorMessage: String;
-begin
-  Result := SysErrorMessage(GetLastOSError);
-end;
-{$ENDIF}
-{$ENDIF}
-
 {$IFDEF WindowsPlatform}
 function GetTick: LongWord;
 begin
@@ -1817,7 +1761,7 @@ begin
   inherited CreateFmt(Msg, Args);
 end;
 
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 function WinErrorCodeToFileError(const ErrorCode: LongWord): TFileError;
 begin
   case ErrorCode of
@@ -1872,7 +1816,7 @@ end;
 { File operations                                                              }
 {                                                                              }
 
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 function FileOpenFlagsToWinFileFlags(const FileOpenFlags: TFileOpenFlags): LongWord;
 var
   FileFlags : LongWord;
@@ -1978,7 +1922,7 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 procedure DoFileOpenWait(const FileOpenWait: PFileOpenWait; const WaitStart: LongWord; var Retry: Boolean);
 
   function GetRandomRetryWait: Integer;
@@ -2044,7 +1988,7 @@ function FileOpenExB(
          const FileOpenWait: PFileOpenWait): TFileHandle;
 var FileHandle     : Integer;
     FileShareMode  : LongWord;
-    {$IFDEF MSWIN}
+    {$IFDEF MSWINDOWS}
     FileOpenAccess : LongWord;
     FileFlags      : LongWord;
     FileCreateDisp : LongWord;
@@ -2058,7 +2002,7 @@ var FileHandle     : Integer;
     FileNameStr    : String;
     {$ENDIF}
 begin
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   FileFlags := FileOpenFlagsToWinFileFlags(FileOpenFlags);
   FileCreateDisp := FileCreationModeToWinFileCreateDisp(FileCreationMode);
   FileShareMode := FileSharingToWinFileShareMode(FileSharing);
@@ -2144,7 +2088,7 @@ function FileOpenExU(
          const FileOpenWait: PFileOpenWait): TFileHandle;
 var FileHandle     : Integer;
     FileShareMode  : LongWord;
-    {$IFDEF MSWIN}
+    {$IFDEF MSWINDOWS}
     FileOpenAccess : LongWord;
     FileFlags      : LongWord;
     FileCreateDisp : LongWord;
@@ -2155,7 +2099,7 @@ var FileHandle     : Integer;
     WaitOpen       : Boolean;
     {$ENDIF}
 begin
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   FileFlags := FileOpenFlagsToWinFileFlags(FileOpenFlags);
   FileCreateDisp := FileCreationModeToWinFileCreateDisp(FileCreationMode);
   FileShareMode := FileSharingToWinFileShareMode(FileSharing);
@@ -2240,7 +2184,7 @@ function FileOpenEx(
          const FileOpenWait: PFileOpenWait): TFileHandle;
 var FileHandle     : Integer;
     FileShareMode  : LongWord;
-    {$IFDEF MSWIN}
+    {$IFDEF MSWINDOWS}
     FileOpenAccess : LongWord;
     FileFlags      : LongWord;
     FileCreateDisp : LongWord;
@@ -2251,7 +2195,7 @@ var FileHandle     : Integer;
     WaitOpen       : Boolean;
     {$ENDIF}
 begin
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   FileFlags := FileOpenFlagsToWinFileFlags(FileOpenFlags);
   FileCreateDisp := FileCreationModeToWinFileCreateDisp(FileCreationMode);
   FileShareMode := FileSharingToWinFileShareMode(FileSharing);
@@ -2360,7 +2304,7 @@ function FileReadEx(
          const FileHandle: TFileHandle;
          var Buf; const BufSize: Integer): Integer;
 begin
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   if not ReadFile(FileHandle, Buf, BufSize, LongWord(Result), nil) then
     raise EFileError.CreateFmt(feFileReadError, SFileReadError, [GetLastOSErrorMessage]);
   {$ELSE}
@@ -2374,7 +2318,7 @@ function FileWriteEx(
          const FileHandle: TFileHandle;
          const Buf; const BufSize: Integer): Integer;
 begin
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   if not WriteFile(FileHandle, Buf, BufSize, LongWord(Result), nil) then
     raise EFileError.CreateFmt(feFileWriteError, SFileWriteError, [GetLastOSErrorMessage, IntToStr(Ord(FileHandle))]);
   {$ELSE}
@@ -2400,7 +2344,7 @@ begin
 end;
 
 function FileExistsB(const FileName: RawByteString): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -2408,7 +2352,7 @@ var SRec : TSearchRec;
 begin
   if FileName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidFileName);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   Attr := GetFileAttributesA(PAnsiChar(FileName));
   if Attr = $FFFFFFFF then
     Result := False
@@ -2426,7 +2370,7 @@ begin
 end;
 
 function FileExistsU(const FileName: UnicodeString): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -2434,7 +2378,7 @@ var SRec : TSearchRec;
 begin
   if FileName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidFileName);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   Attr := GetFileAttributesW(PWideChar(FileName));
   if Attr = $FFFFFFFF then
     Result := False
@@ -2452,7 +2396,7 @@ begin
 end;
 
 function FileExists(const FileName: String): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -2460,7 +2404,7 @@ var SRec : TSearchRec;
 begin
   if FileName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidFileName);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   {$IFDEF StringIsUnicode}
   Attr := GetFileAttributesW(PWideChar(FileName));
   {$ELSE}
@@ -2494,7 +2438,7 @@ begin
       Result := -1
     else
       begin
-        {$IFDEF MSWIN}
+        {$IFDEF MSWINDOWS}
         Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
         Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
         {$ELSE}
@@ -2518,7 +2462,7 @@ begin
       Result := -1
     else
       begin
-        {$IFDEF MSWIN}
+        {$IFDEF MSWINDOWS}
         Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
         Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
         {$ELSE}
@@ -2542,7 +2486,7 @@ begin
       Result := -1
     else
       begin
-        {$IFDEF MSWIN}
+        {$IFDEF MSWINDOWS}
         Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
         Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
         {$ELSE}
@@ -3185,7 +3129,7 @@ begin
         Result := 0
       else
         begin
-          {$IFDEF MSWIN}
+          {$IFDEF MSWINDOWS}
           {$WARNINGS OFF}
           Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
           Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
@@ -3209,7 +3153,7 @@ begin
         Result := 0
       else
         begin
-          {$IFDEF MSWIN}
+          {$IFDEF MSWINDOWS}
           {$WARNINGS OFF}
           Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
           Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
@@ -3233,7 +3177,7 @@ begin
         Result := 0
       else
         begin
-          {$IFDEF MSWIN}
+          {$IFDEF MSWINDOWS}
           {$WARNINGS OFF}
           Int64Rec(Result).Lo := SRec.FindData.nFileSizeLow;
           Int64Rec(Result).Hi := SRec.FindData.nFileSizeHigh;
@@ -3247,7 +3191,7 @@ begin
 end;
 
 function DirectoryExistsB(const DirectoryName: RawByteString): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -3255,7 +3199,7 @@ var SRec : TSearchRec;
 begin
   if DirectoryName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidPath);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   Attr := GetFileAttributesA(PAnsiChar(DirectoryName));
   if Attr = $FFFFFFFF then
     Result := False
@@ -3273,7 +3217,7 @@ begin
 end;
 
 function DirectoryExistsU(const DirectoryName: UnicodeString): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -3281,7 +3225,7 @@ var SRec : TSearchRec;
 begin
   if DirectoryName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidPath);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   Attr := GetFileAttributesW(PWideChar(DirectoryName));
   if Attr = $FFFFFFFF then
     Result := False
@@ -3299,7 +3243,7 @@ begin
 end;
 
 function DirectoryExists(const DirectoryName: String): Boolean;
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 var Attr : LongWord;
 {$ELSE}
 var SRec : TSearchRec;
@@ -3307,7 +3251,7 @@ var SRec : TSearchRec;
 begin
   if DirectoryName = '' then
     raise EFileError.Create(feInvalidParameter, SInvalidPath);
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   {$IFDEF StringIsUnicode}
   Attr := GetFileAttributesW(PWideChar(DirectoryName));
   {$ELSE}
@@ -3677,7 +3621,7 @@ end;
 
 
 
-{$IFDEF MSWIN}
+{$IFDEF MSWINDOWS}
 {                                                                              }
 { Logical Drive functions                                                      }
 {                                                                              }
@@ -3954,7 +3898,7 @@ begin
   Assert(UnixPathToSafeWinPathB('/c/d.f') = '\c\d.f', 'UnixPathToWinPath');
   Assert(WinPathToSafeUnixPathB('\c\d.f') = '/c/d.f', 'WinPathToUnixPath');
 
-  {$IFDEF MSWIN}
+  {$IFDEF MSWINDOWS}
   Assert(PathExtractFileNameB('c:\test\abc\file.txt') = 'file.txt');
   Assert(PathExtractFileNameU('c:\test\abc\file.txt') = 'file.txt');
   {$ENDIF}

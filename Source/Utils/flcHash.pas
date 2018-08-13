@@ -934,26 +934,14 @@ procedure Test;
 
 implementation
 
-{$IFDEF MSWIN}
 uses
-  Windows;
-{$ENDIF}
+  { System }
+  {$IFDEF MSWIN}
+  Windows,
+  {$ENDIF}
 
-{$IFDEF UNIX}
-{$IFDEF FREEPASCAL}
-uses
-  BaseUnix,
-  Unix;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF POSIX}
-{$IFDEF DELPHI}
-uses
-  Posix.Errno,
-  Posix.Unistd;
-{$ENDIF}
-{$ENDIF}
+  { Fundamentals }
+  flcSysUtils;
 
 
 
@@ -3904,71 +3892,6 @@ procedure CalculateHash(const HashType: THashType; const Buf: RawByteString; con
 begin
   CalculateHash(HashType, Pointer(Buf)^, Length(Buf), Digest, Key);
 end;
-
-
-
-{                                                                              }
-{ System helper functions                                                      }
-{                                                                              }
-resourcestring
-  SSystemError = 'System error #%s';
-
-{$IFDEF MSWIN}
-{$IFDEF StringIsUnicode}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Word;
-    Len: Word32;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PWideChar(@Buf));
-end;
-{$ELSE}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Byte;
-    Len: Word32;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PAnsiChar(@Buf));
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF UNIX}
-{$IFDEF FREEPASCAL}
-function GetLastOSErrorMessage: String;
-begin
-  Result := SysErrorMessage(GetLastOSError);
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF POSIX}
-{$IFDEF DELPHI}
-function GetLastOSErrorMessage: String;
-var Err : LongInt;
-begin
-  Err := errno;
-  Result := Format(SSystemError, [IntToStr(Err)])
-end;
-{$ENDIF}
-{$ENDIF}
-
 
 
 

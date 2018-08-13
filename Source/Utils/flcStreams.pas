@@ -98,8 +98,7 @@ uses
   {$ENDIF}
 
   { Fundamentals }
-  flcStdTypes,
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -1018,15 +1017,10 @@ procedure Test;
 
 implementation
 
-{$IFDEF UNIX}
-{$IFDEF FREEPASCAL}
 uses
-  Unix;
-{$ELSE}
-uses
-  Libc;
-{$ENDIF}
-{$ENDIF}
+  { Fundamentals }
+  flcUtils,
+  flcSysUtils;
 
 
 
@@ -1052,68 +1046,6 @@ resourcestring
   SInvalidSize        = 'Invalid size';
   SInvalidParameter   = 'Invalid parameter';
   SCharacterSizeError = 'Character size error';
-
-
-
-{                                                                              }
-{ System helper functions                                                      }
-{                                                                              }
-resourcestring
-  SSystemError = 'System error #%s';
-
-{$IFDEF MSWIN}
-{$IFDEF StringIsUnicode}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Word;
-    Len: LongWord;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PWideChar(@Buf));
-end;
-{$ELSE}
-function GetLastOSErrorMessage: String;
-const MAX_ERRORMESSAGE_LENGTH = 256;
-var Err: LongWord;
-    Buf: array[0..MAX_ERRORMESSAGE_LENGTH - 1] of Byte;
-    Len: LongWord;
-begin
-  Err := Windows.GetLastError;
-  FillChar(Buf, Sizeof(Buf), #0);
-  Len := Windows.FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM, nil, Err, 0,
-      @Buf, MAX_ERRORMESSAGE_LENGTH, nil);
-  if Len = 0 then
-    Result := Format(SSystemError, [IntToStr(Err)])
-  else
-    Result := StrPas(PAnsiChar(@Buf));
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI}
-{$IFDEF POSIX}
-function GetLastOSErrorMessage: String;
-begin
-  Result := SysErrorMessage(GetLastError);
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL}
-{$IFDEF UNIX}
-function GetLastOSErrorMessage: String;
-begin
-  Result := SysErrorMessage(GetLastOSError);
-end;
-{$ENDIF}
-{$ENDIF}
 
 
 
