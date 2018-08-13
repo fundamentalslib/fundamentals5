@@ -660,8 +660,8 @@ procedure StrTrimLeftInPlace(var S: String;         const C: ByteCharSet = csWhi
 
 {$IFDEF SupportAnsiString}
 function  StrTrimLeftStrNoCaseA(const S: AnsiString; const TrimStr: AnsiString): AnsiString;
-function  StrTrimLeftStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 {$ENDIF}
+function  StrTrimLeftStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 function  StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 function  StrTrimLeftStrNoCase(const S: String; const TrimStr: String): String;
 
@@ -683,8 +683,8 @@ procedure StrTrimRightInPlace(var S: String;         const C: ByteCharSet = csWh
 
 {$IFDEF SupportAnsiString}
 function  StrTrimRightStrNoCaseA(const S: AnsiString; const TrimStr: AnsiString): AnsiString;
-function  StrTrimRightStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 {$ENDIF}
+function  StrTrimRightStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 function  StrTrimRightStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 function  StrTrimRightStrNoCase(const S: String; const TrimStr: String): String;
 
@@ -5525,6 +5525,7 @@ begin
     Inc(F, L);
   Result := CopyFromA(S, F);
 end;
+{$ENDIF}
 
 function StrTrimLeftStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 var F, L, M : Integer;
@@ -5536,7 +5537,6 @@ begin
     Inc(F, L);
   Result := CopyFromB(S, F);
 end;
-{$ENDIF}
 
 function StrTrimLeftStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 var F, L, M : Integer;
@@ -5679,6 +5679,7 @@ begin
     Dec(F, L);
   Result := CopyLeftA(S, F + L - 1);
 end;
+{$ENDIF}
 
 function StrTrimRightStrNoCaseB(const S: RawByteString; const TrimStr: RawByteString): RawByteString;
 var F, L : Integer;
@@ -5689,7 +5690,6 @@ begin
     Dec(F, L);
   Result := CopyLeftA(S, F + L - 1);
 end;
-{$ENDIF}
 
 function StrTrimRightStrNoCaseU(const S: UnicodeString; const TrimStr: UnicodeString): UnicodeString;
 var F, L : Integer;

@@ -571,7 +571,7 @@ function  BinToWord32U(const S: UnicodeString): Word32;
 function  BinToWord32(const S: String): Word32;
 
 {$IFDEF SupportAnsiString}
-function  BytesToHex(const P: Pointer; const Count: Integer;
+function  BytesToHexA(const P: Pointer; const Count: Integer;
           const UpperCase: Boolean = True): AnsiString;
 {$ENDIF}
 
@@ -3500,7 +3500,7 @@ end;
 
 
 {$IFDEF SupportAnsiString}
-function BytesToHex(const P: Pointer; const Count: Integer;
+function BytesToHexA(const P: Pointer; const Count: Integer;
          const UpperCase: Boolean): AnsiString;
 var Q : PByte;
     D : PAnsiChar;

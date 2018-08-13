@@ -168,8 +168,8 @@ begin
   M := TCPBufMaxSize;
   if M < 0 then
     M := TCP_BUFFER_DEFAULTMAXSIZE;
-  if M < L then
-    M := L;
+  if L > M then
+    L := M;
   TCPBuf.Max := M;
   if L > 0 then
     GetMem(TCPBuf.Ptr, L);

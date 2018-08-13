@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      TCP tests.                                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -128,6 +128,7 @@ uses
   {$ENDIF}
   SysUtils,
   SyncObjs,
+  flcStdTypes,
   flcSocketLib,
   {$IFDEF TCP_USES_TLS}
   flcTLSConnection,
@@ -149,9 +150,7 @@ uses
 procedure Test_Buffer;
 var A : TTCPBuffer;
     B : Byte;
-    {$IFDEF SupportAnsiString}
-    S : AnsiString;
-    {$ENDIF}
+    S : RawByteString;
     I, L : Integer;
 begin
   TCPBufferInitialise(A, 1500, 1000);
@@ -159,7 +158,6 @@ begin
   Assert(TCPBufferAvailable(A) = 1500);
   TCPBufferSetMaxSize(A, 2000);
   Assert(TCPBufferAvailable(A) = 2000);
-  {$IFDEF SupportAnsiString}
   S := 'Fundamentals';
   L := Length(S);
   TCPBufferAddBuf(A, S[1], L);
@@ -182,7 +180,7 @@ begin
   S := 'X';
   for I := 1 to 2001 do
     begin
-      S[1] := AnsiChar(I mod 256);
+      S[1] := ByteChar(I mod 256);
       TCPBufferAddBuf(A, S[1], 1);
       Assert(TCPBufferUsed(A) = I);
       Assert(TCPBufferAvailable(A) = 2000 - I);
@@ -191,13 +189,12 @@ begin
     begin
       S[1] := 'X';
       TCPBufferRemove(A, S[1], 1);
-      Assert(S[1] = AnsiChar(I mod 256));
+      Assert(S[1] = ByteChar(I mod 256));
       Assert(TCPBufferUsed(A) = 2001 - I);
     end;
   Assert(TCPBufferEmpty(A));
   TCPBufferShrink(A);
   Assert(TCPBufferEmpty(A));
-  {$ENDIF}
   TCPBufferFinalise(A);
 end;
 
@@ -234,7 +231,8 @@ begin
     Assert(not S.Active);
     Assert(S.State = ssClosed);
   finally
-    S.Free;
+    S.Finalise;
+    FreeAndNil(S);
   end;
 
   S := TF5TCPServer.Create(nil);
@@ -256,7 +254,8 @@ begin
         Assert(S.State = ssClosed);
       end;
   finally
-    S.Free;
+    S.Finalise;
+    FreeAndNil(S);
   end;
 end;
 
@@ -286,7 +285,8 @@ begin
       'JIY9r6e1qwNxQ/j1Mud6gn6cRrObpRtEad5z2FtcnwY=';
     S.Active := True;
   finally
-    S.Free;
+    S.Finalise;
+    FreeAndNil(S);
   end;
 end;
 {$ENDIF}
@@ -412,7 +412,8 @@ begin
     Assert(not C.Active);
     Assert(C.IsConnectionClosed);
   finally
-    C.Free;
+    C.Finalise;
+    FreeAndNil(C);
     A.Free;
   end;
 end;
@@ -478,7 +479,8 @@ begin
     C.Active := False;
     Assert(not C.Active);
   finally
-    C.Free;
+    C.Finalise;
+    FreeAnNil(C);
     A.Free;
   end;
 end;
@@ -548,7 +550,8 @@ begin
     C.Active := False;
     Assert(not C.Active);
   finally
-    C.Free;
+    C.Finalise;
+    FreeAndNil(C);
     A.Free;
   end;
 end;
@@ -969,8 +972,12 @@ begin
     Assert(not S.Active);
   finally
     for K := TestClientCount - 1 downto 0 do
-      C[K].Free;
-    S.Free;
+      begin
+        C[K].Finalise;
+        FreeAndNil(C[K]);
+      end;
+    S.Finalise;
+    FreeAndNil(S);
     DebugObj.Free;
   end;
 end;
@@ -1072,8 +1079,12 @@ begin
     Assert(not S.Active);
   finally
     for K := TestClientCount - 1 downto 0 do
-      C[K].Free;
-    S.Free;
+      begin
+        C[K].Finalise;
+        FreeAndNil(C[K]);
+      end;
+    S.Finalise;
+    FreeAndNil(S);
     DebugObj.Free;
   end;
 end;
@@ -1169,8 +1180,10 @@ begin
   C.Active := False;
   S.Active := False;
 
-  C.Free;
-  S.Free;
+  C.Finalise;
+  FreeAndNil(C);
+  S.Finalise;
+  FreeAndNil(S);
 
   TestObj.Free;
   DebugObj.Free;
@@ -1227,8 +1240,11 @@ begin
   C.Active := False;
   S.Active := False;
 
-  C.Free;
-  S.Free;
+  C.Finalise;
+  FreeAndNil(C);
+
+  S.Finalise;
+  FreeAndNil(S);
 
   TestObj.Free;
   DebugObj.Free;

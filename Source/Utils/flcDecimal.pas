@@ -174,62 +174,62 @@ function  Decimal32IsOne(const A: Decimal32): Boolean;
 function  Decimal32IsMaximum(const A: Decimal32): Boolean;
 function  Decimal32IsOverflow(const A: Decimal32): Boolean;
 
-function  Word32IsDecimal32Range(const A: LongWord): Boolean;
+function  Word32IsDecimal32Range(const A: Word32): Boolean;
 function  Int16IsDecimal32Range(const A: SmallInt): Boolean;
 function  Int32IsDecimal32Range(const A: Int32): Boolean;
 function  FloatIsDecimal32Range(const A: Double): Boolean;
 
 procedure Decimal32InitWord8(var A: Decimal32; const B: Byte);
 procedure Decimal32InitWord16(var A: Decimal32; const B: Word);
-procedure Decimal32InitWord32(var A: Decimal32; const B: LongWord);
+procedure Decimal32InitWord32(var A: Decimal32; const B: Word32);
 procedure Decimal32InitInt32(var A: Decimal32; const B: Int32);
 procedure Decimal32InitDecimal32(var A: Decimal32; const B: Decimal32);
 procedure Decimal32InitFloat(var A: Decimal32; const B: Double);
 
 function  Decimal32ToWord8(const A: Decimal32): Byte;
 function  Decimal32ToWord16(const A: Decimal32): Word;
-function  Decimal32ToWord32(const A: Decimal32): LongWord;
+function  Decimal32ToWord32(const A: Decimal32): Word32;
 function  Decimal32ToInt32(const A: Decimal32): Int32;
 function  Decimal32ToFloat(const A: Decimal32): Double;
 
-function  Decimal32Trunc(const A: Decimal32): LongWord;
-function  Decimal32Round(const A: Decimal32): LongWord;
+function  Decimal32Trunc(const A: Decimal32): Word32;
+function  Decimal32Round(const A: Decimal32): Word32;
 function  Decimal32FracWord(const A: Decimal32): Word;
 
 function  Decimal32EqualsWord8(const A: Decimal32; const B: Byte): Boolean;
 function  Decimal32EqualsWord16(const A: Decimal32; const B: Word): Boolean;
-function  Decimal32EqualsWord32(const A: Decimal32; const B: LongWord): Boolean;
+function  Decimal32EqualsWord32(const A: Decimal32; const B: Word32): Boolean;
 function  Decimal32EqualsInt32(const A: Decimal32; const B: Int32): Boolean;
 function  Decimal32EqualsDecimal32(const A: Decimal32; const B: Decimal32): Boolean;
 function  Decimal32EqualsFloat(const A: Decimal32; const B: Double): Boolean;
 
 function  Decimal32CompareWord8(const A: Decimal32; const B: Byte): Integer;
 function  Decimal32CompareWord16(const A: Decimal32; const B: Word): Integer;
-function  Decimal32CompareWord32(const A: Decimal32; const B: LongWord): Integer;
+function  Decimal32CompareWord32(const A: Decimal32; const B: Word32): Integer;
 function  Decimal32CompareInt32(const A: Decimal32; const B: Int32): Integer;
 function  Decimal32CompareDecimal32(const A: Decimal32; const B: Decimal32): Integer;
 function  Decimal32CompareFloat(const A: Decimal32; const B: Double): Integer;
 
 procedure Decimal32AddWord8(var A: Decimal32; const B: Byte);
 procedure Decimal32AddWord16(var A: Decimal32; const B: Word);
-procedure Decimal32AddWord32(var A: Decimal32; const B: LongWord);
+procedure Decimal32AddWord32(var A: Decimal32; const B: Word32);
 procedure Decimal32AddDecimal32(var A: Decimal32; const B: Decimal32);
 
 procedure Decimal32SubtractWord8(var A: Decimal32; const B: Byte);
 procedure Decimal32SubtractWord16(var A: Decimal32; const B: Word);
-procedure Decimal32SubtractWord32(var A: Decimal32; const B: LongWord);
+procedure Decimal32SubtractWord32(var A: Decimal32; const B: Word32);
 procedure Decimal32SubtractDecimal32(var A: Decimal32; const B: Decimal32);
 
 procedure Decimal32MultiplyWord8(var A: Decimal32; const B: Byte);
 procedure Decimal32MultiplyWord16(var A: Decimal32; const B: Word);
-procedure Decimal32MultiplyWord32(var A: Decimal32; const B: LongWord);
+procedure Decimal32MultiplyWord32(var A: Decimal32; const B: Word32);
 procedure Decimal32MultiplyDecimal32(var A: Decimal32; const B: Decimal32);
 
 procedure Decimal32Sqr(var A: Decimal32);
 
 procedure Decimal32DivideWord8(var A: Decimal32; const B: Byte);
 procedure Decimal32DivideWord16(var A: Decimal32; const B: Word);
-procedure Decimal32DivideWord32(var A: Decimal32; const B: LongWord);
+procedure Decimal32DivideWord32(var A: Decimal32; const B: Word32);
 procedure Decimal32DivideDecimal32(var A: Decimal32; const B: Decimal32);
 
 function  Decimal32ToStr(const A: Decimal32): String;
