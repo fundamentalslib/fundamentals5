@@ -630,7 +630,7 @@ begin
     P := Pointer(FBuffer);
     Inc(P, FBufPos + Result);
     for I := Result + 1 to N do
-      if (Ord(P^) > $FF) or not (AnsiChar(Byte(P^)) in C) then
+      if (Ord(P^) > $FF) or not (ByteChar(Byte(P^)) in C) then
         exit
       else
         begin
@@ -669,7 +669,7 @@ begin
     for I := Result + 1 to N do
       begin
         V := Ord(P^);
-        if (V <= $FF) and (AnsiChar(Byte(V)) in C) then
+        if (V <= $FF) and (ByteChar(Byte(V)) in C) then
           // found
           exit;
         Inc(Result);

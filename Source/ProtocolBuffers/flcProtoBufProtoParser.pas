@@ -561,7 +561,7 @@ begin
       if CaseSensitive then
         T := SysUtils.CompareMem(Pointer(S), P, L)
       else
-        T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
+        T := StrPMatchNoAsciiCaseB(Pointer(S), Pointer(P), L);
       if T then
         break;
       Dec(N);

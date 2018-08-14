@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCharSet.pas                                           }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      Character/Byte set functions.                            }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -37,6 +37,7 @@
 {   2000/02/02  0.01  Initial version.                                         }
 {   2017/10/07  5.02  Moved functions from unit flcUtils.                      }
 {   2018/08/11  5.03  Moved functions from unit flcStrings.                    }
+{   2018/08/14  5.04  ByteChar changes.                                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -77,10 +78,10 @@ const
 
 function  WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
-function  AsAnsiCharSet(const C: array of AnsiChar): ByteCharSet;
+function  AsAnsiCharSet(const C: array of ByteChar): ByteCharSet;
 function  AsByteSet(const C: array of Byte): ByteSet;
 function  AsByteCharSet(const C: array of ByteChar): ByteCharSet;
-procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
+procedure ComplementChar(var C: ByteCharSet; const Ch: ByteChar);
 procedure ClearCharSet(var C: ByteCharSet);
 procedure FillCharSet(var C: ByteCharSet);
 procedure ComplementCharSet(var C: ByteCharSet);
@@ -142,7 +143,7 @@ begin
   if Ord(A) >= $100 then
     Result := False
   else
-    Result := AnsiChar(Ord(A)) in C;
+    Result := ByteChar(Ord(A)) in C;
 end;
 
 function CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;
@@ -151,13 +152,13 @@ begin
   if Ord(A) >= $100 then
     Result := False
   else
-    Result := AnsiChar(Ord(A)) in C;
+    Result := ByteChar(Ord(A)) in C;
   {$ELSE}
   Result := A in C;
   {$ENDIF}
 end;
 
-function AsAnsiCharSet(const C: array of AnsiChar): ByteCharSet;
+function AsAnsiCharSet(const C: array of ByteChar): ByteCharSet;
 var I: Integer;
 begin
   Result := [];
@@ -182,13 +183,13 @@ begin
 end;
 
 {$IFDEF ASM386_DELPHI}
-procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
+procedure ComplementChar(var C: ByteCharSet; const Ch: ByteChar);
 asm
       MOVZX   ECX, DL
       BTC     [EAX], ECX
 end;
 {$ELSE}
-procedure ComplementChar(var C: ByteCharSet; const Ch: AnsiChar);
+procedure ComplementChar(var C: ByteCharSet; const Ch: ByteChar);
 begin
   if Ch in C then
     Exclude(C, Ch)
@@ -233,7 +234,7 @@ end;
 {$ELSE}
 procedure FillCharSet(var C: ByteCharSet);
 begin
-  C := [AnsiChar(0)..AnsiChar(255)];
+  C := [ByteChar(0)..ByteChar(255)];
 end;
 {$ENDIF}
 
@@ -252,7 +253,7 @@ end;
 {$ELSE}
 procedure ComplementCharSet(var C: ByteCharSet);
 begin
-  C := [AnsiChar(0)..AnsiChar(255)] - C;
+  C := [ByteChar(0)..ByteChar(255)] - C;
 end;
 {$ENDIF}
 
@@ -394,9 +395,9 @@ asm
 end;
 {$ELSE}
 procedure XORCharSet(var DestSet: ByteCharSet; const SourceSet: ByteCharSet);
-var Ch: AnsiChar;
+var Ch: ByteChar;
 begin
-  for Ch := AnsiChar(0) to AnsiChar(255) do
+  for Ch := ByteChar(0) to ByteChar(255) do
     if Ch in DestSet then
       begin
         if Ch in SourceSet then
@@ -578,10 +579,10 @@ asm
 end;
 {$ELSE}
 function CharCount(const C: ByteCharSet): Integer;
-var I : AnsiChar;
+var I : ByteChar;
 begin
   Result := 0;
-  for I := AnsiChar(0) to AnsiChar(255) do
+  for I := ByteChar(0) to ByteChar(255) do
     if I in C then
       Inc(Result);
 end;
@@ -599,14 +600,14 @@ asm
 end;
 {$ELSE}
 procedure ConvertCaseInsensitive(var C: ByteCharSet);
-var Ch : AnsiChar;
+var Ch : ByteChar;
 begin
-  for Ch := AnsiChar(Ord('A')) to AnsiChar(Ord('Z')) do
+  for Ch := ByteChar(Ord('A')) to ByteChar(Ord('Z')) do
     if Ch in C then
-      Include(C, AnsiChar(Ord(Ch) + 32));
-  for Ch := AnsiChar(Ord('a')) to AnsiChar(Ord('z')) do
+      Include(C, ByteChar(Ord(Ch) + 32));
+  for Ch := ByteChar(Ord('a')) to ByteChar(Ord('z')) do
     if Ch in C then
-      Include(C, AnsiChar(Ord(Ch) - 32));
+      Include(C, ByteChar(Ord(Ch) - 32));
 end;
 {$ENDIF}
 
@@ -646,23 +647,23 @@ end;
 {$ELSE}
 function CharSetToStrB(const C: ByteCharSet): RawByteString;
 // Implemented recursively to avoid multiple memory allocations
-  procedure CharMatch(const Start: AnsiChar; const Count: Integer);
-  var Ch : AnsiChar;
+  procedure CharMatch(const Start: ByteChar; const Count: Integer);
+  var Ch : ByteChar;
   begin
-    for Ch := Start to AnsiChar(255) do
+    for Ch := Start to ByteChar(255) do
       if Ch in C then
         begin
-          if Ch = AnsiChar(255) then
+          if Ch = ByteChar(255) then
             SetLength(Result, Count + 1)
           else
-            CharMatch(AnsiChar(Byte(Ch) + 1), Count + 1);
+            CharMatch(ByteChar(Byte(Ch) + 1), Count + 1);
           Result[Count + 1] := Ch;
           exit;
         end;
     SetLength(Result, Count);
   end;
 begin
-  CharMatch(AnsiChar(0), 0);
+  CharMatch(ByteChar(0), 0);
 end;
 {$ENDIF}
 
@@ -741,7 +742,7 @@ end;
 {$IFDEF SupportAnsiString}
 function CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
 
-  function ChStr(const Ch: AnsiChar): AnsiString;
+  function ChStr(const Ch: ByteChar): AnsiString;
   begin
     case Ch of
       '\'       : Result := '\\';
@@ -760,7 +761,7 @@ function CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
     end;
   end;
 
-  function SeqStr(const SeqStart, SeqEnd: AnsiChar): AnsiString;
+  function SeqStr(const SeqStart, SeqEnd: ByteChar): AnsiString;
   begin
     Result := ChStr(SeqStart);
     if Ord(SeqEnd) = Ord(SeqStart) + 1 then
@@ -770,8 +771,8 @@ function CharSetToCharClassStr(const C: ByteCharSet): AnsiString;
   end;
 
 var CS       : ByteCharSet;
-    F        : AnsiChar;
-    SeqStart : AnsiChar;
+    F        : ByteChar;
+    SeqStart : ByteChar;
     Seq      : Boolean;
 
 begin
@@ -782,7 +783,7 @@ begin
     begin
       Result := '[';
       CS := C;
-      if (AnsiChar(#0) in C) and (AnsiChar(#255) in C) then
+      if (ByteChar(#0) in C) and (ByteChar(#255) in C) then
         begin
           ComplementCharSet(CS);
           Result := Result + '^';
@@ -800,7 +801,7 @@ begin
           end else
           if Seq then
             begin
-              Result := Result + SeqStr(SeqStart, AnsiChar(Ord(F) - 1));
+              Result := Result + SeqStr(SeqStart, ByteChar(Ord(F) - 1));
               Seq := False;
             end;
       if Seq then
@@ -814,7 +815,7 @@ end;
 function CharClassStrToCharSet(const S: AnsiString): CharSet;
 var I, L : Integer;
 
-  function DecodeChar: AnsiChar;
+  function DecodeChar: ByteChar;
   var J : Integer;
   begin
     if S[I] = '\' then
@@ -842,8 +843,8 @@ var I, L : Integer;
           end else
           begin
             if J = I + 2 then
-              Result := AnsiChar(HexAnsiCharToInt(S[J])) else
-              Result := AnsiChar(HexAnsiCharToInt(S[J - 1]) * 16 + HexAnsiCharToInt(S[J]));
+              Result := ByteChar(HexByteCharToInt(S[J])) else
+              Result := ByteChar(HexByteCharToInt(S[J - 1]) * 16 + HexByteCharToInt(S[J]));
             I := J + 1;
           end
     else
@@ -854,7 +855,7 @@ var I, L : Integer;
   end;
 
 var Neg  : Boolean;
-    A, B : AnsiChar;
+    A, B : ByteChar;
 begin
   L := Length(S);
   if (L = 0) or (S = '[]') then
@@ -894,8 +895,8 @@ procedure Test;
 begin
   // ByteCharSet
   Assert(CharCount([]) = 0, 'CharCount');
-  Assert(CharCount([AnsiChar(Ord('a'))..AnsiChar(Ord('z'))]) = 26, 'CharCount');
-  Assert(CharCount([AnsiChar(0), AnsiChar(255)]) = 2, 'CharCount');
+  Assert(CharCount([ByteChar(Ord('a'))..ByteChar(Ord('z'))]) = 26, 'CharCount');
+  Assert(CharCount([ByteChar(0), ByteChar(255)]) = 2, 'CharCount');
 
   // CharClassStr
   {$IFDEF SupportAnsiString}

@@ -916,7 +916,7 @@ var ML, KL : Integer;
             exit;
           end;
         else
-          if not CharMatchA(Mask[MaskPos], Key[KeyPos], AsciiCaseSensitive) then
+          if not CharMatchB(Mask[MaskPos], Key[KeyPos], AsciiCaseSensitive) then
             begin
               Result := False;
               exit;

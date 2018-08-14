@@ -3174,7 +3174,7 @@ end;
 function UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
 var I    : Integer;
     J    : Integer;
-    C, D : AnsiChar;
+    C, D : ByteChar;
     E, F : WideChar;
     P    : PUnicodeTitleCaseLetterInfo;
 begin
@@ -3184,11 +3184,11 @@ begin
   if (Ord(A) < $80) and (Ord(B) < $80) then // ASCII short-cut
     begin
       if Ord(A) in [Ord('A')..Ord('Z')] then
-        C := AnsiChar(Byte(Ord(A)) + (Ord('a') - Ord('A'))) else
-        C := AnsiChar(Ord(A));
+        C := ByteChar(Byte(Ord(A)) + (Ord('a') - Ord('A'))) else
+        C := ByteChar(Ord(A));
       if Ord(B) in [Ord('A')..Ord('Z')] then
-        D := AnsiChar(Byte (Ord(B)) + (Ord('a') - Ord('A'))) else
-        D := AnsiChar(Ord(B));
+        D := ByteChar(Byte(Ord(B)) + (Ord('a') - Ord('A'))) else
+        D := ByteChar(Ord(B));
       Result := C = D;
       exit;
     end;

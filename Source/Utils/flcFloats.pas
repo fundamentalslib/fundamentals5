@@ -718,7 +718,7 @@ begin
               exit;
             end;
           Res := Res * 10.0;
-          DigVal := AnsiCharToInt(Ch);
+          DigVal := ByteCharToInt(Ch);
           if Neg then
             Res := Res - DigVal
           else
@@ -749,7 +749,7 @@ begin
                   Result := convertOverflow;
                   exit;
                 end;
-              DigVal := AnsiCharToInt(Ch);
+              DigVal := ByteCharToInt(Ch);
               Inc(ExI);
               DigValF := DigVal;
               DigValF := DigValF / Power(10.0, ExI);
@@ -780,7 +780,7 @@ begin
         begin
           Inc(Len);
           Inc(P);
-          Result := TryStringToInt64PA(P, BufLen - Len, ExI, L);
+          Result := TryStringToInt64PB(P, BufLen - Len, ExI, L);
           Inc(Len, L);
           if Result <> convertOK then
             begin

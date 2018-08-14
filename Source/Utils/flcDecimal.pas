@@ -2256,7 +2256,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := AnsiCharToInt(C);
+    Digit := ByteCharToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -2297,7 +2297,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := AnsiCharToInt(C);
+            Digit := ByteCharToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -2319,7 +2319,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := AnsiCharToInt(C);
+              ResFracRoundDigit := ByteCharToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -2332,7 +2332,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := AnsiCharToInt(C);
+                    Digit := ByteCharToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -2351,7 +2351,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := AnsiCharToInt(C);
+                  Digit := ByteCharToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -2392,7 +2392,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := AnsiCharToInt(C);
+            Digit := ByteCharToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -3339,7 +3339,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := AnsiCharToInt(C);
+    Digit := ByteCharToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -3381,7 +3381,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := AnsiCharToInt(C);
+            Digit := ByteCharToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -3405,7 +3405,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := AnsiCharToInt(C);
+              ResFracRoundDigit := ByteCharToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -3418,7 +3418,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := AnsiCharToInt(C);
+                    Digit := ByteCharToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -3437,7 +3437,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := AnsiCharToInt(C);
+                  Digit := ByteCharToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -3478,7 +3478,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := AnsiCharToInt(C);
+            Digit := ByteCharToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -4390,7 +4390,7 @@ begin
             Inc(I);
             break;
           end;
-      Digit := AnsiCharToInt(Ch);
+      Digit := ByteCharToInt(Ch);
       if Digit < 0 then
         begin
           Result := dceConvertError;
@@ -4410,7 +4410,7 @@ begin
   Word64DivideWord8(Decimal128Scale, 10, C, E);
   while I <= L do
     begin
-      Digit := AnsiCharToInt(A[I]);
+      Digit := ByteCharToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin
@@ -4428,7 +4428,7 @@ begin
   // rounding
   if I <= L then
     begin
-      RoundingDigit := AnsiCharToInt(A[I]);
+      RoundingDigit := ByteCharToInt(A[I]);
       Inc(I);
       if RoundingDigit < 0 then
         begin
@@ -4438,7 +4438,7 @@ begin
       if RoundingDigit = 5 then
         while I <= L do
           begin
-            Digit := AnsiCharToInt(A[I]);
+            Digit := ByteCharToInt(A[I]);
             Inc(I);
             if Digit < 0 then
               begin
@@ -4457,7 +4457,7 @@ begin
   // validate remaining digits
   while I <= L do
     begin
-      Digit := AnsiCharToInt(A[I]);
+      Digit := ByteCharToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin

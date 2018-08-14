@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.64                                                     }
+{   File version:     5.65                                                     }
 {   Description:      Utility functions.                                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
@@ -112,6 +112,7 @@
 {   2018/07/11  5.62  Moved functions to units flcFloats, flcASCII.            }
 {   2018/07/11  5.63  Moved standard types to unit flcStdTypes.                }
 {   2018/08/12  5.64  Removed WideString functions and CLR code.               }
+{   2018/08/14  5.65  ByteChar changes.                                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -169,7 +170,7 @@ uses
 { Version                                                                      }
 {                                                                              }
 const
-  FundamentalsVersion = '5.01';
+  FundamentalsVersion = '5.0.6';
 
 
 
@@ -268,9 +269,7 @@ function StringRefCount(const S: UnicodeString): Integer; overload; {$IFDEF UseI
 {$IFDEF SupportAnsiString}
 procedure StrAppendChA(var A: AnsiString; const C: AnsiChar);    {$IFDEF UseInline}inline;{$ENDIF}
 {$ENDIF}
-{$IFDEF SupportAnsiChar}
-procedure StrAppendChB(var A: RawByteString; const C: AnsiChar); {$IFDEF UseInline}inline;{$ENDIF}
-{$ENDIF}
+procedure StrAppendChB(var A: RawByteString; const C: ByteChar); {$IFDEF UseInline}inline;{$ENDIF}
 procedure StrAppendChU(var A: UnicodeString; const C: WideChar); {$IFDEF UseInline}inline;{$ENDIF}
 procedure StrAppendCh(var A: String; const C: Char);             {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -283,11 +282,11 @@ procedure StrAppendCh(var A: String; const C: Char);             {$IFDEF UseInli
 {             0  if A = B                                                      }
 {             1  if A > B                                                      }
 {                                                                              }
-function  CharCompareA(const A, B: AnsiChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompareB(const A, B: ByteChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharCompareW(const A, B: WideChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharCompare(const A, B: Char): Integer;      {$IFDEF UseInline}inline;{$ENDIF}
 
-function  StrPCompareA(const A, B: Pointer; const Len: Integer): Integer;
+function  StrPCompareB(const A, B: Pointer; const Len: Integer): Integer;
 function  StrPCompareW(const A, B: PWideChar; const Len: Integer): Integer;
 function  StrPCompare(const A, B: PChar; const Len: Integer): Integer;
 
@@ -368,7 +367,7 @@ function  CompareA(const I1, I2: AnsiString): TCompareResult;
 {$ENDIF}
 function  CompareB(const I1, I2: RawByteString): TCompareResult;
 function  CompareU(const I1, I2: UnicodeString): TCompareResult;
-function  CompareChA(const I1, I2: AnsiChar): TCompareResult;
+function  CompareChB(const I1, I2: ByteChar): TCompareResult;
 function  CompareChW(const I1, I2: WideChar): TCompareResult;
 
 function  Sgn(const A: Int64): Integer; overload;
@@ -395,27 +394,27 @@ const
   StrHexDigitsUpper : String = '0123456789ABCDEF';
   StrHexDigitsLower : String = '0123456789abcdef';
 
-function  AnsiCharToInt(const A: AnsiChar): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
+function  ByteCharToInt(const A: ByteChar): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
 function  WideCharToInt(const A: WideChar): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
 function  CharToInt(const A: Char): Integer;                                    {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToAnsiChar(const A: Integer): AnsiChar;                            {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToByteChar(const A: Integer): ByteChar;                            {$IFDEF UseInline}inline;{$ENDIF}
 function  IntToWideChar(const A: Integer): WideChar;                            {$IFDEF UseInline}inline;{$ENDIF}
 function  IntToChar(const A: Integer): Char;                                    {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IsHexAnsiChar(const Ch: AnsiChar): Boolean;
+function  IsHexByteChar(const Ch: ByteChar): Boolean;
 function  IsHexWideChar(const Ch: WideChar): Boolean;
 function  IsHexChar(const Ch: Char): Boolean;                                   {$IFDEF UseInline}inline;{$ENDIF}
 
-function  HexAnsiCharToInt(const A: AnsiChar): Integer;
+function  HexByteCharToInt(const A: ByteChar): Integer;
 function  HexWideCharToInt(const A: WideChar): Integer;
 function  HexCharToInt(const A: Char): Integer;                                 {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToUpperHexAnsiChar(const A: Integer): AnsiChar;
+function  IntToUpperHexByteChar(const A: Integer): ByteChar;
 function  IntToUpperHexWideChar(const A: Integer): WideChar;
 function  IntToUpperHexChar(const A: Integer): Char;                            {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToLowerHexAnsiChar(const A: Integer): AnsiChar;
+function  IntToLowerHexByteChar(const A: Integer): ByteChar;
 function  IntToLowerHexWideChar(const A: Integer): WideChar;
 function  IntToLowerHexChar(const A: Integer): Char;                            {$IFDEF UseInline}inline;{$ENDIF}
 
@@ -461,7 +460,7 @@ function  Word32ToBinB(const A: Word32; const Digits: Integer = 0): RawByteStrin
 function  Word32ToBinU(const A: Word32; const Digits: Integer = 0): UnicodeString;
 function  Word32ToBin(const A: Word32; const Digits: Integer = 0): String;
 
-function  TryStringToInt64PA(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
+function  TryStringToInt64PB(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 function  TryStringToInt64PW(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 function  TryStringToInt64P(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 
@@ -1178,12 +1177,10 @@ begin
 end;
 {$ENDIF}
 
-{$IFDEF SupportAnsiChar}
-procedure StrAppendChB(var A: RawByteString; const C: AnsiChar);
+procedure StrAppendChB(var A: RawByteString; const C: ByteChar);
 begin
   A := A + C;
 end;
-{$ENDIF}
 
 procedure StrAppendChU(var A: UnicodeString; const C: WideChar);
 begin
@@ -1200,7 +1197,7 @@ end;
 {                                                                              }
 { Compare                                                                      }
 {                                                                              }
-function CharCompareA(const A, B: AnsiChar): Integer;
+function CharCompareB(const A, B: ByteChar): Integer;
 begin
   if Ord(A) < Ord(B) then
     Result := -1 else
@@ -1225,11 +1222,11 @@ begin
   {$IFDEF CharIsWide}
   Result := CharCompareW(A, B);
   {$ELSE}
-  Result := CharCompareA(A, B);
+  Result := CharCompareB(A, B);
   {$ENDIF}
 end;
 
-function StrPCompareA(const A, B: Pointer; const Len: Integer): Integer;
+function StrPCompareB(const A, B: Pointer; const Len: Integer): Integer;
 var P, Q : PByte;
     I    : Integer;
 begin
@@ -1312,7 +1309,7 @@ begin
     I := L
   else
     I := M;
-  Result := StrPCompareA(Pointer(A), Pointer(B), I);
+  Result := StrPCompareB(Pointer(A), Pointer(B), I);
   if Result <> 0 then
     exit;
   if L = M then
@@ -1333,7 +1330,7 @@ begin
     I := L
   else
     I := M;
-  Result := StrPCompareA(Pointer(A), Pointer(B), I);
+  Result := StrPCompareB(Pointer(A), Pointer(B), I);
   if Result <> 0 then
     exit;
   if L = M then
@@ -1792,7 +1789,7 @@ begin
     Result := crLess;
 end;
 
-function CompareChA(const I1, I2: AnsiChar): TCompareResult;
+function CompareChB(const I1, I2: ByteChar): TCompareResult;
 begin
   if I1 = I2 then
     Result := crEqual else
@@ -1861,9 +1858,9 @@ const
 {                                                                              }
 { Integer-String conversions                                                   }
 {                                                                              }
-function AnsiCharToInt(const A: AnsiChar): Integer;
+function ByteCharToInt(const A: ByteChar): Integer;
 begin
-  if A in [AnsiChar(Ord('0'))..AnsiChar(Ord('9'))] then
+  if A in [ByteChar(Ord('0'))..ByteChar(Ord('9'))] then
     Result := Ord(A) - Ord('0')
   else
     Result := -1;
@@ -1882,16 +1879,16 @@ begin
   {$IFDEF CharIsWide}
   Result := WideCharToInt(A);
   {$ELSE}
-  Result := AnsiCharToInt(A);
+  Result := ByteCharToInt(A);
   {$ENDIF}
 end;
 
-function IntToAnsiChar(const A: Integer): AnsiChar;
+function IntToByteChar(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 9) then
-    Result := AnsiChar($00)
+    Result := ByteChar($00)
   else
-    Result := AnsiChar(48 + A);
+    Result := ByteChar(48 + A);
 end;
 
 function IntToWideChar(const A: Integer): WideChar;
@@ -1907,11 +1904,11 @@ begin
   {$IFDEF CharIsWide}
   Result := IntToWideChar(A);
   {$ELSE}
-  Result := IntToAnsiChar(A);
+  Result := IntToByteChar(A);
   {$ENDIF}
 end;
 
-function IsHexAnsiChar(const Ch: AnsiChar): Boolean;
+function IsHexByteChar(const Ch: ByteChar): Boolean;
 begin
   Result := HexLookup[Ord(Ch)] <= 15;
 end;
@@ -1929,11 +1926,11 @@ begin
   {$IFDEF CharIsWide}
   Result := IsHexWideChar(Ch);
   {$ELSE}
-  Result := IsHexAnsiChar(Ch);
+  Result := IsHexByteChar(Ch);
   {$ENDIF}
 end;
 
-function HexAnsiCharToInt(const A: AnsiChar): Integer;
+function HexByteCharToInt(const A: ByteChar): Integer;
 var B : Byte;
 begin
   B := HexLookup[Ord(A)];
@@ -1963,19 +1960,19 @@ begin
   {$IFDEF CharIsWide}
   Result := HexWideCharToInt(A);
   {$ELSE}
-  Result := HexAnsiCharToInt(A);
+  Result := HexByteCharToInt(A);
   {$ENDIF}
 end;
 
-function IntToUpperHexAnsiChar(const A: Integer): AnsiChar;
+function IntToUpperHexByteChar(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 15) then
-    Result := AnsiChar($00)
+    Result := ByteChar($00)
   else
   if A <= 9 then
-    Result := AnsiChar(48 + A)
+    Result := ByteChar(48 + A)
   else
-    Result := AnsiChar(55 + A);
+    Result := ByteChar(55 + A);
 end;
 
 function IntToUpperHexWideChar(const A: Integer): WideChar;
@@ -1994,19 +1991,19 @@ begin
   {$IFDEF CharIsWide}
   Result := IntToUpperHexWideChar(A);
   {$ELSE}
-  Result := IntToUpperHexAnsiChar(A);
+  Result := IntToUpperHexByteChar(A);
   {$ENDIF}
 end;
 
-function IntToLowerHexAnsiChar(const A: Integer): AnsiChar;
+function IntToLowerHexByteChar(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 15) then
-    Result := AnsiChar($00)
+    Result := ByteChar($00)
   else
   if A <= 9 then
-    Result := AnsiChar(48 + A)
+    Result := ByteChar(48 + A)
   else
-    Result := AnsiChar(87 + A);
+    Result := ByteChar(87 + A);
 end;
 
 function IntToLowerHexWideChar(const A: Integer): WideChar;
@@ -2025,7 +2022,7 @@ begin
   {$IFDEF CharIsWide}
   Result := IntToLowerHexWideChar(A);
   {$ELSE}
-  Result := IntToLowerHexAnsiChar(A);
+  Result := IntToLowerHexByteChar(A);
   {$ENDIF}
 end;
 
@@ -2062,12 +2059,12 @@ begin
   T := A;
   if T < 0 then
     begin
-      Result[1] := AnsiChar(Ord('-'));
+      Result[1] := ByteChar(Ord('-'));
       T := -T;
     end;
   while T > 0 do
     begin
-      Result[L - I] := IntToAnsiChar(T mod 10);
+      Result[L - I] := IntToByteChar(T mod 10);
       T := T div 10;
       Inc(I);
     end;
@@ -2111,7 +2108,7 @@ begin
     end;
   while T > 0 do
     begin
-      Result[L - I] := UTF8Char(IntToAnsiChar(T mod 10));
+      Result[L - I] := UTF8Char(IntToByteChar(T mod 10));
       T := T div 10;
       Inc(I);
     end;
@@ -2221,7 +2218,7 @@ begin
         L := Digits;
       SetLength(Result, L);
       for V := 0 to L - 1 do
-        Result[1 + V] := AnsiChar(Ord('0'));
+        Result[1 + V] := ByteChar(Ord('0'));
       exit;
     end;
   // determine number of digits in result
@@ -2241,15 +2238,15 @@ begin
     begin
       V := D mod Base + 1;
       if UpperCase then
-        Result[L] := AnsiChar(StrHexDigitsUpper[V])
+        Result[L] := ByteChar(StrHexDigitsUpper[V])
       else
-        Result[L] := AnsiChar(StrHexDigitsLower[V]);
+        Result[L] := ByteChar(StrHexDigitsLower[V]);
       Dec(L);
       D := D div Base;
     end;
   while L > 0 do
     begin
-      Result[L] := AnsiChar(Ord('0'));
+      Result[L] := ByteChar(Ord('0'));
       Dec(L);
     end;
 end;
@@ -2519,7 +2516,7 @@ begin
 end;
 
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF} // Delphi 7 incorrectly overflowing for -922337203685477580 * 10
-function TryStringToInt64PA(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
+function TryStringToInt64PB(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
     P : PByte;
@@ -2572,7 +2569,7 @@ begin
               exit;
             end;
           Res := Res * 10;
-          DigVal := AnsiCharToInt(AnsiChar(Ch));
+          DigVal := ByteCharToInt(ByteChar(Ch));
           if ((Res = 9223372036854775800) and (DigVal > 7)) or
              ((Res = -9223372036854775800) and (DigVal > 8)) then
             begin
@@ -2784,7 +2781,7 @@ function TryStringToInt64A(const S: AnsiString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
   L := Length(S);
-  Result := TryStringToInt64PA(PAnsiChar(S), L, A, N) = convertOK;
+  Result := TryStringToInt64PB(PAnsiChar(S), L, A, N) = convertOK;
   if Result then
     if N < L then
       Result := False;
@@ -2795,7 +2792,7 @@ function TryStringToInt64B(const S: RawByteString; out A: Int64): Boolean;
 var L, N : Integer;
 begin
   L := Length(S);
-  Result := TryStringToInt64PA(Pointer(S), L, A, N) = convertOK;
+  Result := TryStringToInt64PB(Pointer(S), L, A, N) = convertOK;
   if Result then
     if N < L then
       Result := False;
@@ -3741,7 +3738,7 @@ begin
   Result := HashTable[Byte(Hash) xor C] xor (Hash shr 8);
 end;
 
-function HashCharA(const Hash: Word32; const Ch: AnsiChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharB(const Hash: Word32; const Ch: ByteChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := HashByte(Hash, Byte(Ch));
 end;
@@ -3761,17 +3758,17 @@ begin
   {$IFDEF CharIsWide}
   Result := HashCharW(Hash, Ch);
   {$ELSE}
-  Result := HashCharA(Hash, Ch);
+  Result := HashCharB(Hash, Ch);
   {$ENDIF}
 end;
 
-function HashCharNoAsciiCaseA(const Hash: Word32; const Ch: AnsiChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function HashCharNoAsciiCaseB(const Hash: Word32; const Ch: ByteChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var C : Byte;
 begin
   C := Byte(Ch);
   if C in [Ord('A')..Ord('Z')] then
     C := C or 32;
-  Result := HashCharA(Hash, AnsiChar(C));
+  Result := HashCharB(Hash, ByteChar(C));
 end;
 
 function HashCharNoAsciiCaseW(const Hash: Word32; const Ch: WideChar): Word32; {$IFDEF UseInline}inline;{$ENDIF}
@@ -3789,7 +3786,7 @@ begin
   {$IFDEF CharIsWide}
   Result := HashCharNoAsciiCaseW(Hash, Ch);
   {$ELSE}
-  Result := HashCharNoAsciiCaseA(Hash, Ch);
+  Result := HashCharNoAsciiCaseB(Hash, Ch);
   {$ENDIF}
 end;
 
@@ -3833,10 +3830,10 @@ begin
   Result := $FFFFFFFF;
   if AsciiCaseSensitive then
     for I := A to B do
-      Result := HashCharA(Result, S[I])
+      Result := HashCharB(Result, S[I])
   else
     for I := A to B do
-      Result := HashCharNoAsciiCaseA(Result, S[I]);
+      Result := HashCharNoAsciiCaseB(Result, S[I]);
   if Slots > 0 then
     Result := Result mod Slots;
 end;
@@ -3866,10 +3863,10 @@ begin
   Result := $FFFFFFFF;
   if AsciiCaseSensitive then
     for I := A to B do
-      Result := HashCharA(Result, AnsiChar(S[I]))
+      Result := HashCharB(Result, ByteChar(S[I]))
   else
     for I := A to B do
-      Result := HashCharNoAsciiCaseA(Result, AnsiChar(S[I]));
+      Result := HashCharNoAsciiCaseB(Result, ByteChar(S[I]));
   if Slots > 0 then
     Result := Result mod Slots;
 end;
@@ -5021,10 +5018,10 @@ begin
 
   {$IFDEF SupportAnsiString}
   A := ToAnsiString('-012A');
-  Assert(TryStringToInt64PA(PAnsiChar(A), Length(A), I, L) = convertOK,          'StringToInt');
+  Assert(TryStringToInt64PB(PAnsiChar(A), Length(A), I, L) = convertOK,          'StringToInt');
   Assert((I = -12) and (L = 4),                                                  'StringToInt');
   A := ToAnsiString('-A012');
-  Assert(TryStringToInt64PA(PAnsiChar(A), Length(A), I, L) = convertFormatError, 'StringToInt');
+  Assert(TryStringToInt64PB(PAnsiChar(A), Length(A), I, L) = convertFormatError, 'StringToInt');
   Assert((I = 0) and (L = 1),                                                    'StringToInt');
 
   Assert(TryStringToInt64A(ToAnsiString('0'), I),                        'StringToInt');

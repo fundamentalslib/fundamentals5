@@ -1339,7 +1339,7 @@ begin
   case Value.VType of
     System.vtInteger       : Result := TJSONInteger.Create(Value.VInteger);
     System.vtBoolean       : Result := TJSONBoolean.Create(Value.VBoolean);
-    System.vtChar          : Result := TJSONString.Create(ToStringChA(Value.VChar));
+    System.vtChar          : Result := TJSONString.Create(ToStringChB(Value.VChar));
     System.vtExtended      : Result := TJSONFloat.Create(Value.VExtended^);
     {$IFDEF SupportAnsiString}
     System.vtString        : Result := TJSONString.Create(String(Value.VString^));

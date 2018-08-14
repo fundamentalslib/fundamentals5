@@ -2446,7 +2446,7 @@ begin
       if CaseSensitive then
         Result := SysUtils.CompareMem(Pointer(S), P, L)
       else
-        Result := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
+        Result := StrPMatchNoAsciiCaseB(Pointer(S), Pointer(P), L);
       if not Result then
         exit;
     end
@@ -2544,7 +2544,7 @@ begin
       if CaseSensitive then
         T := SysUtils.CompareMem(PByteChar(S), P, L)
       else
-        T := StrPMatchNoAsciiCaseA(Pointer(S), Pointer(P), L);
+        T := StrPMatchNoAsciiCaseB(Pointer(S), Pointer(P), L);
       if T then
         break;
       Dec(N);
