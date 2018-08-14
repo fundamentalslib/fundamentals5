@@ -405,7 +405,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := IsAsciiStringU(S);
   {$ELSE}
-  Result := IsAsciiStringA(S);
+  Result := IsAsciiStringB(S);
   {$ENDIF}
 end;
 
@@ -947,7 +947,7 @@ begin
     begin
       C := S[1];
       if (Ord(C) >= Ord(AsciiLowerA)) and (Ord(C) <= Ord(AsciiLowerZ)) then
-        S[1] := AsciiUpCase(C);
+        S[1] := AsciiUpCaseW(C);
     end;
 end;
 

@@ -49,6 +49,7 @@ interface
 
 uses
   { Fundamentals }
+  flcStdTypes,
   flcCipherRSA,
   { TLS }
   flcTLSUtils,

@@ -164,9 +164,7 @@ const
 type
   AReaderEx = class(AReader)
   private
-    {$IFDEF SupportRawByteString}
     function  SkipLineTerminator(const EOLTypes: TReaderEOLTypes): Integer;
-    {$ENDIF}
 
   public
     procedure RaiseReadError(const Msg: String = '');

@@ -327,7 +327,7 @@ function deflateParams (var strm : z_stream; level : int; strategy : int) : int;
 
 
 const
-   deflate_copyright : RawByteString = ' deflate 1.1.2 Copyright 1995-1998 Jean-loup Gailly ';
+   deflate_copyright : String = ' deflate 1.1.2 Copyright 1995-1998 Jean-loup Gailly ';
 
 { If you use the zlib library in a product, an acknowledgment is welcome
   in the documentation of your product. If for some reason you cannot

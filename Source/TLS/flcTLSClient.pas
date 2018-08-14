@@ -55,6 +55,8 @@ unit flcTLSClient;
 interface
 
 uses
+  { Fundamentals }
+  flcStdTypes,
   { Cipher }
   flcCipherRSA,
   flcCipherDH,

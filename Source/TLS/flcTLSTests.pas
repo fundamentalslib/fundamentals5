@@ -76,7 +76,8 @@ implementation
 uses
   SysUtils,
   SyncObjs,
-  { Utils }
+  { Fundamentals }
+  flcStdTypes,
   flcUtils,
   flcBase64,
   flcStrings,

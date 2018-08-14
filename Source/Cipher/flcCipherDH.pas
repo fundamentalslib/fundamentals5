@@ -74,7 +74,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcHugeInt;
 
 
@@ -502,7 +502,6 @@ implementation
 
 uses
   { Fundamentals }
-  flcStdTypes,
   flcHash,
   flcRandom,
   flcASN1,

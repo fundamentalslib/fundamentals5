@@ -50,6 +50,8 @@ unit flcTLSCipherSuite;
 interface
 
 uses
+  { Fundamentals }
+  flcStdTypes,
   { TLS }
   flcTLSUtils;
 

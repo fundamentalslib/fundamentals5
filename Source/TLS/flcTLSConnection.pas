@@ -50,6 +50,9 @@ unit flcTLSConnection;
 interface
 
 uses
+  { Fundamentals }
+  flcStdTypes,
+  
   { TLS }
   flcTLSUtils,
   flcTLSCipherSuite,

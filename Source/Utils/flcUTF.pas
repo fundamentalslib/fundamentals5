@@ -63,7 +63,7 @@ interface
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcStdTypes;
 
 
 
@@ -159,7 +159,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
-  flcStdTypes,
+  flcUtils,
   flcASCII;
 
 

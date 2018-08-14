@@ -5,7 +5,7 @@
 {   File version:     5.06                                                     }
 {   Description:      HTTP server.                                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2011-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2011-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -57,7 +57,7 @@ uses
   Classes,
   SyncObjs,
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcStrings,
   flcSocketLib,
   { TCP }
@@ -292,7 +292,7 @@ type
 
     // parameters
     FAddressFamily  : THTTPServerAddressFamily;
-    FBindAddressStr : RawByteString;
+    FBindAddressStr : String;
     FServerPort     : Integer;
     FMaxBacklog     : Integer;
     FMaxClients     : Integer;
@@ -331,7 +331,7 @@ type
     procedure CheckNotActive;
 
     procedure SetAddressFamily(const AddressFamily: THTTPServerAddressFamily);
-    procedure SetBindAddress(const BindAddressStr: RawByteString);
+    procedure SetBindAddress(const BindAddressStr: String);
     procedure SetServerPort(const ServerPort: Integer);
     procedure SetMaxBacklog(const MaxBacklog: Integer);
     procedure SetMaxClients(const MaxClients: Integer);
@@ -401,7 +401,7 @@ type
     property  OnResponseComplete: THTTPServerClientEvent read FOnResponseComplete write FOnResponseComplete;
 
     property  AddressFamily: THTTPServerAddressFamily read FAddressFamily write SetAddressFamily default safIP4;
-    property  BindAddress: RawByteString read FBindAddressStr write SetBindAddress;
+    property  BindAddress: String read FBindAddressStr write SetBindAddress;
     property  ServerPort: Integer read FServerPort write SetServerPort;
     property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default HTTP_SERVER_DEFAULT_MaxBacklog;
     property  MaxClients: Integer read FMaxClients write SetMaxClients default HTTP_SERVER_DEFAULT_MaxClients;
@@ -1287,7 +1287,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5HTTPServer.SetBindAddress(const BindAddressStr: RawByteString);
+procedure TF5HTTPServer.SetBindAddress(const BindAddressStr: String);
 begin
   if BindAddressStr = FBindAddressStr then
     exit;

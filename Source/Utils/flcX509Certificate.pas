@@ -59,6 +59,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
+  flcStdTypes,
   flcUtils,
   flcASN1;
 

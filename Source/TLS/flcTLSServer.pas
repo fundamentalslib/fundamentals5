@@ -53,6 +53,8 @@ interface
 uses
   { System }
   SyncObjs,
+  { Fundamentals }
+  flcStdTypes,
   { Cipher }
   flcCipherRSA,
   flcCipherDH,

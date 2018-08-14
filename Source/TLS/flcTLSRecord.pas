@@ -178,6 +178,7 @@ uses
   { System }
   SysUtils,
   { Fundamentals }
+  flcStdTypes,
   flcStrings,
   flcHash,
   flcCipherRandom,

@@ -64,7 +64,7 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcMaths;
 
 
@@ -185,6 +185,7 @@ uses
   Math,
 
   { Fundamentals }
+  flcUtils,
   flcStrings,
   flcFloats;
 

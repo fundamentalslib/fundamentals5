@@ -5,7 +5,7 @@
 {   File version:     5.12                                                     }
 {   Description:      HTTP client.                                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2009-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2009-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -66,7 +66,7 @@ uses
   Classes,
   SyncObjs,
   { Fundamentals }
-  flcUtils,
+  flcStdTypes,
   flcStrings,
   { Fundamentals TCP }
   flcTCPConnection,
@@ -156,8 +156,8 @@ type
 
     // host
     FAddressFamily : THTTPClientAddressFamily;
-    FHost          : RawByteString;
-    FPort          : RawByteString;
+    FHost          : String;
+    FPort          : String;
 
     // https
     {$IFDEF HTTP_TLS}
@@ -167,8 +167,8 @@ type
 
     // http proxy
     FUseHTTPProxy  : Boolean;
-    FHTTPProxyHost : RawByteString;
-    FHTTPProxyPort : RawByteString;
+    FHTTPProxyHost : String;
+    FHTTPProxyPort : String;
 
     // http request
     FMethod        : THTTPClientMethod;
@@ -244,8 +244,8 @@ type
     procedure SetSynchronisedEvents(const SynchronisedEvents: Boolean);
 
     procedure SetAddressFamily(const AddressFamily: THTTPClientAddressFamily);
-    procedure SetHost(const Host: RawByteString);
-    procedure SetPort(const Port: RawByteString);
+    procedure SetHost(const Host: String);
+    procedure SetPort(const Port: String);
     function  GetPortInt: Integer;
     procedure SetPortInt(const PortInt: Integer);
 
@@ -255,8 +255,8 @@ type
     {$ENDIF}
 
     procedure SetUseHTTPProxy(const UseHTTPProxy: Boolean);
-    procedure SetHTTPProxyHost(const HTTPProxyHost: RawByteString);
-    procedure SetHTTPProxyPort(const HTTPProxyPort: RawByteString);
+    procedure SetHTTPProxyHost(const HTTPProxyHost: String);
+    procedure SetHTTPProxyPort(const HTTPProxyPort: String);
 
     procedure SetMethod(const Method: THTTPClientMethod);
     procedure SetMethodCustom(const MethodCustom: RawByteString);
@@ -395,8 +395,8 @@ type
     property  OnResponseComplete: THTTPClientEvent read FOnResponseComplete write FOnResponseComplete;
 
     property  AddressFamily: THTTPClientAddressFamily read FAddressFamily write SetAddressFamily default cafIP4;
-    property  Host: RawByteString read FHost write SetHost;
-    property  Port: RawByteString read FPort write SetPort;
+    property  Host: String read FHost write SetHost;
+    property  Port: String read FPort write SetPort;
     property  PortInt: Integer read GetPortInt write SetPortInt;
 
     {$IFDEF HTTP_TLS}
@@ -405,8 +405,8 @@ type
     {$ENDIF}
 
     property  UseHTTPProxy: Boolean read FUseHTTPProxy write SetUseHTTPProxy default False;
-    property  HTTPProxyHost: RawByteString read FHTTPProxyHost write SetHTTPProxyHost;
-    property  HTTPProxyPort: RawByteString read FHTTPProxyPort write SetHTTPProxyPort;
+    property  HTTPProxyHost: String read FHTTPProxyHost write SetHTTPProxyHost;
+    property  HTTPProxyPort: String read FHTTPProxyPort write SetHTTPProxyPort;
 
     property  Method: THTTPClientMethod read FMethod write SetMethod default cmGET;
     property  MethodCustom: RawByteString read FMethodCustom write SetMethodCustom;
@@ -867,7 +867,7 @@ begin
   FAddressFamily := AddressFamily;
 end;
 
-procedure TF5HTTPClient.SetHost(const Host: RawByteString);
+procedure TF5HTTPClient.SetHost(const Host: String);
 begin
   if Host = FHost then
     exit;
@@ -875,7 +875,7 @@ begin
   FHost := Host;
 end;
 
-procedure TF5HTTPClient.SetPort(const Port: RawByteString);
+procedure TF5HTTPClient.SetPort(const Port: String);
 begin
   if Port = FPort then
     exit;
@@ -885,14 +885,14 @@ end;
 
 function TF5HTTPClient.GetPortInt: Integer;
 begin
-  Result := StringToIntDefB(FPort, -1);
+  Result := StrToIntDef(FPort, -1);
 end;
 
 procedure TF5HTTPClient.SetPortInt(const PortInt: Integer);
 begin
   if (PortInt <= 0) or (PortInt >= $FFFF) then
     raise EHTTPClient.Create(SError_InvalidParameter);
-  SetPort(IntToStringB(PortInt));
+  SetPort(IntToStr(PortInt));
 end;
 
 {$IFDEF HTTP_TLS}
@@ -921,7 +921,7 @@ begin
   FUseHTTPProxy := UseHTTPProxy;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyHost(const HTTPProxyHost: RawByteString);
+procedure TF5HTTPClient.SetHTTPProxyHost(const HTTPProxyHost: String);
 begin
   if HTTPProxyHost = FHTTPProxyHost then
     exit;
@@ -929,7 +929,7 @@ begin
   FHTTPProxyHost := HTTPProxyHost;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyPort(const HTTPProxyPort: RawByteString);
+procedure TF5HTTPClient.SetHTTPProxyPort(const HTTPProxyPort: String);
 begin
   if HTTPProxyPort = FHTTPProxyPort then
     exit;

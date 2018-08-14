@@ -71,6 +71,7 @@ uses
   SyncObjs,
   Classes,
   { Fundamentals }
+  flcStdTypes,
   flcSocketLib,
   flcSocket,
   flcTCPBuffer,

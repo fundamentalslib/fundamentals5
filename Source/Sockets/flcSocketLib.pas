@@ -1907,7 +1907,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := IsIP4AddressU(Address, NetAddress);
   {$ELSE}
-  Result := IsIP4AddressA(Address, NetAddress);
+  Result := IsIP4AddressB(Address, NetAddress);
   {$ENDIF}
 end;
 
@@ -1917,7 +1917,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := IsIP6AddressU(Address, NetAddress);
   {$ELSE}
-  Result := IsIP6AddressA(Address, NetAddress);
+  Result := IsIP6AddressB(Address, NetAddress);
   {$ENDIF}
 end;
 {$ENDIF}
@@ -1956,7 +1956,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := String(IP4AddressStrB(Address));
   {$ELSE}
-  Result := IP4AddressStrA(Address);
+  Result := IP4AddressStrB(Address);
   {$ENDIF}
 end;
 
@@ -1965,7 +1965,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := String(IP6AddressStrB(Address));
   {$ELSE}
-  Result := IP6AddressStrA(Address);
+  Result := IP6AddressStrB(Address);
   {$ENDIF}
 end;
 
@@ -2196,7 +2196,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := String(IPProtocolToStrB(Protocol));
   {$ELSE}
-  Result := IPProtocolToStrA(Protocol);
+  Result := IPProtocolToStrB(Protocol);
   {$ENDIF}
 end;
 
@@ -2205,7 +2205,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := StrToIPProtocolB(RawByteString(Protocol));
   {$ELSE}
-  Result := StrToIPProtocolA(Protocol);
+  Result := StrToIPProtocolB(Protocol);
   {$ENDIF}
 end;
 
@@ -2233,7 +2233,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := String(LocalHostNameB);
   {$ELSE}
-  Result := LocalHostNameA;
+  Result := LocalHostNameB;
   {$ENDIF}
 end;
 
@@ -2330,7 +2330,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := String(GuessInternetIP4StrB);
   {$ELSE}
-  Result := GuessInternetIP4StrA;
+  Result := GuessInternetIP4StrB;
   {$ENDIF}
 end;
 
@@ -2548,7 +2548,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := ResolveHostIP4ExB(RawByteString(Host));
   {$ELSE}
-  Result := ResolveHostIP4ExA(Host);
+  Result := ResolveHostIP4ExB(Host);
   {$ENDIF}
 end;
 
@@ -2557,7 +2557,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := ResolveHostIP4B(RawByteString(Host));
   {$ELSE}
-  Result := ResolveHostIP4A(Host);
+  Result := ResolveHostIP4B(Host);
   {$ENDIF}
 end;
 
@@ -2602,7 +2602,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := ResolveHostIP6ExB(RawByteString(Host));
   {$ELSE}
-  Result := ResolveHostIP6ExA(Host);
+  Result := ResolveHostIP6ExB(Host);
   {$ENDIF}
 end;
 
@@ -2611,7 +2611,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := ResolveHostIP6B(RawByteString(Host));
   {$ELSE}
-  Result := ResolveHostIP6A(Host);
+  Result := ResolveHostIP6B(Host);
   {$ENDIF}
 end;
 
@@ -2673,7 +2673,7 @@ begin
   {$IFDEF StringIsUnicode}
   Result := ResolvePortB(RawByteString(Port), Protocol);
   {$ELSE}
-  Result := ResolvePortA(Port, Protocol);
+  Result := ResolvePortB(Port, Protocol);
   {$ENDIF}
 end;
 
@@ -2772,7 +2772,7 @@ begin
   Result := ResolveB(RawByteString(Host), Port, AddressFamily, Protocol);
   {$ENDIF}
   {$ELSE}
-  Result := ResolveA(Host, Port, AddressFamily, Protocol);
+  Result := ResolveB(Host, Port, AddressFamily, Protocol);
   {$ENDIF}
 end;
 
@@ -2788,7 +2788,7 @@ begin
   Result := ResolveB(RawByteString(Host), RawByteString(Port), AddressFamily, Protocol);
   {$ENDIF}
   {$ELSE}
-  Result := ResolveA(Host, Port, AddressFamily, Protocol);
+  Result := ResolveB(Host, Port, AddressFamily, Protocol);
   {$ENDIF}
 end;
 

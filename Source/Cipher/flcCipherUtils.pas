@@ -49,9 +49,10 @@ interface
 
 uses
   { System }
-  SysUtils;
+  SysUtils,
 
-
+  { Fundamentals }
+  flcStdTypes;
 
 
 

@@ -181,6 +181,9 @@ procedure Test;
 implementation
 
 uses
+  { Fundamentals }
+  flcStdTypes,
+  
   { TLS }
   flcTLSUtils;
 
