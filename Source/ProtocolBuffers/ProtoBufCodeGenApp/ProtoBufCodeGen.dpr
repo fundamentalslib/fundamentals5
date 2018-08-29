@@ -30,6 +30,8 @@ begin
   Writeln('  -I same as as --proto_path');
   Writeln('  --pas_out=<output path for .pas files>');
   Writeln('  -O same as --pas_out');
+  Writeln('  --pas_ver=<output delphi version for .pas files; 0: less delpi XE, 1: only delphi XE, 2: all>');
+  Writeln('  -V= same as --pas_ver');
   Writeln('  --help');
 end;
 
@@ -62,29 +64,50 @@ begin
   for I := 1 to L do
     begin
       S := ParamStr(I);
-      if StrMatchLeft(S, '--pas_out=', False) or
-         StrMatchLeft(S, '-O=', False) then
-        begin
-          Delete(S, 1, 10);
-          ParamOutputPath := S;
-        end
+      if StrMatchLeft(S, '--pas_ver=', False) then
+      begin
+        Delete(S, 1, 10);
+        N := StrToIntDef(S, 0);
+        if (N >= Integer(Low(TCodeGenSupportVersion))) and (N <= Integer(High(TCodeGenSupportVersion))) then
+          ParamSupportVersion := TCodeGenSupportVersion(N);
+      end
+      else if StrMatchLeft(S, '-V=', False) then
+      begin
+        Delete(S, 1, 3);
+
+        N := StrToIntDef(S, 0);
+        if (N >= Integer(Low(TCodeGenSupportVersion))) and (N <= Integer(High(TCodeGenSupportVersion))) then
+          ParamSupportVersion := TCodeGenSupportVersion(N);
+      end
+      else if StrMatchLeft(S, '--pas_out=', False) then
+      begin
+        Delete(S, 1, 10);
+        ParamOutputPath := S;
+      end
+      else if StrMatchLeft(S, '-O=', False) then
+      begin
+        Delete(S, 1, 3);
+        ParamOutputPath := S;
+      end
+      else if StrMatchLeft(S, '--proto_path=', False) then
+      begin
+        Delete(S, 1, 13);
+        ParamProtoPath := S;
+      end
+      else if StrMatchLeft(S, '-I=', False) then
+      begin
+        Delete(S, 1, 3);
+        ParamProtoPath := S;
+      end
+      else if StrEqualNoAsciiCase(S, '--help') then
+      begin
+        PrintHelp;
+        Halt(1);
+      end
       else
-      if StrMatchLeft(S, '--proto_path=', False) or
-         StrMatchLeft(S, '-I=', False) then
-        begin
-          Delete(S, 1, 13);
-          ParamProtoPath := S;
-        end
-      else
-      if StrEqualNoAsciiCase(S, '--help') then
-        begin
-          PrintHelp;
-          Halt(1);
-        end
-      else
-        begin
-          ParamInputFile := S;
-        end;
+      begin
+        ParamInputFile := S;
+      end;
     end;
 end;
 
