@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.15                                                     }
+{   File version:     5.16                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -51,6 +51,7 @@
 {   2015/04/26  4.13  Blocking interface and worker thread.                    }
 {   2015/04/27  4.14  Whitelist/Blacklist.                                     }
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
+{   2018/08/30  5.16  Trigger Close event when ready client is terminated.     }
 {                                                                              }
 {******************************************************************************}
 // Todo:
@@ -144,7 +145,7 @@ type
 
     procedure ConnectionLog(Sender: TTCPConnection; LogType: TTCPLogType; LogMsg: String; LogLevel: Integer);
     procedure ConnectionStateChange(Sender: TTCPConnection; State: TTCPConnectionState);
-    procedure ConnectionConnected(Sender: TTCPConnection);
+    procedure ConnectionReady(Sender: TTCPConnection);
     procedure ConnectionRead(Sender: TTCPConnection);
     procedure ConnectionWrite(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
@@ -691,7 +692,7 @@ begin
   FConnection.WriteBufferMaxSize := Server.FMaxWriteBufferSize;
   FConnection.OnLog           := ConnectionLog;
   FConnection.OnStateChange   := ConnectionStateChange;
-  FConnection.OnReady     := ConnectionConnected;
+  FConnection.OnReady         := ConnectionReady;
   FConnection.OnRead          := ConnectionRead;
   FConnection.OnWrite         := ConnectionWrite;
   FConnection.OnClose         := ConnectionClose;
@@ -797,7 +798,7 @@ begin
   TriggerStateChange;
 end;
 
-procedure TTCPServerClient.ConnectionConnected(Sender: TTCPConnection);
+procedure TTCPServerClient.ConnectionReady(Sender: TTCPConnection);
 begin
   TriggerConnected;
 end;
@@ -1286,7 +1287,7 @@ end;
 procedure TF5TCPServer.ServerSocketLog(Sender: TSysSocket; LogType: TSysSocketLogType; Msg: String);
 begin
   {$IFDEF TCP_DEBUG_SOCKET}
-  Log(tlDebug, 'ServerSocket:%s', [Msg], 10);
+  Log(tlDebug, 'ServerSocket:%s', [Msg], 1);
   {$ENDIF}
 end;
 
@@ -1476,7 +1477,6 @@ end;
 procedure TF5TCPServer.DoStart;
 begin
   Assert(not FActive);
-
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Starting');
   {$ENDIF}
@@ -1498,7 +1498,6 @@ var I : Integer;
     C : TTCPServerClient;
 begin
   Assert(FActive);
-
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Stopping');
   {$ENDIF}
@@ -1649,11 +1648,13 @@ end;
 function TF5TCPServer.ServerDropClient: Boolean;
 var I, J, L : Integer;
     C, D : TTCPServerClient;
+    S : TTCPServerClientState;
 begin
   // find next client to drop
   Lock;
   try
     D := nil;
+    S := scsInit;
     L := Length(FClients);
     J := FIteratorDrop;
     for I := 0 to L - 1 do
@@ -1664,6 +1665,7 @@ begin
         if C.FTerminated and (C.FReferenceCount = 0) then
           begin
             D := C;
+            S := D.FState;
             // remove from list
             RemoveClientByIndex(J);
             break;
@@ -1684,6 +1686,11 @@ begin
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'ClientRemove');
   {$ENDIF}
+  if S = scsReady then
+    begin
+      D.SetState(scsClosed);
+      TriggerClientClose(D);
+    end;
   TriggerClientRemove(D);
   TriggerClientDestroy(D);
   D.Free;
