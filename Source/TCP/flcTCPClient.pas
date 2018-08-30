@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.16                                                     }
+{   File version:     5.17                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -54,6 +54,7 @@
 {   2015/04/27  4.14  Options to retry failed connections.                     }
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
 {   2018/07/19  5.16  ReconnectOnDisconnect property.                          }
+{   2018/08/30  5.17  Close socket before thread shutdown to prevent blocking. }
 {                                                                              }
 { Todo:                                                                        }
 { - shared processing threads                                                  }
@@ -2263,8 +2264,11 @@ begin
     except
       on E : Exception do
         begin
-          SetErrorFromException(E);
-          TriggerConnectFailed;
+          if not IsTerminated then
+            begin
+              SetErrorFromException(E);
+              TriggerConnectFailed;
+            end;
           exit;
         end;
     end;
@@ -2289,8 +2293,11 @@ begin
       except
         on E : Exception do
           begin
-            SetErrorFromException(E);
-            TriggerConnectFailed;
+            if not IsTerminated then
+              begin
+                SetErrorFromException(E);
+                TriggerConnectFailed;
+              end;
             exit;
           end;
       end;
@@ -2312,7 +2319,7 @@ begin
           on E : Exception do
             begin
               // retry
-              if FRetryFailedConnect then
+              if not IsTerminated and FRetryFailedConnect then
                 if (FRetryFailedConnectMaxAttempts < 0) or
                    (ConnAttempt < FRetryFailedConnectMaxAttempts) then
                   begin
@@ -2326,8 +2333,11 @@ begin
                   end;
               if not ConnRetry then
                 begin
-                  SetErrorFromException(E);
-                  TriggerConnectFailed;
+                  if not IsTerminated then
+                    begin
+                      SetErrorFromException(E);
+                      TriggerConnectFailed;
+                    end;
                   exit;
                 end;
             end;
@@ -2371,13 +2381,13 @@ begin
           end;
       except
         on E : Exception do
-          if not Thread.Terminated then
+          if not IsTerminated then
             SetErrorFromException(E);
       end;
-      Reconnect := not Thread.Terminated and FReconnectOnDisconnect;
+      Reconnect := not IsTerminated and FReconnectOnDisconnect;
     until not Reconnect;
   finally
-    if not Thread.Terminated then
+    if not IsTerminated then
       SetClosed;
   end;
   {$IFDEF TCP_DEBUG_THREAD}
@@ -2486,9 +2496,9 @@ begin
   // stop
   try
     TriggerStop;
+    DoClose;
     StopThread;
     TerminateWorkerThread;
-    DoClose;
     FActive := False;
     TriggerInactive;
     SetStopped;
