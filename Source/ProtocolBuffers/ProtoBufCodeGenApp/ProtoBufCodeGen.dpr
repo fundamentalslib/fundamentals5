@@ -4,14 +4,18 @@ program ProtoBufCodeGen;
 
 uses
   SysUtils,
-  flcUtils in '..\..\Utils\flcUtils.pas',
   flcDynArrays in '..\..\Utils\flcDynArrays.pas',
   flcStrings in '..\..\Utils\flcStrings.pas',
   flcProtoBufUtils in '..\flcProtoBufUtils.pas',
   flcProtoBufProtoNodes in '..\flcProtoBufProtoNodes.pas',
   flcProtoBufProtoParser in '..\flcProtoBufProtoParser.pas',
   flcProtoBufProtoParserTests in '..\flcProtoBufProtoParserTests.pas',
-  flcProtoBufProtoCodeGenPascal in '..\flcProtoBufProtoCodeGenPascal.pas';
+  flcProtoBufProtoCodeGenPascal in '..\flcProtoBufProtoCodeGenPascal.pas',
+  flcUtils in '..\..\Utils\flcUtils.pas',
+  flcStdTypes in '..\..\Utils\flcStdTypes.pas',
+  flcASCII in '..\..\Utils\flcASCII.pas',
+  flcFloats in '..\..\Utils\flcFloats.pas',
+  flcStringBuilder in '..\..\Utils\flcStringBuilder.pas';
 
 const
   AppVersion = '1.0.1';
@@ -32,6 +36,7 @@ begin
   Writeln('  -O same as --pas_out');
   Writeln('  --pas_ver=<output delphi version for .pas files; 0: less delpi XE, 1: only delphi XE, 2: all>');
   Writeln('  -V= same as --pas_ver');
+
   Writeln('  --help');
 end;
 
@@ -45,9 +50,9 @@ var
   ParamInputFile  : String;
   ParamOutputPath : String;
   ParamProtoPath  : String;
-  
+
   ParamSupportVersion: TCodeGenSupportVersion = cgsvLessXE;
-  
+
   // app
   InputFileFull : String;
   InputFilePath : String;
@@ -55,7 +60,7 @@ var
   OutputPath    : String;
 
 procedure ProcessParameters;
-var L, I : Integer;
+var L, I, N: Integer;
     S : String;
 begin
   L := ParamCount;
@@ -67,6 +72,7 @@ begin
   for I := 1 to L do
     begin
       S := ParamStr(I);
+
       if StrMatchLeft(S, '--pas_ver=', False) then
       begin
         Delete(S, 1, 10);
@@ -77,7 +83,6 @@ begin
       else if StrMatchLeft(S, '-V=', False) then
       begin
         Delete(S, 1, 3);
-
         N := StrToIntDef(S, 0);
         if (N >= Integer(Low(TCodeGenSupportVersion))) and (N <= Integer(High(TCodeGenSupportVersion))) then
           ParamSupportVersion := TCodeGenSupportVersion(N);
@@ -155,7 +160,7 @@ begin
   CodeGen := TpbProtoCodeGenPascal.Create;
   try
     CodeGen.OutputPath := OutputPath;
-    CodeGen.GenerateCode(Package);
+    CodeGen.GenerateCode(Package, ParamSupportVersion);
   finally
     FreeAndNil(CodeGen);
   end;
@@ -183,4 +188,3 @@ begin
       PrintError(E.Message);
   end;
 end.
-
