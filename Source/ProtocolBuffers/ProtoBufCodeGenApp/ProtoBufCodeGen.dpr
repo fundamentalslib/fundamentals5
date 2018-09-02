@@ -45,6 +45,9 @@ var
   ParamInputFile  : String;
   ParamOutputPath : String;
   ParamProtoPath  : String;
+  
+  ParamSupportVersion: TCodeGenSupportVersion = cgsvLessXE;
+  
   // app
   InputFileFull : String;
   InputFilePath : String;
