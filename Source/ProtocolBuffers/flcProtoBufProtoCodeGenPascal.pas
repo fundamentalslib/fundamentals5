@@ -65,6 +65,8 @@ uses
 type
   { CodeGenPascal }
 
+  TCodeGenSupportVersion = (cgsvLessXE, cgsvXE, cgsvAll);
+
   TCodeGenPascalUnitUsesList = class
   protected
     FList : RawByteStringArray;
@@ -223,14 +225,14 @@ type
     FPascalDecodeFuncName : RawByteString;
 
     function  GetPascalParentField: TpbProtoPascalField;
-    procedure GenerateArrayHelpers(const AUnit: TCodeGenPascalUnit);
+    procedure GenerateArrayHelpers(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
 
   public
     constructor Create(const AParentField: TpbProtoField);
     destructor Destroy; override;
 
     procedure CodeGenInit;
-    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
   end;
 
 
@@ -265,7 +267,7 @@ type
     destructor Destroy; override;
 
     procedure CodeGenInit;
-    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
   end;
 
 
@@ -282,17 +284,17 @@ type
     function  GetPascalEnum(const Idx: Integer): TpbProtoPascalEnum;
     function  GetPascalMessage(const Idx: Integer): TpbProtoPascalMessage;
 
-    procedure GenerateRecordDeclaration(const AUnit: TCodeGenPascalUnit);
-    procedure GenerateRecordInitProc(const AUnit: TCodeGenPascalUnit);
-    procedure GenerateRecordEncodeProc(const AUnit: TCodeGenPascalUnit);
-    procedure GenerateRecordDecodeProc(const AUnit: TCodeGenPascalUnit);
+    procedure GenerateRecordDeclaration(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
+    procedure GenerateRecordInitProc(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
+    procedure GenerateRecordEncodeProc(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
+    procedure GenerateRecordDecodeProc(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
 
   public
     constructor Create(const AParentNode: TpbProtoNode);
     destructor Destroy; override;
 
     procedure CodeGenInit;
-    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+    procedure GenerateMessageUnit(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
   end;
 
 
@@ -316,7 +318,7 @@ type
     property  MessageUnit: TCodeGenPascalUnit read FMessageUnit;
 
     procedure CodeGenInit;
-    procedure GenerateMessageUnit;
+    procedure GenerateMessageUnit(const PasVersion: TCodeGenSupportVersion);
     procedure Save(const OutputPath: String);
   end;
 
@@ -333,7 +335,7 @@ type
     destructor Destroy; override;
 
     property  OutputPath: String read FOutputPath write FOutputPath;
-    procedure GenerateCode(const APackage: TpbProtoPackage);
+    procedure GenerateCode(const APackage: TpbProtoPackage; const PasVersion: TCodeGenSupportVersion);
   end;
 
 
@@ -629,22 +631,22 @@ var
   I, L : Integer;
 begin
   with AUnit do
-    begin
-      Intf.AppendLn('{ ' + FPascalName + ' }');
-      Intf.AppendLn;
-      Intf.AppendLn('type');
-      Intf.AppendLn('  ' + FPascalName + ' = (');
-      L := GetValueCount;
-      for I := 0 to L - 1 do
-        begin
-          Intf.Append('    ' + GetPascalValue(I).GetPascalDeclaration);
-          if I < L - 1 then
-            Intf.AppendCh(',');
-          Intf.AppendLn;
-        end;
-      Intf.AppendLn('  );');
-      Intf.AppendLn;
-    end;
+  begin
+    Intf.AppendLn('{ ' + FPascalName + ' }');
+    Intf.AppendLn;
+    Intf.AppendLn('type');
+    Intf.AppendLn('  ' + FPascalName + ' = (');
+    L := GetValueCount;
+    for I := 0 to L - 1 do
+      begin
+        Intf.Append('    ' + GetPascalValue(I).GetPascalDeclaration);
+        if I < L - 1 then
+          Intf.AppendCh(',');
+        Intf.AppendLn;
+      end;
+    Intf.AppendLn('  );');
+    Intf.AppendLn;
+  end;
 end;
 
 procedure TpbProtoPascalEnum.GenerateHelpers(const AUnit: TCodeGenPascalUnit);
@@ -925,7 +927,8 @@ begin
     end;
 end;
 
-procedure TpbProtoPascalFieldType.GenerateArrayHelpers(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalFieldType.GenerateArrayHelpers(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 var
   Proto : RawByteString;
   CommentLine : RawByteString;
@@ -933,123 +936,372 @@ var
 begin
   with AUnit do
     if IntfDefs.Add(FPascalTypeStr) then
+    begin
+      CommentLine := '{ ' + FPascalTypeStr + ' }';
+
+      Intf.AppendLn(CommentLine);
+      Intf.AppendLn;
+
+      Impl.AppendLn(CommentLine);
+      Impl.AppendLn;
+
+      Intf.AppendLn('type');
+      Intf.AppendLn('  ' + FPascalTypeStr + ' = array of ' + FPascalBaseType.FPascalTypeStr + ';');
+      Intf.AppendLn;
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
       begin
-        CommentLine := '{ ' + FPascalTypeStr + ' }';
+        Intf.AppendLn('  ' + FPascalTypeStr + 'Helper = record helper for ' + FPascalTypeStr);
+        Intf.AppendLn('  public');
+        Proto := '    function EncodeField(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;';
+        Intf.AppendLn(Proto);
 
-        Intf.AppendLn(CommentLine);
-        Intf.AppendLn;
+        Proto := '    function EncodeField_Packed(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;';
+        Intf.AppendLn(Proto);
 
-        Impl.AppendLn(CommentLine);
-        Impl.AppendLn;
+        Proto := '    procedure DecodeField(const Field: TpbProtoBufDecodeField);';
+        Intf.AppendLn(Proto);
 
-        Intf.AppendLn('type');
-        Intf.AppendLn('  ' + FPascalTypeStr + ' = array of ' + FPascalBaseType.FPascalTypeStr + ';');
-        Intf.AppendLn;
+        Proto := '    procedure DecodeField_Packed(const Field: TpbProtoBufDecodeField);';
+        Intf.AppendLn(Proto);
+        Intf.AppendLn('  end;');
+      end;
 
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
         Proto :=
             'function ' + FPascalArrayEncodeFuncName +
                 '(var Buf; const BufSize: Integer; const FieldNum: Integer; const Value: ' + FPascalTypeStr + '): Integer;';
         Intf.AppendLn(Proto);
-        Impl.AppendLn(Proto);
-        Impl.AppendLn('var');
-        Impl.AppendLn('  P : PByte;');
-        Impl.AppendLn('  I, L, N : Integer;');
-        Impl.AppendLn('begin');
-        Impl.AppendLn('  P := @Buf;');
-        Impl.AppendLn('  L := BufSize;');
-        Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
-        Impl.AppendLn('    begin');
-        Impl.AppendLn('      N := ' + FPascalBaseType.GetPascalEncodeFieldCall('P^', 'L', 'FieldNum', 'Value[I]') + ';');
-        Impl.AppendLn('      Inc(P, N);');
-        Impl.AppendLn('      Dec(L, N);');
-        Impl.AppendLn('    end;');
-        Impl.AppendLn('  Result := BufSize - L;');
-        Impl.AppendLn('end;');
-        Impl.AppendLn;
 
         Proto :=
             'function ' + FPascalArrayEncodeFuncName + '_Packed' +
                 '(var Buf; const BufSize: Integer; const FieldNum: Integer; const Value: ' + FPascalTypeStr + '): Integer;';
         Intf.AppendLn(Proto);
-        Impl.AppendLn(Proto);
-        Impl.AppendLn('var');
-        Impl.AppendLn('  P : PByte;');
-        Impl.AppendLn('  I, T, L, N : Integer;');
-        Impl.AppendLn('begin');
-        Impl.AppendLn('  P := @Buf;');
-        Impl.AppendLn('  T := 0;');
-        Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
-        Impl.AppendLn('    Inc(T, ' + FPascalBaseType.GetPascalEncodeValueCall('P^', '0', 'Value[I]') + ');');
-        Impl.AppendLn('  L := BufSize;');
-        Impl.AppendLn('  N := pbEncodeFieldVarBytesHdr(P^, L, FieldNum, T);');
-        Impl.AppendLn('  Inc(P, N);');
-        Impl.AppendLn('  Dec(L, N);');
-        Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
-        Impl.AppendLn('    begin');
-        Impl.AppendLn('      N := ' + FPascalBaseType.GetPascalEncodeValueCall('P^', 'L', 'Value[I]') + ';');
-        Impl.AppendLn('      Inc(P, N);');
-        Impl.AppendLn('      Dec(L, N);');
-        Impl.AppendLn('    end;');
-        Impl.AppendLn('  Result := BufSize - L;');
-        Impl.AppendLn('end;');
-        Impl.AppendLn;
 
         Proto :=
             'procedure ' + FPascalArrayDecodeFuncName +
                 '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalTypeStr + ');';
         Intf.AppendLn(Proto);
+
+        Proto :=
+            'procedure ' + FPascalArrayDecodeFuncName + '_Packed' +
+                '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalTypeStr + ');';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('{$ENDIF}');
+
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Proto :=
+            'function ' + FPascalTypeStr + 'Helper.EncodeField' +
+                '(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;';
         Impl.AppendLn(Proto);
-        Impl.AppendLn('var');
-        Impl.AppendLn('  L : Integer;');
-        Impl.AppendLn('begin');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto :=
+            'function ' + FPascalArrayEncodeFuncName +
+                '(var Buf; const BufSize: Integer; const FieldNum: Integer; const Value: ' + FPascalTypeStr + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
+      Impl.AppendLn('var');
+      Impl.AppendLn('  P : PByte;');
+      Impl.AppendLn('  I, L, N : Integer;');
+      Impl.AppendLn('begin');
+      Impl.AppendLn('  P := @Buf;');
+      Impl.AppendLn('  L := BufSize;');
+
+      case PasVersion of
+        cgsvLessXE:  Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
+        cgsvXE:      Impl.AppendLn('  for I := 0 to Length(Self) - 1 do');
+        cgsvAll:     Impl.AppendLn('  for I := 0 to Length({$IFDEF VER_XE}Self{$ELSE}Value{$ENDIF}) - 1 do');
+      end;
+
+      Impl.AppendLn('    begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      case PasVersion of
+        cgsvXE:      Impl.AppendLn('      N := Self[I].EncodeField(P^, L, FieldNum);');
+        cgsvAll:     Impl.AppendLn('      N := {$IFDEF VER_XE}Self[I]{$ELSE}Value[I]{$ENDIF}.EncodeField(P^, L, FieldNum);');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('      N := ' + FPascalBaseType.GetPascalEncodeFieldCall('P^', 'L', 'FieldNum', 'Value[I]') + ';');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
+      Impl.AppendLn('      Inc(P, N);');
+      Impl.AppendLn('      Dec(L, N);');
+      Impl.AppendLn('    end;');
+      Impl.AppendLn('  Result := BufSize - L;');
+      Impl.AppendLn('end;');
+      Impl.AppendLn;
+
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Proto :=
+            'function ' + FPascalTypeStr + 'Helper.EncodeField_Packed' +
+                '(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto :=
+            'function ' + FPascalArrayEncodeFuncName + '_Packed' +
+                '(var Buf; const BufSize: Integer; const FieldNum: Integer; const Value: ' + FPascalTypeStr + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+      Impl.AppendLn('var');
+      Impl.AppendLn('  P : PByte;');
+      Impl.AppendLn('  I, T, L, N : Integer;');
+      Impl.AppendLn('begin');
+      Impl.AppendLn('  P := @Buf;');
+      Impl.AppendLn('  T := 0;');
+
+      case PasVersion of
+        cgsvLessXE:  Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
+        cgsvXE:      Impl.AppendLn('  for I := 0 to Length(Self) - 1 do');
+        cgsvAll:     Impl.AppendLn('  for I := 0 to Length({$IFDEF VER_XE}Self{$ELSE}Value{$ENDIF}) - 1 do');
+      end;
+
+      Impl.AppendLn('  begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('    Inc(T, Self[I].EncodeValue(P^, 0));');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('    Inc(T, ' + FPascalBaseType.GetPascalEncodeValueCall('P^', '0', 'Value[I]') + ');');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+      Impl.AppendLn('  end;');
+
+      Impl.AppendLn('  L := BufSize;');
+      Impl.AppendLn('  N := pbEncodeFieldVarBytesHdr(P^, L, FieldNum, T);');
+      Impl.AppendLn('  Inc(P, N);');
+      Impl.AppendLn('  Dec(L, N);');
+
+      case PasVersion of
+        cgsvLessXE:  Impl.AppendLn('  for I := 0 to Length(Value) - 1 do');
+        cgsvXE:      Impl.AppendLn('  for I := 0 to Length(Self) - 1 do');
+        cgsvAll:     Impl.AppendLn('  for I := 0 to Length({$IFDEF VER_XE}Self{$ELSE}Value{$ENDIF}) - 1 do');
+      end;
+
+      Impl.AppendLn('    begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('      N := Self[I].EncodeValue(P^, L);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('      N := ' + FPascalBaseType.GetPascalEncodeValueCall('P^', 'L', 'Value[I]') + ';');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
+      Impl.AppendLn('      Inc(P, N);');
+      Impl.AppendLn('      Dec(L, N);');
+      Impl.AppendLn('    end;');
+      Impl.AppendLn('  Result := BufSize - L;');
+      Impl.AppendLn('end;');
+      Impl.AppendLn;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Proto :=
+            'procedure ' + FPascalTypeStr + 'Helper.DecodeField' +
+                '(const Field: TpbProtoBufDecodeField);';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto :=
+            'procedure ' + FPascalArrayDecodeFuncName +
+                '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalTypeStr + ');';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
+      Impl.AppendLn('var');
+      Impl.AppendLn('  L : Integer;');
+      Impl.AppendLn('begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Impl.AppendLn('  L := Length(Self);');
+        Impl.AppendLn('  SetLength(Self, L + 1);');
+        Impl.AppendLn('  Self[L].Init;');
+        Impl.AppendLn('  Self[L].DecodeField(Field);');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
         Impl.AppendLn('  L := Length(Value);');
         Impl.AppendLn('  SetLength(Value, L + 1);');
         S := FPascalBaseType.GetPascalInitInstanceCall('Value[L]');
         if S <> '' then
           Impl.AppendLn('  ' + S + ';');
         Impl.AppendLn('  ' + FPascalBaseType.GetPascalDecodeFieldCall('Field', 'Value[L]') + ';');
-        Impl.AppendLn('end;');
-        Impl.AppendLn;
+      end;
 
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+      Impl.AppendLn('end;');
+      Impl.AppendLn;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Proto :=
+            'procedure ' + FPascalTypeStr + 'Helper.DecodeField_Packed' +
+                '(const Field: TpbProtoBufDecodeField);';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
         Proto :=
             'procedure ' + FPascalArrayDecodeFuncName + '_Packed' +
                 '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalTypeStr + ');';
-        Intf.AppendLn(Proto);
         Impl.AppendLn(Proto);
-        Impl.AppendLn('var');
-        Impl.AppendLn('  P : PByte;');
-        Impl.AppendLn('  L, N, I : Integer;');
-        Impl.AppendLn('begin');
-        Impl.AppendLn('  P := Field.ValueVarBytesPtr;');
-        Impl.AppendLn('  L := 0;');
-        Impl.AppendLn('  N := Field.ValueVarBytesLen;');
-        Impl.AppendLn('  while N > 0 do');
-        Impl.AppendLn('    begin');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
+      Impl.AppendLn('var');
+      Impl.AppendLn('  P : PByte;');
+      Impl.AppendLn('  L, N, I : Integer;');
+      Impl.AppendLn('begin');
+      Impl.AppendLn('  P := Field.ValueVarBytesPtr;');
+      Impl.AppendLn('  L := 0;');
+      Impl.AppendLn('  N := Field.ValueVarBytesLen;');
+      Impl.AppendLn('  while N > 0 do');
+      Impl.AppendLn('    begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Impl.AppendLn('      SetLength(Self, L + 1);');
+        Impl.AppendLn('      Self[L].Init;');
+        Impl.AppendLn('      I := Self[L].DecodeValue(P^, N);');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
         Impl.AppendLn('      SetLength(Value, L + 1);');
         S := FPascalBaseType.GetPascalInitInstanceCall('Value[L]');
         if S <> '' then
           Impl.AppendLn('      ' + S + ';');
         Impl.AppendLn('      I := ' + FPascalBaseType.GetPascalDecodeValueCall('P^', 'N', 'Value[L]') + ';');
-        Impl.AppendLn('      Inc(L);');
-        Impl.AppendLn('      Inc(P, I);');
-        Impl.AppendLn('      Dec(N, I);');
-        Impl.AppendLn('    end;');
-        Impl.AppendLn('end;');
-        Impl.AppendLn;
-
-        Impl.AppendLn;
-        Impl.AppendLn;
-
-        Intf.AppendLn;
-        Intf.AppendLn;
-        Intf.AppendLn;
       end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+      Impl.AppendLn('      Inc(L);');
+      Impl.AppendLn('      Inc(P, I);');
+      Impl.AppendLn('      Dec(N, I);');
+      Impl.AppendLn('    end;');
+      Impl.AppendLn('end;');
+      Impl.AppendLn;
+
+      Impl.AppendLn;
+      Impl.AppendLn;
+
+      Intf.AppendLn;
+      Intf.AppendLn;
+      Intf.AppendLn;
+    end;
 end;
 
-procedure TpbProtoPascalFieldType.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalFieldType.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 begin
   if FIsArray then
-    GenerateArrayHelpers(AUnit);
+    GenerateArrayHelpers(AUnit, PasVersion);
 end;
 
 
@@ -1124,9 +1376,10 @@ begin
     end;
 end;
 
-procedure TpbProtoPascalField.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalField.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 begin
-  GetPascalFieldType.GenerateMessageUnit(AUnit);
+  GetPascalFieldType.GenerateMessageUnit(AUnit, PasVersion);
 end;
 
 function TpbProtoPascalField.GetPascalEncodeFieldTypeCall(const ParBuf, ParBufSize, ParValue: RawByteString): RawByteString;
@@ -1203,7 +1456,8 @@ begin
     GetPascalField(I).CodeGenInit;
 end;
 
-procedure TpbProtoPascalMessage.GenerateRecordDeclaration(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalMessage.GenerateRecordDeclaration(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 var
   I : Integer;
   F : TpbProtoPascalField;
@@ -1212,6 +1466,16 @@ begin
     begin
       Intf.AppendLn('type');
       Intf.AppendLn('  ' + FPascalName + ' = record');
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Intf.AppendLn('  public');
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('{$ENDIF}');
+
       for I := 0 to GetFieldCount - 1 do
         begin
           F := GetPascalField(I);
@@ -1219,13 +1483,35 @@ begin
             Intf.AppendLn('    ' + F.FPascalRecordHasValueDefinition);
           Intf.AppendLn('    ' + F.FPascalRecordDefinition);
         end;
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('  {$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Intf.AppendLn('    procedure Init;');
+        Intf.AppendLn('    procedure Finalise;');
+
+        Intf.AppendLn('    function  EncodeData(var Buf; const BufSize: Integer): Integer;');
+        Intf.AppendLn('    function  EncodeValue(var Buf; const BufSize: Integer): Integer;');
+        Intf.AppendLn('    function  EncodeField(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;');
+
+        Intf.AppendLn('    function  DecodeValue(const Buf; const BufSize: Integer): Integer;');
+        Intf.AppendLn('    procedure DecodeField(const Field: TpbProtoBufDecodeField);');
+      end;
+
+      if PasVersion = cgsvAll then
+        Intf.AppendLn('  {$ENDIF}');
+
       Intf.AppendLn('  end;');
       Intf.AppendLn('  P' + FPascalProtoName + ' = ^T' + FPascalProtoName + ';');
       Intf.AppendLn;
   end;
+
 end;
 
-procedure TpbProtoPascalMessage.GenerateRecordInitProc(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalMessage.GenerateRecordInitProc(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 var
   I : Integer;
   Proto, S : RawByteString;
@@ -1234,11 +1520,47 @@ var
 begin
   with AUnit do
     begin
-      Proto := 'procedure ' + FPascalProtoName + 'Init(var A: ' + FPascalName + ');';
-      Intf.AppendLn(Proto);
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure ' + FPascalProtoName + 'Init(var A: ' + FPascalName + ');';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('procedure T' + FPascalProtoName + '.Init;');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure ' + FPascalProtoName + 'Init(var A: ' + FPascalName + ');';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('begin');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      Impl.AppendLn('  with Self do');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
       Impl.AppendLn('  with A do');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('  begin');
       for I := 0 to GetFieldCount - 1 do
         begin
@@ -1251,9 +1573,32 @@ begin
       Impl.AppendLn('end;');
       Impl.AppendLn;
 
-      Proto := 'procedure ' + FPascalProtoName + 'Finalise(var A: ' + FPascalName + ');';
-      Intf.AppendLn(Proto);
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure ' + FPascalProtoName + 'Finalise(var A: ' + FPascalName + ');';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+      begin
+        Impl.AppendLn('procedure T' + FPascalProtoName + '.Finalise;');
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure ' + FPascalProtoName + 'Finalise(var A: ' + FPascalName + ');';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       F := False;
       for I := GetFieldCount - 1 downto 0 do
          if GetPascalField(I).FPascalRecordFinaliseStatement <> '' then
@@ -1264,7 +1609,19 @@ begin
       Impl.AppendLn('begin');
       if F then
         begin
+          if PasVersion = cgsvAll then
+            Impl.AppendLn('{$IFDEF VER_XE}');
+
+          Impl.AppendLn('  with Self do');
+
+          if PasVersion = cgsvAll then
+            Impl.AppendLn('{$ELSE}');
+
           Impl.AppendLn('  with A do');
+
+          if PasVersion = cgsvAll then
+            Impl.AppendLn('{$ENDIF}');
+
           Impl.AppendLn('  begin');
           for I := GetFieldCount - 1 downto 0 do
             begin
@@ -1279,7 +1636,8 @@ begin
     end;
 end;
 
-procedure TpbProtoPascalMessage.GenerateRecordEncodeProc(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalMessage.GenerateRecordEncodeProc(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 var
   I, L : Integer;
   F : TpbProtoPascalField;
@@ -1292,10 +1650,31 @@ begin
   with AUnit do
     begin
       EncodeDataProcName := 'pbEncodeData' + FPascalProtoName;
-      Proto := 'function  ' + EncodeDataProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
-      Intf.AppendLn(Proto);
-      Proto := 'function ' + EncodeDataProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
-      Impl.AppendLn(Proto);
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function  ' + EncodeDataProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('function T' + FPascalProtoName + '.EncodeData(var Buf; const BufSize: Integer): Integer;');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function ' + EncodeDataProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('var');
       Impl.AppendLn('  P : PByte;');
       Impl.AppendLn('  L : Integer;');
@@ -1310,12 +1689,43 @@ begin
           Ind := '  ';
           if F.Cardinality = pfcOptional then
             begin
-              Impl.AppendLn(Ind + 'if A.' + F.FPascalHasValueName + ' then');
+              case PasVersion of
+                cgsvLessXE:  Impl.AppendLn(Ind + 'if A.' + F.FPascalHasValueName + ' then');
+                cgsvXE:      Impl.AppendLn(Ind + 'if ' + F.FPascalHasValueName + ' then');
+                cgsvAll:     Impl.AppendLn(Ind + 'if {$IFNDEF VER_XE}A.{$IFEND}' + F.FPascalHasValueName + ' then');
+              end;
+
               Ind := Ind + '  ';
               Impl.AppendLn(Ind + 'begin');
               Ind := Ind + '  ';
             end;
-          Impl.AppendLn(Ind + 'I := ' + F.GetPascalEncodeFieldTypeCall('P^', 'L', 'A.' + F.FPascalName) + ';');
+
+          if F.IsArray then
+          begin
+            if PasVersion = cgsvAll then
+              Impl.AppendLn('{$IFDEF VER_XE}');
+
+            if PasVersion in [cgsvXE, cgsvAll] then
+              Impl.AppendLn(Ind + 'I := ' + F.FPascalName + '.EncodeField(P^, L, ' + IntToStringB(F.FTagID) + ');');
+
+            if PasVersion = cgsvAll then
+              Impl.AppendLn('{$ELSE}');
+
+            if PasVersion in [cgsvLessXE, cgsvAll] then
+              Impl.AppendLn(Ind + 'I := ' + F.GetPascalEncodeFieldTypeCall('P^', 'L', 'A.' + F.FPascalName) + ';');
+
+            if PasVersion = cgsvAll then
+              Impl.AppendLn('{$ENDIF}');
+          end
+          else
+          begin
+            case PasVersion of
+              cgsvLessXE:  Impl.AppendLn(Ind + 'I := ' + F.GetPascalEncodeFieldTypeCall('P^', 'L', 'A.' + F.FPascalName) + ';');
+              cgsvXE:      Impl.AppendLn(Ind + 'I := ' + F.GetPascalEncodeFieldTypeCall('P^', 'L', '' + F.FPascalName) + ';');
+              cgsvAll:     Impl.AppendLn(Ind + 'I := ' + F.GetPascalEncodeFieldTypeCall('P^', 'L', '{$IFNDEF VER_XE}A.{$IFEND}' + F.FPascalName) + ';');
+            end;
+          end;
+
           Impl.AppendLn(Ind + 'Dec(L, I);');
           if I < L - 1 then
             Impl.AppendLn(Ind + 'Inc(P, I);');
@@ -1330,21 +1740,73 @@ begin
       Impl.AppendLn;
 
       EncodeValueProcName := 'pbEncodeValue' + FPascalProtoName;
-      Proto := 'function  ' + EncodeValueProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
-      Intf.AppendLn(Proto);
-      Proto := 'function ' + EncodeValueProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function  ' + EncodeValueProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('function T' + FPascalProtoName + '.EncodeValue(var Buf; const BufSize: Integer): Integer;');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function ' + EncodeValueProcName + '(var Buf; const BufSize: Integer; const A: ' + FPascalName + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
       Impl.AppendLn('var');
       Impl.AppendLn('  P : PByte;');
       Impl.AppendLn('  L, N, I : Integer;');
       Impl.AppendLn('begin');
       Impl.AppendLn('  P := @Buf;');
       Impl.AppendLn('  L := BufSize;');
-      Impl.AppendLn('  N := ' + EncodeDataProcName + '(P^, 0, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('  N := EncodeData(P^, 0);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('  N := ' + EncodeDataProcName + '(P^, 0, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('  I := pbEncodeValueInt32(P^, L, N);');
       Impl.AppendLn('  Inc(P, I);');
       Impl.AppendLn('  Dec(L, I);');
-      Impl.AppendLn('  I := ' + EncodeDataProcName + '(P^, L, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('  I := EncodeData(P^, L);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('  I := ' + EncodeDataProcName + '(P^, L, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
+
       Impl.AppendLn('  Assert(I = N);');
       Impl.AppendLn('  Dec(L, I);');
       Impl.AppendLn('  Result := BufSize - L;');
@@ -1352,10 +1814,30 @@ begin
       Impl.AppendLn;
 
       EncodeFieldProcName := 'pbEncodeField' + FPascalProtoName;
-      Proto := 'function  ' + EncodeFieldProcName + '(var Buf; const BufSize: Integer; const FieldNum: Integer; const A: ' + FPascalName + '): Integer;';
-      Intf.AppendLn(Proto);
-      Proto := 'function ' + EncodeFieldProcName + '(var Buf; const BufSize: Integer; const FieldNum: Integer; const A: ' + FPascalName + '): Integer;';
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function  ' + EncodeFieldProcName + '(var Buf; const BufSize: Integer; const FieldNum: Integer; const A: ' + FPascalName + '): Integer;';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('function T' + FPascalProtoName + '.EncodeField(var Buf; const BufSize: Integer; const FieldNum: Integer): Integer;');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function ' + EncodeFieldProcName + '(var Buf; const BufSize: Integer; const FieldNum: Integer; const A: ' + FPascalName + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('var');
       Impl.AppendLn('  P : PByte;');
       Impl.AppendLn('  L : Integer;');
@@ -1366,7 +1848,22 @@ begin
       Impl.AppendLn('  I := pbEncodeFieldKey(P^, L, FieldNum, pwtVarBytes);');
       Impl.AppendLn('  Dec(L, I);');
       Impl.AppendLn('  Inc(P, I);');
-      Impl.AppendLn('  I := ' + EncodeValueProcName + '(P^, L, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('  I := EncodeValue(P^, L);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+        Impl.AppendLn('  I := ' + EncodeValueProcName + '(P^, L, A);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('  Dec(L, I);');
       Impl.AppendLn('  Result := BufSize - L;');
       Impl.AppendLn('end;');
@@ -1374,7 +1871,8 @@ begin
     end;
 end;
 
-procedure TpbProtoPascalMessage.GenerateRecordDecodeProc(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalMessage.GenerateRecordDecodeProc(const AUnit: TCodeGenPascalUnit;
+  const PasVersion: TCodeGenSupportVersion);
 var
   I, L : Integer;
   F : TpbProtoPascalField;
@@ -1394,16 +1892,48 @@ begin
       for I := 0 to L - 1 do
         begin
           F := GetPascalField(I);
-          Impl.AppendLn('    ' + IntToStringB(F.FTagID) + ' : ' + F.GetPascalDecodeFieldTypeCall('Field', 'A^.' + F.FPascalName, 'A^.') + ';');
+
+          if F.IsArray then
+          begin
+            case PasVersion of
+              cgsvLessXE:  Impl.AppendLn('    ' + IntToStringB(F.FTagID) + ' : ' + F.GetPascalDecodeFieldTypeCall('Field', 'A^.' + F.FPascalName, 'A^.') + ';');
+              cgsvXE:      Impl.AppendLn('    ' + IntToStringB(F.FTagID) + ' : ' + 'A^.' + F.FPascalName + '.DecodeField(Field)' + ';');
+              cgsvAll:     Impl.AppendLn('    ' + IntToStringB(F.FTagID) + ' : {$IFDEF VER_XE}' + 'A^.' + F.FPascalName + '.DecodeField(Field)' + '{$ELSE}'  + F.GetPascalDecodeFieldTypeCall('Field', 'A^.' + F.FPascalName, 'A^.') + '{$ENDIF};');
+            end;
+          end
+          else
+          begin
+            Impl.AppendLn('    ' + IntToStringB(F.FTagID) + ' : ' + F.GetPascalDecodeFieldTypeCall('Field', 'A^.' + F.FPascalName, 'A^.') + ';');
+          end;
         end;
       Impl.AppendLn('  end;');
       Impl.AppendLn('end;');
       Impl.AppendLn;
 
-      Proto := 'function  pbDecodeValue' + FPascalProtoName + '(const Buf; const BufSize: Integer; var Value: ' + FPascalName + '): Integer;';
-      Intf.AppendLn(Proto);
-      Proto := 'function pbDecodeValue' + FPascalProtoName + '(const Buf; const BufSize: Integer; var Value: ' + FPascalName + '): Integer;';
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function  pbDecodeValue' + FPascalProtoName + '(const Buf; const BufSize: Integer; var Value: ' + FPascalName + '): Integer;';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('function T' + FPascalProtoName + '.DecodeValue(const Buf; const BufSize: Integer): Integer;');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'function pbDecodeValue' + FPascalProtoName + '(const Buf; const BufSize: Integer; var Value: ' + FPascalName + '): Integer;';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('var');
       Impl.AppendLn('  P : PByte;');
       Impl.AppendLn('  L, I, N : Integer;');
@@ -1413,23 +1943,57 @@ begin
       Impl.AppendLn('  I := pbDecodeValueInt32(P^, L, N);');
       Impl.AppendLn('  Dec(L, I);');
       Impl.AppendLn('  Inc(P, I);');
-      Impl.AppendLn('  pbDecodeProtoBuf(P^, N, ' + CallbackName + ', @Value);');
+
+      case PasVersion of
+        cgsvLessXE:  Impl.AppendLn('  pbDecodeProtoBuf(P^, N, ' + CallbackName + ', @Value);');
+        cgsvXE:      Impl.AppendLn('  pbDecodeProtoBuf(P^, N, ' + CallbackName + ', @Self);');
+        cgsvAll:     Impl.AppendLn('  pbDecodeProtoBuf(P^, N, ' + CallbackName + ', {$IFDEF VER_XE}@Self{$ELSE}@Value{$ENDIF});');
+      end;
+
+
+
       Impl.AppendLn('  Dec(L, N);');
       Impl.AppendLn('  Result := BufSize - L;');
       Impl.AppendLn('end;');
       Impl.AppendLn;
 
-      Proto := 'procedure pbDecodeField' + FPascalProtoName + '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalName + ');';
-      Intf.AppendLn(Proto);
-      Impl.AppendLn(Proto);
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure pbDecodeField' + FPascalProtoName + '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalName + ');';
+        Intf.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$IFDEF VER_XE}');
+
+      if PasVersion in [cgsvXE, cgsvAll] then
+        Impl.AppendLn('procedure T' + FPascalProtoName + '.DecodeField(const Field: TpbProtoBufDecodeField);');
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ELSE}');
+
+      if PasVersion in [cgsvLessXE, cgsvAll] then
+      begin
+        Proto := 'procedure pbDecodeField' + FPascalProtoName + '(const Field: TpbProtoBufDecodeField; var Value: ' + FPascalName + ');';
+        Impl.AppendLn(Proto);
+      end;
+
+      if PasVersion = cgsvAll then
+        Impl.AppendLn('{$ENDIF}');
+
       Impl.AppendLn('begin');
-      Impl.AppendLn('  pbDecodeProtoBuf(Field.ValueVarBytesPtr^, Field.ValueVarBytesLen, ' + CallbackName + ', @Value);');
+      case PasVersion of
+        cgsvLessXE:  Impl.AppendLn('  pbDecodeProtoBuf(Field.ValueVarBytesPtr^, Field.ValueVarBytesLen, ' + CallbackName + ', @Value);');
+        cgsvXE:      Impl.AppendLn('  pbDecodeProtoBuf(Field.ValueVarBytesPtr^, Field.ValueVarBytesLen, ' + CallbackName + ', @Self);');
+        cgsvAll:     Impl.AppendLn('  pbDecodeProtoBuf(Field.ValueVarBytesPtr^, Field.ValueVarBytesLen, ' + CallbackName + ', {$IFDEF VER_XE}@Self{$ELSE}@Value{$ENDIF});');
+      end;
+
       Impl.AppendLn('end;');
       Impl.AppendLn;
     end;
 end;
 
-procedure TpbProtoPascalMessage.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit);
+procedure TpbProtoPascalMessage.GenerateMessageUnit(const AUnit: TCodeGenPascalUnit; const PasVersion: TCodeGenSupportVersion);
 var
   I : Integer;
   CommentLine : RawByteString;
@@ -1437,9 +2001,9 @@ begin
   for I := 0 to GetEnumCount - 1 do
     GetPascalEnum(I).GenerateMessageUnit(AUnit);
   for I := 0 to GetFieldCount - 1 do
-    GetPascalField(I).GenerateMessageUnit(AUnit);
+    GetPascalField(I).GenerateMessageUnit(AUnit, PasVersion);
   for I := 0 to GetMessageCount - 1 do
-    GetPascalMessage(I).GenerateMessageUnit(AUnit);
+    GetPascalMessage(I).GenerateMessageUnit(AUnit, PasVersion);
 
   CommentLine := '{ ' + FPascalName + ' }';
 
@@ -1449,10 +2013,17 @@ begin
   AUnit.Impl.AppendLn(CommentLine);
   AUnit.Impl.AppendLn;
 
-  GenerateRecordDeclaration(AUnit);
-  GenerateRecordInitProc(AUnit);
-  GenerateRecordEncodeProc(AUnit);
-  GenerateRecordDecodeProc(AUnit);
+  GenerateRecordDeclaration(AUnit, PasVersion);
+
+  if PasVersion = cgsvAll then
+    AUnit.Intf.AppendLn('{$IFNDEF VER_XE}');
+
+  GenerateRecordInitProc(AUnit, PasVersion);
+  GenerateRecordEncodeProc(AUnit, PasVersion);
+  GenerateRecordDecodeProc(AUnit, PasVersion);
+
+  if PasVersion = cgsvAll then
+    AUnit.Intf.AppendLn('{$ENDIF}');
 
   AUnit.Intf.AppendLn;
 
@@ -1495,10 +2066,10 @@ begin
     GetPascalMessage(I).CodeGenInit;
 end;
 
-procedure TpbProtoPascalPackage.GenerateMessageUnit;
+procedure TpbProtoPascalPackage.GenerateMessageUnit(const PasVersion: TCodeGenSupportVersion);
 var I : Integer;
 begin
-  FMessageUnit.UnitComments := FMessageUnit.UnitComments +
+   FMessageUnit.UnitComments := FMessageUnit.UnitComments +
       '{ Unit ' + FMessageUnit.FName + '.pas }' + CRLF;
   if FFileName <> '' then
     FMessageUnit.UnitComments := FMessageUnit.UnitComments +
@@ -1513,10 +2084,20 @@ begin
   for I := 0 to GetImportedPackageCount - 1 do
     FMessageUnit.IntfUses.Add(GetPascalImportedPackage(I).FMessageUnit.FName);
 
+  // add chongchong
+  if PasVersion = cgsvAll then
+  begin
+    FMessageUnit.Intf.AppendLn('{$IF CompilerVersion >= 22}');
+    FMessageUnit.Intf.AppendLn('  {$DEFINE VER_XE}');
+    FMessageUnit.Intf.AppendLn('{$IFEND}');
+    FMessageUnit.Intf.AppendCRLF;
+    FMessageUnit.Intf.AppendCRLF;
+  end;
+
   for I := 0 to GetEnumCount - 1 do
     GetPascalEnum(I).GenerateMessageUnit(FMessageUnit);
   for I := 0 to GetMessageCount - 1 do
-    GetPascalMessage(I).GenerateMessageUnit(FMessageUnit);
+    GetPascalMessage(I).GenerateMessageUnit(FMessageUnit, PasVersion);
 end;
 
 function TpbProtoPascalPackage.GetPascalMessage(const Idx: Integer): TpbProtoPascalMessage;
@@ -1553,14 +2134,14 @@ begin
   inherited Destroy;
 end;
 
-procedure TpbProtoCodeGenPascal.GenerateCode(const APackage: TpbProtoPackage);
+procedure TpbProtoCodeGenPascal.GenerateCode(const APackage: TpbProtoPackage; const PasVersion: TCodeGenSupportVersion);
 var P : TpbProtoPascalPackage;
 begin
   Assert(Assigned(APackage));
 
   P := (APackage as TpbProtoPascalPackage);
   P.CodeGenInit;
-  P.GenerateMessageUnit;
+  P.GenerateMessageUnit(PasVersion);
   P.Save(FOutputPath);
 end;
 
