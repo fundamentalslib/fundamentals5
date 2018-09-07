@@ -1346,7 +1346,7 @@ begin
     Assert(T.SendBufferSize > 0);
 
     R := True; W := True; E := True;
-    Assert(S.Select(20, R, W, E));
+    Assert(S.Select(50, R, W, E));
     Assert(R and not W and not E);
 
     S.Accept(C, A);

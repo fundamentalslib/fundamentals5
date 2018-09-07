@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.17                                                     }
+{   File version:     5.18                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -55,6 +55,7 @@
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
 {   2018/07/19  5.16  ReconnectOnDisconnect property.                          }
 {   2018/08/30  5.17  Close socket before thread shutdown to prevent blocking. }
+{   2018/09/01  5.18  Handle client stopping in process thread.                }
 {                                                                              }
 { Todo:                                                                        }
 { - shared processing threads                                                  }
@@ -496,6 +497,7 @@ type
     function  IsConnectingOrConnected: Boolean;
     function  IsConnected: Boolean;
     function  IsConnectionClosed: Boolean;
+    function  IsStopping: Boolean;
 
     // When WaitForStartup is set, the call to Start or Active := True will only return
     // when the thread has started and the Connection property is available.
@@ -2095,12 +2097,13 @@ end;
 procedure TF5TCPClient.DoBind;
 begin
   Assert(FActive);
-  Assert(FState = csResolvedLocal);
+  Assert(FState in [csResolvedLocal, csClosed]);
   Assert(Assigned(FSocket));
   {$IFDEF TCP_DEBUG}
   Log(cltDebug, 'DoBind');
   {$ENDIF}
-
+  if GetState = csClosed then
+    raise ETCPClient.Create('Closed');
   FSocket.Bind(FLocalAddr);
   SetState(csBound);
 end;
@@ -2110,18 +2113,27 @@ var
   ConAddr : TSocketAddr;
 begin
   Assert(FActive);
-  Assert(FState in [csBound, csConnectRetry]);
+  Assert(FState in [csBound, csConnectRetry, csClosed]);
   Assert(FHost <> '');
   {$IFDEF TCP_DEBUG}
   Log(cltDebug, 'DoResolve');
   {$ENDIF}
 
-  SetState(csResolving);
+  Lock;
+  try
+    if FState = csClosed then
+      raise ETCPClient.Create('Closed');
+    SetState(csResolving);
+  finally
+    Unlock;
+  end;
   ConAddr := flcSocketLib.Resolve(FHost, FPort, FIPAddressFamily, ipTCP);
 
   Lock;
   try
     {$IFDEF TCPCLIENT_SOCKS}
+    if FState = csClosed then
+      raise ETCPClient.Create('Closed');
     if FSocksEnabled then
       begin
         FSocksResolvedAddr := ConAddr;
@@ -2142,13 +2154,20 @@ end;
 procedure TF5TCPClient.DoConnect;
 begin
   Assert(FActive);
-  Assert(FState = csResolved);
+  Assert(FState in [csResolved, csClosed, csStopped]);
   Assert(Assigned(FSocket));
   {$IFDEF TCP_DEBUG}
   Log(cltDebug, 'DoConnect');
   {$ENDIF}
 
-  SetState(csConnecting);
+  Lock;
+  try
+    if FState = csClosed then
+      raise ETCPClient.Create('Closed');
+    SetState(csConnecting);
+  finally
+    Unlock;
+  end;
   FSocket.Connect(FConnectAddr);
   SetConnected;
 end;
@@ -2212,6 +2231,9 @@ procedure TF5TCPClient.ThreadExecute(const Thread: TTCPClientProcessThread);
   function IsTerminated: Boolean;
   begin
     Result := Thread.Terminated;
+    if Result then
+      exit;
+    Result := IsStopping;
   end;
 
   procedure SetErrorFromException(const E: Exception);
@@ -2257,6 +2279,8 @@ begin
     // connection setup
     try
       // startup
+      if IsTerminated then
+        exit;
       CreateConnection;
       if IsTerminated then
         exit;
@@ -2282,6 +2306,8 @@ begin
             FSocket.AllocateSocketHandle;
           end;
         FSocket.SetBlocking(True);
+        if IsTerminated then
+          exit;
         // resolve local
         DoResolveLocal;
         if IsTerminated then
@@ -2307,6 +2333,8 @@ begin
         ConnRetry := False;
         try
           // resolve
+          if IsTerminated then
+            exit;
           DoResolve;
           if IsTerminated then
             exit;
@@ -2340,6 +2368,10 @@ begin
                     end;
                   exit;
                 end;
+              {$IFDEF TCP_DEBUG}
+              if ConnRetry then
+                Log(cltDebug, 'ConnRetry');
+              {$ENDIF}
             end;
         end;
       until not ConnRetry;
@@ -2492,7 +2524,6 @@ begin
       WaitForState([csStopped], ClientStopTimeOut);
       exit;
     end;
-  Assert(FActive);
   // stop
   try
     TriggerStop;
@@ -2545,6 +2576,17 @@ function TF5TCPClient.IsConnectionClosed: Boolean;
 begin
   Result := GetState in TCPClientStates_Closed;
 end;
+
+function TF5TCPClient.IsStopping: Boolean;
+begin
+  Lock;
+  try
+    Result := FIsStopping;
+  finally
+    Unlock;
+  end;
+end;
+
 
 { TLS }
 
