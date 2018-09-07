@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.16                                                     }
+{   File version:     5.18                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -52,10 +52,10 @@
 {   2015/04/27  4.14  Whitelist/Blacklist.                                     }
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
 {   2018/08/30  5.16  Trigger Close event when ready client is terminated.     }
+{   2018/09/07  5.17  Implement ClientList as linked list.                     }
+{   2018/09/07  5.18  Improve latency for large number of clients.             }
 {                                                                              }
 {******************************************************************************}
-// Todo:
-// - Multiple processing threads
 
 {$INCLUDE flcTCP.inc}
 
@@ -95,7 +95,7 @@ const
 
 type
   ETCPServer = class(Exception);
-  
+
   TF5TCPServer = class;
 
   { TTCPServerClient                                                           }
@@ -109,6 +109,8 @@ type
   TTCPServerClient = class
   protected
     FServer         : TF5TCPServer;
+    FPrev           : TTCPServerClient;
+    FNext           : TTCPServerClient;
     FState          : TTCPServerClientState;
     FTerminated     : Boolean;
     FRemoteAddr     : TSocketAddr;
@@ -116,7 +118,7 @@ type
     FConnection     : TTCPConnection;
     FReferenceCount : Integer;
     FOrphanClient   : Boolean;
-    FClientID       : Integer;
+    FClientID       : Int64;
     FUserTag        : NativeInt;
     FUserObject     : TObject;
 
@@ -170,7 +172,7 @@ type
     constructor Create(
                 const Server: TF5TCPServer;
                 const SocketHandle: TSocketHandle;
-                const ClientID: Integer;
+                const ClientID: Int64;
                 const RemoteAddr: TSocketAddr);
     destructor Destroy; override;
 
@@ -195,7 +197,7 @@ type
     property  RemoteAddr: TSocketAddr read FRemoteAddr;
     property  RemoteAddrStr: RawByteString read GetRemoteAddrStr;
 
-    property  ClientID: Integer read FClientID;
+    property  ClientID: Int64 read FClientID;
 
     // Worker thread
     procedure TerminateWorkerThread;
@@ -208,6 +210,21 @@ type
   TTCPServerClientClass = class of TTCPServerClient;
 
   { TTCPServer                                                                 }
+
+  TTCPServerClientList = class
+  private
+    FCount : Integer;
+    FFirst : TTCPServerClient;
+    FLast  : TTCPServerClient;
+
+  public
+    destructor Destroy; override;
+    procedure Finalise;
+    procedure Add(const Client: TTCPServerClient);
+    procedure Remove(const Client: TTCPServerClient);
+    property First: TTCPServerClient read FFirst;
+    property Count: Integer read FCount;
+  end;
 
   TTCPServerThreadTask = (
       sttControl,
@@ -283,20 +300,20 @@ type
     FOnClientWorkerExecute : TTCPServerClientWorkerExecuteEvent;
 
     // state
-    FLock               : TCriticalSection;
-    FActive             : Boolean;
-    FActiveOnLoaded     : Boolean;
-    FState              : TTCPServerState;
-    FControlThread      : TTCPServerThread;
-    FProcessThread      : TTCPServerThread;
-    FServerSocket       : TSysSocket;
-    FBindAddress        : TSocketAddr;
-    FClients            : array of TTCPServerClient;
-    FClientIDCounter    : Integer;
-    FIteratorDrop       : Integer;
-    FIteratorProcess    : Integer;
-    FWhitelist          : TSocketAddrArray;
-    FBlacklist          : TSocketAddrArray;
+    FLock                 : TCriticalSection;
+    FActive               : Boolean;
+    FActiveOnLoaded       : Boolean;
+    FState                : TTCPServerState;
+    FControlThread        : TTCPServerThread;
+    FProcessThread        : TTCPServerThread;
+    FServerSocket         : TSysSocket;
+    FBindAddress          : TSocketAddr;
+    FClientList           : TTCPServerClientList;
+    FClientTerminatedList : TTCPServerClientList;
+    FClientIDCounter      : Int64;
+    FIteratorProcess      : TTCPServerClient;
+    FWhitelist            : TSocketAddrArray;
+    FBlacklist            : TSocketAddrArray;
 
     {$IFDEF TCPSERVER_TLS}
     FTLSServer          : TTLSServer;
@@ -374,14 +391,12 @@ type
 
     procedure StartControlThread;
     procedure StartProcessThread;
-    procedure StopThreads;
+    procedure StopServerThreads;
 
     procedure DoStart;
     procedure DoStop;
 
     function  CreateClient(const SocketHandle: TSocketHandle; const SocketAddr: TSocketAddr): TTCPServerClient; virtual;
-    procedure AddClient(const Client: TTCPServerClient);
-    procedure RemoveClientByIndex(const Idx: Integer);
 
     function  CanAcceptClient: Boolean;
     function  ServerAcceptClient: Boolean;
@@ -450,7 +465,8 @@ type
 
     property  ActiveClientCount: Integer read GetActiveClientCount;
     property  ClientCount: Integer read GetClientCount;
-    function  GetClientReferenceByIndex(const Idx: Integer): TTCPServerClient;
+    function  ClientIterateFirst: TTCPServerClient;
+    function  ClientIterateNext(const C: TTCPServerClient): TTCPServerClient;
 
     property  ReadRate: Int64 read GetReadRate;
     property  WriteRate: Int64 read GetWriteRate;
@@ -675,7 +691,7 @@ end;
 constructor TTCPServerClient.Create(
             const Server: TF5TCPServer;
             const SocketHandle: TSocketHandle;
-            const ClientID: Integer;
+            const ClientID: Int64;
             const RemoteAddr: TSocketAddr);
 begin
   Assert(Assigned(Server));
@@ -958,6 +974,81 @@ end;
 
 
 {                                                                              }
+{ TCP Server Client List                                                       }
+{                                                                              }
+destructor TTCPServerClientList.Destroy;
+begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TTCPServerClientList.Finalise;
+var
+  Item : TTCPServerClient;
+  Next : TTCPServerClient;
+begin
+  Item := FFirst;
+  while Assigned(Item) do
+    begin
+      Next := Item.FNext;
+      Item.FNext := nil;
+      Item.FPrev := nil;
+      Item := Next;
+    end;
+  FFirst := nil;
+  FLast := nil;
+end;
+
+procedure TTCPServerClientList.Add(const Client: TTCPServerClient);
+var
+  Last : TTCPServerClient;
+begin
+  Assert(Assigned(Client));
+  Last := FLast;
+  Client.FNext := nil;
+  Client.FPrev := Last;
+  if Assigned(Last) then
+    Last.FNext := Client
+  else
+    FFirst := Client;
+  FLast := Client;
+  Inc(FCount);
+end;
+
+procedure TTCPServerClientList.Remove(const Client: TTCPServerClient);
+var
+  Prev, Next : TTCPServerClient;
+begin
+  Assert(Assigned(Client));
+  Assert(FCount > 0);
+  Prev := Client.FPrev;
+  Next := Client.FNext;
+  if Assigned(Prev) then
+    begin
+      Prev.FNext := Next;
+      Client.FPrev := nil;
+    end
+  else
+    begin
+      Assert(FFirst = Client);
+      FFirst := Next;
+    end;
+  if Assigned(Next) then
+    begin
+      Next.FPrev := Prev;
+      Client.FNext := nil;
+    end
+  else
+    begin
+      Assert(FLast = Client);
+      FLast := Prev;
+    end;
+  Dec(FCount);
+end;
+
+
+
+{                                                                              }
 { TCP Server Thread                                                            }
 {                                                                              }
 constructor TTCPServerThread.Create(const Server: TF5TCPServer; const Task: TTCPServerThreadTask);
@@ -1004,6 +1095,8 @@ begin
   FState := ssInit;
   FActiveOnLoaded := False;
   FLock := TCriticalSection.Create;
+  FClientList := TTCPServerClientList.Create;
+  FClientTerminatedList := TTCPServerClientList.Create;
   {$IFDEF TCPSERVER_TLS}
   FTLSServer := TTLSServer.Create(TLSServerTransportLayerSendProc);
   {$ENDIF}
@@ -1030,25 +1123,39 @@ begin
 end;
 
 procedure TF5TCPServer.Finalise;
-var I : Integer;
-    C : TTCPServerClient;
+
+  procedure FinaliseClientList(const List: TTCPServerClientList);
+  var
+    Iter, Next : TTCPServerClient;
+  begin
+    Iter := List.First;
+    while Assigned(Iter) do
+      begin
+        Next := Iter.FNext;
+        List.Remove(Iter);
+        if Iter.FReferenceCount = 0 then
+          Iter.Free
+        else
+          Iter.SetClientOrphaned;
+        Iter := Next;
+      end;
+  end;
+
+var
+  Iter : TTCPServerClient;
 begin
   // stop threads
   try
-    if Assigned(FProcessThread) then
+    StopServerThreads;
+    if Assigned(FClientList) then
       begin
-        FProcessThread.Terminate;
-        FProcessThread.WaitFor;
+        Iter := FClientList.First;
+        while Assigned(Iter) do
+          begin
+            Iter.TerminateWorkerThread;
+            Iter := Iter.FNext;
+          end;
       end;
-    if Assigned(FControlThread) then
-      begin
-        FControlThread.Terminate;
-        FControlThread.WaitFor;
-      end;
-    FreeAndNil(FProcessThread);
-    FreeAndNil(FControlThread);
-    for I := Length(FClients) - 1 downto 0 do
-      FClients[I].TerminateWorkerThread;
   except
     {$IFDEF TCP_DEBUG} raise; {$ELSE}
     on E : Exception do
@@ -1059,20 +1166,16 @@ begin
   {$ENDIF}
   // Clients
   // Remove & Destroy/MarkOrphaned
-  for I := Length(FClients) - 1 downto 0 do
+  if Assigned(FClientTerminatedList) then
     begin
-      C := FClients[I];
-      FClients[I] := nil;
-      TriggerClientRemove(C);
-      if C.FReferenceCount = 0 then
-        begin
-          TriggerClientDestroy(C);
-          C.Free;
-        end
-      else
-        C.SetClientOrphaned;
+      FinaliseClientList(FClientTerminatedList);
+      FreeAndNil(FClientTerminatedList);
     end;
-  FClients := nil;
+  if Assigned(FClientList) then
+    begin
+      FinaliseClientList(FClientList);
+      FreeAndNil(FClientList);
+    end;
   // free
   FreeAndNil(FServerSocket);
   FreeAndNil(FLock);
@@ -1295,7 +1398,7 @@ procedure TF5TCPServer.ClientLog(const Client: TTCPServerClient; const LogType: 
 begin
   Assert(Assigned(Client));
   {$IFDEF TCP_DEBUG}
-  Log(LogType, 'Client[%d]:%s', [Client.FClientID, LogMsg], LogLevel + 1);
+  Log(LogType, 'Client[%d]:%s', [Client.ClientID, LogMsg], LogLevel + 1);
   {$ENDIF}
 end;
 
@@ -1415,10 +1518,15 @@ begin
 end;
 
 procedure TF5TCPServer.DoCloseClients;
-var I : Integer;
+var
+  C : TTCPServerClient;
 begin
-  for I := 0 to Length(FClients) - 1 do
-    FClients[I].Close;
+  C := FClientList.FFirst;
+  while Assigned(C) do
+    begin
+      C.Close;
+      C := C.FNext;
+    end;
 end;
 
 procedure TF5TCPServer.DoCloseServer;
@@ -1458,7 +1566,7 @@ begin
   FProcessThread := TTCPServerThread.Create(self, sttProcess);
 end;
 
-procedure TF5TCPServer.StopThreads;
+procedure TF5TCPServer.StopServerThreads;
 begin
   if Assigned(FProcessThread) then
     begin
@@ -1494,35 +1602,50 @@ begin
 end;
 
 procedure TF5TCPServer.DoStop;
-var I : Integer;
-    C : TTCPServerClient;
+
+  procedure RemoveAllClients(const List: TTCPServerClientList);
+  var
+    Iter, Next : TTCPServerClient;
+  begin
+    Iter := List.First;
+    while Assigned(Iter) do
+      begin
+        Next := Iter.FNext;
+        TriggerClientRemove(Iter);
+        List.Remove(Iter);
+        if Iter.FReferenceCount = 0 then
+          begin
+            TriggerClientDestroy(Iter);
+            Iter.Free;
+          end
+        else
+          Iter.SetClientOrphaned;
+        Iter := Next;
+      end;
+  end;
+
+var
+  Iter : TTCPServerClient;
 begin
   Assert(FActive);
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Stopping');
   {$ENDIF}
   TriggerStop;
-  StopThreads;
-  for I := Length(FClients) - 1 downto 0 do
-    FClients[I].TerminateWorkerThread;
+  StopServerThreads;
+  Iter := FClientList.First;
+  while Assigned(Iter) do
+    begin
+      Iter.TerminateWorkerThread;
+      Iter := Iter.FNext;
+    end;
   DoClose;
   {$IFDEF TCPSERVER_TLS}
   if FTLSEnabled then
     FTLSServer.Stop;
   {$ENDIF}
-  for I := Length(FClients) - 1 downto 0 do
-    begin
-      C := FClients[I];
-      SetLength(FClients, I);
-      TriggerClientRemove(C);
-      if C.FReferenceCount = 0 then
-        begin
-          TriggerClientDestroy(C);
-          C.Free;
-        end
-      else
-        C.SetClientOrphaned;
-    end;
+  RemoveAllClients(FClientTerminatedList);
+  RemoveAllClients(FClientList);
   FreeAndNil(FServerSocket);
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Stopped');
@@ -1531,34 +1654,15 @@ begin
 end;
 
 function TF5TCPServer.CreateClient(const SocketHandle: TSocketHandle; const SocketAddr: TSocketAddr): TTCPServerClient;
+var
+  ClientId : Int64;
 begin
   Inc(FClientIDCounter);
+  ClientId := FClientIDCounter;
   {$IFDEF TCP_DEBUG}
-  Log(tlDebug, 'CreateClient(ID:%d,Handle:%d)', [FClientIDCounter, Ord(SocketHandle)]);
+  Log(tlDebug, 'CreateClient(ID:%d,Handle:%d)', [ClientId, Ord(SocketHandle)]);
   {$ENDIF}
-  Result := TTCPServerClient.Create(self, SocketHandle, FClientIDCounter, SocketAddr);
-end;
-
-procedure TF5TCPServer.AddClient(const Client: TTCPServerClient);
-var L : Integer;
-begin
-  Assert(Assigned(Client));
-
-  L := Length(FClients);
-  SetLength(FClients, L + 1);
-  FClients[L] := Client;
-end;
-
-procedure TF5TCPServer.RemoveClientByIndex(const Idx: Integer);
-var I, L : Integer;
-begin
-  Assert(Idx >= 0);
-  Assert(Idx < Length(FClients));
-
-  L := Length(FClients);
-  for I := Idx to L - 2 do
-    FClients[I] := FClients[I + 1];
-  SetLength(FClients, L - 1);
+  Result := TTCPServerClient.Create(self, SocketHandle, ClientId, SocketAddr);
 end;
 
 function TF5TCPServer.CanAcceptClient: Boolean;
@@ -1572,7 +1676,7 @@ begin
     if M = 0 then // paused
       Result := False
     else
-      Result := Length(FClients) < M;
+      Result := FClientList.Count < M;
   finally
     Unlock;
   end;
@@ -1633,7 +1737,7 @@ begin
   TriggerClientCreate(Client);
   Lock;
   try
-    AddClient(Client);
+    FClientList.Add(Client);
     Client.Start;
   finally
     Unlock;
@@ -1646,37 +1750,35 @@ begin
 end;
 
 function TF5TCPServer.ServerDropClient: Boolean;
-var I, J, L : Integer;
-    C, D : TTCPServerClient;
-    S : TTCPServerClientState;
+var
+  ItCnt, ClCnt : Integer;
+  Iter : TTCPServerClient;
+  DropCl : TTCPServerClient;
+  S : TTCPServerClientState;
 begin
   // find next client to drop
   Lock;
   try
-    D := nil;
+    DropCl := nil;
     S := scsInit;
-    L := Length(FClients);
-    J := FIteratorDrop;
-    for I := 0 to L - 1 do
+    ClCnt := FClientTerminatedList.Count;
+    Iter := FClientTerminatedList.First;
+    for ItCnt := 0 to ClCnt - 1 do
       begin
-        if J >= L then
-          J := 0;
-        C := FClients[J];
-        if C.FTerminated and (C.FReferenceCount = 0) then
+        if Iter.FTerminated and (Iter.FReferenceCount = 0) then
           begin
-            D := C;
-            S := D.FState;
+            DropCl := Iter;
+            S := DropCl.FState;
             // remove from list
-            RemoveClientByIndex(J);
+            FClientTerminatedList.Remove(DropCl);
             break;
           end;
-        Inc(J);
+        Iter := Iter.FNext;
       end;
-    FIteratorDrop := J;
   finally
     Unlock;
   end;
-  if not Assigned(D) then
+  if not Assigned(DropCl) then
     begin
       // no client to drop
       Result := False;
@@ -1688,58 +1790,70 @@ begin
   {$ENDIF}
   if S = scsReady then
     begin
-      D.SetState(scsClosed);
-      TriggerClientClose(D);
+      DropCl.SetState(scsClosed);
+      TriggerClientClose(DropCl);
     end;
-  TriggerClientRemove(D);
-  TriggerClientDestroy(D);
-  D.Free;
+  TriggerClientRemove(DropCl);
+  TriggerClientDestroy(DropCl);
+  DropCl.Free;
   Result := True;
 end;
 
 function TF5TCPServer.ServerProcessClient: Boolean;
-var I, J, L, ClientIdx : Integer;
-    C, D : TTCPServerClient;
-    ClientIdle, ClientTerminated : Boolean;
+var
+  ItCnt, ClCnt : Integer;
+  Iter : TTCPServerClient;
+  C, ProcCl : TTCPServerClient;
+  ClientIdle, ClientTerminated : Boolean;
 begin
-  // find next client to process
-  Lock;
-  try
-    D := nil;
-    L := Length(FClients);
-    J := FIteratorProcess;
-    for I := 0 to L - 1 do
-      begin
-        if J >= L then
-          J := 0;
-        ClientIdx := J;
-        C := FClients[ClientIdx];
-        Inc(J);
+  ItCnt := 0;
+  repeat
+    Lock;
+    try
+      ClCnt := FClientList.Count;
+      ProcCl := nil;
+      Iter := FIteratorProcess;
+      repeat
+        Inc(ItCnt);
+        if ItCnt > ClCnt then
+          begin
+            Result := False;
+            exit;
+          end;
+        if not Assigned(Iter) then
+          Iter := FClientList.First;
+        C := Iter;
+        Iter := Iter.FNext;
         if not C.FTerminated then
           begin
-            D := C;
+            ProcCl := C;
             // add reference to client to prevent removal while processing
-            D.AddReference;
-            break;
+            ProcCl.AddReference;
           end;
-      end;
-    FIteratorProcess := J;
-  finally
-    Unlock;
-  end;
-  if not Assigned(D) then
-    begin
-      // no client to process
-      Result := False;
-      exit;
+      until Assigned(ProcCl);
+      FIteratorProcess := Iter;
+    finally
+      Unlock;
     end;
-  // process client
-  try
-    D.Process(ClientIdle, ClientTerminated);
-  finally
-    D.ReleaseReference;
-  end;
-  Result := not ClientIdle;
+    // process client
+    try
+      ProcCl.Process(ClientIdle, ClientTerminated);
+    finally
+      ProcCl.ReleaseReference;
+    end;
+    if ClientTerminated then
+      begin
+        ProcCl.TerminateWorkerThread;
+        Lock;
+        try
+          FClientList.Remove(ProcCl);
+          FClientTerminatedList.Add(ProcCl);
+        finally
+          Unlock;
+        end;
+      end;
+  until not ClientIdle;
+  Result := True;
 end;
 
 // The control thread handles accepting new clients and removing deleted client
@@ -1869,17 +1983,19 @@ begin
 end;
 
 function TF5TCPServer.GetActiveClientCount: Integer;
-var I, N : Integer;
-    C : TTCPServerClient;
+var
+  N : Integer;
+  C : TTCPServerClient;
 begin
   Lock;
   try
     N := 0;
-    for I := 0 to Length(FClients) - 1 do
+    C := FClientList.FFirst;
+    while Assigned(C) do
       begin
-        C := FClients[I];
         if not C.FTerminated and (C.FState in [scsNegotiating, scsReady]) then
-          Inc(N);  
+          Inc(N);
+        C := C.FNext;
       end;
   finally
     Unlock;
@@ -1891,45 +2007,59 @@ function TF5TCPServer.GetClientCount: Integer;
 begin
   Lock;
   try
-    Result := Length(FClients);
+    Result := FClientList.Count;
   finally
     Unlock;
   end;
 end;
 
-function TF5TCPServer.GetClientReferenceByIndex(const Idx: Integer): TTCPServerClient;
-var C : TTCPServerClient;
+function TF5TCPServer.ClientIterateFirst: TTCPServerClient;
+var
+  C : TTCPServerClient;
 begin
   Lock;
   try
-    if (Idx < 0) or (Idx >= Length(FClients)) then
-      C := nil
-    else
-      begin
-        C := FClients[Idx];
-        // add reference to prevent removal of client
-        // caller must call C.ReleaseReference
-        C.AddReference;
-      end;
+    C := FClientList.FFirst;
+    // add reference to prevent removal of client
+    // caller must call C.ReleaseReference
+    C.AddReference;
   finally
     Unlock;
   end;
   Result := C;
 end;
 
+function TF5TCPServer.ClientIterateNext(const C: TTCPServerClient): TTCPServerClient;
+var
+  N : TTCPServerClient;
+begin
+  Lock;
+  try
+    N := C.FNext;
+    if Assigned(N) then
+      // add reference to prevent removal of client
+      // caller must call C.ReleaseReference
+      N.AddReference;
+  finally
+    Unlock;
+  end;
+  Result := N;
+end;
+
 function TF5TCPServer.GetReadRate: Int64;
-var I : Integer;
-    R : Int64;
-    C : TTCPServerClient;
+var
+  R : Int64;
+  C : TTCPServerClient;
 begin
   Lock;
   try
     R := 0;
-    for I := 0 to Length(FClients) - 1 do
+    C := FClientList.FFirst;
+    while Assigned(C) do
       begin
-        C := FClients[I];
         if not C.FTerminated and (C.FState = scsReady) then
           Inc(R, C.Connection.ReadRate);
+        C := C.FNext;
       end;
   finally
     Unlock;
@@ -1938,18 +2068,19 @@ begin
 end;
 
 function TF5TCPServer.GetWriteRate: Int64;
-var I : Integer;
-    R : Int64;
-    C : TTCPServerClient;
+var
+  R : Int64;
+  C : TTCPServerClient;
 begin
   Lock;
   try
     R := 0;
-    for I := 0 to Length(FClients) - 1 do
+    C := FClientList.FFirst;
+    while Assigned(C) do
       begin
-        C := FClients[I];
         if not C.FTerminated and (C.FState = scsReady) then
           Inc(R, C.Connection.WriteRate);
+        C := C.FNext;
       end;
   finally
     Unlock;
