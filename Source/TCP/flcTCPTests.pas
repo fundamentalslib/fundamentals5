@@ -130,6 +130,7 @@ uses
   SyncObjs,
   flcStdTypes,
   flcSocketLib,
+  flcSocket,
   {$IFDEF TCP_USES_TLS}
   flcTLSConnection,
   flcTLSClient,
@@ -697,6 +698,7 @@ const
 var C : array of TF5TCPClient;
     S : TF5TCPServer;
     T : array of TTCPServerClient;
+    TSC : TTCPServerClient;
     I, J, K : Integer;
     F : RawByteString;
     B : Byte;
@@ -851,9 +853,10 @@ begin
     until (S.ClientCount >= TestClientCount) or (I >= 5000);
     Assert(S.ClientCount = TestClientCount);
     // wait for server clients
+    TSC := S.ClientIterateFirst;
     for K := 0 to TestClientCount - 1 do
       begin
-        T[K] := S.GetClientReferenceByIndex(K);
+        T[K] := TSC;
         Assert(Assigned(T[K]));
         Assert(T[K].State in [scsStarting, scsNegotiating, scsReady]);
         Assert(T[K].Connection.State in [cnsProxyNegotiation, cnsConnected]);
@@ -866,6 +869,8 @@ begin
         Assert(T[K].Connection.State = cnsConnected);
         Assert(not C[K].TLSEnabled or T[K].TLSClient.IsReadyState);
         {$ENDIF}
+        TSC.ReleaseReference;
+        TSC := S.ClientIterateNext(TSC);
       end;
     // read & write (small block): client to server
     for K := 0 to TestClientCount - 1 do
@@ -1251,11 +1256,58 @@ begin
 end;
 {$ENDIF}
 
+{$IFDEF TCPSERVER_TEST}
+procedure Test_Server_Connections;
+const
+  MaxConns = 1000;
+var
+  T : Word32;
+  S : TF5TCPServer;
+  C : array[1..MaxConns] of TSysSocket;
+  I : Integer;
+begin
+  S := TF5TCPServer.Create(nil);
+  S.AddressFamily := iaIP4;
+  S.BindAddress := '127.0.0.1';
+  S.ServerPort := 12349;
+  S.MaxClients := -1;
+  S.Active := True;
+
+  for I := 1 to MaxConns do
+    begin
+      C[I] := TSysSocket.Create(iaIP4, ipTCP, False);
+      C[I].Bind('127.0.0.1', 0);
+      C[I].SetBlocking(False);
+    end;
+  T := GetTickCount;
+  for I := 1 to MaxConns do
+    begin
+      C[I].Connect('127.0.0.1', '12349');
+      Sleep(1);
+      if I mod 100 = 0 then
+        Writeln(I, ' ', Word32(GetTickCount - T) / I:0:2);
+    end;
+  I := 0;
+  repeat
+    Sleep(1);
+    Inc(I);
+  until (S.ClientCount = MaxConns) or (I > 10000);
+  Assert(S.ClientCount = MaxConns);
+  T := Word32(GetTickCount - T);
+  Writeln(T / MaxConns:0:2);
+
+  S.Active := False;
+
+  S.Free;
+end;
+{$ENDIF}
+
 procedure Test;
 begin
   Test_Buffer;
   {$IFDEF TCPSERVER_TEST}
   Test_Server;
+  Test_Server_Connections;
   {$ENDIF}
   {$IFDEF TCPCLIENT_TEST}
   Test_Client;
