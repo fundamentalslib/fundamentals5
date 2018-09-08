@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPConnection.pas                                     }
-{   File version:     5.25                                                     }
+{   File version:     5.26                                                     }
 {   Description:      TCP connection.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -61,9 +61,8 @@
 {   2015/04/26  4.23  Blocking interface and worker thread.                    }
 {   2016/01/09  5.24  Revised for Fundamentals 5.                              }
 {   2018/08/30  5.25  PollSocket returns Terminated on exception.              }
+{   2018/09/08  5.26  PollSocket remove use of Select.                         }
 {                                                                              }
-{ Todo:                                                                        }
-{ - Throttle Peek/Discard?                                                     }
 {******************************************************************************}
 
 {$INCLUDE flcTCP.inc}
@@ -1322,7 +1321,7 @@ begin
     Unlock;
   end;
   // receive from socket into local buffer
-  if IsHandleInvalid then // socket may have been closed by a proxy while in this loop
+  if IsHandleInvalid then // socket may have been closed by a proxy
     begin
       {$IFDEF TCP_DEBUG}
       Log(tlDebug, 'FillBufferFromSocket:SocketHandleInvalid');
@@ -1421,11 +1420,11 @@ begin
   Result := SizeWritten;
 end;
 
-// Processes by polling socket events
+// Processes by polling socket
 // Pre: Socket is non-blocking
 procedure TTCPConnection.PollSocket(out Idle, Terminated: Boolean);
 var Len : Integer;
-    Select, ReadSelect, WriteSelect, ErrorSelect, Error, Fin : Boolean;
+    WriteSelect, Error, Fin : Boolean;
     ReadSelectPending : Boolean;
     RecvClosed, RecvReadEvent, RecvReadBufFullEvent, RecvCloseNow : Boolean;
     WriteBufEmptyBefore, WriteBufEmptied : Boolean;
@@ -1455,91 +1454,67 @@ begin
     finally
       Unlock;
     end;
-    ReadSelect := True;
-    ErrorSelect := True;
-    // select
-    Error := False;
-    try
-      Select := FSocket.Select(0, ReadSelect, WriteSelect, ErrorSelect);
-    except
-      // select error
-      Select := False;
-      Error := True;
-    end;
-    // handle select failure
-    if Error then
-      begin
-        // select error
-        Terminated := True;
-        exit;
-      end;
     Terminated := False;
-    if not Select then
-      exit;
-    // set pending read select
-    if ReadSelectPending then
-      ReadSelect := True;
     // process read
-    if ReadSelect then
-      begin
-        // if not proxy, trigger read to allow user to read directly from socket
-        // before buffering
-        if not FProxyConnection then
-          TriggerRead;
-        Fin := False;
-        repeat
-          // receive data from socket into buffer
-          Len := FillBufferFromSocket(RecvClosed, RecvReadEvent, RecvReadBufFullEvent);
-          Lock;
-          try
-            // check pending flags
-            if FReadEventPending then
-              begin
-                RecvReadEvent := True;
-                FReadEventPending := False;
-              end;
-            RecvCloseNow := FClosePending;
-            if RecvCloseNow then
-              FClosePending := False;
-          finally
-            Unlock;
+    Fin := False;
+    repeat
+      // receive data from socket into buffer
+      Len := FillBufferFromSocket(RecvClosed, RecvReadEvent, RecvReadBufFullEvent);
+      Lock;
+      try
+        // check pending flags
+        if FReadEventPending then
+          begin
+            RecvReadEvent := True;
+            FReadEventPending := False;
           end;
-          if Len > 0 then
-            begin
-              // data received
-              Idle := False;
-            end else
-            begin
-              // nothing received
-              Fin := True;
-            end;
-          // perform pending actions
-          if RecvReadBufFullEvent then
-            TriggerReadBufferFull;
-          if RecvReadEvent then
-            TriggerRead;
-          if RecvCloseNow then
-            begin
-              Close;
-              Fin := True;
-            end
-          else
-            if RecvClosed then
-              begin
-                // socket closed
-                SetStateClosed;
-                Terminated := True;
-                Fin := True;
-              end;
-        until Fin;
+        RecvCloseNow := FClosePending;
+        if RecvCloseNow then
+          FClosePending := False;
+      finally
+        Unlock;
       end;
+      if Len > 0 then
+        begin
+          // data received
+          Idle := False;
+        end else
+        begin
+          // nothing received
+          Fin := True;
+        end;
+      // perform pending actions
+      if RecvReadBufFullEvent then
+        TriggerReadBufferFull;
+      if RecvReadEvent then
+        TriggerRead;
+      if RecvCloseNow then
+        begin
+          Close;
+          Fin := True;
+        end
+      else
+        if RecvClosed then
+          begin
+            // socket closed
+            SetStateClosed;
+            Terminated := True;
+            Fin := True;
+          end;
+    until Fin;
     // process write
     if WriteSelect then
       begin
         WriteEvent := False;
         WriteBufEmptyEvent := False;
         WriteShutdownNow := False;
-        Len := EmptyBufferToSocket(WriteBufEmptyBefore, WriteBufEmptied);
+        Error := False;
+        try
+          Len := EmptyBufferToSocket(WriteBufEmptyBefore, WriteBufEmptied);
+        except
+          Len := 0;
+          Error := True;
+        end;
         Lock;
         try
           // check write state

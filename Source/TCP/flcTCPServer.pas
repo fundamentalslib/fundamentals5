@@ -401,6 +401,9 @@ type
     function  CanAcceptClient: Boolean;
     function  ServerAcceptClient: Boolean;
     function  ServerDropClient: Boolean;
+    function  ProcessClientFromList(const List: TTCPServerClientList;
+              var Iter: TTCPServerClient; var ItCnt: Integer;
+              out ClientIdle, ClientTerminated: Boolean): Boolean;
     function  ServerProcessClient: Boolean;
 
     procedure ControlThreadExecute(const Thread: TTCPServerThread);
@@ -1754,22 +1757,18 @@ var
   ItCnt, ClCnt : Integer;
   Iter : TTCPServerClient;
   DropCl : TTCPServerClient;
-  S : TTCPServerClientState;
 begin
-  // find next client to drop
+  // find terminated client to free
   Lock;
   try
     DropCl := nil;
-    S := scsInit;
     ClCnt := FClientTerminatedList.Count;
     Iter := FClientTerminatedList.First;
     for ItCnt := 0 to ClCnt - 1 do
       begin
-        if Iter.FTerminated and (Iter.FReferenceCount = 0) then
+        if Iter.FReferenceCount = 0 then
           begin
             DropCl := Iter;
-            S := DropCl.FState;
-            // remove from list
             FClientTerminatedList.Remove(DropCl);
             break;
           end;
@@ -1786,71 +1785,94 @@ begin
     end;
   // notify and free client
   {$IFDEF TCP_DEBUG}
-  Log(tlDebug, 'ClientRemove');
+  Log(tlDebug, 'ClientDestroy');
   {$ENDIF}
-  if S = scsReady then
-    begin
-      DropCl.SetState(scsClosed);
-      TriggerClientClose(DropCl);
-    end;
-  TriggerClientRemove(DropCl);
   TriggerClientDestroy(DropCl);
   DropCl.Free;
   Result := True;
 end;
 
+function TF5TCPServer.ProcessClientFromList(const List: TTCPServerClientList;
+         var Iter: TTCPServerClient; var ItCnt: Integer;
+         out ClientIdle, ClientTerminated: Boolean): Boolean;
+var
+  ClCnt : Integer;
+  Cl, It, ProcCl : TTCPServerClient;
+  ClSt : TTCPServerClientState;
+  ClFr : Boolean;
+begin
+  Lock;
+  try
+    ClCnt := List.Count;
+    ProcCl := nil;
+    It := Iter;
+    repeat
+      Inc(ItCnt);
+      if ItCnt > ClCnt then
+        begin
+          Result := False;
+          exit;
+        end;
+      if not Assigned(It) then
+        It := List.First;
+      Cl := It;
+      It := It.FNext;
+      if not Cl.FTerminated then
+        begin
+          ProcCl := Cl;
+          // add reference to client to prevent removal while processing
+          ProcCl.AddReference;
+        end;
+    until Assigned(ProcCl);
+    Iter := It;
+  finally
+    Unlock;
+  end;
+  try
+    ProcCl.Process(ClientIdle, ClientTerminated);
+  finally
+    ProcCl.ReleaseReference;
+  end;
+  if ClientTerminated then
+    begin
+      ProcCl.TerminateWorkerThread;
+      Lock;
+      try
+        ClSt := ProcCl.State;
+        ClFr := ProcCl.FReferenceCount = 0;
+        List.Remove(ProcCl);
+        if not ClFr then
+          FClientTerminatedList.Add(ProcCl);
+      finally
+        Unlock;
+      end;
+      if ClSt = scsReady then
+        begin
+          ProcCl.SetState(scsClosed);
+          TriggerClientClose(ProcCl);
+        end;
+      TriggerClientRemove(ProcCl);
+      if ClFr then
+        begin
+          TriggerClientDestroy(ProcCl);
+          ProcCl.Free;
+        end;
+    end;
+  Result := True;
+end;
+
 function TF5TCPServer.ServerProcessClient: Boolean;
 var
-  ItCnt, ClCnt : Integer;
-  Iter : TTCPServerClient;
-  C, ProcCl : TTCPServerClient;
+  ItCnt : Integer;
   ClientIdle, ClientTerminated : Boolean;
 begin
   ItCnt := 0;
   repeat
-    Lock;
-    try
-      ClCnt := FClientList.Count;
-      ProcCl := nil;
-      Iter := FIteratorProcess;
-      repeat
-        Inc(ItCnt);
-        if ItCnt > ClCnt then
-          begin
-            Result := False;
-            exit;
-          end;
-        if not Assigned(Iter) then
-          Iter := FClientList.First;
-        C := Iter;
-        Iter := Iter.FNext;
-        if not C.FTerminated then
-          begin
-            ProcCl := C;
-            // add reference to client to prevent removal while processing
-            ProcCl.AddReference;
-          end;
-      until Assigned(ProcCl);
-      FIteratorProcess := Iter;
-    finally
-      Unlock;
-    end;
-    // process client
-    try
-      ProcCl.Process(ClientIdle, ClientTerminated);
-    finally
-      ProcCl.ReleaseReference;
-    end;
-    if ClientTerminated then
+    if not ProcessClientFromList(FClientList, FIteratorProcess, ItCnt,
+        ClientIdle, ClientTerminated) then
       begin
-        ProcCl.TerminateWorkerThread;
-        Lock;
-        try
-          FClientList.Remove(ProcCl);
-          FClientTerminatedList.Add(ProcCl);
-        finally
-          Unlock;
-        end;
+        Result := False;
+        exit;
       end;
   until not ClientIdle;
   Result := True;
