@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLibWindows.inc                                  }
-{   File version:     5.12                                                     }
+{   File version:     5.13                                                     }
 {   Description:      WinSock API                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
@@ -48,6 +48,7 @@
 {   2011/09/27  4.10  Added GetAddrInfoW, FreeAddrInfoW.                       }
 {   2016/01/09  5.11  Revised for Fundamentals 5.                              }
 {   2018/07/11  5.12  Word32 type changes.                                     }
+{   2018/09/09  5.13  WSAPoll function.                                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -59,8 +60,8 @@
 {   Delphi 2009 Win32                   4.10  2011/09/27                       }
 {   Delphi XE7 Win32                    5.11  2016/01/09                       }
 {   Delphi XE7 Win64                    5.11  2016/01/09                       }
-{   Delphi 10 Win32                     5.11  2016/01/09                       }
-{   Delphi 10 Win64                     5.11  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.13  2018/09/10                       }
+{   Delphi 10.2 Win64                   5.13  2018/09/10                       }
 {   FreePascal 2.5.1 Win32 i386         4.09  2010/07/21                       }
 {                                                                              }
 { References:                                                                  }
@@ -381,6 +382,18 @@ const
   INADDR_BROADCAST = Word32(not 0);
   INADDR_NONE      = Word32(not 0);
 
+  // WSAPoll
+  POLLERR    = $0001;
+  POLLHUP    = $0002;
+  POLLNVAL   = $0004;
+  POLLWRNORM = $0010;
+  POLLWRBAND = $0020;
+  POLLRDNORM = $0100;
+  POLLRDBAND = $0200;
+  POLLPRI    = $0400;
+  POLLIN     = POLLRDNORM or POLLRDBAND;
+  POLLOUT    = POLLWRNORM;
+
 
 
 {                                                                              }
@@ -573,12 +586,12 @@ type
     MaxSockets   : Word;
     MaxUdpDg     : Word;
     VendorInfo   : Pointer;
-    Description  : Array[0..WSADESCRIPTION_LEN+1-1] of AnsiChar;
-    SystemStatus : Array[0..WSASYS_STATUS_LEN+1-1] of AnsiChar;
+    Description  : array[0..WSADESCRIPTION_LEN+1-1] of AnsiChar;
+    SystemStatus : array[0..WSASYS_STATUS_LEN+1-1] of AnsiChar;
     {$ENDIF}
     {$IFDEF OS_WIN32}
-    Description  : Array[0..WSADESCRIPTION_LEN+1-1] of AnsiChar;
-    SystemStatus : Array[0..WSASYS_STATUS_LEN+1-1] of AnsiChar;
+    Description  : array[0..WSADESCRIPTION_LEN+1-1] of AnsiChar;
+    SystemStatus : array[0..WSASYS_STATUS_LEN+1-1] of AnsiChar;
     MaxSockets   : Word;
     MaxUdpDg     : Word;
     VendorInfo   : Pointer;
@@ -679,7 +692,7 @@ type
     SecurityScheme    : Int32;
     MessageSize       : Word32;
     ProviderReserved  : Word32;
-    szProtocol        : Array[0..WSAPROTOCOL_LEN+1-1] of AnsiChar;
+    szProtocol        : array[0..WSAPROTOCOL_LEN+1-1] of AnsiChar;
   end;
 
   PWSAProtocol_InfoW = ^TWSAProtocol_InfoW;
@@ -881,6 +894,16 @@ type
       const Overlapped: PWSAOverlapped;
       const Flags: Word32); stdcall;
   TWSAOverlappedCompletionRoutine = LPWSAOVERLAPPED_COMPLETION_ROUTINE;
+
+  TWSAPOLLFD = record
+    fd      : TSocket;
+    events  : Int16;
+    revents : Int16;
+  end;
+  PWSAPOLLFD = ^TWSAPOLLFD;
+
+  TPollfd = TWSAPOLLFD;
+  PPollfd = ^TPollfd;
 
 
 
@@ -1130,6 +1153,7 @@ function  WSANtohl(const S: TSocket; const NetLong: Word32;
           var HostLong: Word32): Integer;
 function  WSANtohs(const S: TSocket; const NetShort: Word;
           var HostShort: Word): Integer;
+function  WSAPoll(const fdArray: Pointer; const fds: Integer; const Timeout: Integer): Integer;
 function  WSARecv(const S: TSocket;
           const Buffers: PWSABuf; const BufferCount: Word32;
           var NumberOfBytesRecvd: Word32; var Flags: Word32;
@@ -1557,6 +1581,8 @@ type
       function (s: TSocket; netlong: Word32; var hostlong: Word32): Int32; stdcall;
   TWSANtohsProc =
       function (s: TSocket; netshort: Word; var hostshort: Word): Int32; stdcall;
+  TWSAPollProc =
+      function (fdArray: Pointer; fds: Word32; timeout: Int32): Int32; stdcall;
   TWSARecvProc =
       function (s: TSocket; Buffers: PWSABuf; BufferCount: Word32;
                 var NumberOfBytesRecvd: Word32; var Flags: Word32;
@@ -1701,6 +1727,7 @@ var
   WSALookupServiceNextWProc            : TWSALookupServiceNextWProc = nil;
   WSANtohlProc                         : TWSANtohlProc = nil;
   WSANtohsProc                         : TWSANtohsProc = nil;
+  WSAPollProc                          : TWSAPollProc = nil;
   WSARecvProc                          : TWSARecvProc = nil;
   WSARecvDisconnectProc                : TWSARecvDisconnectProc = nil;
   WSARecvFromProc                      : TWSARecvFromProc = nil;
@@ -1889,6 +1916,7 @@ begin
   WSALookupServiceNextWProc := nil;
   WSANtohlProc := nil;
   WSANtohsProc := nil;
+  WSAPollProc := nil;
   WSARecvProc := nil;
   WSARecvDisconnectProc := nil;
   WSARecvFromProc := nil;
@@ -2433,6 +2461,13 @@ begin
   if not Assigned(WSANtohsProc) then
     GetSocketProc('WSANtohs', @WSANtohsProc);
   Result := WSANtohsProc(S, NetShort, HostShort);
+end;
+
+function WSAPoll(const fdArray: Pointer; const fds: Integer; const Timeout: Integer): Integer;
+begin
+  if not Assigned(WSAPollProc) then
+    GetSocketProc('WSAPoll', @WSAPollProc);
+  Result := WSAPollProc(fdArray, fds, Timeout);
 end;
 
 function WSARecv(const S: TSocket; const Buffers: PWSABuf;

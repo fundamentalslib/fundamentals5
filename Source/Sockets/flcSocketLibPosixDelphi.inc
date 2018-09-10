@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLibPosixDelphi.inc                              }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      Delphi Posix socket library                              }
 {                                                                              }
 {   Copyright:        Copyright © 2018, David J Butler                         }
@@ -36,10 +36,11 @@
 {                                                                              }
 {   2018/07/12  5.01  Initial implementation.                                  }
 {   2018/07/16  5.02  Fixes.                                                   }
+{   2018/09/09  5.03  Poll function.                                           }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Linux x64              5.02  2018/07/17                        }
+{   Delphi 10.2 Linux x64              5.03  2018/09/10                        }
 {                                                                              }
 {******************************************************************************}
 
@@ -167,6 +168,22 @@ const
 type
   TSockLen = FixedUInt;
 
+type
+  TPollfd = record
+              fd      : TSocket;
+              events  : Int16;
+              revents : Int16;
+             end;
+  PPollfd = ^TPollfd;
+
+const
+  POLLIN   = $0001;
+  POLLPRI  = $0002;
+  POLLOUT  = $0004;
+  POLLERR  = $0008;
+  POLLHUP  = $0010;
+  POLLNVAL = $0020;
+
 function  Accept(const socket: TSocket; const address: PSockAddr; var address_len: TSockLen): Integer;
 function  Bind(const socket: TSocket; const address: TSockAddr; const address_len: TSockLen): Integer;
 function  CloseSocket(const socket: TSocket): Integer;
@@ -196,6 +213,7 @@ function  inet_addr(const P: Pointer): Word32;
 function  Listen(const S: TSocket; const Backlog: Integer): Integer;
 function  ntohs(const NetShort: Word): Word;
 function  ntohl(const NetLong: Word32): Word32;
+function  Poll(fds: Pointer; nfds: Integer; timeout: Integer): Integer;
 function  Recv(const S: TSocket; var Buf; const Len, Flags: Integer): Integer;
 function  RecvFrom(const S: TSocket; var Buf; const Len, Flags: Integer;
           var From: TSockAddr; var FromLen: Integer): Integer;
@@ -259,7 +277,8 @@ uses
   Posix.Unistd,
   Posix.ArpaInet,
   Posix.Fcntl,
-  Posix.StrOpts;
+  Posix.StrOpts,
+  Posix.Base;
 
 
 
@@ -444,6 +463,15 @@ end;
 function ntohl(const NetLong: Word32): Word32;
 begin
   Result := Posix.ArpaInet.ntohl(NetLong);
+end;
+
+function libcpoll(fds: Pointer; nfds: Int32; timeout: Int32): Int32; cdecl;
+  external libc name _PU + 'poll';
+  {$EXTERNALSYM libcpoll}
+
+function Poll(fds: Pointer; nfds: Integer; timeout: Integer): Integer;
+begin
+  Result := libcpoll(fds, nfds, timeout);
 end;
 
 function Recv(const S: TSocket; var Buf; const Len, Flags: Integer): Integer;

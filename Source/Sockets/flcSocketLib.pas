@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
-{   File version:     5.19                                                     }
+{   File version:     5.20                                                     }
 {   Description:      Socket library.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
@@ -55,6 +55,7 @@
 {   2015/05/06  4.17  Rename IP4/IP6 address functions.                        }
 {   2016/01/09  5.18  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.19  Type changes.                                            }
+{   2018/09/09  5.20  Poll function.                                           }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -296,6 +297,7 @@ function  Socketinet_addr(const P: Pointer): TIP4Addr;
 function  SocketListen(const S: TSocketHandle; const Backlog: Integer): Integer;
 function  Socketntohs(const NetShort: Word): Word;
 function  Socketntohl(const NetLong: Word32): Word32;
+function  SocketsPoll(const Fd: Pointer; const FdCount: Integer; const Timeout: Integer): Integer;
 function  SocketRecv(const S: TSocketHandle; var Buf; const Len: Integer; const Flags: TSocketRecvFlags): Integer;
 function  SocketRecvFrom(const S: TSocketHandle; var Buf; const Len: Integer; const Flags: TSocketRecvFlags;
           out From: TSocketAddr): Integer;
@@ -1462,6 +1464,15 @@ end;
 function Socketntohl(const NetLong: Word32): Word32;
 begin
   Result := ntohl(NetLong);
+end;
+
+function SocketsPoll(const Fd: Pointer; const FdCount: Integer; const Timeout: Integer): Integer;
+begin
+  {$IFDEF SOCKETLIB_WIN}
+  Result := WSAPoll(Fd, FdCount, Timeout);
+  {$ELSE}
+  Result := Poll(Fd, FdCount, Timeout);
+  {$ENDIF}
 end;
 
 function SocketRecvFlagsToFlags(const Flags: TSocketRecvFlags): Int32;
@@ -2804,6 +2815,7 @@ var AF, ST, PR : Int32;
     NewAPI     : Boolean;
     FL         : Word32;
     {$ENDIF}
+    Res        : TSocket;
 begin
   AF := IPAddressFamilyToAF(AddressFamily);
   if AF = AF_UNSPEC then
@@ -2840,9 +2852,10 @@ begin
   {$ENDIF}
   if Overlapped then
     raise ESocketLib.Create('Overlapped sockets not supported');
-  Result := Socket(AF, ST, PR);
-  if Result = INVALID_SOCKET then
+  Res := Socket(AF, ST, PR);
+  if Res = INVALID_SOCKET then
     raise ESocketLib.Create('Failed to allocate socket handle', SocketGetLastError);
+  Result := TSocketHandle(Res);
 end;
 
 

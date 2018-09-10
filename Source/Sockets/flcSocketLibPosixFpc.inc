@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLibPosixFpc.inc                                 }
-{   File version:     5.08                                                     }
+{   File version:     5.09                                                     }
 {   Description:      FreePascal Posix socket library                          }
 {                                                                              }
-{   Copyright:        Copyright © 2001-2016, David J Butler                    }
+{   Copyright:        Copyright © 2001-2018, David J Butler                    }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -42,6 +42,7 @@
 {   2007/12/29  4.06  Revision.                                                }
 {   2014/04/23  4.07  Revision.                                                }
 {   2016/01/09  5.08  Revised for Fundamentals 5.                              }
+{   2018/09/09  5.09  Poll function.                                           }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -402,6 +403,22 @@ type
   end;
   TProtoEnt = protoent;
 
+type
+  TPollfd = record
+              fd      : TSocket;
+              events  : Int16;
+              revents : Int16;
+             end;
+  PPollfd = ^TPollfd;
+
+const
+  POLLIN   = $0001;
+  POLLPRI  = $0002;
+  POLLOUT  = $0004;
+  POLLERR  = $0008;
+  POLLHUP  = $0010;
+  POLLNVAL = $0020;
+
 
 
 {                                                                              }
@@ -532,6 +549,7 @@ function  ntohl(const NetLong: Word32): Word32;
 function  Recv(const S: TSocket; var Buf; const Len, Flags: Integer): Integer;
 function  RecvFrom(const S: TSocket; var Buf; const Len, Flags: Integer;
           var From: TSockAddr; var FromLen: Integer): Integer;
+function  Poll(const fds: Pointer; const nfds: Integer; const timeout: Integer): Integer;
 function  Select(const nfds: Word32; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;
           const TimeOut: PTimeVal): Integer;
 function  Send(const S: TSocket; const Buf; const Len, Flags: Integer): Integer;
@@ -713,6 +731,8 @@ type
   TSelectProc =
       function (nfds: Word32; readfds, writefds, exceptfds: PFDSet;
                 timeout: PTimeVal): Int32; cdecl;
+  TPollProc =
+      function (fds: Pointer; nfds: Int32; timeout: Int32): Int32; cdecl;
   TGetAddrInfoProc =
       function (NodeName: PAnsiChar; ServName: PAnsiChar; Hints: PAddrInfo;
                 var Addrinfo: PAddrInfo): Int32; cdecl;
@@ -759,6 +779,7 @@ var
   ntohlProc                            : TntohlProc = nil;
   RecvProc                             : TRecvProc = nil;
   RecvFromProc                         : TRecvFromProc = nil;
+  PollProc                             : TPollProc = nil;
   SelectProc                           : TSelectProc = nil;
   SendProc                             : TSendProc = nil;
   SendToProc                           : TSendToProc = nil;
@@ -857,6 +878,7 @@ begin
   ntohlProc := nil;
   RecvProc := nil;
   RecvFromProc := nil;
+  PollProc := nil;
   SelectProc := nil;
   SendProc := nil;
   SendToProc := nil;
@@ -1086,6 +1108,13 @@ begin
   if not Assigned(RecvFromProc) then
     GetSocketProc('recvfrom', @RecvFromProc);
   Result := RecvFromProc(S, Buf, Len, Flags, From, FromLen);
+end;
+
+function Poll(const fds: Pointer; const nfds: Integer; const timeout: Integer): Integer;
+begin
+  if not Assigned(PollProc) then
+    GetSocketProc('poll', @PollProc);
+  Result := PollProc(fds, nfds, timeout);
 end;
 
 function Select(const nfds: Word32; const ReadFDS, WriteFDS, ExceptFDS: PFDSet;

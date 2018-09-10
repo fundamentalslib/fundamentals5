@@ -209,6 +209,7 @@ type
                 const Overlapped: Boolean = False;
                 const SocketHandle: TSocketHandle = INVALID_SOCKETHANDLE);
     destructor Destroy; override;
+    procedure Finalise;
 
     property  AddressFamily: TIPAddressFamily read FAddressFamily;
     property  Protocol: TIPProtocol read FProtocol;
@@ -316,8 +317,8 @@ implementation
 
 {$IFDEF SOCKET_WIN}
 uses
-  { System }
-  Messages;
+  Messages,
+  flcSocketLibSys;
 {$ENDIF}
 {$IFDEF SOCKET_POSIX_DELPHI}
 uses
@@ -489,6 +490,12 @@ begin
 end;
 
 destructor TSysSocket.Destroy;
+begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TSysSocket.Finalise;
 var S : TSocketHandle;
     {$IFDEF SOCKET_WIN}
     W : HWND;
@@ -514,7 +521,6 @@ begin
       DestroyWindow(W); // don't check for DestroyWindow errors during destruction
     end;
   {$ENDIF}
-  inherited Destroy;
 end;
 
 procedure TSysSocket.Log(const LogType: TSysSocketLogType; const Msg: String);
@@ -951,6 +957,9 @@ begin
   if SocketConnect(FSocketHandle, Address) < 0 then
     begin
       ErrorCode := flcSocketLib.SocketGetLastError;
+      if ErrorCode = EINPROGRESS then
+        Result := True
+      else
       if ErrorCode <> EWOULDBLOCK then
         raise ESocketLib.Create('Connect failed', SocketGetLastError)
       else
@@ -1204,7 +1213,7 @@ var ErrorCode : Integer;
 begin
   Result := SocketRecv(FSocketHandle, Buf, BufSize, []);
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Recv:%db:%db', [BufSize, Result]);
+  //Log(sltDebug, 'Recv:%db:%db', [BufSize, Result]);
   {$ENDIF}
   if Result < 0 then
     begin
@@ -1307,6 +1316,7 @@ var T, S, C : TSysSocket;
     A : TIP4Addr;
     B : Array[0..255] of AnsiChar;
     R, W, E : Boolean;
+    FD : TPollfd;
 begin
   S := TSysSocket.Create(iaIP4, ipTCP, False, INVALID_SOCKETHANDLE);
   T := TSysSocket.Create(iaIP4, ipTCP, False, INVALID_SOCKETHANDLE);
@@ -1346,7 +1356,7 @@ begin
     Assert(T.SendBufferSize > 0);
 
     R := True; W := True; E := True;
-    Assert(S.Select(50, R, W, E));
+    Assert(S.Select(100, R, W, E));
     Assert(R and not W and not E);
 
     S.Accept(C, A);
@@ -1368,6 +1378,13 @@ begin
     Assert(C.Select(0, R, W, E));
     Assert(R and W and not E);
 
+    FD.fd := C.SocketHandle;
+    FD.events := POLLIN or POLLOUT;
+    FD.revents := 0;
+    Assert(SocketsPoll(@FD, 1, 1) = 1);
+    Assert(FD.revents and POLLIN <> 0);
+    Assert(FD.revents and POLLOUT <> 0);
+
     FillChar(B[0], Sizeof(B), #0);
 
     {$IFNDEF SOCKET_POSIX_DELPHI}
@@ -1380,6 +1397,13 @@ begin
     R := True; W := True; E := True;
     Assert(C.Select(0, R, W, E));
     Assert(not R and W and not E);
+
+    FD.fd := C.SocketHandle;
+    FD.events := POLLIN or POLLOUT;
+    FD.revents := 0;
+    Assert(SocketsPoll(@FD, 1, 1) = 1);
+    Assert(FD.revents and POLLIN = 0);
+    Assert(FD.revents and POLLOUT <> 0);
 
     C.Send('de');
     Sleep(1);
