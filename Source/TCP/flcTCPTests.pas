@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPTests.pas                                          }
-{   File version:     5.08                                                     }
+{   File version:     5.09                                                     }
 {   Description:      TCP tests.                                               }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -44,14 +44,7 @@
 {   2012/04/19  4.06  Test for stopping and restarting client.                 }
 {   2015/04/26  4.07  Test for worker thread and blocking interface.           }
 {   2016/01/08  5.08  Update for Fundamentals 5.                               }
-{                                                                              }
-{ Supported compilers:                                                         }
-{                                                                              }
-{   Delphi 7 Win32                      5.08  2016/01/09                       }
-{   Delphi XE7 Win32                    5.08  2016/01/09                       }
-{   Delphi XE7 Win64                    5.08  2016/01/09                       }
-{   Delphi 10 Win32                     5.08  2016/01/09                       }
-{   Delphi 10 Win64                     5.08  2016/01/09                       }
+{   2018/09/08  5.09  Server tests with high connection count.                 }
 {                                                                              }
 { Todo:                                                                        }
 { - Test case socks proxy                                                      }
@@ -213,7 +206,7 @@ begin
   try
     // init
     S.AddressFamily := iaIP4;
-    S.ServerPort := 12345;
+    S.ServerPort := 12745;
     S.MaxClients := -1;
     Assert(S.State = ssInit);
     Assert(not S.Active);
@@ -240,7 +233,7 @@ begin
   try
     // init
     S.AddressFamily := iaIP4;
-    S.ServerPort := 12345;
+    S.ServerPort := 12745;
     S.MaxClients := -1;
     Assert(S.State = ssInit);
     for I := 1 to 10 do
@@ -268,7 +261,7 @@ begin
   try
     // init
     S.AddressFamily := iaIP4;
-    S.ServerPort := 12345;
+    S.ServerPort := 12845;
     S.TLSEnabled := True;
     S.TLSServer.PrivateKeyRSAPEM := // from stunnel.pem file
       'MIICXAIBAAKBgQCxUFMuqJJbI9KnB8VtwSbcvwNOltWBtWyaSmp7yEnqwWel5TFf' +
@@ -726,7 +719,7 @@ begin
     S.OnLog := DebugObj.ServerLog;
     S.AddressFamily := iaIP4;
     S.BindAddress := '127.0.0.1';
-    S.ServerPort := 12345;
+    S.ServerPort := 12545;
     S.MaxClients := -1;
     {$IFDEF TCPCLIENTSERVER_TEST_TLS}
     S.TLSEnabled := Mode = tmTLS;
@@ -823,6 +816,7 @@ begin
       Inc(I);
       Sleep(1);
     until (S.State <> ssStarting) or (I >= 5000);
+    Sleep(100);
     Assert(S.State = ssReady);
     Assert(S.ClientCount = 0);
     for K := 0 to TestClientCount - 1 do
@@ -830,7 +824,7 @@ begin
         // init client
         C[K].AddressFamily := cafIP4;
         C[K].Host := '127.0.0.1';
-        C[K].Port := '12345';
+        C[K].Port := '12545';
         {$IFDEF TCPCLIENTSERVER_TEST_TLS}
         C[K].TLSEnabled := Mode = tmTLS;
         {$ENDIF}
@@ -1012,7 +1006,7 @@ begin
     S.OnLog := DebugObj.ServerLog;
     S.AddressFamily := iaIP4;
     S.BindAddress := '127.0.0.1';
-    S.ServerPort := 12345;
+    S.ServerPort := 12645;
     S.MaxClients := -1;
     Assert(S.State = ssInit);
     Assert(not S.Active);
@@ -1031,7 +1025,7 @@ begin
       begin
         C[K].AddressFamily := cafIP4;
         C[K].Host := '127.0.0.1';
-        C[K].Port := '12345';
+        C[K].Port := '12645';
         C[K].WaitForStartup := True;
         Assert(C[K].State = csInit);
         Assert(not C[K].Active);
@@ -1162,17 +1156,19 @@ begin
   S.OnLog := DebugObj.ServerLog;
   S.AddressFamily := iaIP4;
   S.BindAddress := '127.0.0.1';
-  S.ServerPort := 12345;
+  S.ServerPort := 12145;
   S.MaxClients := -1;
   S.UseWorkerThread := True;
   S.OnClientWorkerExecute := TestObj.ServerExec;
   S.Active := True;
 
+  Sleep(50);
+
   C := TF5TCPClient.Create(nil);
   C.OnLog := DebugObj.ClientLog;
   C.LocalHost := '0.0.0.0';
   C.Host := '127.0.0.1';
-  C.Port := '12345';
+  C.Port := '12145';
   C.WaitForStartup := True;
   C.UseWorkerThread := True;
   C.OnWorkerExecute := TestObj.ClientExec;
@@ -1209,7 +1205,7 @@ begin
   S.OnLog := DebugObj.ServerLog;
   S.AddressFamily := iaIP4;
   S.BindAddress := '127.0.0.1';
-  S.ServerPort := 12345;
+  S.ServerPort := 12045;
   S.MaxClients := -1;
   S.UseWorkerThread := True;
   S.OnClientWorkerExecute := TestObj.ServerExec;
@@ -1218,7 +1214,7 @@ begin
   C.OnLog := DebugObj.ClientLog;
   C.LocalHost := '0.0.0.0';
   C.Host := '127.0.0.1';
-  C.Port := '12345';
+  C.Port := '12045';
   C.WaitForStartup := True;
   C.UseWorkerThread := True;
   C.OnWorkerExecute := TestObj.ClientExec;
@@ -1259,7 +1255,7 @@ end;
 {$IFDEF TCPSERVER_TEST}
 procedure Test_Server_Connections;
 const
-  MaxConns = 1000;
+  MaxConns = 100;
 var
   T : Word32;
   S : TF5TCPServer;
@@ -1269,7 +1265,7 @@ begin
   S := TF5TCPServer.Create(nil);
   S.AddressFamily := iaIP4;
   S.BindAddress := '127.0.0.1';
-  S.ServerPort := 12349;
+  S.ServerPort := 12249;
   S.MaxClients := -1;
   S.Active := True;
 
@@ -1279,26 +1275,83 @@ begin
       C[I].Bind('127.0.0.1', 0);
       C[I].SetBlocking(False);
     end;
-  T := GetTickCount;
+  T := TCPGetTick;
   for I := 1 to MaxConns do
     begin
-      C[I].Connect('127.0.0.1', '12349');
-      Sleep(1);
+      C[I].Connect('127.0.0.1', '12249');
+      Sleep(5);
       if I mod 100 = 0 then
-        Writeln(I, ' ', Word32(GetTickCount - T) / I:0:2);
+        Writeln(I, ' ', Word32(TCPGetTick - T) / I:0:2);
     end;
   I := 0;
   repeat
-    Sleep(1);
+    Sleep(10);
     Inc(I);
-  until (S.ClientCount = MaxConns) or (I > 10000);
+  until (S.ClientCount = MaxConns) or (I > 1000);
   Assert(S.ClientCount = MaxConns);
-  T := Word32(GetTickCount - T);
+  T := Word32(TCPGetTick - T);
   Writeln(T / MaxConns:0:2);
 
   S.Active := False;
 
   S.Free;
+end;
+
+procedure Test_ServerMulti_Connections;
+const
+  MaxSrvrs = 20;
+  MaxConns = 10;
+var
+  T : Word32;
+  S : array[1..MaxSrvrs] of TF5TCPServer;
+  C : array[1..MaxSrvrs] of array[1..MaxConns] of TSysSocket;
+  SySo : TSysSocket;
+  I, J : Integer;
+begin
+  for I := 1 to MaxSrvrs do
+    begin
+      S[I] := TF5TCPServer.Create(nil);
+      S[I].AddressFamily := iaIP4;
+      S[I].BindAddress := '127.0.0.1';
+      S[I].ServerPort := 12300 + I;
+      S[I].MaxClients := -1;
+      S[I].Active := True;
+    end;
+
+  for J := 1 to MaxSrvrs do
+    for I := 1 to MaxConns do
+      begin
+        SySo := TSysSocket.Create(iaIP4, ipTCP, False);
+        C[J][I] := SySo;
+        SySo.Bind('127.0.0.1', 0);
+        SySo.SetBlocking(False);
+      end;
+  T := TCPGetTick;
+  for J := 1 to MaxSrvrs do
+    for I := 1 to MaxConns do
+      begin
+        C[J][I].Connect('127.0.0.1', RawByteString(IntToStr(12300 + J)));
+        if I mod 2 = 0 then
+          Sleep(1);
+        if I mod 100 = 0 then
+          Writeln(J, ' ', I, ' ', Word32(TCPGetTick - T) / (I + (J - 1) * MaxConns):0:2);
+      end;
+  I := 0;
+  Sleep(1000);
+  repeat
+    Sleep(1);
+    Inc(I);
+  until (S[MaxSrvrs].ClientCount = MaxConns) or (I > 30000);
+  Assert(S[MaxSrvrs].ClientCount = MaxConns);
+  T := Word32(TCPGetTick - T);
+  Writeln(T / (MaxConns * MaxSrvrs):0:2);
+  Sleep(1000);
+
+  for I := 1 to MaxSrvrs do
+    S[I].Active := False;
+
+  for I := 1 to MaxSrvrs do
+    S[I].Free;
 end;
 {$ENDIF}
 
@@ -1308,6 +1361,7 @@ begin
   {$IFDEF TCPSERVER_TEST}
   Test_Server;
   Test_Server_Connections;
+  Test_ServerMulti_Connections;
   {$ENDIF}
   {$IFDEF TCPCLIENT_TEST}
   Test_Client;

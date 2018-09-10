@@ -57,8 +57,11 @@
 {   2018/08/30  5.17  Close socket before thread shutdown to prevent blocking. }
 {   2018/09/01  5.18  Handle client stopping in process thread.                }
 {                                                                              }
-{ Todo:                                                                        }
-{ - shared processing threads                                                  }
+{ Supported compilers:                                                         }
+{                                                                              }
+{   Delphi 10.2 Win32                   5.18  2018/09/10                       }
+{   Delphi 10.2 Win64                   5.18  2018/09/10                       }
+{   Delphi 10.2 Linux64                 5.18  2018/09/10                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -416,7 +419,6 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-
     procedure Finalise;
 
     // Parameters
@@ -1147,16 +1149,24 @@ begin
     begin
       FProcessThread.Terminate;
       FProcessThread.WaitFor;
+      FreeAndNil(FProcessThread);
     end;
-  FreeAndNil(FProcessThread);
-  FreeAndNil(FConnection);
+  if Assigned(FConnection) then
+    begin
+      FConnection.Finalise;
+      FreeAndNil(FConnection);
+    end;
   if Assigned(FSyncListLog) then
     begin
       for I := FSyncListLog.Count - 1 downto 0 do
         Dispose(FSyncListLog.Items[0]);
       FreeAndNil(FSyncListLog);
     end;
-  FreeAndNil(FSocket);
+  if Assigned(FSocket) then
+    begin
+      FSocket.Finalise;
+      FreeAndNil(FSocket);
+    end;
   FreeAndNil(FLock);
 end;
 
@@ -2058,8 +2068,16 @@ end;
 
 procedure TF5TCPClient.FreeConnection;
 begin
-  FreeAndNil(FConnection);
-  FreeAndNil(FSocket);
+  if Assigned(FConnection) then
+    begin
+      FConnection.Finalise;
+      FreeAndNil(FConnection);
+    end;
+  if Assigned(FSocket) then
+    begin
+      FSocket.Finalise;
+      FreeAndNil(FSocket);
+    end;
 end;
 
 function TF5TCPClient.GetBlockingConnection: TTCPBlockingConnection;
@@ -2383,7 +2401,7 @@ begin
         {$ENDIF}
         while not IsTerminated do
           begin
-            FConnection.PollSocket(ConIdle, ConTerminated);
+            FConnection.ProcessSocket(True, True, ConIdle, ConTerminated);
             if ConTerminated then
               begin
                 {$IFDEF TCP_DEBUG_THREAD}

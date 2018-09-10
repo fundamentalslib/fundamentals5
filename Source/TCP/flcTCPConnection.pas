@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPConnection.pas                                     }
-{   File version:     5.26                                                     }
+{   File version:     5.27                                                     }
 {   Description:      TCP connection.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
@@ -62,6 +62,7 @@
 {   2016/01/09  5.24  Revised for Fundamentals 5.                              }
 {   2018/08/30  5.25  PollSocket returns Terminated on exception.              }
 {   2018/09/08  5.26  PollSocket remove use of Select.                         }
+{   2018/09/10  5.27  PollSocket change to ProcessSocket.                      }
 {                                                                              }
 {******************************************************************************}
 
@@ -128,6 +129,7 @@ type
     class function ProxyName: String; virtual;
 
     constructor Create(const Connection: TTCPConnection);
+    procedure Finalise;
 
     property  State: TTCPConnectionProxyState read FState;
     property  StateStr: RawByteString read GetStateStr;
@@ -146,6 +148,7 @@ type
 
   public
     destructor Destroy; override;
+    procedure Finalise;
 
     property  Count: Integer read GetCount;
     property  Item[const Idx: Integer]: TTCPConnectionProxy read GetItem; default;
@@ -223,7 +226,7 @@ type
 
     FReadEventPending    : Boolean;
     FReadBufferFull      : Boolean;
-    FReadSelectPending   : Boolean;
+    FReadProcessPending  : Boolean;
     FWriteEventPending   : Boolean;
     FShutdownPending     : Boolean;
     FClosePending        : Boolean;
@@ -317,6 +320,7 @@ type
   public
     constructor Create(const Socket: TSysSocket);
     destructor Destroy; override;
+    procedure Finalise;
 
     // Parameters
     property  Socket: TSysSocket read FSocket;
@@ -356,7 +360,9 @@ type
     property  WriteRate: Integer read GetWriteRate;
 
     // Poll routine
-    procedure PollSocket(out Idle, Terminated: Boolean);
+    procedure GetEventsToPoll(out WritePoll: Boolean);
+    procedure ProcessSocket(const ProcessRead, ProcessWrite: Boolean;
+              out Idle, Terminated: Boolean);
 
     // Read
     function  Read(var Buf; const BufSize: Integer): Integer;
@@ -429,6 +435,7 @@ type
   public
     constructor Create(const Connection : TTCPConnection);
     destructor Destroy; override;
+    procedure Finalise;
 
     property  Connection: TTCPConnection read FConnection;
 
@@ -506,6 +513,11 @@ begin
   FConnection := Connection;
 end;
 
+procedure TTCPConnectionProxy.Finalise;
+begin
+  FConnection := nil;
+end;
+
 procedure TTCPConnectionProxy.Log(const LogType: TTCPLogType; const LogMsg: String; const LogLevel: Integer);
 begin
   FConnection.ProxyLog(self, LogType, LogMsg, LogLevel);
@@ -570,11 +582,20 @@ end;
 { TCP Connection Proxy List                                                    }
 {                                                                              }
 destructor TTCPConnectionProxyList.Destroy;
+begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TTCPConnectionProxyList.Finalise;
 var I : Integer;
 begin
   for I := Length(FList) - 1 downto 0 do
-    FreeAndNil(FList[I]);
-  inherited Destroy;
+    begin
+      FList[I].Finalise;
+      FreeAndNil(FList[I]);
+    end;
+  FList := nil;
 end;
 
 function TTCPConnectionProxyList.GetCount: Integer;
@@ -808,18 +829,32 @@ end;
 
 destructor TTCPConnection.Destroy;
 begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure TTCPConnection.Finalise;
+begin
   if Assigned(FWorkerThread) then
     begin
       FWorkerThread.Terminate;
       FWorkerThread.WaitFor;
       FreeAndNil(FWorkerThread);
     end;
-  FreeAndNil(FBlockingConnection);
+  if Assigned(FBlockingConnection) then
+    begin
+      FBlockingConnection.Finalise;
+      FreeAndNil(FBlockingConnection);
+    end;
+  FUserObject := nil;
   TCPBufferFinalise(FWriteBuffer);
   TCPBufferFinalise(FReadBuffer);
-  FreeAndNil(FProxyList);
+  if Assigned(FProxyList) then
+    begin
+      FProxyList.Finalise;
+      FreeAndNil(FProxyList);
+    end;
   FreeAndNil(FLock);
-  inherited Destroy;
 end;
 
 procedure TTCPConnection.Init;
@@ -1420,12 +1455,26 @@ begin
   Result := SizeWritten;
 end;
 
-// Processes by polling socket
+procedure TTCPConnection.GetEventsToPoll(out WritePoll: Boolean);
+begin
+  Lock;
+  try
+    WritePoll :=
+        FWriteEventPending or
+        FShutdownPending or
+        not TCPBufferEmpty(FWriteBuffer);
+  finally
+    Unlock;
+  end;
+end;
+
+// Processes socket by reading/writing
 // Pre: Socket is non-blocking
-procedure TTCPConnection.PollSocket(out Idle, Terminated: Boolean);
+procedure TTCPConnection.ProcessSocket(const ProcessRead, ProcessWrite: Boolean;
+          out Idle, Terminated: Boolean);
 var Len : Integer;
-    WriteSelect, Error, Fin : Boolean;
-    ReadSelectPending : Boolean;
+    WriteDoProcess, Error, Fin : Boolean;
+    ReadProcessPending, ReadDoProcess : Boolean;
     RecvClosed, RecvReadEvent, RecvReadBufFullEvent, RecvCloseNow : Boolean;
     WriteBufEmptyBefore, WriteBufEmptied : Boolean;
     WriteEvent, WriteBufEmptyEvent, WriteShutdownNow : Boolean;
@@ -1439,71 +1488,73 @@ begin
         Terminated := True;
         exit;
       end;
-    // prepare for select
+    // check if read/write should process
     Lock;
     try
-      // check and reset pending read select
-      ReadSelectPending := FReadSelectPending;
-      if ReadSelectPending then
-        FReadSelectPending := False;
-      // only query write if we need to process write related activities
-      WriteSelect :=
+      ReadProcessPending := FReadProcessPending;
+      if ReadProcessPending then
+        FReadProcessPending := False;
+      ReadDoProcess := ReadProcessPending or ProcessRead;
+      WriteDoProcess :=
           FWriteEventPending or
           FShutdownPending or
-          not TCPBufferEmpty(FWriteBuffer);
+          (ProcessWrite and not TCPBufferEmpty(FWriteBuffer));
     finally
       Unlock;
     end;
     Terminated := False;
     // process read
-    Fin := False;
-    repeat
-      // receive data from socket into buffer
-      Len := FillBufferFromSocket(RecvClosed, RecvReadEvent, RecvReadBufFullEvent);
-      Lock;
-      try
-        // check pending flags
-        if FReadEventPending then
-          begin
-            RecvReadEvent := True;
-            FReadEventPending := False;
+    if ReadDoProcess then
+      begin
+        Fin := False;
+        repeat
+          // receive data from socket into buffer
+          Len := FillBufferFromSocket(RecvClosed, RecvReadEvent, RecvReadBufFullEvent);
+          Lock;
+          try
+            // check pending flags
+            if FReadEventPending then
+              begin
+                RecvReadEvent := True;
+                FReadEventPending := False;
+              end;
+            RecvCloseNow := FClosePending;
+            if RecvCloseNow then
+              FClosePending := False;
+          finally
+            Unlock;
           end;
-        RecvCloseNow := FClosePending;
-        if RecvCloseNow then
-          FClosePending := False;
-      finally
-        Unlock;
+          if Len > 0 then
+            begin
+              // data received
+              Idle := False;
+            end else
+            begin
+              // nothing received
+              Fin := True;
+            end;
+          // perform pending actions
+          if RecvReadBufFullEvent then
+            TriggerReadBufferFull;
+          if RecvReadEvent then
+            TriggerRead;
+          if RecvCloseNow then
+            begin
+              Close;
+              Fin := True;
+            end
+          else
+            if RecvClosed then
+              begin
+                // socket closed
+                SetStateClosed;
+                Terminated := True;
+                Fin := True;
+              end;
+        until Fin;
       end;
-      if Len > 0 then
-        begin
-          // data received
-          Idle := False;
-        end else
-        begin
-          // nothing received
-          Fin := True;
-        end;
-      // perform pending actions
-      if RecvReadBufFullEvent then
-        TriggerReadBufferFull;
-      if RecvReadEvent then
-        TriggerRead;
-      if RecvCloseNow then
-        begin
-          Close;
-          Fin := True;
-        end
-      else
-        if RecvClosed then
-          begin
-            // socket closed
-            SetStateClosed;
-            Terminated := True;
-            Fin := True;
-          end;
-    until Fin;
     // process write
-    if WriteSelect then
+    if WriteDoProcess then
       begin
         WriteEvent := False;
         WriteBufEmptyEvent := False;
@@ -1559,9 +1610,10 @@ begin
   except
     on E : Exception do
       begin
+        Idle := False;
         Terminated := True;
         {$IFDEF TCP_DEBUG}
-        Log(tlDebug, 'PollSocket:Terminated:%s', [E.Message]);
+        Log(tlDebug, 'ProcessSocket:Terminated:%s', [E.Message]);
         {$ENDIF}
       end;
   end;
@@ -1728,7 +1780,7 @@ begin
     if FReadBufferFull then
       begin
         FReadBufferFull := False;
-        FReadSelectPending := True;
+        FReadProcessPending := True;
       end;
 end;
 
@@ -1755,7 +1807,7 @@ begin
     if FReadBufferFull then
       begin
         FReadBufferFull := False;
-        FReadSelectPending := True;
+        FReadProcessPending := True;
       end;
 end;
 
@@ -2200,7 +2252,13 @@ end;
 
 destructor TTCPBlockingConnection.Destroy;
 begin
+  Finalise;
   inherited Destroy;
+end;
+
+procedure TTCPBlockingConnection.Finalise;
+begin
+  FConnection := nil;
 end;
 
 procedure TTCPBlockingConnection.Wait;
@@ -2234,6 +2292,7 @@ var T : Word32;
     L : Integer;
     C : TTCPConnection;
 begin
+  Assert(Assigned(FConnection));
   T := TCPGetTick;
   C := FConnection;
   repeat
@@ -2256,6 +2315,7 @@ var T : Word32;
     L : Integer;
     C : TTCPConnection;
 begin
+  Assert(Assigned(FConnection));
   T := TCPGetTick;
   C := FConnection;
   repeat
@@ -2289,6 +2349,7 @@ end;
 // Write and wait for write buffers to empty or timeout.
 function TTCPBlockingConnection.Write(const Buf; const BufferSize: Integer; const TimeOutMs: Integer): Integer;
 begin
+  Assert(Assigned(FConnection));
   Result := FConnection.Write(Buf, BufferSize);
   if Result > 0 then
     WaitForTransmitFin(TimeOutMs);
@@ -2304,6 +2365,7 @@ procedure TTCPBlockingConnection.Shutdown(
           const TransmitTimeOutMs: Integer;
           const CloseTimeOutMs: Integer);
 begin
+  Assert(Assigned(FConnection));
   if SettleTimeMs > 0 then
     WaitForTransmitFin(SettleTimeMs);
   FConnection.Shutdown;
@@ -2316,6 +2378,7 @@ end;
 // Closes immediately and waits for connection to close or timeout.
 procedure TTCPBlockingConnection.Close(const TimeOutMs: Integer);
 begin
+  Assert(Assigned(FConnection));
   FConnection.Close;
   if not WaitForClose(TimeOutMs) then
     raise ETCPConnection.Create(SError_TimedOut);
