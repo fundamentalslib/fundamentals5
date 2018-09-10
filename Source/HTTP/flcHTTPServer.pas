@@ -228,6 +228,7 @@ type
                 const HTTPServer: TF5HTTPServer;
                 const TCPClient: TTCPServerClient);
     destructor Destroy; override;
+    procedure Finalise;
 
     property  State: THTTPServerClientState read GetState;
     property  StateStr: RawByteString read GetStateStr;
@@ -563,11 +564,18 @@ end;
 
 destructor THTTPServerClient.Destroy;
 begin
+  Finalise;
+  inherited Destroy;
+end;
+
+procedure THTTPServerClient.Finalise;
+begin
+  FHTTPServer := nil;
+  FTCPClient := nil;
   FreeAndNil(FResponseContentWriter);
   FreeAndNil(FRequestContentReader);
   FreeAndNil(FHTTPParser);
   FreeAndNil(FLock);
-  inherited Destroy;
 end;
 
 procedure THTTPServerClient.Log(const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
@@ -1189,7 +1197,7 @@ end;
 
 
 {                                                                              }
-{ THTTP4Server                                                                 }
+{ TF5HTTPServer                                                                }
 {                                                                              }
 constructor TF5HTTPServer.Create(AOwner: TComponent);
 begin
@@ -1237,7 +1245,11 @@ end;
 
 destructor TF5HTTPServer.Destroy;
 begin
-  FreeAndNil(FTCPServer);
+  if Assigned(FTCPServer) then
+    begin
+      FTCPServer.Finalise;
+      FreeAndNil(FTCPServer);
+    end;
   FreeAndNil(FLock);
   inherited Destroy;
 end;
@@ -1459,8 +1471,14 @@ begin
   Log(sltDebug, 'TCPServer_ClientRemove');
   {$ENDIF}
   Assert(not Assigned(Sender.UserObject) or (Sender.UserObject is THTTPServerClient));
-  Sender.UserObject.Free;
-  Sender.UserObject := nil;
+  if Assigned(Sender.UserObject) then
+    begin
+      THTTPServerClient(Sender.UserObject).Finalise;
+      {$IFNDEF NEXTGEN}
+      Sender.UserObject.Free;
+      {$ENDIF}
+      Sender.UserObject := nil;
+    end;
 end;
 
 procedure TF5HTTPServer.TCPServerClientStateChange(Sender: TTCPServerClient);

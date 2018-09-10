@@ -722,7 +722,11 @@ end;
 
 destructor TF5HTTPClient.Destroy;
 begin
-  FreeAndNil(FTCPClient);
+  if Assigned(FTCPClient) then
+    begin
+      FTCPClient.Finalise;
+      FreeAndNil(FTCPClient);
+    end;
   FreeAndNil(FRequestContentWriter);
   FreeAndNil(FResponseContentReader);
   FreeAndNil(FHTTPParser);
@@ -1930,12 +1934,6 @@ var R_IsStarting : Boolean;
     R_Connect : Boolean;
     R_IsActive : Boolean;
 begin
-  {$IFDEF DELPHI2007_UP}
-  // prevent bogus compiler warnings in Delphi 2007+
-  R_Ready := False;
-  R_Connect := False;
-  R_IsActive := False;
-  {$ENDIF}
   Lock;
   try
     // check state
