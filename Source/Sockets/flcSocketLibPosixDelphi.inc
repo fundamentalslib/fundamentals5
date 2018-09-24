@@ -131,7 +131,9 @@ const
   SOL_SOCKET = Posix.SysSocket.SOL_SOCKET;
   {$IFNDEF ANDROID}
   {$IFNDEF OSX}
+  {$IFNDEF IOS}
   SOL_RAW = Posix.SysSocket.SOL_RAW;
+  {$ENDIF}
   {$ENDIF}
   {$ENDIF}
 
@@ -549,6 +551,11 @@ function SockAvailableToRecv(const S: TSocket): Integer;
 begin
   Result := 0;
 end;
+{$ELSE}{$IFDEF IOS}
+function SockAvailableToRecv(const S: TSocket): Integer;
+begin
+  Result := 0;
+end;
 {$ELSE}
 function SockAvailableToRecv(const S: TSocket): Integer;
 var L : Word32;
@@ -558,7 +565,7 @@ begin
   else
     Result := L;
 end;
-{$ENDIF}{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
 
 
 

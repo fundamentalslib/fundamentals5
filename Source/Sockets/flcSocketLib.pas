@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
-{   File version:     5.20                                                     }
+{   File version:     5.21                                                     }
 {   Description:      Socket library.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
@@ -56,6 +56,7 @@
 {   2016/01/09  5.18  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.19  Type changes.                                            }
 {   2018/09/09  5.20  Poll function.                                           }
+{   2018/09/24  5.21  OSX changes.                                             }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -73,6 +74,7 @@
 {   Delphi 10.2 Win32                   5.19  2018/07/17                       }
 {   Delphi 10.2 Win64                   5.19  2018/07/17                       }
 {   Delphi 10.2 Linux64                 5.19  2018/07/17                       }
+{   Delphi 10.2 OSX32                   5.21  2018/09/24                       }
 {   FreePascal 2.6.2 Linux i386         4.15  2014/04/23                       }
 {   FreePascal 2.6.2 Linux x64          4.15  2015/04/01                       }
 {   FreePascal 2.6.2 Win32 i386         4.15  2014/04/23                       }
@@ -146,7 +148,7 @@ type
 function IPProtocolToIPPROTO(const Protocol: TIPProtocol): Int32;
 
 type
-  TIP4Addr = record
+  TIP4Addr = packed record
     case Integer of
       0 : (Addr8  : array[0..3] of Byte);
       1 : (Addr16 : array[0..1] of Word);
@@ -170,7 +172,7 @@ function IP4AddrIsZero(const A: TIP4Addr): Boolean;
 function IP4AddrIsNone(const A: TIP4Addr): Boolean;
 
 type
-  TIP6Addr = record
+  TIP6Addr = packed record
     case Integer of
       0 : (Addr8  : array[0..15] of Byte);
       1 : (Addr16 : array[0..7] of Word);
@@ -198,7 +200,7 @@ procedure IP6AddrSetBroadcast(var A: TIP6Addr);
 procedure IP6AddrAssign(var A: TIP6Addr; const B: TIP6Addr); {$IFDEF UseInline}inline;{$ENDIF}
 
 type
-  TSocketAddr = record
+  TSocketAddr = packed record
     Port : Word; // port in host endian (not network endian)
     case AddrFamily : TIPAddressFamily of
       iaIP4 : (AddrIP4  : TIP4Addr);
@@ -217,7 +219,7 @@ procedure SetSocketAddrPort(var SocketAddr: TSocketAddr; const Port: Word);
 
 function  SockAddrLen(const SockAddr: TSockAddr): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  SockAddrToSocketAddr(const Addr: TSockAddr): TSocketAddr;
-function  SocketAddrToSockAddr(const Addr: TSocketAddr): TSockAddr;
+function  SocketAddrToSockAddr(const Addr: TSocketAddr; out SockAddr: TSockAddr): Integer;
 
 function  SocketAddrIPStrA(const Addr: TSocketAddr): RawByteString;
 function  SocketAddrIPStr(const Addr: TSocketAddr): String;
@@ -1003,7 +1005,8 @@ begin
   end;
 end;
 
-function SocketAddrToSockAddr(const Addr: TSocketAddr): TSockAddr;
+// Returns size used in SockAddr structure
+function SocketAddrToSockAddr(const Addr: TSocketAddr; out SockAddr: TSockAddr): Integer;
 var
   AddrIn : PSockAddrIn;
   AddrIn6 : PSockAddrIn6;
@@ -1011,7 +1014,11 @@ begin
   case Addr.AddrFamily of
     iaIP4 :
     begin
-      AddrIn := @Result;
+      AddrIn := @SockAddr;
+      FillChar(AddrIn^.sin_zero, SizeOf(AddrIn^.sin_zero), 0);
+      {$IFDEF OSX}
+      AddrIn^.sin_len := SizeOf(TSockAddrIn);
+      {$ENDIF}
       {$IFDEF SOCKETLIB_POSIX_DELPHI}
       AddrIn^.sin_family := AF_INET;
       {$ELSE}
@@ -1019,20 +1026,29 @@ begin
       {$ENDIF}
       AddrIn^.sin_port := PortToNetPort(Addr.Port);
       AddrIn^.sin_addr.S_addr := Addr.AddrIP4.Addr32;
+      Result := SizeOf(TSockAddrIn);
     end;
     iaIP6 :
     begin
-      AddrIn6 := @Result;
+      AddrIn6 := @SockAddr;
+      FillChar(AddrIn6^, SizeOf(TSockAddrIn6), 0);
+      {$IFDEF OSX}
+      AddrIn6^.sin6_len := SizeOf(TSockAddrIn6);
+      {$ENDIF}
       AddrIn6^.sin6_family := AF_INET6;
       AddrIn6^.sin6_port := PortToNetPort(Addr.Port);
       Move(Addr.AddrIP6.Addr32[0], AddrIn6^.sin6_addr, 16);
+      Result := SizeOf(TSockAddrIn6);
     end;
   else
-    {$IFDEF SOCKETLIB_POSIX_DELPHI}
-    Result.ss_family := AF_UNSPEC;
-    {$ELSE}
-    Result.sa_family := AF_UNSPEC;
-    {$ENDIF}
+    begin
+      {$IFDEF SOCKETLIB_POSIX_DELPHI}
+      SockAddr.ss_family := AF_UNSPEC;
+      {$ELSE}
+      SockAddr.sa_family := AF_UNSPEC;
+      {$ENDIF}
+      Result := 0;
+    end;
   end;
 end;
 
@@ -1251,10 +1267,11 @@ begin
 end;
 
 function SocketBind(const S: TSocketHandle; const Addr: TSocketAddr): Integer;
-var AAddr : TSockAddr;
+var SockAddr : TSockAddr;
+    SockAddrLen : Integer;
 begin
-  AAddr := SocketAddrToSockAddr(Addr);
-  Result := Bind(TSocket(S), AAddr, SizeOf(AAddr));
+  SockAddrLen := SocketAddrToSockAddr(Addr, SockAddr);
+  Result := Bind(TSocket(S), SockAddr, SockAddrLen);
 end;
 
 function SocketClose(const S: TSocketHandle): Integer;
@@ -1263,10 +1280,11 @@ begin
 end;
 
 function SocketConnect(const S: TSocketHandle; const Addr: TSocketAddr): Integer;
-var AAddr : TSockAddr;
+var SockAddr : TSockAddr;
+    SockAddrLen : Integer;
 begin
-  AAddr := SocketAddrToSockAddr(Addr);
-  Result := Connect(TSocket(S), @AAddr, SizeOf(AAddr));
+  SockAddrLen := SocketAddrToSockAddr(Addr, SockAddr);
+  Result := Connect(TSocket(S), @SockAddr, SockAddrLen);
 end;
 
 procedure SocketGetAddrInfo(
@@ -1364,13 +1382,14 @@ begin
 end;
 
 function SocketGetNameInfo(const Address: TSocketAddr): RawByteString;
-var Hints : TAddrInfo;
-    Host  : Array[0..NI_MAXHOST] of AnsiChar;
-    Serv  : Array[0..NI_MAXSERV] of AnsiChar;
-    Error : Integer;
-    Addr  : TSockAddr;
+var Hints   : TAddrInfo;
+    Host    : Array[0..NI_MAXHOST] of AnsiChar;
+    Serv    : Array[0..NI_MAXSERV] of AnsiChar;
+    Error   : Integer;
+    Addr    : TSockAddr;
+    AddrLen : Integer;
 begin
-  Addr := SocketAddrToSockAddr(Address);
+  AddrLen := SocketAddrToSockAddr(Address, Addr);
   FillChar(Hints, Sizeof(TAddrInfo), 0);
   {$IFDEF SOCKETLIB_POSIX_DELPHI}
   Hints.ai_family := Addr.ss_family;
@@ -1383,7 +1402,7 @@ begin
   if not WinSockStarted then
     WinSockStartup;
   {$ENDIF}
-  Error := GetNameInfo(@Addr, SockAddrLen(Addr), @Host, NI_MAXHOST,
+  Error := GetNameInfo(@Addr, AddrLen, @Host, NI_MAXHOST,
       @Serv, NI_MAXSERV, NI_NUMERICSERV);
   if Error <> 0 then
     raise ESocketLib.Create('Reverse lookup failed', SocketGetLastError);
@@ -1575,9 +1594,10 @@ end;
 function SocketSendTo(const S: TSocketHandle; const Buf; const Len, Flags: Integer;
          const AddrTo: TSocketAddr): Integer;
 var Addr : TSockAddr;
+    AddrLen : Integer;
 begin
-  Addr := SocketAddrToSockAddr(AddrTo);
-  Result := SendTo(TSocket(S), Buf, Len, Flags, @Addr, SizeOf(Addr));
+  AddrLen := SocketAddrToSockAddr(AddrTo, Addr);
+  Result := SendTo(TSocket(S), Buf, Len, Flags, @Addr, AddrLen);
 end;
 
 function SocketSetSockOpt(const S: TSocketHandle; const Level, OptName: Integer;
