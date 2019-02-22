@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.18                                                     }
+{   File version:     5.19                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -56,6 +56,7 @@
 {   2018/07/19  5.16  ReconnectOnDisconnect property.                          }
 {   2018/08/30  5.17  Close socket before thread shutdown to prevent blocking. }
 {   2018/09/01  5.18  Handle client stopping in process thread.                }
+{   2018/12/31  5.19  OnActivity events.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -209,6 +210,8 @@ type
     FSynchronisedEvents : Boolean;
     FWaitForStartup     : Boolean;
 
+    FTrackLastActivityTime : Boolean;
+
     FUserTag            : NativeInt;
     FUserObject         : TObject;
 
@@ -228,6 +231,8 @@ type
     FOnReady             : TTCPClientNotifyEvent;
     FOnRead              : TTCPClientNotifyEvent;
     FOnWrite             : TTCPClientNotifyEvent;
+    FOnReadActivity      : TTCPClientNotifyEvent;
+    FOnWriteActivity     : TTCPClientNotifyEvent;
     FOnClose             : TTCPClientNotifyEvent;
     FOnStopped           : TTCPClientNotifyEvent;
     FOnMainThreadWait    : TTCPClientNotifyEvent;
@@ -338,6 +343,8 @@ type
     procedure SyncTriggerReady;
     procedure SyncTriggerRead;
     procedure SyncTriggerWrite;
+    procedure SyncTriggerReadActivity;
+    procedure SyncTriggerWriteActivity;
     procedure SyncTriggerClose;
     procedure SyncTriggerStopped;
 
@@ -355,6 +362,8 @@ type
     procedure TriggerReady; virtual;
     procedure TriggerRead; virtual;
     procedure TriggerWrite; virtual;
+    procedure TriggerReadActivity; virtual;
+    procedure TriggerWriteActivity; virtual;
     procedure TriggerClose; virtual;
     procedure TriggerStopped; virtual;
 
@@ -372,6 +381,8 @@ type
     procedure ConnectionStateChange(Sender: TTCPConnection; State: TTCPConnectionState);
     procedure ConnectionRead(Sender: TTCPConnection);
     procedure ConnectionWrite(Sender: TTCPConnection);
+    procedure ConnectionReadActivity(Sender: TTCPConnection);
+    procedure ConnectionWriteActivity(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
@@ -473,6 +484,8 @@ type
     // synchronisation if required.
     property  SynchronisedEvents: Boolean read FSynchronisedEvents write SetSynchronisedEvents default False;
 
+    property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write FTrackLastActivityTime default True;
+
     property  OnLog: TTCPClientLogEvent read FOnLog write FOnLog;
     property  OnError: TTCPClientErrorEvent read FOnError write FOnError;
     property  OnStart: TTCPClientNotifyEvent read FOnStart write FOnStart;
@@ -488,6 +501,8 @@ type
     property  OnReady: TTCPClientNotifyEvent read FOnReady write FOnReady;
     property  OnRead: TTCPClientNotifyEvent read FOnRead write FOnRead;
     property  OnWrite: TTCPClientNotifyEvent read FOnWrite write FOnWrite;
+    property  OnReadActivity: TTCPClientNotifyEvent read FOnReadActivity write FOnReadActivity;
+    property  OnWriteActivity: TTCPClientNotifyEvent read FOnWriteActivity write FOnWriteActivity;
     property  OnClose: TTCPClientNotifyEvent read FOnClose write FOnClose;
     property  OnStopped: TTCPClientNotifyEvent read FOnStopped write FOnStopped;
 
@@ -1133,6 +1148,7 @@ begin
   {$ENDIF}
   FSynchronisedEvents := False;
   FWaitForStartup := False;
+  FTrackLastActivityTime := True;
   FUseWorkerThread := False;
 end;
 
@@ -1653,6 +1669,22 @@ begin
     FOnWrite(self);
 end;
 
+procedure TF5TCPClient.SyncTriggerReadActivity;
+begin
+  if csDestroying in ComponentState then
+    exit;
+  if Assigned(FOnReadActivity) then
+    FOnReadActivity(self);
+end;
+
+procedure TF5TCPClient.SyncTriggerWriteActivity;
+begin
+  if csDestroying in ComponentState then
+    exit;
+  if Assigned(FOnWriteActivity) then
+    FOnWriteActivity(self);
+end;
+
 procedure TF5TCPClient.SyncTriggerClose;
 begin
   if csDestroying in ComponentState then
@@ -1832,6 +1864,30 @@ begin
       FOnWrite(self);
 end;
 
+procedure TF5TCPClient.TriggerReadActivity;
+begin
+  {$IFDEF TCP_DEBUG_DATA}
+  Log(cltDebug, 'Activity');
+  {$ENDIF}
+  if Assigned(FOnReadActivity) then
+    if FSynchronisedEvents then
+      Synchronize(SyncTriggerReadActivity)
+    else
+      FOnReadActivity(self);
+end;
+
+procedure TF5TCPClient.TriggerWriteActivity;
+begin
+  {$IFDEF TCP_DEBUG_DATA}
+  Log(cltDebug, 'Activity');
+  {$ENDIF}
+  if Assigned(FOnWriteActivity) then
+    if FSynchronisedEvents then
+      Synchronize(SyncTriggerWriteActivity)
+    else
+      FOnWriteActivity(self);
+end;
+
 procedure TF5TCPClient.TriggerClose;
 begin
   {$IFDEF TCP_DEBUG}
@@ -1949,6 +2005,22 @@ begin
   TriggerWrite;
 end;
 
+procedure TF5TCPClient.ConnectionReadActivity(Sender: TTCPConnection);
+begin
+  {$IFDEF TCP_DEBUG_DATA}
+  Log(cltDebug, 'Connection_ReadActivity');
+  {$ENDIF}
+  TriggerReadActivity;
+end;
+
+procedure TF5TCPClient.ConnectionWriteActivity(Sender: TTCPConnection);
+begin
+  {$IFDEF TCP_DEBUG_DATA}
+  Log(cltDebug, 'Connection_WriteActivity');
+  {$ENDIF}
+  TriggerWriteActivity;
+end;
+
 procedure TF5TCPClient.ConnectionClose(Sender: TTCPConnection);
 begin
   {$IFDEF TCP_DEBUG_CONNECTION}
@@ -2039,13 +2111,23 @@ begin
     {$ENDIF}
 
     FConnection := TTCPConnection.Create(FSocket);
+
     FConnection.OnLog           := ConnectionLog;
     FConnection.OnStateChange   := ConnectionStateChange;
-    FConnection.OnRead          := ConnectionRead;
-    FConnection.OnWrite         := ConnectionWrite;
     FConnection.OnClose         := ConnectionClose;
     FConnection.OnWorkerExecute := ConnectionWorkerExecute;
-    FConnection.UseWorkerThread := FUseWorkerThread;
+
+    if Assigned(FOnRead) then
+      FConnection.OnRead := ConnectionRead;
+    if Assigned(FOnWrite) then
+      FConnection.OnWrite := ConnectionWrite;
+    if Assigned(FOnReadActivity) then
+      FConnection.OnReadActivity := ConnectionReadActivity;
+    if Assigned(FOnWriteActivity) then
+      FConnection.OnWriteActivity := ConnectionWriteActivity;
+
+    FConnection.UseWorkerThread       := FUseWorkerThread;
+    FConnection.TrackLastActivityTime := FTrackLastActivityTime;
   finally
     Unlock;
   end;
@@ -2401,7 +2483,7 @@ begin
         {$ENDIF}
         while not IsTerminated do
           begin
-            FConnection.ProcessSocket(True, True, ConIdle, ConTerminated);
+            FConnection.ProcessSocket(True, True, Now, ConIdle, ConTerminated);
             if ConTerminated then
               begin
                 {$IFDEF TCP_DEBUG_THREAD}

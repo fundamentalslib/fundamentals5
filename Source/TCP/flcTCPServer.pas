@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.19                                                     }
+{   File version:     5.20                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -55,6 +55,7 @@
 {   2018/09/07  5.17  Implement ClientList as linked list.                     }
 {   2018/09/07  5.18  Improve latency for large number of clients.             }
 {   2018/09/10  5.19  Change polling to use Sockets Poll function.             }
+{   2018/12/31  5.20  OnActivity events.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -94,19 +95,19 @@ uses
 
 
 
-{                                                                              }
-{ TCP Server                                                                   }
-{                                                                              }
 const
   TCP_SERVER_DEFAULT_MaxBacklog = 64;
   TCP_SERVER_DEFAULT_MaxClients = -1;
+
+
 
 type
   ETCPServer = class(Exception);
 
   TF5TCPServer = class;
 
-  { TTCPServerClient                                                           }
+  { TCP Server Client                                                          }
+
   TTCPServerClientState = (
       scsInit,
       scsStarting,
@@ -159,6 +160,8 @@ type
     procedure ConnectionReady(Sender: TTCPConnection);
     procedure ConnectionRead(Sender: TTCPConnection);
     procedure ConnectionWrite(Sender: TTCPConnection);
+    procedure ConnectionReadActivity(Sender: TTCPConnection);
+    procedure ConnectionWriteActivity(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
@@ -170,10 +173,13 @@ type
     procedure TriggerReady;
     procedure TriggerRead;
     procedure TriggerWrite;
+    procedure TriggerReadActivity;
+    procedure TriggerWriteActivity;
     procedure TriggerClose;
 
     procedure Start;
     procedure Process(const ProcessRead, ProcessWrite: Boolean;
+              const ActivityTime: TDateTime;
               var Idle, Terminated: Boolean);
     procedure AddReference;
     procedure SetClientOrphaned;
@@ -220,7 +226,7 @@ type
 
   TTCPServerClientClass = class of TTCPServerClient;
 
-  { TTCPServer                                                                 }
+  { TCP Server Client List                                                     }
 
   TTCPServerClientList = class
   private
@@ -236,6 +242,9 @@ type
     property First: TTCPServerClient read FFirst;
     property Count: Integer read FCount;
   end;
+
+  { TCP Server Poll List                                                       }
+  { Poll list maintains poll buffer used in call to Poll.                      }
 
   TTCPServerPollList = class
   private
@@ -253,8 +262,10 @@ type
     procedure Remove(const Idx: Integer);
     property  ClientCount: Integer read FClientCount;
     procedure GetPollBuffer(out P: Pointer; out ItemCount: Integer);
-    function  GetClientByIndex(const Idx: Integer): TTCPServerClient;
+    function  GetClientByIndex(const Idx: Integer): TTCPServerClient; {$IFDEF UseInline}inline;{$ENDIF}
   end;
+
+  { TCP Server Thread                                                          }
 
   TTCPServerThreadTask = (
       sttControl,
@@ -270,6 +281,8 @@ type
     procedure Finalise;
     property Terminated;
   end;
+
+  { TCP Server                                                                 }
 
   TTCPServerState = (
       ssInit,
@@ -294,13 +307,14 @@ type
   TF5TCPServer = class(TComponent)
   private
     // parameters
-    FAddressFamily      : TIPAddressFamily;
-    FBindAddressStr     : String;
-    FServerPort         : Integer;
-    FMaxBacklog         : Integer;
-    FMaxClients         : Integer;
-    FMaxReadBufferSize  : Integer;
-    FMaxWriteBufferSize : Integer;
+    FAddressFamily         : TIPAddressFamily;
+    FBindAddressStr        : String;
+    FServerPort            : Integer;
+    FMaxBacklog            : Integer;
+    FMaxClients            : Integer;
+    FMaxReadBufferSize     : Integer;
+    FMaxWriteBufferSize    : Integer;
+    FTrackLastActivityTime : Boolean;
     {$IFDEF TCPSERVER_TLS}
     FTLSEnabled         : Boolean;
     {$ENDIF}
@@ -327,6 +341,8 @@ type
     FOnClientReady         : TTCPServerClientEvent;
     FOnClientRead          : TTCPServerClientEvent;
     FOnClientWrite         : TTCPServerClientEvent;
+    FOnClientReadActivity  : TTCPServerClientEvent;
+    FOnClientWriteActivity : TTCPServerClientEvent;
     FOnClientClose         : TTCPServerClientEvent;
     FOnClientWorkerExecute : TTCPServerClientWorkerExecuteEvent;
 
@@ -406,6 +422,8 @@ type
     procedure TriggerClientReady(const Client: TTCPServerClient); virtual;
     procedure TriggerClientRead(const Client: TTCPServerClient); virtual;
     procedure TriggerClientWrite(const Client: TTCPServerClient); virtual;
+    procedure TriggerClientReadActivity(const Client: TTCPServerClient); virtual;
+    procedure TriggerClientWriteActivity(const Client: TTCPServerClient); virtual;
     procedure TriggerClientClose(const Client: TTCPServerClient); virtual;
     procedure TriggerClientWorkerExecute(const Client: TTCPServerClient;
               const Connection: TTCPBlockingConnection; var CloseOnExit: Boolean); virtual;
@@ -436,6 +454,7 @@ type
     procedure ProcessClient(
               const Client: TTCPServerClient;
               const ProcessRead, ProcessWrite: Boolean;
+              const ActivityTime: TDateTime;
               out ClientIdle, ClientTerminated: Boolean);
     function  ServerProcessClients: Boolean;
 
@@ -463,6 +482,7 @@ type
     property  MaxClients: Integer read FMaxClients write SetMaxClients default TCP_SERVER_DEFAULT_MaxClients;
     property  MaxReadBufferSize: Integer read FMaxReadBufferSize write SetReadBufferSize;
     property  MaxWriteBufferSize: Integer read FMaxWriteBufferSize write SetWriteBufferSize;
+    property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write FTrackLastActivityTime;
 
     // TLS
     {$IFDEF TCPSERVER_TLS}
@@ -470,7 +490,7 @@ type
     property  TLSServer: TTLSServer read FTLSServer;
     {$ENDIF}
 
-    // Event handlers may be called from any number of external threads.
+    // Event handlers may be triggered from any number of external threads.
     // Event handlers should do their own synchronisation if required.
     property  OnLog: TTCPServerLogEvent read FOnLog write FOnLog;
     property  OnStateChanged: TTCPServerStateEvent read FOnStateChanged write FOnStateChanged;
@@ -490,6 +510,8 @@ type
     property  OnClientReady: TTCPServerClientEvent read FOnClientReady write FOnClientReady;
     property  OnClientRead: TTCPServerClientEvent read FOnClientRead write FOnClientRead;
     property  OnClientWrite: TTCPServerClientEvent read FOnClientWrite write FOnClientWrite;
+    property  OnClientReadActivity: TTCPServerClientEvent read FOnClientReadActivity write FOnClientReadActivity;
+    property  OnClientWriteActivity: TTCPServerClientEvent read FOnClientWriteActivity write FOnClientWriteActivity;
     property  OnClientClose: TTCPServerClientEvent read FOnClientClose write FOnClientClose;
 
     // State
@@ -527,7 +549,7 @@ type
 
 
 {                                                                              }
-{ Components                                                                   }
+{ Fundamentals Code Library TCP Server component                               }
 {                                                                              }
 type
   TfclTCPServer = class(TF5TCPServer)
@@ -558,6 +580,8 @@ type
 
     property  OnClientRead;
     property  OnClientWrite;
+    property  OnClientReadActivity;
+    property  OnClientWriteActivity;
     property  OnClientClose;
 
     property  UseWorkerThread;
@@ -740,15 +764,23 @@ begin
   FSocket := TSysSocket.Create(Server.FAddressFamily, ipTCP, False, SocketHandle);
   FRemoteAddr := RemoteAddr;
   FConnection := TTCPConnection.Create(FSocket);
-  FConnection.ReadBufferMaxSize  := Server.FMaxReadBufferSize;
-  FConnection.WriteBufferMaxSize := Server.FMaxWriteBufferSize;
-  FConnection.OnLog           := ConnectionLog;
-  FConnection.OnStateChange   := ConnectionStateChange;
-  FConnection.OnReady         := ConnectionReady;
-  FConnection.OnRead          := ConnectionRead;
-  FConnection.OnWrite         := ConnectionWrite;
-  FConnection.OnClose         := ConnectionClose;
-  FConnection.OnWorkerExecute := ConnectionWorkerExecute;
+  FConnection.ReadBufferMaxSize     := Server.FMaxReadBufferSize;
+  FConnection.WriteBufferMaxSize    := Server.FMaxWriteBufferSize;
+  FConnection.TrackLastActivityTime := Server.FTrackLastActivityTime;
+  if Assigned(FServer.FOnLog) then
+    FConnection.OnLog := ConnectionLog;
+  FConnection.OnStateChange    := ConnectionStateChange;
+  FConnection.OnReady          := ConnectionReady;
+  FConnection.OnClose          := ConnectionClose;
+  FConnection.OnWorkerExecute  := ConnectionWorkerExecute;
+  if Assigned(FServer.FOnClientRead) then
+    FConnection.OnRead := ConnectionRead;
+  if Assigned(FServer.FOnClientWrite) then
+    FConnection.OnWrite := ConnectionWrite;
+  if Assigned(FServer.FOnClientReadActivity) then
+    FConnection.OnReadActivity := ConnectionReadActivity;
+  if Assigned(FServer.FOnClientWriteActivity) then
+    FConnection.OnWriteActivity := ConnectionWriteActivity;
   {$IFDEF TCPSERVER_TLS}
   if FServer.FTLSEnabled then
     InstallTLSProxy;
@@ -882,6 +914,16 @@ begin
   TriggerWrite;
 end;
 
+procedure TTCPServerClient.ConnectionReadActivity(Sender: TTCPConnection);
+begin
+  TriggerReadActivity;
+end;
+
+procedure TTCPServerClient.ConnectionWriteActivity(Sender: TTCPConnection);
+begin
+  TriggerWriteActivity;
+end;
+
 procedure TTCPServerClient.ConnectionClose(Sender: TTCPConnection);
 begin
   {$IFDEF TCP_DEBUG_CONNECTION}
@@ -937,6 +979,18 @@ begin
     FServer.TriggerClientWrite(self);
 end;
 
+procedure TTCPServerClient.TriggerReadActivity;
+begin
+  if Assigned(FServer) then
+    FServer.TriggerClientReadActivity(self);
+end;
+
+procedure TTCPServerClient.TriggerWriteActivity;
+begin
+  if Assigned(FServer) then
+    FServer.TriggerClientWriteActivity(self);
+end;
+
 procedure TTCPServerClient.TriggerClose;
 begin
   if Assigned(FServer) then
@@ -953,9 +1007,10 @@ begin
 end;
 
 procedure TTCPServerClient.Process(const ProcessRead, ProcessWrite: Boolean;
+          const ActivityTime: TDateTime;
           var Idle, Terminated: Boolean);
 begin
-  FConnection.ProcessSocket(ProcessRead, ProcessWrite, Idle, Terminated);
+  FConnection.ProcessSocket(ProcessRead, ProcessWrite, ActivityTime, Idle, Terminated);
   if Terminated then
     FTerminated := True;
 end;
@@ -1035,6 +1090,8 @@ end;
 {                                                                              }
 { TCP Server Client List                                                       }
 {                                                                              }
+{ This implementation uses a linked list to avoid any heap operations.         }
+{                                                                              }
 destructor TTCPServerClientList.Destroy;
 begin
   Finalise;
@@ -1109,6 +1166,12 @@ end;
 
 {                                                                              }
 { TCP Server Poll List                                                         }
+{                                                                              }
+{ This implementation aims to:                                                 }
+{   - Keep a populated buffer ready for use in calls to Poll (one entry for    }
+{     every active client).                                                    }
+{   - Avoid heap operations for calls to frequently used operations Add        }
+{     and Remove.                                                              }
 {                                                                              }
 constructor TTCPServerPollList.Create;
 begin
@@ -1189,6 +1252,7 @@ begin
       Dec(FListUsed);
 end;
 
+// Returns buffer to be passed to Poll in P
 procedure TTCPServerPollList.GetPollBuffer(out P: Pointer; out ItemCount: Integer);
 begin
   P := Pointer(FFDList);
@@ -1197,8 +1261,8 @@ end;
 
 function TTCPServerPollList.GetClientByIndex(const Idx: Integer): TTCPServerClient;
 begin
-  if (Idx < 0) or (Idx >= FListUsed) then
-    raise ETCPServer.Create('Invalid index');
+  Assert(Idx >= 0);
+  Assert(Idx < FListUsed);
   Result := FClientList[Idx];
 end;
 
@@ -1274,6 +1338,8 @@ begin
   FMaxBacklog := TCP_SERVER_DEFAULT_MaxBacklog;
   FMaxClients := TCP_SERVER_DEFAULT_MaxClients;
   FMaxReadBufferSize := TCP_BUFFER_DEFAULTBUFSIZE;
+  FMaxWriteBufferSize := TCP_BUFFER_DEFAULTBUFSIZE;
+  FTrackLastActivityTime := True;
   {$IFDEF TCPSERVER_TLS}
   FTLSEnabled := False;
   {$ENDIF}
@@ -1668,6 +1734,18 @@ begin
     FOnClientWrite(Client);
 end;
 
+procedure TF5TCPServer.TriggerClientReadActivity(const Client: TTCPServerClient);
+begin
+  if Assigned(FOnClientReadActivity) then
+    FOnClientReadActivity(Client);
+end;
+
+procedure TF5TCPServer.TriggerClientWriteActivity(const Client: TTCPServerClient);
+begin
+  if Assigned(FOnClientWriteActivity) then
+    FOnClientWriteActivity(Client);
+end;
+
 procedure TF5TCPServer.TriggerClientClose(const Client: TTCPServerClient);
 begin
   if Assigned(FOnClientClose) then
@@ -1930,6 +2008,9 @@ begin
   Result := True;
 end;
 
+// Find a terminated client without any references to it, if found
+// remove from client list and free client object
+// Returns True if client found and dropped
 function TF5TCPServer.ServerDropClient: Boolean;
 var
   ItCnt, ClCnt : Integer;
@@ -1970,16 +2051,19 @@ begin
   Result := True;
 end;
 
+// Process a client (read from socket, write to socket, handle socket errors)
 procedure TF5TCPServer.ProcessClient(
           const Client: TTCPServerClient;
           const ProcessRead, ProcessWrite: Boolean;
+          const ActivityTime: TDateTime;
           out ClientIdle, ClientTerminated: Boolean);
 var
   ClSt : TTCPServerClientState;
   ClFr : Boolean;
 begin
+  Client.AddReference;
   try
-    Client.Process(ProcessRead, ProcessWrite, ClientIdle, ClientTerminated);
+    Client.Process(ProcessRead, ProcessWrite, ActivityTime, ClientIdle, ClientTerminated);
   finally
     Client.ReleaseReference;
   end;
@@ -2014,6 +2098,9 @@ begin
     end;
 end;
 
+// Add newly accepted clients to poll list
+// Poll to determine which clients to process
+// Process clients with signalled events
 function TF5TCPServer.ServerProcessClients: Boolean;
 var
   FdPtr : Pointer;
@@ -2024,6 +2111,7 @@ var
   Cl, Nx : TTCPServerClient;
   Ev : Int16;
   WritePoll, ClientIdle, ClientTerminated : Boolean;
+  ActivityTime : TDateTime;
 begin
   Lock;
   try
@@ -2063,9 +2151,11 @@ begin
       ItemP^.revents := 0;
       Inc(ItemP);
     end;
+  Assert(FdCnt > 0);
   PollRes := SocketsPoll(FdPtr, FdCnt, 100);
   if PollRes > 0 then
     begin
+      ActivityTime := Now;
       ItemP := FdPtr;
       for Idx := 0 to FdCnt - 1 do
         begin
@@ -2075,8 +2165,9 @@ begin
               Cl := FPollList.GetClientByIndex(Idx);
               Assert(Assigned(Cl));
               ProcessClient(Cl,
-                  Ev and (POLLIN or POLLHUP) <> 0,
-                  Ev and POLLOUT <> 0,
+                  Ev and (POLLIN or POLLHUP or POLLERR) <> 0,
+                  Ev and (POLLOUT or POLLHUP or POLLERR) <> 0,
+                  ActivityTime,
                   ClientIdle, ClientTerminated);
             end;
           Inc(ItemP);

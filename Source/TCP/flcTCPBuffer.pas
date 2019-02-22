@@ -112,6 +112,9 @@ function  TCPBufferPeekByte(
 function  TCPBufferRemove(
           var TCPBuf: TTCPBuffer;
           var Buf; const Size: Integer): Integer;
+function  TCPBufferRemoveBuf(
+          var TCPBuf: TTCPBuffer;
+          var Buf; const Size: Integer): Boolean;
 procedure TCPBufferClear(var TCPBuf: TTCPBuffer);
 function  TCPBufferDiscard(
           var TCPBuf: TTCPBuffer;
@@ -420,13 +423,54 @@ begin
   // remove from TCP buffer
   H := TCPBuf.Head;
   U := TCPBuf.Used;
-  Inc(H, L);
   Dec(U, L);
   if U = 0 then
-    H := 0;
+    H := 0
+  else
+    Inc(H, L);
   TCPBuf.Head := H;
   TCPBuf.Used := U;
   Result := L;
+end;
+
+// Remove data from a TCP buffer
+// Returns True if Size bytes were available and copied into the user buffer
+// Returns False if Size bytes were not available
+function TCPBufferRemoveBuf(
+         var TCPBuf: TTCPBuffer;
+         var Buf; const Size: Integer): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var H, U : Integer;
+    P : PByte;
+begin
+  // handle invalid size
+  if Size <= 0 then
+    begin
+      Result := False;
+      exit;
+    end;
+  // check if enough data available
+  U := TCPBuf.Used;
+  if U < Size then
+    begin
+      Result := False;
+      exit;
+    end;
+  // get buffer
+  H := TCPBuf.Head;
+  Assert(H + Size <= TCPBuf.Size);
+  P := TCPBuf.Ptr;
+  Assert(Assigned(P));
+  Inc(P, H);
+  Move(P^, Buf, Size);
+  // remove from TCP buffer
+  Dec(U, Size);
+  if U = 0 then
+    H := 0
+  else
+    Inc(H, Size);
+  TCPBuf.Head := H;
+  TCPBuf.Used := U;
+  Result := True;
 end;
 
 // Clear the data from a TCP buffer

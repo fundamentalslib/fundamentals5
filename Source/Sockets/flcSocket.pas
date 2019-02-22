@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocket.pas                                            }
-{   File version:     5.09                                                     }
+{   File version:     5.10                                                     }
 {   Description:      System independent socket class.                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -45,6 +45,7 @@
 {   2014/04/23  4.07  Revision.                                                }
 {   2016/01/09  5.08  Revised for Fundamentals 5.                              }
 {   2018/07/11  5.09  Type changes for Win64.                                  }
+{   2019/01/01  5.10  Cache local and remote addresses.                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -74,6 +75,7 @@
   {$DEFINE SOCKET_WIN}
   {$DEFINE SOCKET_SUPPORT_ASYNC}
 {$ELSE}
+  {$DEFINE SOCKET_POSIX}
   {$IFDEF FREEPASCAL}
     {$DEFINE SOCKET_POSIX_FPC}
   {$ELSE}
@@ -154,6 +156,22 @@ type
     FWindowHandle  : HWND;
     {$ENDIF}
 
+    // LocalAddress cache
+    FLocalAddressCached    : Boolean;
+    FLocalAddress          : TSocketAddr;
+    FLocalAddressStrCached : Boolean;
+    FLocalAddressStr       : RawByteString;
+    FLocalPortStrCached    : Boolean;
+    FLocalPortStr          : String;
+
+    // RemoteAddress cache
+    FRemoteAddressCached    : Boolean;
+    FRemoteAddress          : TSocketAddr;
+    FRemoteAddressStrCached : Boolean;
+    FRemoteAddressStr       : RawByteString;
+    FRemoteHostNameCached   : Boolean;
+    FRemoteHostName         : RawByteString;
+
     // Init
     procedure Init(
               const AddressFamily: TIPAddressFamily;
@@ -182,8 +200,8 @@ type
     // WinSock asynchronous event notifications
     procedure HandleSocketMessage(const Events: TSocketAsynchronousEvents; const Param: Word);
     {$ENDIF}
-    {$IFDEF UNIX}
-    // procedure ProcessAsynchronousEventsUnix;
+    {$IFDEF SOCKET_POSIX}
+    // procedure ProcessAsynchronousEventsPosix
     {$ENDIF}
 
     // Socket options
@@ -875,10 +893,17 @@ begin
 end;
 
 function TSysSocket.GetLocalAddress: TSocketAddr;
+var A : TSocketAddr;
 begin
-  InitSocketAddrNone(Result);
-  if SocketGetSockName(FSocketHandle, Result) < 0 then
-    raise ESocketLib.Create('Error retrieving local binding information', SocketGetLastError);
+  if not FLocalAddressCached then
+    begin
+      InitSocketAddrNone(A);
+      if SocketGetSockName(FSocketHandle, A) < 0 then
+        raise ESocketLib.Create('Error retrieving local binding information', SocketGetLastError);
+      FLocalAddress := A;
+      FLocalAddressCached := True;
+    end;
+  Result := FLocalAddress;
 end;
 
 function TSysSocket.GetLocalAddressIP: TIP4Addr;
@@ -903,22 +928,29 @@ end;
 
 function TSysSocket.GetLocalAddressStr: RawByteString;
 var A : TSocketAddr;
+    S : RawByteString;
 begin
-  A := GetLocalAddress;
-  case A.AddrFamily of
-    iaIP4 :
-      if IP4AddrIsNone(A.AddrIP4) then
-        Result := ''
+  if not FLocalAddressStrCached then
+    begin
+      A := GetLocalAddress;
+      case A.AddrFamily of
+        iaIP4 :
+          if IP4AddrIsNone(A.AddrIP4) then
+            S := ''
+          else
+            S := IP4AddressStrB(A.AddrIP4);
+        iaIP6 :
+          if IP6AddrIsZero(A.AddrIP6) then
+            S := ''
+          else
+            S := IP6AddressStrB(A.AddrIP6);
       else
-        Result := IP4AddressStrB(A.AddrIP4);
-    iaIP6 :
-      if IP6AddrIsZero(A.AddrIP6) then
-        Result := ''
-      else
-        Result := IP6AddressStrB(A.AddrIP6);
-  else
-    Result := '';
-  end;
+        S := '';
+      end;
+      FLocalAddressStr := S;
+      FLocalAddressStrCached := True;
+    end;
+  Result := FLocalAddressStr;
 end;
 
 function TSysSocket.GetLocalPort: Integer;
@@ -934,8 +966,15 @@ begin
 end;
 
 function TSysSocket.GetLocalPortStr: String;
+var S : String;
 begin
-  Result := IntToStr(GetLocalPort);
+  if not FLocalPortStrCached then
+    begin
+      S := IntToStr(GetLocalPort);
+      FLocalPortStr := S;
+      FLocalPortStrCached := True;
+    end;
+  Result := FLocalPortStr;
 end;
 
 procedure TSysSocket.Shutdown(const How: TSocketShutdown);
@@ -1078,8 +1117,13 @@ end;
 
 function TSysSocket.GetRemoteAddress: TSocketAddr;
 begin
-  if SocketGetPeerName(FSocketHandle, Result) < 0 then
-    raise ESocketLib.Create('Failed to get peer name', SocketGetLastError);
+  if not FRemoteAddressCached then
+    begin
+      if SocketGetPeerName(FSocketHandle, FRemoteAddress) < 0 then
+        raise ESocketLib.Create('Failed to get peer name', SocketGetLastError);
+      FRemoteAddressCached := True;
+    end;
+  Result := FRemoteAddress;
 end;
 
 function TSysSocket.GetRemoteAddressIP: TIP4Addr;
@@ -1104,39 +1148,53 @@ end;
 
 function TSysSocket.GetRemoteAddressStr: RawByteString;
 var A : TSocketAddr;
+    S : RawByteString;
 begin
-  A := GetRemoteAddress;
-  case A.AddrFamily of
-    iaIP4 :
-      if IP4AddrIsNone(A.AddrIP4) then
-        Result := ''
+  if not FRemoteAddressStrCached then
+    begin
+      A := GetRemoteAddress;
+      case A.AddrFamily of
+        iaIP4 :
+          if IP4AddrIsNone(A.AddrIP4) then
+            S := ''
+          else
+            S := IP4AddressStrB(A.AddrIP4);
+        iaIP6 :
+          if IP6AddrIsZero(A.AddrIP6) then
+            S := ''
+          else
+            S := IP6AddressStrB(A.AddrIP6);
       else
-        Result := IP4AddressStrB(A.AddrIP4);
-    iaIP6 :
-      if IP6AddrIsZero(A.AddrIP6) then
-        Result := ''
-      else
-        Result := IP6AddressStrB(A.AddrIP6);
-  else
-    Result := '';
-  end;
+        S := '';
+      end;
+      FRemoteAddressStr := S;
+      FRemoteAddressStrCached := True;
+    end;
+  Result := FRemoteAddressStr;
 end;
 
 function TSysSocket.GetRemoteHostName: RawByteString;
 var Address : TIP4Addr;
+    S : RawByteString;
 begin
-  Address := GetRemoteAddressIP;
-  if IP4AddrIsNone(Address) or IP4AddrIsZero(Address) then
-    Result := ''
-  else
+  if not FRemoteHostNameCached then
     begin
-      Result := flcSocketLib.GetRemoteHostNameB(Address);
-      if Result = '' then
-        Result := IP4AddressStrB(Address);
-      {$IFDEF SOCKET_DEBUG}
-      Log(sltDebug, 'RemoteHostName:%s', [Result]);
-      {$ENDIF}
+      Address := GetRemoteAddressIP;
+      if IP4AddrIsNone(Address) or IP4AddrIsZero(Address) then
+        S := ''
+      else
+        begin
+          S := flcSocketLib.GetRemoteHostNameB(Address);
+          if S = '' then
+            S := IP4AddressStrB(Address);
+          {$IFDEF SOCKET_DEBUG}
+          Log(sltDebug, 'RemoteHostName:%s', [S]);
+          {$ENDIF}
+        end;
+      FRemoteHostName := S;
+      FRemoteHostNameCached := True;
     end;
+  Result := FRemoteHostName;
 end;
 
 function TSysSocket.Send(const Buf; const BufSize: Integer): Integer;

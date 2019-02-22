@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPConnection.pas                                     }
-{   File version:     5.27                                                     }
+{   File version:     5.28                                                     }
 {   Description:      TCP connection.                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -63,6 +63,7 @@
 {   2018/08/30  5.25  PollSocket returns Terminated on exception.              }
 {   2018/09/08  5.26  PollSocket remove use of Select.                         }
 {   2018/09/10  5.27  PollSocket change to ProcessSocket.                      }
+{   2018/12/31  5.28  CreationTime and LastActivityTime properties.            }
 {                                                                              }
 {******************************************************************************}
 
@@ -205,6 +206,8 @@ type
     FOnClose            : TTCPConnectionNotifyEvent;
     FOnReadBufferFull   : TTCPConnectionNotifyEvent;
     FOnWriteBufferEmpty : TTCPConnectionNotifyEvent;
+    FOnReadActivity     : TTCPConnectionNotifyEvent;
+    FOnWriteActivity    : TTCPConnectionNotifyEvent;
 
     FOnWait             : TTCPConnectionNotifyEvent;
 
@@ -212,27 +215,33 @@ type
     FOnWorkerFinished   : TTCPConnectionNotifyEvent;
 
     // state
-    FLock                : TCriticalSection;
-    FState               : TTCPConnectionState;
+    FLock                  : TCriticalSection;
+    FState                 : TTCPConnectionState;
+    FCreationTime          : TDateTime;
 
-    FProxyList           : TTCPConnectionProxyList;
-    FProxyConnection     : Boolean;
+    FProxyList             : TTCPConnectionProxyList;
+    FProxyConnection       : Boolean;
 
-    FReadBuffer          : TTCPBuffer;
-    FWriteBuffer         : TTCPBuffer;
+    FReadBuffer            : TTCPBuffer;
+    FWriteBuffer           : TTCPBuffer;
 
-    FReadTransferState   : TTCPConnectionTransferState;
-    FWriteTransferState  : TTCPConnectionTransferState;
+    FReadTransferState     : TTCPConnectionTransferState;
+    FWriteTransferState    : TTCPConnectionTransferState;
 
-    FReadEventPending    : Boolean;
-    FReadBufferFull      : Boolean;
-    FReadProcessPending  : Boolean;
-    FWriteEventPending   : Boolean;
-    FShutdownPending     : Boolean;
-    FClosePending        : Boolean;
-    FReadyNotified       : Boolean;
+    FReadEventPending      : Boolean;
+    FReadBufferFull        : Boolean;
+    FReadProcessPending    : Boolean;
+    FReadActivityPending   : Boolean;
+    FWriteEventPending     : Boolean;
+    FShutdownPending       : Boolean;
+    FClosePending          : Boolean;
+    FReadyNotified         : Boolean;
 
-    FBlockingConnection  : TTCPBlockingConnection;
+    FTrackLastActivityTime : Boolean;
+    FLastReadActivityTime  : TDateTime;
+    FLastWriteActivityTime : TDateTime;
+
+    FBlockingConnection    : TTCPBlockingConnection;
 
     // worker thread
     FWorkerThread        : TThread;
@@ -275,6 +284,8 @@ type
     procedure TriggerClose;
     procedure TriggerReadBufferFull;
     procedure TriggerWriteBufferEmpty;
+    procedure TriggerReadActivity;
+    procedure TriggerWriteActivity;
 
     procedure TriggerWait;
     procedure TriggerWorkerFinished;
@@ -295,6 +306,10 @@ type
 
     function  FillBufferFromSocket(out RecvClosed, ReadEventPending, ReadBufFullEvent: Boolean): Integer;
     function  EmptyBufferToSocket(out BufferEmptyBefore, BufferEmptied: Boolean): Integer;
+
+    function  GetLastReadActivityTime: TDateTime;
+    function  GetLastWriteActivityTime: TDateTime;
+    function  GetLastActivityTime: TDateTime;
 
     function  LocateChrInBuffer(const Delimiter: TRawByteCharSet; const MaxSize: Integer): Integer;
     function  LocateStrInBuffer(const Delimiter: RawByteString; const MaxSize: Integer): Integer;
@@ -334,11 +349,14 @@ type
     property  OnClose: TTCPConnectionNotifyEvent read FOnClose write FOnClose;
     property  OnReadBufferFull: TTCPConnectionNotifyEvent read FOnReadBufferFull write FOnReadBufferFull;
     property  OnWriteBufferEmpty: TTCPConnectionNotifyEvent read FOnWriteBufferEmpty write FOnWriteBufferEmpty;
+    property  OnReadActivity: TTCPConnectionNotifyEvent read FOnReadActivity write FOnReadActivity;
+    property  OnWriteActivity: TTCPConnectionNotifyEvent read FOnWriteActivity write FOnWriteActivity;
 
     // Proxies
     procedure AddProxy(const Proxy: TTCPConnectionProxy);
 
     // State
+    property  CreationTime: TDateTime read FCreationTime;
     property  State: TTCPConnectionState read GetState;
     property  StateStr: RawByteString read GetStateStr;
     procedure Start;
@@ -359,10 +377,17 @@ type
     property  ReadRate: Integer read GetReadRate;
     property  WriteRate: Integer read GetWriteRate;
 
-    // Poll routine
+    // Poll routines
     procedure GetEventsToPoll(out WritePoll: Boolean);
     procedure ProcessSocket(const ProcessRead, ProcessWrite: Boolean;
+              const ActivityTime: TDateTime;
               out Idle, Terminated: Boolean);
+
+    // Last activity times
+    property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write FTrackLastActivityTime;
+    property  LastReadActivityTime: TDateTime read GetLastReadActivityTime;
+    property  LastWriteActivityTime: TDateTime read GetLastWriteActivityTime;
+    property  LastActivityTime: TDateTime read GetLastActivityTime;
 
     // Read
     function  Read(var Buf; const BufSize: Integer): Integer;
@@ -858,6 +883,8 @@ begin
 end;
 
 procedure TTCPConnection.Init;
+var
+  N : TDateTime;
 begin
   FState := cnsInit;
   FReadBufferMaxSize  := TCP_BUFFER_DEFAULTMAXSIZE;
@@ -869,6 +896,11 @@ begin
   FProxyConnection := False;
   TCPBufferInitialise(FReadBuffer,  FReadBufferMaxSize,  TCP_BUFFER_DEFAULTBUFSIZE);
   TCPBufferInitialise(FWriteBuffer, FWriteBufferMaxSize, TCP_BUFFER_DEFAULTBUFSIZE);
+  N := Now;
+  FCreationTime := N;
+  FTrackLastActivityTime := False;
+  FLastReadActivityTime := 0.0;
+  FLastWriteActivityTime := 0.0;
 end;
 
 procedure TTCPConnection.Lock;
@@ -1111,6 +1143,18 @@ procedure TTCPConnection.TriggerWriteBufferEmpty;
 begin
   if Assigned(FOnWriteBufferEmpty) then
     FOnWriteBufferEmpty(self);
+end;
+
+procedure TTCPConnection.TriggerReadActivity;
+begin
+  if Assigned(FOnReadActivity) then
+    FOnReadActivity(self);
+end;
+
+procedure TTCPConnection.TriggerWriteActivity;
+begin
+  if Assigned(FOnWriteActivity) then
+    FOnWriteActivity(self);
 end;
 
 procedure TTCPConnection.TriggerWait;
@@ -1471,13 +1515,16 @@ end;
 // Processes socket by reading/writing
 // Pre: Socket is non-blocking
 procedure TTCPConnection.ProcessSocket(const ProcessRead, ProcessWrite: Boolean;
+          const ActivityTime: TDateTime;
           out Idle, Terminated: Boolean);
 var Len : Integer;
     WriteDoProcess, Error, Fin : Boolean;
-    ReadProcessPending, ReadDoProcess : Boolean;
-    RecvClosed, RecvReadEvent, RecvReadBufFullEvent, RecvCloseNow : Boolean;
+    ReadProcessPending, ReadActivityPending, ReadEventPending, ReadDoProcess : Boolean;
+    RecvClosed, RecvReadEvent, RecvReadBufFullEvent, RecvCloseNow, RecvData, RecvActivity : Boolean;
     WriteBufEmptyBefore, WriteBufEmptied : Boolean;
-    WriteEvent, WriteBufEmptyEvent, WriteShutdownNow : Boolean;
+    WriteEventPending, WriteEvent, WriteBufEmptyEvent, WriteShutdownNow, WriteData, WriteActivity : Boolean;
+    ShutdownPending, ClosePending : Boolean;
+    TrackLastActivityTime : Boolean;
 begin
   try
     Assert(FState <> cnsInit);
@@ -1491,48 +1538,70 @@ begin
     // check if read/write should process
     Lock;
     try
+      //read
       ReadProcessPending := FReadProcessPending;
       if ReadProcessPending then
         FReadProcessPending := False;
-      ReadDoProcess := ReadProcessPending or ProcessRead;
+      ReadActivityPending := FReadActivityPending;
+      if ReadActivityPending then
+        FReadActivityPending := False;
+      ReadEventPending := FReadEventPending;
+      if ReadEventPending then
+        FReadEventPending := False;
+      ClosePending := FClosePending;
+      if ClosePending then
+        FClosePending := False;
+      ReadDoProcess :=
+          ProcessRead or
+          ReadProcessPending or
+          ReadActivityPending or
+          ReadEventPending or
+          ClosePending;
+      // write
+      WriteEventPending := FWriteEventPending;
+      if WriteEventPending then
+        FWriteEventPending := False;
+      ShutdownPending := FShutdownPending;
+      if ShutdownPending then
+        FShutdownPending := False;
       WriteDoProcess :=
-          FWriteEventPending or
-          FShutdownPending or
+          WriteEventPending or
+          ShutdownPending or
           (ProcessWrite and not TCPBufferEmpty(FWriteBuffer));
+      // last activity times
+      TrackLastActivityTime := FTrackLastActivityTime;
     finally
       Unlock;
     end;
     Terminated := False;
     // process read
+    RecvActivity := False;
     if ReadDoProcess then
       begin
+        if ReadActivityPending then
+          RecvActivity := True;
         Fin := False;
         repeat
           // receive data from socket into buffer
           Len := FillBufferFromSocket(RecvClosed, RecvReadEvent, RecvReadBufFullEvent);
-          Lock;
-          try
-            // check pending flags
-            if FReadEventPending then
-              begin
-                RecvReadEvent := True;
-                FReadEventPending := False;
-              end;
-            RecvCloseNow := FClosePending;
-            if RecvCloseNow then
-              FClosePending := False;
-          finally
-            Unlock;
-          end;
-          if Len > 0 then
+          // check pending flags
+          if ReadEventPending then
             begin
-              // data received
-              Idle := False;
-            end else
-            begin
-              // nothing received
-              Fin := True;
+              RecvReadEvent := True;
+              ReadEventPending := False;
             end;
+          RecvCloseNow := ClosePending;
+          if RecvCloseNow then
+            ClosePending := False;
+          // check received data
+          RecvData := Len > 0;
+          if RecvData then
+            begin
+              RecvActivity := True;
+              Idle := False;
+            end
+          else
+            Fin := True;
           // perform pending actions
           if RecvReadBufFullEvent then
             TriggerReadBufferFull;
@@ -1554,6 +1623,7 @@ begin
         until Fin;
       end;
     // process write
+    WriteActivity := False;
     if WriteDoProcess then
       begin
         WriteEvent := False;
@@ -1566,31 +1636,27 @@ begin
           Len := 0;
           Error := True;
         end;
-        Lock;
-        try
-          // check write state
-          if FWriteEventPending then
-            begin
-              WriteEvent := True;
-              WriteBufEmptyEvent := True;
-              FWriteEventPending := False;
-            end;
-          if WriteBufEmptied then
+        // check write activity
+        WriteData := Len > 0;
+        if WriteEventPending then
+          begin
+            WriteActivity := True;
+            WriteEvent := True;
             WriteBufEmptyEvent := True;
-          if WriteBufEmptyBefore and FShutdownPending then
-            begin
-              WriteShutdownNow := True;
-              FShutdownPending := False;
-            end;
-        finally
-          Unlock;
-        end;
-        if Len > 0 then
+          end;
+        // check write state
+        if WriteBufEmptied then
+          WriteBufEmptyEvent := True;
+        if WriteBufEmptyBefore and ShutdownPending then
+          WriteShutdownNow := True;
+        if WriteData then
           begin
             // data sent
             Idle := False;
             WriteEvent := True;
-          end else
+            WriteActivity := True;
+          end
+        else
           begin
             if Error then
               // socket send error
@@ -1607,6 +1673,26 @@ begin
         if WriteShutdownNow then
           DoShutdown;
       end;
+      // trigger activity
+      if RecvActivity or WriteActivity then
+        begin
+          if TrackLastActivityTime then
+            begin
+              Lock;
+              try
+                if RecvActivity then
+                  FLastReadActivityTime := ActivityTime;
+                if WriteActivity then
+                  FLastWriteActivityTime := ActivityTime;
+              finally
+                Unlock;
+              end;
+            end;
+          if RecvActivity then
+            TriggerReadActivity;
+          if WriteActivity then
+            TriggerWriteActivity;
+        end;
   except
     on E : Exception do
       begin
@@ -1616,6 +1702,42 @@ begin
         Log(tlDebug, 'ProcessSocket:Terminated:%s', [E.Message]);
         {$ENDIF}
       end;
+  end;
+end;
+
+function TTCPConnection.GetLastReadActivityTime: TDateTime;
+begin
+  Lock;
+  try
+    Result := FLastReadActivityTime;
+  finally
+    Unlock;
+  end;
+end;
+
+function TTCPConnection.GetLastWriteActivityTime: TDateTime;
+begin
+  Lock;
+  try
+    Result := FLastWriteActivityTime;
+  finally
+    Unlock;
+  end;
+end;
+
+function TTCPConnection.GetLastActivityTime: TDateTime;
+begin
+  Lock;
+  try
+    if FLastReadActivityTime > FLastWriteActivityTime then
+      Result := FLastReadActivityTime
+    else
+    if FLastWriteActivityTime > FCreationTime then
+      Result := FLastWriteActivityTime
+    else
+      Result := FCreationTime;
+  finally
+    Unlock;
   end;
 end;
 
@@ -1852,6 +1974,8 @@ begin
         BufPtr := @Buf;
         Inc(BufPtr, SizeReadBuf);
         SizeReadSocket := ReadFromSocket(BufPtr^, SizeRemain);
+        if SizeReadSocket > 0 then
+          FReadActivityPending := True;
       end;
     SizeTotal := SizeReadBuf + SizeReadSocket;
     // update transfer statistics
