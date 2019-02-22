@@ -1,6 +1,6 @@
 # Fundamentals 5 Library
 
-Fundamentals 5 Code Library for FreePascal and Delphi
+Fundamentals 5 Code Library for Delphi and FreePascal
 
 Includes:
 
@@ -23,4 +23,4 @@ Includes:
 * TCP Server
 * HTTP Client
 * HTTP Server
-
+* HTML Parser
