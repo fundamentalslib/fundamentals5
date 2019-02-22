@@ -710,6 +710,7 @@ procedure TrimStringsA(var S: AnsiStringArray; const C: ByteCharSet = csWhiteSpa
 {$ENDIF}
 procedure TrimStringsB(var S: RawByteStringArray; const C: ByteCharSet = csWhiteSpace); overload;
 procedure TrimStringsU(var S: UnicodeStringArray; const C: ByteCharSet = csWhiteSpace); overload;
+procedure TrimStrings(var S: StringArray; const C: ByteCharSet = csWhiteSpace);
 
 
 
@@ -2132,14 +2133,6 @@ begin
       end
     else
       exit;
-end;
-
-function WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean;
-begin
-  if Ord(A) >= $100 then
-    Result := False
-  else
-    Result := ByteChar(Ord(A)) in C;
 end;
 
 function StrPMatchLenW(const P: PWideChar; const Len: Integer; const M: ByteCharSet): Integer;
@@ -5828,6 +5821,13 @@ var I : Integer;
 begin
   for I := 0 to Length(S) - 1 do
     StrTrimInPlaceU(S[I], C);
+end;
+
+procedure TrimStrings(var S : StringArray; const C: ByteCharSet);
+var I : Integer;
+begin
+  for I := 0 to Length(S) - 1 do
+    StrTrimInPlace(S[I], C);
 end;
 
 

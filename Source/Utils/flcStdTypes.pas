@@ -177,6 +177,8 @@ const
   MaxLongWord   = LongWord(High(LongWord));
   MinLongInt    = LongInt(Low(LongInt));
   MaxLongInt    = LongInt(High(LongInt));
+  MinInt8       = Low(Int8);
+  MaxInt8       = High(Int8);
   MinInt16      = Low(Int16);
   MaxInt16      = High(Int16);
   MinInt32      = Low(Int32);

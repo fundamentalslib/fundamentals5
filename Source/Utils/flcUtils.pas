@@ -223,6 +223,17 @@ function  StrPToStrB(const P: Pointer; const L: Integer): RawByteString;
 function  StrPToStrU(const P: PWideChar; const L: Integer): UnicodeString;
 function  StrPToStr(const P: PChar; const L: Integer): String;
 
+function  StrZLenA(const S: Pointer): Integer;
+function  StrZLenW(const S: PWideChar): Integer;
+function  StrZLen(const S: PChar): Integer;
+
+{$IFDEF SupportAnsiString}
+function  StrZPasA(const A: PAnsiChar): AnsiString;
+{$ENDIF}
+function  StrZPasB(const A: PByteChar): RawByteString;
+function  StrZPasU(const A: PWideChar): UnicodeString;
+function  StrZPas(const A: PChar): String;
+
 
 
 {                                                                              }
@@ -272,6 +283,14 @@ procedure StrAppendChA(var A: AnsiString; const C: AnsiChar);    {$IFDEF UseInli
 procedure StrAppendChB(var A: RawByteString; const C: ByteChar); {$IFDEF UseInline}inline;{$ENDIF}
 procedure StrAppendChU(var A: UnicodeString; const C: WideChar); {$IFDEF UseInline}inline;{$ENDIF}
 procedure StrAppendCh(var A: String; const C: Char);             {$IFDEF UseInline}inline;{$ENDIF}
+
+
+
+{                                                                              }
+{ ByteCharSet functions                                                        }
+{                                                                              }
+function  WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
 
 
 
@@ -979,6 +998,130 @@ end;
 
 
 {                                                                              }
+{ String construction from zero terminated buffer                              }
+{                                                                              }
+function StrZLenA(const S: Pointer): Integer;
+var P : PByteChar;
+begin
+  if not Assigned(S) then
+    Result := 0
+  else
+    begin
+      Result := 0;
+      P := S;
+      while Ord(P^) <> 0 do
+        begin
+          Inc(Result);
+          Inc(P);
+        end;
+    end;
+end;
+
+function StrZLenW(const S: PWideChar): Integer;
+var P : PWideChar;
+begin
+  if not Assigned(S) then
+    Result := 0
+  else
+    begin
+      Result := 0;
+      P := S;
+      while P^ <> #0 do
+        begin
+          Inc(Result);
+          Inc(P);
+        end;
+    end;
+end;
+
+function StrZLen(const S: PChar): Integer;
+var P : PChar;
+begin
+  if not Assigned(S) then
+    Result := 0
+  else
+    begin
+      Result := 0;
+      P := S;
+      while P^ <> #0 do
+        begin
+          Inc(Result);
+          Inc(P);
+        end;
+    end;
+end;
+
+{$IFDEF SupportAnsiString}
+function StrZPasA(const A: PAnsiChar): AnsiString;
+var I, L : Integer;
+    P : PAnsiChar;
+begin
+  L := StrZLenA(A);
+  SetLength(Result, L);
+  if L = 0 then
+    exit;
+  I := 0;
+  P := A;
+  while I < L do
+    begin
+      Result[I + 1] := P^;
+      Inc(I);
+      Inc(P);
+    end;
+end;
+{$ENDIF}
+
+function StrZPasB(const A: PByteChar): RawByteString;
+var I, L : Integer;
+    P : PByteChar;
+begin
+  L := StrZLenA(A);
+  SetLength(Result, L);
+  if L = 0 then
+    exit;
+  I := 0;
+  P := A;
+  while I < L do
+    begin
+      Result[I + 1] := P^;
+      Inc(I);
+      Inc(P);
+    end;
+end;
+
+function StrZPasU(const A: PWideChar): UnicodeString;
+var I, L : Integer;
+begin
+  L := StrZLenW(A);
+  SetLength(Result, L);
+  if L = 0 then
+    exit;
+  I := 0;
+  while I < L do
+    begin
+      Result[I + 1] := A[I];
+      Inc(I);
+    end;
+end;
+
+function StrZPas(const A: PChar): String;
+var I, L : Integer;
+begin
+  L := StrZLen(A);
+  SetLength(Result, L);
+  if L = 0 then
+    exit;
+  I := 0;
+  while I < L do
+    begin
+      Result[I + 1] := A[I];
+      Inc(I);
+    end;
+end;
+
+
+
+{                                                                              }
 { RawByteString conversion functions                                           }
 {                                                                              }
 
@@ -1190,6 +1333,31 @@ end;
 procedure StrAppendCh(var A: String; const C: Char);
 begin
   A := A + C;
+end;
+
+
+
+{                                                                              }
+{ ByteCharSet functions                                                        }
+{                                                                              }
+function WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean;
+begin
+  if Ord(A) >= $100 then
+    Result := False
+  else
+    Result := ByteChar(Ord(A)) in C;
+end;
+
+function CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;
+begin
+  {$IFDEF CharIsWide}
+  if Ord(A) >= $100 then
+    Result := False
+  else
+    Result := ByteChar(Ord(A)) in C;
+  {$ELSE}
+  Result := A in C;
+  {$ENDIF}
 end;
 
 

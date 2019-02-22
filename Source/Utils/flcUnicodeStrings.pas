@@ -62,6 +62,8 @@ function  StrCompareNoUnicodeCaseU(const A, B: UnicodeString): Integer;
 function  StrMatchNoUnicodeCaseU(const S, M: UnicodeString; const Index: Integer = 1): Boolean;
 
 function  StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
+function  StrZMatchStrUnicodeCaseU(const P: PWideChar; const M: UnicodeString;
+          const UnicodeCaseSensitive: Boolean): Boolean;
 
 function  StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;
 
@@ -210,6 +212,43 @@ begin
       Inc(Q);
     end;
   Result := True;
+end;
+
+function StrZMatchStrU(const P: PWideChar; const M: UnicodeString): Boolean;
+var T, Q : PWideChar;
+    I, L : Integer;
+    C    : WideChar;
+begin
+  L := Length(M);
+  if L = 0 then
+    begin
+      Result := False;
+      exit;
+    end;
+  T := P;
+  Q := Pointer(M);
+  for I := 1 to L do
+    begin
+      C := T^;
+      if (C = #0) or (C <> Q^) then
+        begin
+          Result := False;
+          exit;
+        end else
+        begin
+          Inc(T);
+          Inc(Q);
+        end;
+    end;
+  Result := True;
+end;
+
+function StrZMatchStrUnicodeCaseU(const P: PWideChar; const M: UnicodeString; const UnicodeCaseSensitive: Boolean): Boolean;
+begin
+  if UnicodeCaseSensitive then
+    Result := StrZMatchStrU(P, M)
+  else
+    Result := StrZMatchStrNoUnicodeCaseU(P, M);
 end;
 
 function StrEqualNoUnicodeCaseU(const A, B: UnicodeString): Boolean;

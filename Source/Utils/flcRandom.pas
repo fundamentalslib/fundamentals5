@@ -183,7 +183,8 @@ uses
   {$ENDIF}
 
   SysUtils,
-  flcZeroTermStrings,
+
+  { Fundamentals }
   flcUtils;
 
 
