@@ -6,7 +6,7 @@
 {   Description:      Abstract Syntax Notation One (ASN.1)                     }
 {                     BER (Basic Encoding Routines)                            }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -54,7 +54,7 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    0.03  2016/01/10                       }
+{   Delphi 7 Win32                      5.05  2019/02/24                       }
 {   Delphi XE7 Win64                    0.03  2016/01/10                       }
 {   Delphi XE8 Win32                    0.03  2016/01/10                       }
 {   Delphi XE8 Win64                    0.03  2016/01/10                       }

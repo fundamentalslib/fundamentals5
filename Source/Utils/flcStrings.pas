@@ -5,7 +5,7 @@
 {   File version:     5.71                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -119,15 +119,19 @@
 {                                                                              }
 {   Delphi 5 Win32                      4.60  2015/03/14                       }
 {   Delphi 6 Win32                      4.60  2015/03/14                       }
-{   Delphi 7 Win32                      5.70  2018/08/14                       }
+{   Delphi 7 Win32                      5.71  2019/02/24                       }
 {   Delphi 2007 Win32                   4.57  2012/08/29                       }
 {   Delphi 2009 Win32                   4.50  2011/09/27                       }
 {   Delphi 2009 .NET                    4.46  2009/10/09                       }
 {   Delphi XE                           4.57  2012/08/29                       }
-{   Delphi XE3 Win64                    4.57  2013/01/29                       }
-{   Delphi XE6 Win32                    4.59  2014/08/26                       }
-{   Delphi XE7 Win32                    5.62  2016/01/09                       }
-{   Delphi XE7 Win64                    5.62  2016/01/09                       }
+{   Delphi XE2 Win32                    5.71  2019/03/02                       }
+{   Delphi XE2 Win64                    5.71  2019/03/02                       }
+{   Delphi XE3 Win32                    5.71  2019/03/02                       }
+{   Delphi XE3 Win64                    5.71  2019/03/02                       }
+{   Delphi XE6 Win32                    5.71  2019/03/02                       }
+{   Delphi XE6 Win64                    5.71  2019/03/02                       }
+{   Delphi XE7 Win32                    5.71  2019/03/02                       }
+{   Delphi XE7 Win64                    5.71  2019/03/02                       }
 {   Delphi 10 Win32                     5.62  2016/01/09                       }
 {   Delphi 10 Win64                     5.62  2016/01/09                       }
 {   Delphi 10.2 Win32                   5.67  2018/07/17                       }
@@ -135,8 +139,7 @@
 {   Delphi 10.2 Linux64                 5.67  2018/07/17                       }
 {   FreePascal 2.0.4 Linux i386         4.45  2009/06/06                       }
 {   FreePascal 2.4.0 OSX x86-64         4.47  2010/06/27                       }
-{   FreePascal 2.6.0 Win32              4.57  2012/08/30                       }
-{   FreePascal 3.0.0 Win32              5.64  2016/04/16                       }
+{   FreePascal 3.0.4 Win32              5.71  2019/02/24                       }
 {                                                                              }
 {******************************************************************************}
 

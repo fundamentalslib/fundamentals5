@@ -49,8 +49,12 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE2 Win32                    4.07  2014/04/23                       }
-{   Delphi XE7 Win32                    5.08  2016/01/09                       }
+{   Delphi XE2 Win32                    5.10  2019/03/02                       }
+{   Delphi XE2 Win64                    5.10  2019/03/02                       }
+{   Delphi XE6 Win32                    5.10  2019/03/02                       }
+{   Delphi XE6 Win64                    5.10  2019/03/02                       }
+{   Delphi XE7 Win32                    5.10  2019/03/02                       }
+{   Delphi XE7 Win64                    5.10  2019/03/02                       }
 {   Delphi 10 Win32                     5.08  2016/01/09                       }
 {   FreePascal 2.6.2 Linux i386         4.07  2014/04/23                       }
 {   FreePascal 2.6.2 Win32 i386         4.07  2014/04/23                       }
@@ -1414,7 +1418,7 @@ begin
     Assert(T.SendBufferSize > 0);
 
     R := True; W := True; E := True;
-    Assert(S.Select(100, R, W, E));
+    Assert(S.Select(200, R, W, E));
     Assert(R and not W and not E);
 
     S.Accept(C, A);

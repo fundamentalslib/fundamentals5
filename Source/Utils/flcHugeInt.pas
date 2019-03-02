@@ -5,7 +5,7 @@
 {   File version:     5.26                                                     }
 {   Description:      HugeInt functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -65,15 +65,20 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.24  2016/01/09                       }
-{   Delphi XE7 Win32                    5.24  2016/01/09                       }
-{   Delphi XE7 Win64                    5.24  2016/01/09                       }
+{   Delphi 7 Win32                      5.26  2019/02/24                       }
+{   Delphi XE2 Win32                    5.26  2019/03/02                       }
+{   Delphi XE2 Win64                    5.26  2019/03/02                       }
+{   Delphi XE3 Win32                    5.26  2019/03/02                       }
+{   Delphi XE3 Win64                    5.26  2019/03/02                       }
+{   Delphi XE7 Win32                    5.26  2019/03/02                       }
+{   Delphi XE7 Win64                    5.26  2019/03/02                       }
 {   Delphi 10 Win32                     5.24  2016/01/09                       }
 {   Delphi 10 Win64                     5.24  2016/01/09                       }
 {   Delphi 10.2 Win32                   5.25  2018/07/17                       }
 {   Delphi 10.2 Win64                   5.25  2018/07/17                       }
 {   Delphi 10.2 Linux64                 5.25  2018/07/17                       }
 {   FreePascal 2.6.2 Linux x64          4.21  2015/04/01                       }
+{   FreePascal 3.0.4 Win32              5.26  2019/02/24                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -6208,9 +6213,11 @@ begin
   Assert(HugeIntToInt64(A) = -$7FFFFFFFFFFFFFFF);
   Assert(HugeIntToStrB(A) = '-9223372036854775807');
   Assert(HugeIntToHexB(A) = '-7FFFFFFFFFFFFFFF');
+  {$IFNDEF DELPHIXE2_UP}
   {$IFNDEF FREEPASCAL}
   {$IFNDEF CPU_32}
   Assert(HugeIntToDouble(A) = Double(-9223372036854775807.0));
+  {$ENDIF}
   {$ENDIF}
   {$ENDIF}
   Assert(HugeIntEqualsInt64(A, -$7FFFFFFFFFFFFFFF));
@@ -6235,9 +6242,11 @@ begin
   HugeIntSubtractInt32(A, 1);
   Assert(HugeIntToStrB(A) = '-9223372036854775809');
   Assert(HugeIntToHexB(A) = '-8000000000000001');
+  {$IFNDEF DELPHIXE2_UP}
   {$IFNDEF FREEPASCAL}
   {$IFNDEF CPU_32}
   Assert(HugeIntToDouble(A) = Double(-9223372036854775809.0));
+  {$ENDIF}
   {$ENDIF}
   {$ENDIF}
   Assert(not HugeIntEqualsInt64(A, MinInt64 { -$8000000000000000 }));

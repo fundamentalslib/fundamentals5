@@ -5,7 +5,7 @@
 {   File version:     5.39                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -169,8 +169,13 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    5.37  2016/01/16                       }
-{   Delphi XE7 Win64                    5.37  2016/01/16                       }
+{   Delphi 7 Win32                      5.39  2019/02/24                       }
+{   Delphi XE2 Win32                    5.39  2019/03/02                       }
+{   Delphi XE2 Win64                    5.39  2019/03/02                       }
+{   Delphi XE3 Win32                    5.39  2019/03/02                       }
+{   Delphi XE3 Win64                    5.39  2019/03/02                       }
+{   Delphi XE7 Win32                    5.39  2019/03/02                       }
+{   Delphi XE7 Win64                    5.39  2019/03/02                       }
 {                                                                              }
 {******************************************************************************}
 

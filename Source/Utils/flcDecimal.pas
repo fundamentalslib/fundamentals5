@@ -1,10 +1,10 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcDecimal.pas                                           }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      Decimal number functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 2014-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2014-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -43,9 +43,15 @@
 {   2016/01/10  5.08  Make rounding same under 32/64-bit compilers.            }
 {   2018/07/17  5.09  Word32/Int32 changes.                                    }
 {   2018/08/12  5.10  String type changes.                                     }
+{   2019/02/22  5.11  Compilable with Delphi 7.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
+{   Delphi 7 Win32                      5.11  2019/02/24                       }
+{   Delphi XE2 Win32                    5.11  2019/03/02                       }
+{   Delphi XE2 Win64                    5.11  2019/03/02                       }
+{   Delphi XE3 Win32                    5.11  2019/03/02                       }
+{   Delphi XE3 Win64                    5.11  2019/03/02                       }
 {   Delphi XE7 Win32                    5.08  2016/01/10                       }
 {   Delphi XE7 Win64                    5.08  2016/01/10                       }
 {                                                                              }
@@ -252,13 +258,20 @@ const
   Decimal64Precision    = 9;
   Decimal64Scale        = 1000000000;
   Decimal64MaxInt       = 9999999999; // 10 9's
+  {$IFNDEF DELPHI7_DOWN}
   Decimal64MaxValue     = 9999999999999999999; // 19 9's
+  {$ENDIF}
   Decimal64MaxValueW64  : Word64 = (Word32s:($89E7FFFF, $8AC72304)); // 9999999999999999999
   Decimal64RoundTerm    = Decimal64Scale div 2; // 500000000
   Decimal64MinFloat     = -1.0 / Decimal64Scale / 2.0; // -0.0000000005
   Decimal64MinFloatD    : Double = Decimal64MinFloat;
+  {$IFDEF DELPHI7_DOWN}
+  Decimal64MaxFloatLim  : Double = 999999999999999.9999999995;
+  Decimal64MaxFloatLimD : Double = 999999999999999.9999999995;
+  {$ELSE}
   Decimal64MaxFloatLim  = ((1 + Decimal64MaxValue) div Decimal64Scale) + Decimal64MinFloat; // 999999999999999.9999999995
   Decimal64MaxFloatLimD : Double = Decimal64MaxFloatLim;
+  {$ENDIF}
 
 procedure Decimal64InitZero(var A: Decimal64);
 procedure Decimal64InitOne(var A: Decimal64);
@@ -634,10 +647,17 @@ function  StrToSDecimal32B(const A: RawByteString): SDecimal32;
 const
   SDecimal64MinInt       = -9999999999;
   SDecimal64MaxInt       = 9999999999;
+  {$IFDEF DELPHI7_DOWN}
+  SDecimal64MinFloatLim  : Double = -999999999999999.9999999995;
+  SDecimal64MinFloatLimD : Double = -999999999999999.9999999995;
+  SDecimal64MaxFloatLim  : Double = 999999999999999.9999999995;
+  SDecimal64MaxFloatLimD : Double = 999999999999999.9999999995;
+  {$ELSE}
   SDecimal64MinFloatLim  = -Decimal64MaxFloatLim;
   SDecimal64MinFloatLimD : Double = SDecimal64MinFloatLim;
   SDecimal64MaxFloatLim  = Decimal64MaxFloatLim;
   SDecimal64MaxFloatLimD : Double = SDecimal64MaxFloatLim;
+  {$ENDIF}
 
 procedure SDecimal64InitZero(var A: SDecimal64);
 procedure SDecimal64InitOne(var A: SDecimal64);
@@ -10027,8 +10047,10 @@ begin
   Assert(not FloatIsDecimal64Range(-0.000000001));
   Assert(FloatIsDecimal64Range(-0.0000000005));
   Assert(not FloatIsDecimal64Range(-0.00000000051));
+  {$IFNDEF DELPHI7_DOWN}
   Assert(not FloatIsDecimal64Range(9999999999.999999999));
   Assert(not FloatIsDecimal64Range(10000000000.000000000));
+  {$ENDIF}
 
   Decimal64InitInt64(A, Decimal64MaxInt);
   Assert(Decimal64ToInt64(A) = 9999999999);
@@ -11796,8 +11818,10 @@ begin
   Assert(FloatIsSDecimal64Range(0.000000000));
   Assert(FloatIsSDecimal64Range(-0.000000001));
   Assert(FloatIsSDecimal64Range(-0.0000000005));
+  {$IFNDEF DELPHI7_DOWN}
   Assert(not FloatIsSDecimal64Range(9999999999.999999999));
   Assert(not FloatIsSDecimal64Range(10000000000.000000000));
+  {$ENDIF}
 
   SDecimal64InitInt64(A, SDecimal64MaxInt);
   Assert(SDecimal64ToInt64(A) = 9999999999);

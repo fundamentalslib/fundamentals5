@@ -76,8 +76,6 @@ const
   CompleteByteCharSet = [ByteChar(#0)..ByteChar(#255)];
   CompleteByteSet = [0..255];
 
-function  WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;         {$IFDEF UseInline}inline;{$ENDIF}
 function  AsAnsiCharSet(const C: array of ByteChar): ByteCharSet;
 function  AsByteSet(const C: array of Byte): ByteSet;
 function  AsByteCharSet(const C: array of ByteChar): ByteCharSet;
@@ -138,26 +136,6 @@ uses
 {                                                                              }
 { Sets                                                                         }
 {                                                                              }
-function WideCharInCharSet(const A: WideChar; const C: ByteCharSet): Boolean;
-begin
-  if Ord(A) >= $100 then
-    Result := False
-  else
-    Result := ByteChar(Ord(A)) in C;
-end;
-
-function CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;
-begin
-  {$IFDEF CharIsWide}
-  if Ord(A) >= $100 then
-    Result := False
-  else
-    Result := ByteChar(Ord(A)) in C;
-  {$ELSE}
-  Result := A in C;
-  {$ENDIF}
-end;
-
 function AsAnsiCharSet(const C: array of ByteChar): ByteCharSet;
 var I: Integer;
 begin

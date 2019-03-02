@@ -5,7 +5,7 @@
 {   File version:     5.26                                                     }
 {   Description:      Reader, Writer and Stream classes                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -63,7 +63,7 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.24  2016/01/17                       }
+{   Delphi 7 Win32                      5.26  2019/02/24                       }
 {   Delphi XE7 Win32                    5.24  2016/01/17                       }
 {   Delphi XE7 Win64                    5.24  2016/01/17                       }
 {                                                                              }

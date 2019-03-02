@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      UTF encoding and decoing functions.                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2015-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2015-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -40,6 +40,13 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
+{   Delphi 7 Win32                      5.03  2019/02/24                       }
+{   Delphi XE2 Win32                    5.03  2019/03/02                       }
+{   Delphi XE2 Win64                    5.03  2019/03/02                       }
+{   Delphi XE3 Win32                    5.03  2019/03/02                       }
+{   Delphi XE3 Win64                    5.03  2019/03/02                       }
+{   Delphi XE7 Win32                    5.03  2019/03/02                       }
+{   Delphi XE7 Win64                    5.03  2019/03/02                       }
 {   Delphi 10 Win32                     5.02  2016/01/09                       }
 {                                                                              }
 {******************************************************************************}

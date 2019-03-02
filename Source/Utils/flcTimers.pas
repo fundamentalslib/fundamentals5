@@ -50,10 +50,10 @@
 {                                                                              }
 {   Delphi 5/6/2005/2006/2007 Win32                                            }
 {   Delphi 2009 .NET                                                           }
-{   Delphi 7 Win32                      5.10  2015/03/14                       }
+{   Delphi 7 Win32                      5.11  2019/02/24                       }
 {   Delphi XE7 Win32                    5.10  2016/01/17                       }
 {   Delphi XE7 Win64                    5.10  2016/01/17                       }
-{   FreePascal 2.0.1 Win32 i386                                                }
+{   FreePascal 3.0.4 Win32              5.11  2019/02/24                       }
 {   FreePascal 2.6.2 Linux i386                                                }
 {   FreePascal 2.4.0 OSX x86-64                                                }
 {                                                                              }

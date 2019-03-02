@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcX509Certificate.pas                                   }
-{   File version:     5.06                                                     }
+{   File version:     5.07                                                     }
 {   Description:      X.509 certificate                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -46,6 +46,7 @@
 {   2010/12/15  0.04  RSAPrivateKey structure                                  }
 {   2015/03/31  4.05  Revision for Fundamentals 4                              }
 {   2018/07/17  5.06  Revised for Fundamentals 5                               }
+{   2019/09/24  5.07  Compilable with FreePascal 3.04                          }
 {                                                                              }
 {******************************************************************************}
 
@@ -496,9 +497,6 @@ procedure Test;
 implementation
 
 uses
-  { System }
-  DateUtils,
-
   { Fundamentals }
   flcBase64;
 
@@ -779,8 +777,11 @@ end;
    GeneralizedTime values MUST NOT include fractional seconds.
 *)
 function EncodeX509Time(const A: TX509Time): RawByteString;
+var
+  Y, M, D : Word;
 begin
-  if YearOf(A) >= 2050 then
+  DecodeDate(A, Y, M, D);
+  if Y >= 2050 then
     Result := ASN1EncodeGeneralizedTime(A)
   else
     Result := ASN1EncodeUTCTime(A);

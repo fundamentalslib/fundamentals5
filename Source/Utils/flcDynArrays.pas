@@ -5,7 +5,7 @@
 {   File version:     5.31                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -72,9 +72,13 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.28  2016/01/09                       }
-{   Delphi XE7 Win32                    5.28  2016/01/09                       }
-{   Delphi XE7 Win64                    5.28  2016/01/09                       }
+{   Delphi 7 Win32                      5.31  2019/02/24                       }
+{   Delphi XE2 Win32                    5.31  2019/03/02                       }
+{   Delphi XE2 Win64                    5.31  2019/03/02                       }
+{   Delphi XE3 Win32                    5.31  2019/03/02                       }
+{   Delphi XE3 Win64                    5.31  2019/03/02                       }
+{   Delphi XE7 Win32                    5.31  2019/03/02                       }
+{   Delphi XE7 Win64                    5.31  2019/03/02                       }
 {   Delphi 10 Win32                     5.28  2016/01/09                       }
 {   Delphi 10 Win64                     5.28  2016/01/09                       }
 {   FreePascal 3.0.0 Win32              5.29  2016/04/16                       }

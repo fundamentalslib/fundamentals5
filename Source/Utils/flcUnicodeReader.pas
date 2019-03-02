@@ -5,7 +5,7 @@
 {   File version:     5.09                                                     }
 {   Description:      Unicode reader class                                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2002-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2002-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -46,11 +46,15 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   FreePascal 2 Win32 i386                                                    }
-{   FreePascal 2 Linux i386                                                    }
-{   Delphi 7 Win32                      5.09  2016/01/09                       }
+{   Delphi 7 Win32                      5.09  2019/02/24                       }
+{   Delphi XE2 Win32                    5.09  2019/03/02                       }
+{   Delphi XE2 Win64                    5.09  2019/03/02                       }
+{   Delphi XE3 Win32                    5.09  2019/03/02                       }
+{   Delphi XE3 Win64                    5.09  2019/03/02                       }
 {   Delphi XE7 Win32                    5.09  2016/01/09                       }
 {   Delphi XE7 Win64                    5.09  2016/01/09                       }
+{   FreePascal 2 Linux i386                                                    }
+{   FreePascal 3.0.4 Win32              5.09  2019/02/24                       }
 {                                                                              }
 {******************************************************************************}
 

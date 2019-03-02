@@ -66,9 +66,12 @@
 {   Delphi 2006 Win32                   4.14  2011/09/27                       }
 {   Delphi 2007 Win32                   4.14  2011/09/27                       }
 {   Delphi 2009 Win32                   4.14  2011/09/27                       }
-{   Delphi XE2 Win32                    4.15  2014/04/23                       }
-{   Delphi XE7 Win32                    5.18  2016/01/09                       }
-{   Delphi XE7 Win64                    5.18  2016/01/09                       }
+{   Delphi XE2 Win32                    5.21  2019/03/02                       }
+{   Delphi XE2 Win64                    5.21  2019/03/02                       }
+{   Delphi XE6 Win32                    5.21  2019/03/02                       }
+{   Delphi XE6 Win64                    5.21  2019/03/02                       }
+{   Delphi XE7 Win32                    5.21  2019/03/02                       }
+{   Delphi XE7 Win64                    5.21  2019/03/02                       }
 {   Delphi 10 Win32                     5.18  2016/01/09                       }
 {   Delphi 10 Win64                     5.18  2016/01/09                       }
 {   Delphi 10.2 Win32                   5.19  2018/07/17                       }

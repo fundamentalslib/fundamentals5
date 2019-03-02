@@ -78,27 +78,6 @@ type
 
 
 {                                                                              }
-{ Length                                                                       }
-{                                                                              }
-function  StrZLenA(const S: Pointer): Integer;
-function  StrZLenW(const S: PWideChar): Integer;
-function  StrZLen(const S: PChar): Integer;
-
-
-
-{                                                                              }
-{ Conversion                                                                   }
-{                                                                              }
-{$IFDEF SupportAnsiString}
-function  StrZPasA(const A: PAnsiChar): AnsiString;
-{$ENDIF}
-function  StrZPasB(const A: PByteChar): RawByteString;
-function  StrZPasU(const A: PWideChar): UnicodeString;
-function  StrZPas(const A: PChar): String;
-
-
-
-{                                                                              }
 { Match                                                                        }
 {                                                                              }
 function  StrZMatchLenA(const P: PByteChar; const M: ByteCharSet; const MaxLen: Integer = -1): Integer;
@@ -127,8 +106,6 @@ function  StrZMatchStrNoAsciiCaseBW(const P: PWideChar; const M: RawByteString):
 function  StrZMatchStrNoAsciiCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
 function  StrZMatchStrNoAsciiCase(const P: PChar; const M: String): Boolean;
 
-function  StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
-
 {$IFDEF SupportAnsiString}
 function  StrZMatchStrAsciiA(const P: PAnsiChar; const M: AnsiString; const AsciiCaseSensitive: Boolean): Boolean;
 {$ENDIF}
@@ -139,8 +116,6 @@ function  StrZMatchStrAsciiAW(const P: PWideChar; const M: AnsiString; const Asc
 function  StrZMatchStrAsciiBW(const P: PWideChar; const M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
 function  StrZMatchStrAsciiU(const P: PWideChar; const M: UnicodeString; const AsciiCaseSensitive: Boolean): Boolean;
 function  StrZMatchStrAscii(const P: PChar; const M: String; const AsciiCaseSensitive: Boolean): Boolean;
-
-function  StrZMatchStrUnicodeU(const P: PWideChar; const M: UnicodeString; const UnicodeCaseSensitive: Boolean): Boolean;
 
 
 
@@ -280,138 +255,7 @@ implementation
 uses
   { Fundamentals }
   flcUtils,
-  flcASCII,
-  flcCharSet,
-  flcUnicodeChar;
-
-
-
-{                                                                              }
-{ Length                                                                       }
-{                                                                              }
-function StrZLenA(const S: Pointer): Integer;
-var P : PByteChar;
-begin
-  if not Assigned(S) then
-    Result := 0
-  else
-    begin
-      Result := 0;
-      P := S;
-      while Ord(P^) <> 0 do
-        begin
-          Inc(Result);
-          Inc(P);
-        end;
-    end;
-end;
-
-function StrZLenW(const S: PWideChar): Integer;
-var P : PWideChar;
-begin
-  if not Assigned(S) then
-    Result := 0
-  else
-    begin
-      Result := 0;
-      P := S;
-      while P^ <> #0 do
-        begin
-          Inc(Result);
-          Inc(P);
-        end;
-    end;
-end;
-
-function StrZLen(const S: PChar): Integer;
-var P : PChar;
-begin
-  if not Assigned(S) then
-    Result := 0
-  else
-    begin
-      Result := 0;
-      P := S;
-      while P^ <> #0 do
-        begin
-          Inc(Result);
-          Inc(P);
-        end;
-    end;
-end;
-
-
-
-{                                                                              }
-{ Conversion                                                                   }
-{                                                                              }
-{$IFDEF SupportAnsiString}
-function StrZPasA(const A: PAnsiChar): AnsiString;
-var I, L : Integer;
-    P : PAnsiChar;
-begin
-  L := StrZLenA(A);
-  SetLength(Result, L);
-  if L = 0 then
-    exit;
-  I := 0;
-  P := A;
-  while I < L do
-    begin
-      Result[I + 1] := P^;
-      Inc(I);
-      Inc(P);
-    end;
-end;
-{$ENDIF}
-
-function StrZPasB(const A: PByteChar): RawByteString;
-var I, L : Integer;
-    P : PByteChar;
-begin
-  L := StrZLenA(A);
-  SetLength(Result, L);
-  if L = 0 then
-    exit;
-  I := 0;
-  P := A;
-  while I < L do
-    begin
-      Result[I + 1] := P^;
-      Inc(I);
-      Inc(P);
-    end;
-end;
-
-function StrZPasU(const A: PWideChar): UnicodeString;
-var I, L : Integer;
-begin
-  L := StrZLenW(A);
-  SetLength(Result, L);
-  if L = 0 then
-    exit;
-  I := 0;
-  while I < L do
-    begin
-      Result[I + 1] := A[I];
-      Inc(I);
-    end;
-end;
-
-function StrZPas(const A: PChar): String;
-var I, L : Integer;
-begin
-  L := StrZLen(A);
-  SetLength(Result, L);
-  if L = 0 then
-    exit;
-  I := 0;
-  while I < L do
-    begin
-      Result[I + 1] := A[I];
-      Inc(I);
-    end;
-end;
+  flcASCII;
 
 
 
@@ -941,39 +785,6 @@ begin
   Result := True;
 end;
 
-function StrZMatchStrNoUnicodeCaseU(const P: PWideChar; const M: UnicodeString): Boolean;
-var T, Q : PWideChar;
-    I, L : Integer;
-    C, D : WideChar;
-begin
-  L := Length(M);
-  if L = 0 then
-    begin
-      Result := False;
-      exit;
-    end;
-  T := P;
-  Q := Pointer(M);
-  for I := 1 to L do
-    begin
-      C := T^;
-      if C = #0 then
-        begin
-          Result := False;
-          exit;
-        end;
-      D := Q^;
-      if not UnicodeCharIsEqualNoCase(C, D) then
-        begin
-          Result := False;
-          exit;
-        end;
-      Inc(T);
-      Inc(Q);
-    end;
-  Result := True;
-end;
-
 {$IFDEF SupportAnsiString}
 function StrZMatchStrAsciiA(const P: PAnsiChar; const M: AnsiString;
     const AsciiCaseSensitive: Boolean): Boolean;
@@ -1029,14 +840,6 @@ begin
     Result := StrZMatchStr(P, M)
   else
     Result := StrZMatchStrNoAsciiCase(P, M);
-end;
-
-function StrZMatchStrUnicodeU(const P: PWideChar; const M: UnicodeString; const UnicodeCaseSensitive: Boolean): Boolean;
-begin
-  if UnicodeCaseSensitive then
-    Result := StrZMatchStrU(P, M)
-  else
-    Result := StrZMatchStrNoUnicodeCaseU(P, M);
 end;
 
 

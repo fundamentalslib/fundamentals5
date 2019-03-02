@@ -5,7 +5,7 @@
 {   File version:     5.22                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -61,14 +61,20 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.19  2016/01/09                       }
-{   Delphi XE7 Win32                    5.19  2016/01/09                       }
+{   Delphi 7 Win32                      5.22  2019/02/24                       }
+{   Delphi XE2 Win32                    5.22  2019/03/02                       }
+{   Delphi XE2 Win64                    5.22  2019/03/02                       }
+{   Delphi XE3 Win32                    5.22  2019/03/02                       }
+{   Delphi XE3 Win64                    5.22  2019/03/02                       }
+{   Delphi XE6 Win32                    5.22  2019/03/02                       }
+{   Delphi XE6 Win64                    5.22  2019/03/02                       }
+{   Delphi XE7 Win32                    5.22  2019/03/02                       }
+{   Delphi XE7 Win64                    5.22  2019/03/02                       }
 {   Delphi 10 Win32                     5.19  2016/01/09                       }
 {   Delphi 10.2 Win32                   5.21  2018/07/17                       }
 {   Delphi 10.2 Win64                   5.21  2018/07/17                       }
 {   Delphi 10.2 Linux64                 5.21  2018/07/17                       }
-{   FreePascal 2 Win32 i386                                                    }
-{   FreePascal 2 Linux i386                                                    }
+{   FreePascal 3.0.4 Win32              5.22  2019/02/24                       }
 {                                                                              }
 { Definitions:                                                                 }
 {                                                                              }

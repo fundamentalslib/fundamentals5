@@ -5,7 +5,7 @@
 {   File version:     5.10                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -50,7 +50,7 @@
 { Supported compilers:                                                         }
 {                                                                              }
 {   Delphi 5 Win32                      4.08  2015/03/31                       }
-{   Delphi 7 Win32                      4.08  2015/03/31                       }
+{   Delphi 7 Win32                      5.10  2019/02/24                       }
 {   Delphi XE7 Win32                    5.09  2016/01/09                       }
 {   Delphi XE7 Win64                    5.09  2016/01/09                       }
 {   Delphi 10 Win32                     5.09  2016/01/09                       }

@@ -41,6 +41,14 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
+{   Delphi XE2 Win32                    5.04  2019/03/02                       }
+{   Delphi XE2 Win64                    5.04  2019/03/02                       }
+{   Delphi XE3 Win32                    5.04  2019/03/02                       }
+{   Delphi XE3 Win64                    5.04  2019/03/02                       }
+{   Delphi XE6 Win32                    5.04  2019/03/02                       }
+{   Delphi XE6 Win64                    5.04  2019/03/02                       }
+{   Delphi XE7 Win32                    5.04  2019/03/02                       }
+{   Delphi XE7 Win64                    5.04  2019/03/02                       }
 {   Delphi 10 Win32                     5.02  2017/10/24                       }
 {                                                                              }
 { Notes:                                                                       }

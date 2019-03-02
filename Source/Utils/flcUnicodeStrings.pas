@@ -50,6 +50,9 @@ unit flcUnicodeStrings;
 
 interface
 
+uses
+  flcStdTypes;
+
 
 
 function  CharCompareNoUnicodeCaseW(const A, B: WideChar): Integer;

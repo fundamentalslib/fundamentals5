@@ -1,10 +1,10 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.17                                                     }
+{   File version:     5.18                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -50,11 +50,18 @@
 {   2016/01/10  5.15  Bug fix in 32-bit assembly routine.                      }
 {   2018/07/17  5.16  Word32/Int32 changes.                                    }
 {   2018/08/12  5.17  String type changes.                                     }
+{   2019/02/24  5.18  Compilable with Delphi 7.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    5.15  2016/01/10                       }
-{   Delphi XE7 Win64                    5.15  2016/01/10                       }
+{   Delphi 7 Win32                      5.18  2019/02/24                       }
+{   Delphi XE2 Win32                    5.18  2019/03/02                       }
+{   Delphi XE2 Win64                    5.18  2019/03/02                       }
+{   Delphi XE3 Win32                    5.18  2019/03/02                       }
+{   Delphi XE3 Win64                    5.18  2019/03/02                       }
+{   Delphi XE7 Win32                    5.18  2019/03/02                       }
+{   Delphi XE7 Win64                    5.18  2019/03/02                       }
+{   FreePascal 3.0.4 Win32              5.18  2019/02/24                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -1831,6 +1838,12 @@ begin
 end;
 {$ENDIF}
 {$IFNDEF OPT_C_ON}{$C-}{$ENDIF}
+
+
+
+{$IFDEF DELPHI7_DOWN}
+  {$Q-}
+{$ENDIF}
 
 
 

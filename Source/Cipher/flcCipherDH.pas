@@ -54,7 +54,7 @@
 {   2016/01/07  0.04  Improvements and tests (KM, KEK and generation).         }
 {   2016/01/08  0.05  Secure random.                                           }
 {   2016/01/09  5.06  Revised for Fundamentals 5.                              }
-{   2015/01/29  5.07  Well known groups, tests and fixes.                      }
+{   2016/01/29  5.07  Well known groups, tests and fixes.                      }
 {   2018/07/17  5.08  Types changes.                                           }
 {                                                                              }
 { Todo:                                                                        }

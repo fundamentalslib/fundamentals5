@@ -1003,7 +1003,6 @@
 {$ENDIF}
 
 {$IFDEF DELPHIXE4_UP}
-  {$DEFINE SupportUTF8Char}
   {$IFDEF IOS}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
@@ -1027,6 +1026,10 @@
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHI10_UP}
+  {$DEFINE SupportUTF8Char}
 {$ENDIF}
 
 

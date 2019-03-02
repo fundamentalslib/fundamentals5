@@ -870,7 +870,6 @@ function RSAEncrypt(
          var CipherBuf; const CipherBufSize: Integer): Integer;
 var EncodedMsg, CipherMsg : HugeWord;
 begin
-  Result := 0;
   // validate
   if (PublicKey.KeySize <= 0) or
      (PublicKey.KeySize mod HugeWordElementBits <> 0) then
@@ -1173,7 +1172,6 @@ function RSADecrypt(
          var PlainBuf; const PlainBufSize: Integer): Integer;
 var CipherMsg, EncodedMsg : HugeWord;
 begin
-  Result := 0;
   // validate
   if (PrivateKey.KeySize <= 0) or
      (PrivateKey.KeySize mod HugeWordElementBits <> 0) then
@@ -1522,7 +1520,7 @@ end;
 {$IFDEF OS_WIN}
 {$IFDEF CIPHER_PROFILE}
 procedure Profile;
-const KeySize = 1024 + 64;
+const KeySize = 2048 + 64;
 var T : Word32;
     Pri : TRSAPrivateKey;
     Pub : TRSAPublicKey;
@@ -1551,13 +1549,13 @@ begin
   Enc := RSAEncryptStr(rsaetPKCS1, Pub, Pln);
   Assert(Enc <> Pln);
   T := GetTickCount - T;
-  Writeln('EncryptStr: ', T / 1000.0:0:3, 'ms');
+  Writeln('EncryptStr: ', T, 'ms');
 
   T := GetTickCount;
   Dec := RSADecryptStr(rsaetPKCS1, Pri, Enc);
   Assert(Dec = Pln);
   T := GetTickCount - T;
-  Writeln('DecryptStr: ', T / 1000.0:0:3, 'ms');
+  Writeln('DecryptStr: ', T, 'ms');
 
   RSAPublicKeyFinalise(Pub);
   RSAPrivateKeyFinalise(Pri);
