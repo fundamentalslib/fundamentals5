@@ -334,7 +334,7 @@ procedure Swap(var X, Y: Int32); overload;
 procedure Swap(var X, Y: Int64); overload;
 procedure Swap(var X, Y: Single); overload;
 procedure Swap(var X, Y: Double); overload;
-procedure Swap(var X, Y: Extended); overload;
+procedure SwapExt(var X, Y: Extended); overload;
 procedure Swap(var X, Y: Currency); overload;
 {$IFDEF SupportAnsiString}
 procedure SwapA(var X, Y: AnsiString); overload;
@@ -1734,7 +1734,7 @@ begin
   Y := F;
 end;
 
-procedure Swap(var X, Y: Extended);
+procedure SwapExt(var X, Y: Extended);
 var F : Extended;
 begin
   F := X;

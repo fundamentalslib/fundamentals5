@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.31                                                     }
+{   File version:     5.32                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
@@ -69,6 +69,7 @@
 {   2016/04/16  5.29  Changes for FreePascal 3.0.0.                            }
 {   2018/07/17  5.30  Int32/Word32 functions.                                  }
 {   2018/08/12  5.31  String type changes.                                     }
+{   2019/03/22  5.32  FreePascal 3.04 Win64 changes.                           }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -81,7 +82,7 @@
 {   Delphi XE7 Win64                    5.31  2019/03/02                       }
 {   Delphi 10 Win32                     5.28  2016/01/09                       }
 {   Delphi 10 Win64                     5.28  2016/01/09                       }
-{   FreePascal 3.0.0 Win32              5.29  2016/04/16                       }
+{   FreePascal 3.0.4 Win64              5.32  2019/03/22                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -5734,7 +5735,7 @@ var I, L : Integer;
 begin
   L := Length(V);
   for I := 1 to L div 2 do
-    Swap(V[I - 1], V[L - I]);
+    SwapExt(V[I - 1], V[L - I]);
 end;
 
 

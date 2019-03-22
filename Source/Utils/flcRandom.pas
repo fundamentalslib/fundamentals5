@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcRandom.pas                                            }
-{   File version:     5.18                                                     }
+{   File version:     5.19                                                     }
 {   Description:      Random number functions                                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -52,6 +52,7 @@
 {   2015/05/06  4.16  Prevent mwcRandom32 overflow error.                      }
 {   2016/01/09  5.17  Revised for Fundamentals 5.                              }
 {   2018/08/12  5.18  String type changes.                                     }
+{   2019/03/22  5.19  FreePascal 3.04 Win64 changes.                           }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -423,7 +424,7 @@ begin
   F := GetCurrentThreadID;
   S := S xor F;
   H := GetCurrentThread;
-  S := S xor H;
+  S := S xor Int64(H);
   GetThreadTimes(H, T1, T2, T3, T4);
   A := T1.dwLowDateTime  xor T2.dwLowDateTime  xor T3.dwLowDateTime  xor T4.dwLowDateTime;
   B := T1.dwHighDateTime xor T2.dwHighDateTime xor T3.dwHighDateTime xor T4.dwHighDateTime;
@@ -433,7 +434,7 @@ begin
   F := GetCurrentProcessId;
   S := S xor F;
   H := GetCurrentProcess;
-  S := S xor H;
+  S := S xor Int64(H);
   GetProcessTimes(H, T1, T2, T3, T4);
   A := T1.dwLowDateTime  xor T2.dwLowDateTime  xor T3.dwLowDateTime  xor T4.dwLowDateTime;
   B := T1.dwHighDateTime xor T2.dwHighDateTime xor T3.dwHighDateTime xor T4.dwHighDateTime;
