@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcWinUtils.pas                                          }
-{   File version:     5.13                                                     }
+{   File version:     5.14                                                     }
 {   Description:      MS Windows utility functions                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -47,6 +47,7 @@
 {   2016/01/21  4.11  String changes.                                          }
 {   2016/01/22  5.12  Revised for Fundamentals 5.                              }
 {   2018/08/12  5.13  String type changes.                                     }
+{   2019/03/22  5.14  Changes for FreePascal 3.0.4.                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -389,7 +390,9 @@ function  LoadLibraryU(const LibraryName: UnicodeString): TLibraryHandle;
 function  LoadLibrary(const LibraryName: String): TLibraryHandle; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  GetProcAddressA(const Handle: TLibraryHandle; const ProcName: AnsiString): Pointer;
+{$IFNDEF FREEPASCAL}
 function  GetProcAddressU(const Handle: TLibraryHandle; const ProcName: UnicodeString): Pointer;
+{$ENDIF}
 function  GetProcAddress(const Handle: TLibraryHandle; const ProcName: String): Pointer; {$IFDEF UseInline}inline;{$ENDIF}
 
 procedure FreeLibrary(const Handle: TLibraryHandle);
@@ -2026,22 +2029,18 @@ end;
 type
   TStartupInfoA = _STARTUPINFOA;
 {$ENDIF}
-{$IFDEF FPC}
-type
-  TStartupInfoA = STARTUPINFO;
-{$ENDIF}
 
 const
   WINEXECUTE_MAXCMDBUFLEN = 1024;
 
 function WinExecuteA(const ExeName, Params: AnsiString; const ShowWin: Word;
     const WaitTime: Integer; const DefaultPath: AnsiString): LongWord;
-var StartUpInfo : TStartupInfoA;
-    ProcessInfo	: TProcessInformation;
-    Cmd         : AnsiString;
-    CmdBuf      : array[0..WINEXECUTE_MAXCMDBUFLEN + 2] of AnsiChar;
-    DefDir      : PAnsiChar;
-    TimeOut     : LongWord;
+var LStartUpInfo : TStartupInfoA;
+    LProcessInfo : TProcessInformation;
+    Cmd          : AnsiString;
+    CmdBuf       : array[0..WINEXECUTE_MAXCMDBUFLEN + 2] of AnsiChar;
+    DefDir       : PAnsiChar;
+    TimeOut      : LongWord;
 begin
   if ExeName = '' then
     raise EOSError.Create(SInvalidParameter);
@@ -2055,22 +2054,22 @@ begin
       if ExpandEnvironmentStringsA(PAnsiChar(Cmd), @CmdBuf, WINEXECUTE_MAXCMDBUFLEN) > 0 then
         Cmd := StrZPasA(PAnsiChar(@CmdBuf));
     end;
-  FillChar(StartUpInfo, SizeOf(StartUpInfo), 0);
-  StartUpInfo.cb := SizeOf(StartUpInfo);
-  StartUpInfo.dwFlags := STARTF_USESHOWWINDOW;
-  StartUpInfo.wShowWindow := ShowWin;
+  FillChar(LStartUpInfo, SizeOf(LStartUpInfo), 0);
+  LStartUpInfo.cb := SizeOf(LStartUpInfo);
+  LStartUpInfo.dwFlags := STARTF_USESHOWWINDOW;
+  LStartUpInfo.wShowWindow := ShowWin;
   if DefaultPath = '' then
     DefDir := nil
   else
     DefDir := PAnsiChar(DefaultPath);
-  FillChar(ProcessInfo, Sizeof(ProcessInfo), 0);
+  FillChar(LProcessInfo, Sizeof(LProcessInfo), 0);
   if not CreateProcessA(
         nil, PAnsiChar(Cmd), nil, nil, False,
         CREATE_NEW_CONSOLE or NORMAL_PRIORITY_CLASS, nil, DefDir,
-        StartUpInfo, ProcessInfo) then
+        LStartUpInfo, LProcessInfo) then
     RaiseLastWinError;
-  if ProcessInfo.hThread <> 0 then
-    CloseHandle(ProcessInfo.hThread);
+  if LProcessInfo.hThread <> 0 then
+    CloseHandle(LProcessInfo.hThread);
   if WaitTime < 0 then
     TimeOut := INFINITE
   else
@@ -2078,16 +2077,16 @@ begin
   if WaitTime = 0 then
     Result := 0
   else
-    if Windows.WaitForSingleObject(ProcessInfo.hProcess, TimeOut) = WAIT_TIMEOUT then
+    if Windows.WaitForSingleObject(LProcessInfo.hProcess, TimeOut) = WAIT_TIMEOUT then
       begin
-        TerminateProcess(ProcessInfo.hProcess, 1);
-        CloseHandle(ProcessInfo.hProcess);
+        TerminateProcess(LProcessInfo.hProcess, 1);
+        CloseHandle(LProcessInfo.hProcess);
         raise EOSError.Create(SProcessTimedOut)
       end
     else
       begin
-        GetExitCodeProcess(ProcessInfo.hProcess, Result);
-        CloseHandle(ProcessInfo.hProcess);
+        GetExitCodeProcess(LProcessInfo.hProcess, Result);
+        CloseHandle(LProcessInfo.hProcess);
       end;
 end;
 
@@ -2211,17 +2210,23 @@ begin
   Result := Windows.GetProcAddress(Cardinal(Handle), LPCSTR(PAnsiChar(ProcName)));
 end;
 
+{$IFNDEF FREEPASCAL}
 function GetProcAddressU(const Handle: TLibraryHandle; const ProcName: UnicodeString): Pointer;
 begin
   Result := Windows.GetProcAddress(Cardinal(Handle), LPCWSTR(PWideChar(ProcName)));
 end;
+{$ENDIF}
 
 function GetProcAddress(const Handle: TLibraryHandle; const ProcName: String): Pointer;
 begin
+  {$IFDEF FREEPASCAL}
+  Result := GetProcAddressA(Handle, ProcName);
+  {$ELSE}
   {$IFDEF StringIsUnicode}
   Result := GetProcAddressU(Handle, ProcName);
   {$ELSE}
   Result := GetProcAddressA(Handle, ProcName);
+  {$ENDIF}
   {$ENDIF}
 end;
 
@@ -2271,7 +2276,11 @@ end;
 function TDynamicLibrary.GetProcAddressU(const ProcName: UnicodeString): Pointer;
 begin
   Assert(FHandle <> 0);
+  {$IFDEF FREEPASCAL}
+  Result := flcWinUtils.GetProcAddressA(FHandle, ProcName);
+  {$ELSE}
   Result := flcWinUtils.GetProcAddressU(FHandle, ProcName);
+  {$ENDIF}
 end;
 
 

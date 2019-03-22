@@ -1201,6 +1201,10 @@
   {$DEFINE SupportUnicodeString}
   {$DEFINE SupportRawByteString}
   {$DEFINE SupportStringRefCount}
+
+  {$IFDEF CPUX86_64}
+    {$DEFINE ExtendedIsDouble}
+  {$ENDIF}
 {$ENDIF}
 
 
