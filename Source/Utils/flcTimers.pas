@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTimers.pas                                            }
-{   File version:     5.11                                                     }
+{   File version:     5.12                                                     }
 {   Description:      Timer functions                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -45,6 +45,7 @@
 {   2015/01/16  4.09  Added GetTickAccuracy.                                   }
 {   2015/01/17  5.10  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.11  Word32 changes.                                          }
+{   2019/04/02  5.12  Compilable with Delphi 10.2 Linux64.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -53,6 +54,7 @@
 {   Delphi 7 Win32                      5.11  2019/02/24                       }
 {   Delphi XE7 Win32                    5.10  2016/01/17                       }
 {   Delphi XE7 Win64                    5.10  2016/01/17                       }
+{   Delphi 10.2 Linux64                 5.12  2019/04/02                       }
 {   FreePascal 3.0.4 Win32              5.11  2019/02/24                       }
 {   FreePascal 2.6.2 Linux i386                                                }
 {   FreePascal 2.4.0 OSX x86-64                                                }
@@ -66,11 +68,6 @@
   {$DEFINE TIMERS_TEST}
 {$ENDIF}
 {$ENDIF}
-
-// Define TIMERS_TICK_USE_DATETIME to give higher precision to Tick timer on
-// some Windows platforms
-//
-{.DEFINE TIMERS_TICK_USE_DATETIME}
 
 unit flcTimers;
 
@@ -173,11 +170,18 @@ uses
   Windows;
 {$ENDIF}
 
-{$IFDEF OS_UNIX}
+{$IFDEF UNIX}
 {$IFDEF FREEPASCAL}
 uses
   BaseUnix,
   Unix;
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
+uses
+  Posix.SysTime;
 {$ENDIF}
 {$ENDIF}
 
@@ -187,27 +191,13 @@ uses
 { Tick timer                                                                   }
 {                                                                              }
 
-{$IFDEF TIMERS_TICK_USE_DATETIME}
-  {$DEFINE GetTickDateTime}
-{$ELSE}
-  {$IFDEF WindowsPlatform}
-    {$DEFINE GetTickWindows}
-  {$ELSE}
-    {$IFDEF UNIX}
-      {$DEFINE GetTickUnix}
-    {$ELSE}
-      {$DEFINE GetTickDateTime}
-    {$ENDIF}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF GetTickWindows}
+{$IFDEF WindowsPlatform}
 function GetTick: Word32;
 begin
   Result := GetTickCount;
 end;
 {$ELSE}
-{$IFDEF GetTickUnix}
+{$IFDEF POSIX}
 function GetTick: Word32;
 begin
   Result := Word32(DateTimeToTimeStamp(Now).Time);
@@ -339,8 +329,8 @@ end;
 {$ENDIF}
 
 {$IFDEF UNIX}
-{$DEFINE Defined_GetHighPrecisionCounter}
 {$IFDEF FREEPASCAL}
+{$DEFINE Defined_GetHighPrecisionCounter}
 const
   HighPrecisionMillisecondFactor = 1000;
   HighPrecisionMicrosecondFactor = 1;
@@ -353,9 +343,18 @@ begin
   fpGetTimeOfDay(@TV, TZ);
   Result := Int64(TV.tv_sec) * 1000000 + Int64(TV.tv_usec);
 end;
-{$ELSE}
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF POSIX}
+{$IFDEF DELPHI}
+{$DEFINE Defined_GetHighPrecisionCounter}
+const
+  HighPrecisionMillisecondFactor = 1000;
+  HighPrecisionMicrosecondFactor = 1;
+
 function GetHighPrecisionCounter: Int64;
-var T : Ttimeval;
+var T : timeval;
 begin
   GetTimeOfDay(T, nil);
   Result := Int64(T.tv_sec) * 1000000 + Int64(T.tv_usec);
@@ -372,16 +371,6 @@ const
 function GetHighPrecisionCounter: Int64;
 begin
   Result := Trunc(Frac(Now) * 24.0 * 60.0 * 60.0 * 1000.0 * 1000.0);
-end;
-{$ENDIF}
-
-{$IFNDEF Defined_GetHighPrecisionCounter}
-const
-  SHighResTimerNotAvailable = 'High resolution timer not available';
-
-function GetHighPrecisionCounter: Int64;
-begin
-  raise ETimers.Create(SHighResTimerNotAvailable);
 end;
 {$ENDIF}
 

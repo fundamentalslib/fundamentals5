@@ -93,9 +93,9 @@ uses
   {$IFDEF MSWIN}
   Windows,
   {$ENDIF}
-  {$IFDEF UNIX}
+  {$IFDEF FREEPASCAL}{$IFDEF UNIX}
   BaseUnix,
-  {$ENDIF}
+  {$ENDIF}{$ENDIF}
 
   { Fundamentals }
   flcStdTypes;
@@ -1016,6 +1016,10 @@ procedure Test;
 implementation
 
 uses
+  {$IFDEF DELPHI}{$IFDEF POSIX}
+  Posix.Unistd,
+  {$ENDIF}{$ENDIF}
+
   { Fundamentals }
   flcUtils,
   flcSysUtils;
@@ -3125,9 +3129,7 @@ begin
   if fpftruncate(FHandle, Size) <> 0 then
     raise EFileWriter.CreateFmt(SFileResizeError, [GetLastOSErrorMessage]);
   {$ELSE}
-  SetPosition(Size);
-  if libc.ftruncate(FHandle, Size) <> 0 then
-    raise EFileWriter.CreateFmt(SFileResizeError, [GetLastOSErrorMessage]);
+  raise EFileWriter.Create('TruncateFile not implemented');
   {$ENDIF}
   {$ELSE}
   SetPosition(Size);

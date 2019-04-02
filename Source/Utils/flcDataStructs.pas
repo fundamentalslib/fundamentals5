@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.39                                                     }
+{   File version:     5.40                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
@@ -166,6 +166,7 @@
 {   2016/01/16  5.37  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.38  Int32/Word32 arrays.                                     }
 {   2018/08/12  5.39  String type changes.                                     }
+{   2019/04/02  5.40  Integer/Cardinal array changes.                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -3697,7 +3698,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -3751,7 +3752,7 @@ type
   TLongIntDictionaryA = class(TGeneralLongIntDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): LongInt; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -3783,7 +3784,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -3837,7 +3838,7 @@ type
   TLongIntDictionaryB = class(TGeneralLongIntDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): LongInt; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -3868,7 +3869,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -3922,7 +3923,7 @@ type
   TLongIntDictionaryU = class(TGeneralLongIntDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): LongInt; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -3953,7 +3954,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4007,7 +4008,7 @@ type
   TLongIntDictionary = class(TGeneralLongIntDictionary)
   protected
     function  GetItem(const Key: String): LongInt; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4054,7 +4055,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4108,7 +4109,7 @@ type
   TLongWordDictionaryA = class(TGeneralLongWordDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): LongWord; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4140,7 +4141,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4194,7 +4195,7 @@ type
   TLongWordDictionaryB = class(TGeneralLongWordDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): LongWord; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4225,7 +4226,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4279,7 +4280,7 @@ type
   TLongWordDictionaryU = class(TGeneralLongWordDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): LongWord; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4310,7 +4311,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4364,7 +4365,7 @@ type
   TLongWordDictionary = class(TGeneralLongWordDictionary)
   protected
     function  GetItem(const Key: String): LongWord; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4413,7 +4414,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4467,7 +4468,7 @@ type
   TInt64DictionaryA = class(TGeneralInt64DictionaryA)
   protected
     function  GetItem(const Key: AnsiString): Int64; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4499,7 +4500,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4553,7 +4554,7 @@ type
   TInt64DictionaryB = class(TGeneralInt64DictionaryB)
   protected
     function  GetItem(const Key: RawByteString): Int64; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4584,7 +4585,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4638,7 +4639,7 @@ type
   TInt64DictionaryU = class(TGeneralInt64DictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): Int64; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4669,7 +4670,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4723,7 +4724,7 @@ type
   TInt64Dictionary = class(TGeneralInt64Dictionary)
   protected
     function  GetItem(const Key: String): Int64; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4755,7 +4756,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4809,7 +4810,7 @@ type
   TSingleDictionaryA = class(TGeneralSingleDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): Single; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4841,7 +4842,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4895,7 +4896,7 @@ type
   TSingleDictionaryB = class(TGeneralSingleDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): Single; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -4926,7 +4927,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -4980,7 +4981,7 @@ type
   TSingleDictionaryU = class(TGeneralSingleDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): Single; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5011,7 +5012,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5065,7 +5066,7 @@ type
   TSingleDictionary = class(TGeneralSingleDictionary)
   protected
     function  GetItem(const Key: String): Single; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5097,7 +5098,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5151,7 +5152,7 @@ type
   TDoubleDictionaryA = class(TGeneralDoubleDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): Double; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5183,7 +5184,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5237,7 +5238,7 @@ type
   TDoubleDictionaryB = class(TGeneralDoubleDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): Double; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5268,7 +5269,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5322,7 +5323,7 @@ type
   TDoubleDictionaryU = class(TGeneralDoubleDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): Double; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5353,7 +5354,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5407,7 +5408,7 @@ type
   TDoubleDictionary = class(TGeneralDoubleDictionary)
   protected
     function  GetItem(const Key: String): Double; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5439,7 +5440,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5493,7 +5494,7 @@ type
   TExtendedDictionaryA = class(TGeneralExtendedDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): Extended; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5525,7 +5526,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5579,7 +5580,7 @@ type
   TExtendedDictionaryB = class(TGeneralExtendedDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): Extended; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5610,7 +5611,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5664,7 +5665,7 @@ type
   TExtendedDictionaryU = class(TGeneralExtendedDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): Extended; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5695,7 +5696,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5749,7 +5750,7 @@ type
   TExtendedDictionary = class(TGeneralExtendedDictionary)
   protected
     function  GetItem(const Key: String): Extended; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5781,7 +5782,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5835,7 +5836,7 @@ type
   TAnsiStringDictionaryA = class(TGeneralAnsiStringDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): AnsiString; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5866,7 +5867,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -5920,7 +5921,7 @@ type
   TAnsiStringDictionaryU = class(TGeneralAnsiStringDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): AnsiString; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -5951,7 +5952,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6005,7 +6006,7 @@ type
   TAnsiStringDictionary = class(TGeneralAnsiStringDictionary)
   protected
     function  GetItem(const Key: String): AnsiString; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6038,7 +6039,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6092,7 +6093,7 @@ type
   TRawByteStringDictionaryA = class(TGeneralRawByteStringDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): RawByteString; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6124,7 +6125,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6178,7 +6179,7 @@ type
   TRawByteStringDictionaryB = class(TGeneralRawByteStringDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): RawByteString; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6209,7 +6210,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6263,7 +6264,7 @@ type
   TRawByteStringDictionaryU = class(TGeneralRawByteStringDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): RawByteString; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6294,7 +6295,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6348,7 +6349,7 @@ type
   TRawByteStringDictionary = class(TGeneralRawByteStringDictionary)
   protected
     function  GetItem(const Key: String): RawByteString; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6380,7 +6381,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6434,7 +6435,7 @@ type
   TUnicodeStringDictionaryA = class(TGeneralUnicodeStringDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): UnicodeString; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6466,7 +6467,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6520,7 +6521,7 @@ type
   TUnicodeStringDictionaryU = class(TGeneralUnicodeStringDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): UnicodeString; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6551,7 +6552,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6605,7 +6606,7 @@ type
   TUnicodeStringDictionary = class(TGeneralUnicodeStringDictionary)
   protected
     function  GetItem(const Key: String): UnicodeString; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6637,7 +6638,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6691,7 +6692,7 @@ type
   TStringDictionaryA = class(TGeneralStringDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): String; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6723,7 +6724,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6777,7 +6778,7 @@ type
   TStringDictionaryU = class(TGeneralStringDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): String; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6808,7 +6809,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6862,7 +6863,7 @@ type
   TStringDictionary = class(TGeneralStringDictionary)
   protected
     function  GetItem(const Key: String): String; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6894,7 +6895,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -6948,7 +6949,7 @@ type
   TPointerDictionaryA = class(TGeneralPointerDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): Pointer; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -6980,7 +6981,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7034,7 +7035,7 @@ type
   TPointerDictionaryB = class(TGeneralPointerDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): Pointer; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7065,7 +7066,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7119,7 +7120,7 @@ type
   TPointerDictionaryU = class(TGeneralPointerDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): Pointer; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7150,7 +7151,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7204,7 +7205,7 @@ type
   TPointerDictionary = class(TGeneralPointerDictionary)
   protected
     function  GetItem(const Key: String): Pointer; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7236,7 +7237,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7290,7 +7291,7 @@ type
   TInterfaceDictionaryA = class(TGeneralInterfaceDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): IInterface; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7322,7 +7323,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7376,7 +7377,7 @@ type
   TInterfaceDictionaryU = class(TGeneralInterfaceDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): IInterface; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7407,7 +7408,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7461,7 +7462,7 @@ type
   TInterfaceDictionary = class(TGeneralInterfaceDictionary)
   protected
     function  GetItem(const Key: String): IInterface; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7493,7 +7494,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7555,7 +7556,7 @@ type
   TObjectDictionaryA = class(TGeneralObjectDictionaryA)
   protected
     function  GetItem(const Key: AnsiString): TObject; override;
-    function  LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+    function  LocateKey(const Key: AnsiString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7588,7 +7589,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7650,7 +7651,7 @@ type
   TObjectDictionaryB = class(TGeneralObjectDictionaryB)
   protected
     function  GetItem(const Key: RawByteString): TObject; override;
-    function  LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+    function  LocateKey(const Key: RawByteString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7682,7 +7683,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7744,7 +7745,7 @@ type
   TObjectDictionaryU = class(TGeneralObjectDictionaryU)
   protected
     function  GetItem(const Key: UnicodeString): TObject; override;
-    function  LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+    function  LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -7776,7 +7777,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -7838,7 +7839,7 @@ type
   TObjectDictionary = class(TGeneralObjectDictionary)
   protected
     function  GetItem(const Key: String): TObject; override;
-    function  LocateKey(const Key: String; var LookupIdx: Integer;
+    function  LocateKey(const Key: String; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
@@ -15138,7 +15139,7 @@ begin
   // Swap lookup
   if LocateItemHash(FData[Idx1], L1, I1) and
      LocateItemHash(FData[Idx2], L2, I2) then
-    Swap(FLookup[L1][I1], FLookup[L2][I2]);
+    SwapInt(FLookup[L1][I1], FLookup[L2][I2]);
   // Swap array items
   inherited ExchangeItems(Idx1, Idx2);
 end;
@@ -15322,7 +15323,7 @@ begin
   // Swap lookup
   if LocateItemHash(FData[Idx1], L1, I1) and
      LocateItemHash(FData[Idx2], L2, I2) then
-    Swap(FLookup[L1][I1], FLookup[L2][I2]);
+    SwapInt(FLookup[L1][I1], FLookup[L2][I2]);
   // Swap array items
   inherited ExchangeItems(Idx1, Idx2);
 end;
@@ -17827,9 +17828,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongIntDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralLongIntDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -17852,7 +17854,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryA.Add(const Key: AnsiString; const Value: LongInt);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -17895,20 +17898,22 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongIntDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongIntDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -17929,7 +17934,7 @@ begin
 end;
 
 function TGeneralLongIntDictionaryA.LocateItem(const Key: AnsiString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -17971,7 +17976,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryA.SetItem(const Key: AnsiString; const Value: LongInt);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18041,14 +18047,15 @@ end;
 {                                                                              }
 { TLongIntDictionaryA                                                          }
 {                                                                              }
-function TLongIntDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TLongIntDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -18064,7 +18071,8 @@ begin
 end;
 
 function TLongIntDictionaryA.GetItem(const Key: AnsiString): LongInt;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18074,7 +18082,7 @@ begin
 end;
 
 function TLongIntDictionaryA.LocateItem(const Key: AnsiString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -18180,9 +18188,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongIntDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralLongIntDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -18205,7 +18214,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryB.Add(const Key: RawByteString; const Value: LongInt);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -18248,20 +18258,22 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongIntDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongIntDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -18282,7 +18294,7 @@ begin
 end;
 
 function TGeneralLongIntDictionaryB.LocateItem(const Key: RawByteString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -18324,7 +18336,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryB.SetItem(const Key: RawByteString; const Value: LongInt);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18394,14 +18407,15 @@ end;
 {                                                                              }
 { TLongIntDictionaryB                                                          }
 {                                                                              }
-function TLongIntDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TLongIntDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -18417,7 +18431,8 @@ begin
 end;
 
 function TLongIntDictionaryB.GetItem(const Key: RawByteString): LongInt;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18427,7 +18442,7 @@ begin
 end;
 
 function TLongIntDictionaryB.LocateItem(const Key: RawByteString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -18532,9 +18547,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongIntDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralLongIntDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -18557,7 +18573,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryU.Add(const Key: UnicodeString; const Value: LongInt);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -18600,20 +18617,22 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongIntDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongIntDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -18634,7 +18653,7 @@ begin
 end;
 
 function TGeneralLongIntDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -18676,7 +18695,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionaryU.SetItem(const Key: UnicodeString; const Value: LongInt);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18746,14 +18766,15 @@ end;
 {                                                                              }
 { TLongIntDictionaryU                                                          }
 {                                                                              }
-function TLongIntDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TLongIntDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -18769,7 +18790,8 @@ begin
 end;
 
 function TLongIntDictionaryU.GetItem(const Key: UnicodeString): LongInt;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -18779,7 +18801,7 @@ begin
 end;
 
 function TLongIntDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -18884,9 +18906,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongIntDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralLongIntDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -18909,7 +18932,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionary.Add(const Key: String; const Value: LongInt);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -18952,20 +18976,22 @@ begin
 end;
 
 procedure TGeneralLongIntDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongIntDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongIntDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -18986,7 +19012,7 @@ begin
 end;
 
 function TGeneralLongIntDictionary.LocateItem(const Key: String; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19028,7 +19054,8 @@ begin
 end;
 
 procedure TGeneralLongIntDictionary.SetItem(const Key: String; const Value: LongInt);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19098,14 +19125,15 @@ end;
 {                                                                              }
 { TLongIntDictionary                                                           }
 {                                                                              }
-function TLongIntDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TLongIntDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -19121,7 +19149,8 @@ begin
 end;
 
 function TLongIntDictionary.GetItem(const Key: String): LongInt;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19131,7 +19160,7 @@ begin
 end;
 
 function TLongIntDictionary.LocateItem(const Key: String; var Value: LongInt): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19237,9 +19266,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongWordDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralLongWordDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -19262,7 +19292,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryA.Add(const Key: AnsiString; const Value: LongWord);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -19305,20 +19336,22 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongWordDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongWordDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -19339,7 +19372,7 @@ begin
 end;
 
 function TGeneralLongWordDictionaryA.LocateItem(const Key: AnsiString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19381,7 +19414,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryA.SetItem(const Key: AnsiString; const Value: LongWord);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19451,14 +19485,15 @@ end;
 {                                                                              }
 { TLongWordDictionaryA                                                         }
 {                                                                              }
-function TLongWordDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TLongWordDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -19474,7 +19509,8 @@ begin
 end;
 
 function TLongWordDictionaryA.GetItem(const Key: AnsiString): LongWord;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19484,7 +19520,7 @@ begin
 end;
 
 function TLongWordDictionaryA.LocateItem(const Key: AnsiString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19590,9 +19626,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongWordDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralLongWordDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -19615,7 +19652,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryB.Add(const Key: RawByteString; const Value: LongWord);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -19658,20 +19696,22 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongWordDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongWordDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -19692,7 +19732,7 @@ begin
 end;
 
 function TGeneralLongWordDictionaryB.LocateItem(const Key: RawByteString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19734,7 +19774,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryB.SetItem(const Key: RawByteString; const Value: LongWord);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19804,14 +19845,15 @@ end;
 {                                                                              }
 { TLongWordDictionaryB                                                         }
 {                                                                              }
-function TLongWordDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TLongWordDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -19827,7 +19869,8 @@ begin
 end;
 
 function TLongWordDictionaryB.GetItem(const Key: RawByteString): LongWord;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -19837,7 +19880,7 @@ begin
 end;
 
 function TLongWordDictionaryB.LocateItem(const Key: RawByteString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -19942,9 +19985,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongWordDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralLongWordDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -19967,7 +20011,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryU.Add(const Key: UnicodeString; const Value: LongWord);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -20010,20 +20055,22 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongWordDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongWordDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -20044,7 +20091,7 @@ begin
 end;
 
 function TGeneralLongWordDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -20086,7 +20133,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionaryU.SetItem(const Key: UnicodeString; const Value: LongWord);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20156,14 +20204,15 @@ end;
 {                                                                              }
 { TLongWordDictionaryU                                                         }
 {                                                                              }
-function TLongWordDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TLongWordDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -20179,7 +20228,8 @@ begin
 end;
 
 function TLongWordDictionaryU.GetItem(const Key: UnicodeString): LongWord;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20189,7 +20239,7 @@ begin
 end;
 
 function TLongWordDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -20294,9 +20344,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralLongWordDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralLongWordDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -20319,7 +20370,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionary.Add(const Key: String; const Value: LongWord);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -20362,20 +20414,22 @@ begin
 end;
 
 procedure TGeneralLongWordDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralLongWordDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralLongWordDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -20396,7 +20450,7 @@ begin
 end;
 
 function TGeneralLongWordDictionary.LocateItem(const Key: String; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -20438,7 +20492,8 @@ begin
 end;
 
 procedure TGeneralLongWordDictionary.SetItem(const Key: String; const Value: LongWord);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20508,14 +20563,15 @@ end;
 {                                                                              }
 { TLongWordDictionary                                                          }
 {                                                                              }
-function TLongWordDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TLongWordDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -20531,7 +20587,8 @@ begin
 end;
 
 function TLongWordDictionary.GetItem(const Key: String): LongWord;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20541,7 +20598,7 @@ begin
 end;
 
 function TLongWordDictionary.LocateItem(const Key: String; var Value: LongWord): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -20647,9 +20704,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInt64DictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralInt64DictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -20672,7 +20730,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryA.Add(const Key: AnsiString; const Value: Int64);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -20715,20 +20774,22 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInt64DictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInt64DictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -20749,7 +20810,7 @@ begin
 end;
 
 function TGeneralInt64DictionaryA.LocateItem(const Key: AnsiString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -20791,7 +20852,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryA.SetItem(const Key: AnsiString; const Value: Int64);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20861,14 +20923,15 @@ end;
 {                                                                              }
 { TInt64DictionaryA                                                            }
 {                                                                              }
-function TInt64DictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TInt64DictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -20884,7 +20947,8 @@ begin
 end;
 
 function TInt64DictionaryA.GetItem(const Key: AnsiString): Int64;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -20894,7 +20958,7 @@ begin
 end;
 
 function TInt64DictionaryA.LocateItem(const Key: AnsiString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21000,9 +21064,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInt64DictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralInt64DictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -21025,7 +21090,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryB.Add(const Key: RawByteString; const Value: Int64);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -21068,20 +21134,22 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInt64DictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInt64DictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -21102,7 +21170,7 @@ begin
 end;
 
 function TGeneralInt64DictionaryB.LocateItem(const Key: RawByteString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21144,7 +21212,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryB.SetItem(const Key: RawByteString; const Value: Int64);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21214,14 +21283,15 @@ end;
 {                                                                              }
 { TInt64DictionaryB                                                            }
 {                                                                              }
-function TInt64DictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TInt64DictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -21237,7 +21307,8 @@ begin
 end;
 
 function TInt64DictionaryB.GetItem(const Key: RawByteString): Int64;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21247,7 +21318,7 @@ begin
 end;
 
 function TInt64DictionaryB.LocateItem(const Key: RawByteString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21352,9 +21423,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInt64DictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralInt64DictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -21377,7 +21449,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryU.Add(const Key: UnicodeString; const Value: Int64);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -21420,20 +21493,22 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInt64DictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInt64DictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -21454,7 +21529,7 @@ begin
 end;
 
 function TGeneralInt64DictionaryU.LocateItem(const Key: UnicodeString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21496,7 +21571,8 @@ begin
 end;
 
 procedure TGeneralInt64DictionaryU.SetItem(const Key: UnicodeString; const Value: Int64);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21566,14 +21642,15 @@ end;
 {                                                                              }
 { TInt64DictionaryU                                                            }
 {                                                                              }
-function TInt64DictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TInt64DictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -21589,7 +21666,8 @@ begin
 end;
 
 function TInt64DictionaryU.GetItem(const Key: UnicodeString): Int64;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21599,7 +21677,7 @@ begin
 end;
 
 function TInt64DictionaryU.LocateItem(const Key: UnicodeString; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21704,9 +21782,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInt64Dictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralInt64Dictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -21729,7 +21808,8 @@ begin
 end;
 
 procedure TGeneralInt64Dictionary.Add(const Key: String; const Value: Int64);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -21772,20 +21852,22 @@ begin
 end;
 
 procedure TGeneralInt64Dictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInt64Dictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInt64Dictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -21806,7 +21888,7 @@ begin
 end;
 
 function TGeneralInt64Dictionary.LocateItem(const Key: String; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -21848,7 +21930,8 @@ begin
 end;
 
 procedure TGeneralInt64Dictionary.SetItem(const Key: String; const Value: Int64);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21918,14 +22001,15 @@ end;
 {                                                                              }
 { TInt64Dictionary                                                             }
 {                                                                              }
-function TInt64Dictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TInt64Dictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -21941,7 +22025,8 @@ begin
 end;
 
 function TInt64Dictionary.GetItem(const Key: String): Int64;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -21951,7 +22036,7 @@ begin
 end;
 
 function TInt64Dictionary.LocateItem(const Key: String; var Value: Int64): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22057,9 +22142,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralSingleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralSingleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -22082,7 +22168,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryA.Add(const Key: AnsiString; const Value: Single);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -22125,20 +22212,22 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralSingleDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralSingleDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -22159,7 +22248,7 @@ begin
 end;
 
 function TGeneralSingleDictionaryA.LocateItem(const Key: AnsiString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22201,7 +22290,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryA.SetItem(const Key: AnsiString; const Value: Single);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -22271,14 +22361,15 @@ end;
 {                                                                              }
 { TSingleDictionaryA                                                           }
 {                                                                              }
-function TSingleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TSingleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -22294,7 +22385,8 @@ begin
 end;
 
 function TSingleDictionaryA.GetItem(const Key: AnsiString): Single;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -22304,7 +22396,7 @@ begin
 end;
 
 function TSingleDictionaryA.LocateItem(const Key: AnsiString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22410,9 +22502,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralSingleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralSingleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -22435,7 +22528,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryB.Add(const Key: RawByteString; const Value: Single);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -22478,20 +22572,22 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralSingleDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralSingleDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -22512,7 +22608,7 @@ begin
 end;
 
 function TGeneralSingleDictionaryB.LocateItem(const Key: RawByteString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22554,7 +22650,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryB.SetItem(const Key: RawByteString; const Value: Single);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -22624,14 +22721,15 @@ end;
 {                                                                              }
 { TSingleDictionaryB                                                           }
 {                                                                              }
-function TSingleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TSingleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -22647,7 +22745,8 @@ begin
 end;
 
 function TSingleDictionaryB.GetItem(const Key: RawByteString): Single;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -22657,7 +22756,7 @@ begin
 end;
 
 function TSingleDictionaryB.LocateItem(const Key: RawByteString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22762,9 +22861,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralSingleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralSingleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -22787,7 +22887,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryU.Add(const Key: UnicodeString; const Value: Single);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -22830,20 +22931,22 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralSingleDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralSingleDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -22864,7 +22967,7 @@ begin
 end;
 
 function TGeneralSingleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -22906,7 +23009,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionaryU.SetItem(const Key: UnicodeString; const Value: Single);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -22976,14 +23080,15 @@ end;
 {                                                                              }
 { TSingleDictionaryU                                                           }
 {                                                                              }
-function TSingleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TSingleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -22999,7 +23104,8 @@ begin
 end;
 
 function TSingleDictionaryU.GetItem(const Key: UnicodeString): Single;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -23009,7 +23115,7 @@ begin
 end;
 
 function TSingleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23114,9 +23220,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralSingleDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralSingleDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -23139,7 +23246,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionary.Add(const Key: String; const Value: Single);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -23182,20 +23290,22 @@ begin
 end;
 
 procedure TGeneralSingleDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralSingleDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralSingleDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -23216,7 +23326,7 @@ begin
 end;
 
 function TGeneralSingleDictionary.LocateItem(const Key: String; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23258,7 +23368,8 @@ begin
 end;
 
 procedure TGeneralSingleDictionary.SetItem(const Key: String; const Value: Single);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -23328,14 +23439,15 @@ end;
 {                                                                              }
 { TSingleDictionary                                                            }
 {                                                                              }
-function TSingleDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TSingleDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -23351,7 +23463,8 @@ begin
 end;
 
 function TSingleDictionary.GetItem(const Key: String): Single;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -23361,7 +23474,7 @@ begin
 end;
 
 function TSingleDictionary.LocateItem(const Key: String; var Value: Single): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23467,9 +23580,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralDoubleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralDoubleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -23492,7 +23606,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryA.Add(const Key: AnsiString; const Value: Double);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -23535,20 +23650,22 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralDoubleDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralDoubleDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -23569,7 +23686,7 @@ begin
 end;
 
 function TGeneralDoubleDictionaryA.LocateItem(const Key: AnsiString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23611,7 +23728,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryA.SetItem(const Key: AnsiString; const Value: Double);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -23681,14 +23799,15 @@ end;
 {                                                                              }
 { TDoubleDictionaryA                                                           }
 {                                                                              }
-function TDoubleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TDoubleDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -23704,7 +23823,8 @@ begin
 end;
 
 function TDoubleDictionaryA.GetItem(const Key: AnsiString): Double;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -23714,7 +23834,7 @@ begin
 end;
 
 function TDoubleDictionaryA.LocateItem(const Key: AnsiString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23820,9 +23940,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralDoubleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralDoubleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -23845,7 +23966,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryB.Add(const Key: RawByteString; const Value: Double);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -23888,20 +24010,22 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralDoubleDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralDoubleDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -23922,7 +24046,7 @@ begin
 end;
 
 function TGeneralDoubleDictionaryB.LocateItem(const Key: RawByteString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -23964,7 +24088,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryB.SetItem(const Key: RawByteString; const Value: Double);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24034,14 +24159,15 @@ end;
 {                                                                              }
 { TDoubleDictionaryB                                                           }
 {                                                                              }
-function TDoubleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TDoubleDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -24057,7 +24183,8 @@ begin
 end;
 
 function TDoubleDictionaryB.GetItem(const Key: RawByteString): Double;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24067,7 +24194,7 @@ begin
 end;
 
 function TDoubleDictionaryB.LocateItem(const Key: RawByteString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -24172,9 +24299,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralDoubleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralDoubleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -24197,7 +24325,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryU.Add(const Key: UnicodeString; const Value: Double);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -24240,20 +24369,22 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralDoubleDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralDoubleDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -24274,7 +24405,7 @@ begin
 end;
 
 function TGeneralDoubleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -24316,7 +24447,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionaryU.SetItem(const Key: UnicodeString; const Value: Double);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24386,14 +24518,15 @@ end;
 {                                                                              }
 { TDoubleDictionaryU                                                           }
 {                                                                              }
-function TDoubleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TDoubleDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -24409,7 +24542,8 @@ begin
 end;
 
 function TDoubleDictionaryU.GetItem(const Key: UnicodeString): Double;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24419,7 +24553,7 @@ begin
 end;
 
 function TDoubleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -24524,9 +24658,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralDoubleDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralDoubleDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -24549,7 +24684,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionary.Add(const Key: String; const Value: Double);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -24592,20 +24728,22 @@ begin
 end;
 
 procedure TGeneralDoubleDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralDoubleDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralDoubleDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -24626,7 +24764,7 @@ begin
 end;
 
 function TGeneralDoubleDictionary.LocateItem(const Key: String; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -24668,7 +24806,8 @@ begin
 end;
 
 procedure TGeneralDoubleDictionary.SetItem(const Key: String; const Value: Double);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24738,14 +24877,15 @@ end;
 {                                                                              }
 { TDoubleDictionary                                                            }
 {                                                                              }
-function TDoubleDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TDoubleDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -24761,7 +24901,8 @@ begin
 end;
 
 function TDoubleDictionary.GetItem(const Key: String): Double;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -24771,7 +24912,7 @@ begin
 end;
 
 function TDoubleDictionary.LocateItem(const Key: String; var Value: Double): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -24877,9 +25018,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralExtendedDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralExtendedDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -24902,7 +25044,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryA.Add(const Key: AnsiString; const Value: Extended);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -24945,20 +25088,22 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralExtendedDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralExtendedDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -24979,7 +25124,7 @@ begin
 end;
 
 function TGeneralExtendedDictionaryA.LocateItem(const Key: AnsiString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25021,7 +25166,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryA.SetItem(const Key: AnsiString; const Value: Extended);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25091,14 +25237,15 @@ end;
 {                                                                              }
 { TExtendedDictionaryA                                                         }
 {                                                                              }
-function TExtendedDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TExtendedDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -25114,7 +25261,8 @@ begin
 end;
 
 function TExtendedDictionaryA.GetItem(const Key: AnsiString): Extended;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25124,7 +25272,7 @@ begin
 end;
 
 function TExtendedDictionaryA.LocateItem(const Key: AnsiString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25230,9 +25378,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralExtendedDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralExtendedDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -25255,7 +25404,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryB.Add(const Key: RawByteString; const Value: Extended);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -25298,20 +25448,22 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralExtendedDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralExtendedDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -25332,7 +25484,7 @@ begin
 end;
 
 function TGeneralExtendedDictionaryB.LocateItem(const Key: RawByteString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25374,7 +25526,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryB.SetItem(const Key: RawByteString; const Value: Extended);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25444,14 +25597,15 @@ end;
 {                                                                              }
 { TExtendedDictionaryB                                                         }
 {                                                                              }
-function TExtendedDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TExtendedDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -25467,7 +25621,8 @@ begin
 end;
 
 function TExtendedDictionaryB.GetItem(const Key: RawByteString): Extended;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25477,7 +25632,7 @@ begin
 end;
 
 function TExtendedDictionaryB.LocateItem(const Key: RawByteString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25582,9 +25737,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralExtendedDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralExtendedDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -25607,7 +25763,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryU.Add(const Key: UnicodeString; const Value: Extended);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -25650,20 +25807,22 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralExtendedDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralExtendedDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -25684,7 +25843,7 @@ begin
 end;
 
 function TGeneralExtendedDictionaryU.LocateItem(const Key: UnicodeString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25726,7 +25885,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionaryU.SetItem(const Key: UnicodeString; const Value: Extended);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25796,14 +25956,15 @@ end;
 {                                                                              }
 { TExtendedDictionaryU                                                         }
 {                                                                              }
-function TExtendedDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TExtendedDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -25819,7 +25980,8 @@ begin
 end;
 
 function TExtendedDictionaryU.GetItem(const Key: UnicodeString): Extended;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -25829,7 +25991,7 @@ begin
 end;
 
 function TExtendedDictionaryU.LocateItem(const Key: UnicodeString; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -25934,9 +26096,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralExtendedDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralExtendedDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -25959,7 +26122,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionary.Add(const Key: String; const Value: Extended);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -26002,20 +26166,22 @@ begin
 end;
 
 procedure TGeneralExtendedDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralExtendedDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralExtendedDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -26036,7 +26202,7 @@ begin
 end;
 
 function TGeneralExtendedDictionary.LocateItem(const Key: String; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26078,7 +26244,8 @@ begin
 end;
 
 procedure TGeneralExtendedDictionary.SetItem(const Key: String; const Value: Extended);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26148,14 +26315,15 @@ end;
 {                                                                              }
 { TExtendedDictionary                                                          }
 {                                                                              }
-function TExtendedDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TExtendedDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -26171,7 +26339,8 @@ begin
 end;
 
 function TExtendedDictionary.GetItem(const Key: String): Extended;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26181,7 +26350,7 @@ begin
 end;
 
 function TExtendedDictionary.LocateItem(const Key: String; var Value: Extended): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26287,9 +26456,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralAnsiStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralAnsiStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -26312,7 +26482,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryA.Add(const Key: AnsiString; const Value: AnsiString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -26355,20 +26526,22 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralAnsiStringDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralAnsiStringDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -26389,7 +26562,7 @@ begin
 end;
 
 function TGeneralAnsiStringDictionaryA.LocateItem(const Key: AnsiString; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26431,7 +26604,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryA.SetItem(const Key: AnsiString; const Value: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26501,14 +26675,15 @@ end;
 {                                                                              }
 { TAnsiStringDictionaryA                                                       }
 {                                                                              }
-function TAnsiStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TAnsiStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -26524,7 +26699,8 @@ begin
 end;
 
 function TAnsiStringDictionaryA.GetItem(const Key: AnsiString): AnsiString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26534,7 +26710,7 @@ begin
 end;
 
 function TAnsiStringDictionaryA.LocateItem(const Key: AnsiString; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26639,9 +26815,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralAnsiStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralAnsiStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -26664,7 +26841,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryU.Add(const Key: UnicodeString; const Value: AnsiString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -26707,20 +26885,22 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralAnsiStringDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralAnsiStringDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -26741,7 +26921,7 @@ begin
 end;
 
 function TGeneralAnsiStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26783,7 +26963,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionaryU.SetItem(const Key: UnicodeString; const Value: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26853,14 +27034,15 @@ end;
 {                                                                              }
 { TAnsiStringDictionaryU                                                       }
 {                                                                              }
-function TAnsiStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TAnsiStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -26876,7 +27058,8 @@ begin
 end;
 
 function TAnsiStringDictionaryU.GetItem(const Key: UnicodeString): AnsiString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -26886,7 +27069,7 @@ begin
 end;
 
 function TAnsiStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -26991,9 +27174,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralAnsiStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralAnsiStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -27016,7 +27200,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionary.Add(const Key: String; const Value: AnsiString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -27059,20 +27244,22 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralAnsiStringDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralAnsiStringDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -27093,7 +27280,7 @@ begin
 end;
 
 function TGeneralAnsiStringDictionary.LocateItem(const Key: String; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -27135,7 +27322,8 @@ begin
 end;
 
 procedure TGeneralAnsiStringDictionary.SetItem(const Key: String; const Value: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27205,14 +27393,15 @@ end;
 {                                                                              }
 { TAnsiStringDictionary                                                        }
 {                                                                              }
-function TAnsiStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TAnsiStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -27228,7 +27417,8 @@ begin
 end;
 
 function TAnsiStringDictionary.GetItem(const Key: String): AnsiString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27238,7 +27428,7 @@ begin
 end;
 
 function TAnsiStringDictionary.LocateItem(const Key: String; var Value: AnsiString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -27345,9 +27535,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralRawByteStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralRawByteStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -27370,7 +27561,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryA.Add(const Key: AnsiString; const Value: RawByteString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -27413,20 +27605,22 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralRawByteStringDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralRawByteStringDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -27447,7 +27641,7 @@ begin
 end;
 
 function TGeneralRawByteStringDictionaryA.LocateItem(const Key: AnsiString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -27489,7 +27683,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryA.SetItem(const Key: AnsiString; const Value: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27559,14 +27754,15 @@ end;
 {                                                                              }
 { TRawByteStringDictionaryA                                                    }
 {                                                                              }
-function TRawByteStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TRawByteStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -27582,7 +27778,8 @@ begin
 end;
 
 function TRawByteStringDictionaryA.GetItem(const Key: AnsiString): RawByteString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27592,7 +27789,7 @@ begin
 end;
 
 function TRawByteStringDictionaryA.LocateItem(const Key: AnsiString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -27698,9 +27895,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralRawByteStringDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralRawByteStringDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -27723,7 +27921,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryB.Add(const Key: RawByteString; const Value: RawByteString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -27766,20 +27965,22 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralRawByteStringDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralRawByteStringDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -27800,7 +28001,7 @@ begin
 end;
 
 function TGeneralRawByteStringDictionaryB.LocateItem(const Key: RawByteString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -27842,7 +28043,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryB.SetItem(const Key: RawByteString; const Value: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27912,14 +28114,15 @@ end;
 {                                                                              }
 { TRawByteStringDictionaryB                                                    }
 {                                                                              }
-function TRawByteStringDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TRawByteStringDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -27935,7 +28138,8 @@ begin
 end;
 
 function TRawByteStringDictionaryB.GetItem(const Key: RawByteString): RawByteString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -27945,7 +28149,7 @@ begin
 end;
 
 function TRawByteStringDictionaryB.LocateItem(const Key: RawByteString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28050,9 +28254,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralRawByteStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralRawByteStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -28075,7 +28280,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryU.Add(const Key: UnicodeString; const Value: RawByteString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -28118,20 +28324,22 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralRawByteStringDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralRawByteStringDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -28152,7 +28360,7 @@ begin
 end;
 
 function TGeneralRawByteStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28194,7 +28402,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionaryU.SetItem(const Key: UnicodeString; const Value: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -28264,14 +28473,15 @@ end;
 {                                                                              }
 { TRawByteStringDictionaryU                                                    }
 {                                                                              }
-function TRawByteStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TRawByteStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -28287,7 +28497,8 @@ begin
 end;
 
 function TRawByteStringDictionaryU.GetItem(const Key: UnicodeString): RawByteString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -28297,7 +28508,7 @@ begin
 end;
 
 function TRawByteStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28402,9 +28613,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralRawByteStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralRawByteStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -28427,7 +28639,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionary.Add(const Key: String; const Value: RawByteString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -28470,20 +28683,22 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralRawByteStringDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralRawByteStringDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -28504,7 +28719,7 @@ begin
 end;
 
 function TGeneralRawByteStringDictionary.LocateItem(const Key: String; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28546,7 +28761,8 @@ begin
 end;
 
 procedure TGeneralRawByteStringDictionary.SetItem(const Key: String; const Value: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -28616,14 +28832,15 @@ end;
 {                                                                              }
 { TRawByteStringDictionary                                                     }
 {                                                                              }
-function TRawByteStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TRawByteStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -28639,7 +28856,8 @@ begin
 end;
 
 function TRawByteStringDictionary.GetItem(const Key: String): RawByteString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -28649,7 +28867,7 @@ begin
 end;
 
 function TRawByteStringDictionary.LocateItem(const Key: String; var Value: RawByteString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28755,9 +28973,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralUnicodeStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralUnicodeStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -28780,7 +28999,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryA.Add(const Key: AnsiString; const Value: UnicodeString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -28823,20 +29043,22 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralUnicodeStringDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralUnicodeStringDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -28857,7 +29079,7 @@ begin
 end;
 
 function TGeneralUnicodeStringDictionaryA.LocateItem(const Key: AnsiString; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -28899,7 +29121,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryA.SetItem(const Key: AnsiString; const Value: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -28969,14 +29192,15 @@ end;
 {                                                                              }
 { TUnicodeStringDictionaryA                                                    }
 {                                                                              }
-function TUnicodeStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TUnicodeStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -28992,7 +29216,8 @@ begin
 end;
 
 function TUnicodeStringDictionaryA.GetItem(const Key: AnsiString): UnicodeString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -29002,7 +29227,7 @@ begin
 end;
 
 function TUnicodeStringDictionaryA.LocateItem(const Key: AnsiString; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29108,9 +29333,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralUnicodeStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralUnicodeStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -29133,7 +29359,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryU.Add(const Key: UnicodeString; const Value: UnicodeString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -29176,20 +29403,22 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralUnicodeStringDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralUnicodeStringDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -29210,7 +29439,7 @@ begin
 end;
 
 function TGeneralUnicodeStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29252,7 +29481,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionaryU.SetItem(const Key: UnicodeString; const Value: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -29322,14 +29552,15 @@ end;
 {                                                                              }
 { TUnicodeStringDictionaryU                                                    }
 {                                                                              }
-function TUnicodeStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TUnicodeStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -29345,7 +29576,8 @@ begin
 end;
 
 function TUnicodeStringDictionaryU.GetItem(const Key: UnicodeString): UnicodeString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -29355,7 +29587,7 @@ begin
 end;
 
 function TUnicodeStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29460,9 +29692,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralUnicodeStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralUnicodeStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -29485,7 +29718,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionary.Add(const Key: String; const Value: UnicodeString);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -29528,20 +29762,22 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralUnicodeStringDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralUnicodeStringDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -29562,7 +29798,7 @@ begin
 end;
 
 function TGeneralUnicodeStringDictionary.LocateItem(const Key: String; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29604,7 +29840,8 @@ begin
 end;
 
 procedure TGeneralUnicodeStringDictionary.SetItem(const Key: String; const Value: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -29674,14 +29911,15 @@ end;
 {                                                                              }
 { TUnicodeStringDictionary                                                     }
 {                                                                              }
-function TUnicodeStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TUnicodeStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -29697,7 +29935,8 @@ begin
 end;
 
 function TUnicodeStringDictionary.GetItem(const Key: String): UnicodeString;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -29707,7 +29946,7 @@ begin
 end;
 
 function TUnicodeStringDictionary.LocateItem(const Key: String; var Value: UnicodeString): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29813,9 +30052,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -29838,7 +30078,8 @@ begin
 end;
 
 procedure TGeneralStringDictionaryA.Add(const Key: AnsiString; const Value: String);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -29881,20 +30122,22 @@ begin
 end;
 
 procedure TGeneralStringDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralStringDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralStringDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -29915,7 +30158,7 @@ begin
 end;
 
 function TGeneralStringDictionaryA.LocateItem(const Key: AnsiString; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -29957,7 +30200,8 @@ begin
 end;
 
 procedure TGeneralStringDictionaryA.SetItem(const Key: AnsiString; const Value: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30027,14 +30271,15 @@ end;
 {                                                                              }
 { TStringDictionaryA                                                           }
 {                                                                              }
-function TStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TStringDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -30050,7 +30295,8 @@ begin
 end;
 
 function TStringDictionaryA.GetItem(const Key: AnsiString): String;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30060,7 +30306,7 @@ begin
 end;
 
 function TStringDictionaryA.LocateItem(const Key: AnsiString; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -30166,9 +30412,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -30191,7 +30438,8 @@ begin
 end;
 
 procedure TGeneralStringDictionaryU.Add(const Key: UnicodeString; const Value: String);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -30234,20 +30482,22 @@ begin
 end;
 
 procedure TGeneralStringDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralStringDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralStringDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -30268,7 +30518,7 @@ begin
 end;
 
 function TGeneralStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -30310,7 +30560,8 @@ begin
 end;
 
 procedure TGeneralStringDictionaryU.SetItem(const Key: UnicodeString; const Value: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30380,14 +30631,15 @@ end;
 {                                                                              }
 { TStringDictionaryU                                                           }
 {                                                                              }
-function TStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TStringDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -30403,7 +30655,8 @@ begin
 end;
 
 function TStringDictionaryU.GetItem(const Key: UnicodeString): String;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30413,7 +30666,7 @@ begin
 end;
 
 function TStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -30518,9 +30771,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -30543,7 +30797,8 @@ begin
 end;
 
 procedure TGeneralStringDictionary.Add(const Key: String; const Value: String);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -30586,20 +30841,22 @@ begin
 end;
 
 procedure TGeneralStringDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralStringDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralStringDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -30620,7 +30877,7 @@ begin
 end;
 
 function TGeneralStringDictionary.LocateItem(const Key: String; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -30662,7 +30919,8 @@ begin
 end;
 
 procedure TGeneralStringDictionary.SetItem(const Key: String; const Value: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30732,14 +30990,15 @@ end;
 {                                                                              }
 { TStringDictionary                                                            }
 {                                                                              }
-function TStringDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TStringDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -30755,7 +31014,8 @@ begin
 end;
 
 function TStringDictionary.GetItem(const Key: String): String;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -30765,7 +31025,7 @@ begin
 end;
 
 function TStringDictionary.LocateItem(const Key: String; var Value: String): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -30871,9 +31131,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralPointerDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralPointerDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -30896,7 +31157,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryA.Add(const Key: AnsiString; const Value: Pointer);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -30939,20 +31201,22 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralPointerDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralPointerDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -30973,7 +31237,7 @@ begin
 end;
 
 function TGeneralPointerDictionaryA.LocateItem(const Key: AnsiString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31015,7 +31279,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryA.SetItem(const Key: AnsiString; const Value: Pointer);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31085,14 +31350,15 @@ end;
 {                                                                              }
 { TPointerDictionaryA                                                          }
 {                                                                              }
-function TPointerDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TPointerDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -31108,7 +31374,8 @@ begin
 end;
 
 function TPointerDictionaryA.GetItem(const Key: AnsiString): Pointer;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31118,7 +31385,7 @@ begin
 end;
 
 function TPointerDictionaryA.LocateItem(const Key: AnsiString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31224,9 +31491,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralPointerDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralPointerDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -31249,7 +31517,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryB.Add(const Key: RawByteString; const Value: Pointer);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -31292,20 +31561,22 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralPointerDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralPointerDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -31326,7 +31597,7 @@ begin
 end;
 
 function TGeneralPointerDictionaryB.LocateItem(const Key: RawByteString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31368,7 +31639,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryB.SetItem(const Key: RawByteString; const Value: Pointer);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31438,14 +31710,15 @@ end;
 {                                                                              }
 { TPointerDictionaryB                                                          }
 {                                                                              }
-function TPointerDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TPointerDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -31461,7 +31734,8 @@ begin
 end;
 
 function TPointerDictionaryB.GetItem(const Key: RawByteString): Pointer;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31471,7 +31745,7 @@ begin
 end;
 
 function TPointerDictionaryB.LocateItem(const Key: RawByteString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31576,9 +31850,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralPointerDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralPointerDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -31601,7 +31876,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryU.Add(const Key: UnicodeString; const Value: Pointer);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -31644,20 +31920,22 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralPointerDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralPointerDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -31678,7 +31956,7 @@ begin
 end;
 
 function TGeneralPointerDictionaryU.LocateItem(const Key: UnicodeString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31720,7 +31998,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionaryU.SetItem(const Key: UnicodeString; const Value: Pointer);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31790,14 +32069,15 @@ end;
 {                                                                              }
 { TPointerDictionaryU                                                          }
 {                                                                              }
-function TPointerDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TPointerDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -31813,7 +32093,8 @@ begin
 end;
 
 function TPointerDictionaryU.GetItem(const Key: UnicodeString): Pointer;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -31823,7 +32104,7 @@ begin
 end;
 
 function TPointerDictionaryU.LocateItem(const Key: UnicodeString; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -31928,9 +32209,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralPointerDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralPointerDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -31953,7 +32235,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionary.Add(const Key: String; const Value: Pointer);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -31996,20 +32279,22 @@ begin
 end;
 
 procedure TGeneralPointerDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralPointerDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralPointerDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -32030,7 +32315,7 @@ begin
 end;
 
 function TGeneralPointerDictionary.LocateItem(const Key: String; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32072,7 +32357,8 @@ begin
 end;
 
 procedure TGeneralPointerDictionary.SetItem(const Key: String; const Value: Pointer);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32142,14 +32428,15 @@ end;
 {                                                                              }
 { TPointerDictionary                                                           }
 {                                                                              }
-function TPointerDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TPointerDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -32165,7 +32452,8 @@ begin
 end;
 
 function TPointerDictionary.GetItem(const Key: String): Pointer;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32175,7 +32463,7 @@ begin
 end;
 
 function TPointerDictionary.LocateItem(const Key: String; var Value: Pointer): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32281,9 +32569,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInterfaceDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralInterfaceDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -32306,7 +32595,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryA.Add(const Key: AnsiString; const Value: IInterface);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -32349,20 +32639,22 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInterfaceDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInterfaceDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -32383,7 +32675,7 @@ begin
 end;
 
 function TGeneralInterfaceDictionaryA.LocateItem(const Key: AnsiString; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32425,7 +32717,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryA.SetItem(const Key: AnsiString; const Value: IInterface);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32495,14 +32788,15 @@ end;
 {                                                                              }
 { TInterfaceDictionaryA                                                        }
 {                                                                              }
-function TInterfaceDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TInterfaceDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -32518,7 +32812,8 @@ begin
 end;
 
 function TInterfaceDictionaryA.GetItem(const Key: AnsiString): IInterface;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32528,7 +32823,7 @@ begin
 end;
 
 function TInterfaceDictionaryA.LocateItem(const Key: AnsiString; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32634,9 +32929,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInterfaceDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralInterfaceDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -32659,7 +32955,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryU.Add(const Key: UnicodeString; const Value: IInterface);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -32702,20 +32999,22 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInterfaceDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInterfaceDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -32736,7 +33035,7 @@ begin
 end;
 
 function TGeneralInterfaceDictionaryU.LocateItem(const Key: UnicodeString; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32778,7 +33077,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionaryU.SetItem(const Key: UnicodeString; const Value: IInterface);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32848,14 +33148,15 @@ end;
 {                                                                              }
 { TInterfaceDictionaryU                                                        }
 {                                                                              }
-function TInterfaceDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TInterfaceDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -32871,7 +33172,8 @@ begin
 end;
 
 function TInterfaceDictionaryU.GetItem(const Key: UnicodeString): IInterface;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -32881,7 +33183,7 @@ begin
 end;
 
 function TInterfaceDictionaryU.LocateItem(const Key: UnicodeString; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -32986,9 +33288,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralInterfaceDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralInterfaceDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -33011,7 +33314,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionary.Add(const Key: String; const Value: IInterface);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -33054,20 +33358,22 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralInterfaceDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralInterfaceDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -33088,7 +33394,7 @@ begin
 end;
 
 function TGeneralInterfaceDictionary.LocateItem(const Key: String; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -33130,7 +33436,8 @@ begin
 end;
 
 procedure TGeneralInterfaceDictionary.SetItem(const Key: String; const Value: IInterface);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -33200,14 +33507,15 @@ end;
 {                                                                              }
 { TInterfaceDictionary                                                         }
 {                                                                              }
-function TInterfaceDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TInterfaceDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -33223,7 +33531,8 @@ begin
 end;
 
 function TInterfaceDictionary.GetItem(const Key: String): IInterface;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -33233,7 +33542,7 @@ begin
 end;
 
 function TInterfaceDictionary.LocateItem(const Key: String; var Value: IInterface): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -33350,9 +33659,10 @@ begin
     DynArrayAppend(FLookup[HashStrA(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralObjectDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TGeneralObjectDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -33375,7 +33685,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryA.Add(const Key: AnsiString; const Value: TObject);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -33418,20 +33729,22 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryA.Delete(const Key: AnsiString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralObjectDictionaryA.HasKey(const Key: AnsiString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralObjectDictionaryA.Rename(const Key, NewKey: AnsiString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -33452,7 +33765,7 @@ begin
 end;
 
 function TGeneralObjectDictionaryA.LocateItem(const Key: AnsiString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -33494,7 +33807,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryA.SetItem(const Key: AnsiString; const Value: TObject);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -33552,7 +33866,8 @@ begin
 end;
 
 function TGeneralObjectDictionaryA.ReleaseItem(const Key: AnsiString): TObject;
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   Result := FValues.ReleaseItem(I);
@@ -33587,14 +33902,15 @@ end;
 {                                                                              }
 { TObjectDictionaryA                                                           }
 {                                                                              }
-function TObjectDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Integer;
+function TObjectDictionaryA.LocateKey(const Key: AnsiString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrA(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -33610,7 +33926,8 @@ begin
 end;
 
 function TObjectDictionaryA.GetItem(const Key: AnsiString): TObject;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -33620,7 +33937,7 @@ begin
 end;
 
 function TObjectDictionaryA.LocateItem(const Key: AnsiString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -33737,9 +34054,10 @@ begin
     DynArrayAppend(FLookup[HashStrB(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralObjectDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TGeneralObjectDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -33762,7 +34080,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryB.Add(const Key: RawByteString; const Value: TObject);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -33805,20 +34124,22 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryB.Delete(const Key: RawByteString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralObjectDictionaryB.HasKey(const Key: RawByteString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralObjectDictionaryB.Rename(const Key, NewKey: RawByteString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -33839,7 +34160,7 @@ begin
 end;
 
 function TGeneralObjectDictionaryB.LocateItem(const Key: RawByteString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -33881,7 +34202,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryB.SetItem(const Key: RawByteString; const Value: TObject);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -33939,7 +34261,8 @@ begin
 end;
 
 function TGeneralObjectDictionaryB.ReleaseItem(const Key: RawByteString): TObject;
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   Result := FValues.ReleaseItem(I);
@@ -33974,14 +34297,15 @@ end;
 {                                                                              }
 { TObjectDictionaryB                                                           }
 {                                                                              }
-function TObjectDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Integer;
+function TObjectDictionaryB.LocateKey(const Key: RawByteString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrB(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -33997,7 +34321,8 @@ begin
 end;
 
 function TObjectDictionaryB.GetItem(const Key: RawByteString): TObject;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -34007,7 +34332,7 @@ begin
 end;
 
 function TObjectDictionaryB.LocateItem(const Key: RawByteString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -34123,9 +34448,10 @@ begin
     DynArrayAppend(FLookup[HashStrU(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralObjectDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TGeneralObjectDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -34148,7 +34474,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryU.Add(const Key: UnicodeString; const Value: TObject);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -34191,20 +34518,22 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryU.Delete(const Key: UnicodeString);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralObjectDictionaryU.HasKey(const Key: UnicodeString): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralObjectDictionaryU.Rename(const Key, NewKey: UnicodeString);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -34225,7 +34554,7 @@ begin
 end;
 
 function TGeneralObjectDictionaryU.LocateItem(const Key: UnicodeString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -34267,7 +34596,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionaryU.SetItem(const Key: UnicodeString; const Value: TObject);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -34325,7 +34655,8 @@ begin
 end;
 
 function TGeneralObjectDictionaryU.ReleaseItem(const Key: UnicodeString): TObject;
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   Result := FValues.ReleaseItem(I);
@@ -34360,14 +34691,15 @@ end;
 {                                                                              }
 { TObjectDictionaryU                                                           }
 {                                                                              }
-function TObjectDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Integer;
+function TObjectDictionaryU.LocateKey(const Key: UnicodeString; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStrU(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -34383,7 +34715,8 @@ begin
 end;
 
 function TObjectDictionaryU.GetItem(const Key: UnicodeString): TObject;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -34393,7 +34726,7 @@ begin
 end;
 
 function TObjectDictionaryU.LocateItem(const Key: UnicodeString; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -34509,9 +34842,10 @@ begin
     DynArrayAppend(FLookup[HashStr(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneralObjectDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TGeneralObjectDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -34534,7 +34868,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionary.Add(const Key: String; const Value: TObject);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -34577,20 +34912,22 @@ begin
 end;
 
 procedure TGeneralObjectDictionary.Delete(const Key: String);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneralObjectDictionary.HasKey(const Key: String): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneralObjectDictionary.Rename(const Key, NewKey: String);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -34611,7 +34948,7 @@ begin
 end;
 
 function TGeneralObjectDictionary.LocateItem(const Key: String; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -34653,7 +34990,8 @@ begin
 end;
 
 procedure TGeneralObjectDictionary.SetItem(const Key: String; const Value: TObject);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -34711,7 +35049,8 @@ begin
 end;
 
 function TGeneralObjectDictionary.ReleaseItem(const Key: String): TObject;
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   Result := FValues.ReleaseItem(I);
@@ -34746,14 +35085,15 @@ end;
 {                                                                              }
 { TObjectDictionary                                                            }
 {                                                                              }
-function TObjectDictionary.LocateKey(const Key: String; var LookupIdx: Integer;
+function TObjectDictionary.LocateKey(const Key: String; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -34769,7 +35109,8 @@ begin
 end;
 
 function TObjectDictionary.GetItem(const Key: String): TObject;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -34779,7 +35120,7 @@ begin
 end;
 
 function TObjectDictionary.LocateItem(const Key: String; var Value: TObject): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then

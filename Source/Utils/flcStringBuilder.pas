@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStringBuilder.pas                                     }
-{   File version:     5.64                                                     }
+{   File version:     5.04                                                     }
 {   Description:      String builder classes                                   }
 {                                                                              }
-{   Copyright:        Copyright (c) 2005-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2005-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -37,11 +37,12 @@
 {   2005/09/20  4.01  Added TStringBuilder class.                              }
 {   2014/08/26  4.02  StringBuilder unit tests.                                }
 {   2017/10/07  5.03  Split from flcStrings unit.                              }
+{   2019/03/15  5.04  Removed dependency on unit flcAscii.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.03  2016/01/09                       }
-{   Delphi 10 Win64                     5.03  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.04  2019/03/15                       }
+{   Delphi 10.2 Win64                   5.04  2019/03/15                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -217,10 +218,6 @@ procedure Test;
 
 implementation
 
-uses
-  { Fundamentals }
-  flcASCII;
-
 
 
 {                                                                              }
@@ -320,9 +317,12 @@ begin
   FLength := L;
 end;
 
+const
+  AnsiStringCRLF = AnsiString(#13#10);
+
 procedure TAnsiStringBuilder.AppendCRLF;
 begin
-  Append(AsciiCRLF);
+  Append(AnsiStringCRLF);
 end;
 
 procedure TAnsiStringBuilder.AppendLn(const S: AnsiString);
@@ -509,9 +509,12 @@ begin
   FLength := L;
 end;
 
+const
+  RawByteStringCRLF = RawByteString(#13#10);
+
 procedure TRawByteStringBuilder.AppendCRLF;
 begin
-  Append(AsciiCRLF);
+  Append(RawByteStringCRLF);
 end;
 
 procedure TRawByteStringBuilder.AppendLn(const S: RawByteString);
@@ -688,9 +691,12 @@ begin
   FLength := L;
 end;
 
+const
+  UnicodeStringCRLF = UnicodeString(WideChar(#13) + WideChar(#10));
+
 procedure TUnicodeStringBuilder.AppendCRLF;
 begin
-  Append(WideCRLF);
+  Append(UnicodeStringCRLF);
 end;
 
 procedure TUnicodeStringBuilder.AppendLn(const S: UnicodeString);
@@ -855,9 +861,12 @@ begin
   FLength := L;
 end;
 
+const
+  StringCRLF = String(#13#10);
+
 procedure TStringBuilder.AppendCRLF;
 begin
-  Append(#13#10);
+  Append(StringCRLF);
 end;
 
 procedure TStringBuilder.AppendLn(const S: String);

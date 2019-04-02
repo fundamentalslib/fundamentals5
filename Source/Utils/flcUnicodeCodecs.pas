@@ -2564,7 +2564,7 @@ begin
       exit;
     end;
   L := 0;
-  N := Pointer(NativeUInt(P) + BufSize - 4);
+  N := Pointer(NativeUInt(P) + NativeUInt(BufSize) - 4);
   while NativeUInt(P) <= NativeUInt(N) do
     begin
       T := Pointer(P);
@@ -2819,7 +2819,7 @@ begin
       exit;
     end;
   L := 0;
-  N := Pointer(NativeUInt(P) + BufSize - 4);
+  N := Pointer(NativeUInt(P) + NativeUInt(BufSize) - 4);
   while NativeUInt(P) <= NativeUInt(N) do
     begin
       T := Pointer(P);
@@ -3068,7 +3068,7 @@ begin
       exit;
     end;
   L := 0;
-  N := Pointer(NativeUInt(P) + BufSize - 4);
+  N := Pointer(NativeUInt(P) + NativeUInt(BufSize) - 4);
   while NativeUInt(P) <= NativeUInt(N) do
     begin
       T := Pointer(P);
@@ -3311,7 +3311,7 @@ begin
       exit;
     end;
   L := 0;
-  N := Pointer(NativeUInt(P) + BufSize - 4);
+  N := Pointer(NativeUInt(P) + NativeUInt(BufSize) - 4);
   while NativeUInt(P) <= NativeUInt(N) do
     begin
       T := Pointer(P);

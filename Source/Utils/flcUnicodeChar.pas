@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeChar.pas                                       }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      Unicode char utility functions                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -38,6 +38,8 @@
 {   2017/10/24  5.02  Move from Strings unit.                                  }
 {   2017/07/17  5.03  Type changes.                                            }
 {   2018/08/12  5.04  String type changes.                                     }
+{   2019/03/15  5.05  UnicodeIsNoBreakSpace, UnicodeIsSpace,                   }
+{                     UnicodeSpaceWidth, UnicodeIsLineBreak                    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -124,6 +126,34 @@ const
 { Unicode functions                                                            }
 {                                                                              }
 function  UnicodeIsAsciiChar(const Ch: WideChar): Boolean;
+
+type
+  TUnicodeSpaceWidth = (
+    uswNone,
+    uswZero,
+    uswAdjustableEmOneOverFour,
+    uswEmOneOverTwo,
+    uswEmOneOverThree,
+    uswEmOneOverFour,
+    uswEmFourOverEighteen,
+    uswEmOneOverFive,
+    uswEmOneOverSix,
+    uswEmOne,
+    uswWidthDigit,
+    uswWidthPeriod,
+    uswWidthIdeographic
+    );
+
+function  UnicodeSpaceWidth(const Ch: WideChar): TUnicodeSpaceWidth;
+
+function  UnicodeIsNoBreakSpace(const Ch: WideChar): Boolean;
+
+function  UnicodeIsSpaceFixedWidth(const Ch: WideChar): Boolean;
+function  UnicodeIsSpaceAdjustableWidth(const Ch: WideChar): Boolean;
+function  UnicodeIsSpace(const Ch: WideChar): Boolean;
+
+function  UnicodeIsLineBreak(const Ch: WideChar): Boolean;
+
 function  UnicodeIsWhiteSpace(const Ch: WideChar): Boolean;
 function  UnicodeIsControl(const Ch: WideChar): Boolean;
 function  UnicodeIsControlOrWhiteSpace(const Ch: WideChar): Boolean;
@@ -206,6 +236,120 @@ implementation
 function UnicodeIsAsciiChar(const Ch: WideChar): Boolean;
 begin
   Result := Ord(Ch) <= $7F;
+end;
+
+function UnicodeSpaceWidth(const Ch: WideChar): TUnicodeSpaceWidth;
+begin
+  case Ch of
+    #$0020 : Result := uswAdjustableEmOneOverFour;            // SPACE
+    #$00A0 : Result := uswEmOneOverFour;                      // NO-BREAK SPACE
+    #$1361 : Result := uswAdjustableEmOneOverFour;            // ETHIOPIC WORDSPACE
+    #$180E : Result := uswZero;                               // MONGOLIAN VOWEL SEPARATOR
+    #$2000 : Result := uswEmOneOverTwo;                       // EN QUAD
+    #$2001 : Result := uswEmOne;                              // EM QUAD
+    #$2002 : Result := uswEmOneOverTwo;                       // EN SPACE
+    #$2003 : Result := uswEmOne;                              // EM SPACE
+    #$2004 : Result := uswEmOneOverThree;                     // THREE-PER-EM SPACE
+    #$2005 : Result := uswEmOneOverFour;                      // FOUR-PER-EM SPACE
+    #$2006 : Result := uswEmOneOverSix;                       // SIX-PER-EM SPACE
+    #$2007 : Result := uswWidthDigit;                         // FIGURE SPACE
+    #$2008 : Result := uswWidthPeriod;                        // PUNCTUATION SPACE
+    #$2009 : Result := uswEmOneOverFive;                      // THIN SPACE
+    #$200A : Result := uswEmOneOverFour;                      // HAIR SPACE
+    #$200B : Result := uswZero;                               // ZERO WIDTH SPACE
+    #$202F : Result := uswEmOneOverFive;                      // NARROW NO-BREAK SPACE
+    #$205F : Result := uswEmFourOverEighteen;                 // MEDIUM MATHEMATICAL SPACE
+    #$3000 : Result := uswWidthIdeographic;                   // IDEOGRAPHIC SPACE
+    #$FEFF : Result := uswZero;                               // # Cf ZERO WIDTH NO-BREAK SPACE
+  else
+    Result := uswNone;
+  end;
+end;
+
+function UnicodeIsNoBreakSpace(const Ch: WideChar): Boolean;
+begin
+  case Ch of
+    #$00A0,            // NO-BREAK SPACE
+    #$2007,            // FIGURE SPACE
+    #$202F,            // NARROW NO-BREAK SPACE
+    #$FEFF :           // # Cf ZERO WIDTH NO-BREAK SPACE
+      Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function UnicodeIsSpaceFixedWidth(const Ch: WideChar): Boolean;
+begin
+  case Ch of
+    #$2000,            // EN QUAD
+    #$2001,            // EM QUAD
+    #$2002,            // EN SPACE
+    #$2003,            // EM SPACE
+    #$2004,            // THREE-PER-EM SPACE
+    #$2005,            // FOUR-PER-EM SPACE
+    #$2006,            // SIX-PER-EM SPACE
+    #$2008,            // PUNCTUATION SPACE
+    #$2009,            // THIN SPACE
+    #$200A,            // HAIR SPACE
+    #$200B,            // ZERO WIDTH SPACE
+    #$205F,            // MEDIUM MATHEMATICAL SPACE
+    #$3000 :           // IDEOGRAPHIC SPACE
+      Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function UnicodeIsSpaceAdjustableWidth(const Ch: WideChar): Boolean;
+begin
+  case Ch of
+    #$0020,            // SPACE
+    #$1361 :           // ETHIOPIC WORDSPACE
+      Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function UnicodeIsSpace(const Ch: WideChar): Boolean;
+begin
+  case Ch of
+    #$0020,            // SPACE
+    #$1361,            // ETHIOPIC WORDSPACE
+    #$2000,            // EN QUAD
+    #$2001,            // EM QUAD
+    #$2002,            // EN SPACE
+    #$2003,            // EM SPACE
+    #$2004,            // THREE-PER-EM SPACE
+    #$2005,            // FOUR-PER-EM SPACE
+    #$2006,            // SIX-PER-EM SPACE
+    #$2008,            // PUNCTUATION SPACE
+    #$2009,            // THIN SPACE
+    #$200A,            // HAIR SPACE
+    #$200B,            // ZERO WIDTH SPACE
+    #$205F,            // MEDIUM MATHEMATICAL SPACE
+    #$3000 :           // IDEOGRAPHIC SPACE
+      Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function UnicodeIsLineBreak(const Ch: WideChar): Boolean;
+begin
+  case Ch of
+    #$000A,            // LF
+    #$000B,            // VT
+    #$000C,            // FF
+    #$000D,            // CR
+    #$0085,            // NEXT LINE
+    #$2028,            // LINE SEPARATOR
+    #$2029 :           // PARAGRAPH SEPARATOR
+      Result := True;
+  else
+    Result := False;
+  end;
 end;
 
 function UnicodeIsWhiteSpace(const Ch: WideChar): Boolean;

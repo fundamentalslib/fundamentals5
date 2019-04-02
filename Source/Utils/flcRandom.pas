@@ -61,6 +61,7 @@
 {   Delphi XE7 Win64                    5.17  2016/01/09                       }
 {   Delphi 10 Win32                     5.17  2016/01/09                       }
 {   Delphi 10 Win64                     5.17  2016/01/09                       }
+{   Delphi 10.2 Linux64                 5.19  2019/04/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -161,13 +162,8 @@ implementation
 
 uses
   { System }
-  {$IFDEF DOT_NET}
-  Borland.Vcl.Windows,
-  System.Threading,
-  {$ELSE}
   {$IFDEF MSWIN}
   Windows,
-  {$ENDIF}
   {$ENDIF}
 
   {$IFDEF UNIX}
@@ -183,10 +179,7 @@ uses
   {$ENDIF}
   {$ENDIF}
 
-  SysUtils,
-
-  { Fundamentals }
-  flcUtils;
+  SysUtils;
 
 
 
@@ -294,7 +287,6 @@ begin
   Result := Result xor (Int64(Ye) shl 32) xor (Int64(Mo) shl 48) xor (Int64(Da) shl 56);
 end;
 
-{$IFNDEF DOT_NET}
 function HashBuffer(const Buffer: PByte; const Len: Integer): Word32;
 var
   I : Integer;
@@ -304,7 +296,7 @@ begin
   P := Buffer;
   for I := 1 to Len do
     begin
-      Result := Result xor (Word32(P^) shl ((I mod 7) * 4));
+      Result := Result xor (P^ shl ((I mod 7) * 4));
       Inc(P);
     end;
 end;
@@ -319,7 +311,6 @@ begin
     exit;
   Result := HashBuffer(@S[1], Length(S));
 end;
-{$ENDIF}
 
 {$IFDEF MSWIN}
 function GetCPUFrequency: Int64;
@@ -334,7 +325,6 @@ end;
 {$ENDIF}
 
 {$IFDEF MSWIN}
-{$IFNDEF DOT_NET}
 function StrLenA(const A: PAnsiChar): Integer;
 var L : Integer;
 begin
@@ -349,7 +339,7 @@ begin
   Result := L;
 end;
 
-function StrPasB(const A: PAnsiChar): UTF8String;
+function StrZPasB(const A: PAnsiChar): UTF8String;
 var
   I, L : Integer;
 begin
@@ -390,7 +380,6 @@ begin
   else
     Result := '';
 end;
-{$ENDIF}
 {$ENDIF}
 
 {$IFDEF UNIX}
@@ -578,17 +567,17 @@ begin
   { CPU Frequency }
   S := S xor GetCPUFrequency;
   { OS User Name }
-  S := Int64(S + HashStrB(GetOSUserName));
+  S := Int64(S + StrHashB(GetOSUserName));
   { OS Computer Name }
-  S := Int64(S + HashStrB(GetOSComputerName));
+  S := Int64(S + StrHashB(GetOSComputerName));
   {$ENDIF}
   {$IFDEF UNIX}
   { OS User Name }
-  S := Int64(S + Int64(HashStrB(GetOSUserName)));
+  S := Int64(S + Int64(StrHashB(GetOSUserName)));
   { OS Computer Name }
-  S := Int64(S + Int64(HashStrB(GetOSComputerName)));
+  S := Int64(S + Int64(StrHashB(GetOSComputerName)));
   { PPID }
-  S := Int64(S + Int64(HashStrB(GetEnvironmentVariable('PPID'))));
+  S := Int64(S + Int64(StrHashB(GetEnvironmentVariable('PPID'))));
   {$ENDIF}
   { System Timing }
   S := Int64(S + RandomState);
@@ -1186,7 +1175,7 @@ end;
 {$ASSERTIONS ON}
 procedure Test;
 var I, L : Integer;
-    A, B, C : Word32;
+    A, B, C, D : Word32;
     V, W : Int64;
     T1, T2 : Int64;
 begin
@@ -1198,7 +1187,6 @@ begin
       Assert((L >= 5) and (L <= 16));
     end;
   Assert(Length(RandomHexB(32)) = 32);
-  // Note: These are simple sanity tests that may fail occasionally
   // RandomSeed/RandomUniform
   // - Check for unique numbers
   // - Check average value of random numbers
@@ -1209,18 +1197,20 @@ begin
       A := RandomSeed32;
       B := RandomSeed32;
       C := RandomSeed32;
-      Assert(not ((A = B) and (B = C)), 'RandomSeed');
-      T1 := T1 + A + B + C;
+      D := RandomSeed32;
+      Assert(not ((A = B) and (B = C) and (C = D)), 'RandomSeed');
+      T1 := T1 + A + B + C + D;
       A := RandomUniform32;
       B := RandomUniform32;
       C := RandomUniform32;
-      Assert(not ((A = B) and (B = C)), 'RandomUniform');
-      T2 := T2 + A + B + C;
+      D := RandomUniform32;
+      Assert(not ((A = B) and (B = C) and (C = D)), 'RandomUniform');
+      T2 := T2 + A + B + C + D;
     end;
-  T1 := T1 div 30000;
-  Assert((T1 > 1600000000) and (T1 < 2800000000), 'RandomSeed');
-  T2 := T2 div 30000;
-  Assert((T2 > 1600000000) and (T2 < 2800000000), 'RandomUniform');
+  T1 := T1 div 40000;
+  Assert((T1 > $50000000) and (T1 < $B0000000), 'RandomSeed');
+  T2 := T2 div 40000;
+  Assert((T2 > $50000000) and (T2 < $B0000000), 'RandomUniform');
   // RandomInt64
   // - Check sign
   I := 0;

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.32                                                     }
+{   File version:     5.33                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
@@ -70,6 +70,7 @@
 {   2018/07/17  5.30  Int32/Word32 functions.                                  }
 {   2018/08/12  5.31  String type changes.                                     }
 {   2019/03/22  5.32  FreePascal 3.04 Win64 changes.                           }
+{   2019/04/02  5.33  Integer/Cardinal functions.                              }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -120,10 +121,12 @@ function  DynArrayAppend(var V: ByteArray; const R: Byte): Integer; overload; {$
 function  DynArrayAppend(var V: WordArray; const R: Word): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: Word32Array; const R: Word32): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: LongWordArray; const R: LongWord): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+function  DynArrayAppend(var V: CardinalArray; const R: Cardinal): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: NativeUIntArray; const R: NativeUInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: ShortIntArray; const R: ShortInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: SmallIntArray; const R: SmallInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: LongIntArray; const R: LongInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+function  DynArrayAppend(var V: IntegerArray; const R: Integer): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: Int32Array; const R: Int32): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: Int64Array; const R: Int64): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: NativeIntArray; const R: NativeInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
@@ -151,7 +154,8 @@ function  DynArrayAppendCardinalArray(var V: CardinalArray; const R: array of Ca
 function  DynArrayAppendNativeUIntArray(var V: NativeUIntArray; const R: array of NativeUInt): Integer; overload;
 function  DynArrayAppendShortIntArray(var V: ShortIntArray; const R: array of ShortInt): Integer; overload;
 function  DynArrayAppendSmallIntArray(var V: SmallIntArray; const R: array of SmallInt): Integer; overload;
-function  DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of LongInt): Integer; overload;
+function  DynArrayAppendLongIntArray(var V: LongIntArray; const R: array of LongInt): Integer; overload;
+function  DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of Integer): Integer; overload;
 function  DynArrayAppendInt32Array(var V: Int32Array; const R: array of Int32): Integer; overload;
 function  DynArrayAppendInt64Array(var V: Int64Array; const R: array of Int64): Integer; overload;
 function  DynArrayAppendNativeIntArray(var V: NativeIntArray; const R: array of NativeInt): Integer; overload;
@@ -174,10 +178,12 @@ function  DynArrayRemove(var V: ByteArray; const Idx: Integer; const Count: Inte
 function  DynArrayRemove(var V: WordArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: Word32Array; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: LongWordArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
+function  DynArrayRemove(var V: CardinalArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: NativeUIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: ShortIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: SmallIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: LongIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
+function  DynArrayRemove(var V: IntegerArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: Int32Array; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: Int64Array; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: NativeIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
@@ -279,6 +285,8 @@ function  DynArrayPosNext(const Find: Word32; const V: Word32Array; const PrevPo
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: LongWord; const V: LongWordArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
+function  DynArrayPosNext(const Find: Cardinal; const V: CardinalArray; const PrevPos: Integer = -1;
+          const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: NativeUInt; const V: NativeUIntArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: ShortInt; const V: ShortIntArray; const PrevPos: Integer = -1;
@@ -286,6 +294,8 @@ function  DynArrayPosNext(const Find: ShortInt; const V: ShortIntArray; const Pr
 function  DynArrayPosNext(const Find: SmallInt; const V: SmallIntArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: LongInt; const V: LongIntArray; const PrevPos: Integer = -1;
+          const IsSortedAscending: Boolean = False): Integer; overload;
+function  DynArrayPosNext(const Find: Integer; const V: IntegerArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: Int32; const V: Int32Array; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
@@ -539,10 +549,12 @@ procedure SetLengthAndZero(var V: ByteArray; const NewLength: Integer); overload
 procedure SetLengthAndZero(var V: WordArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: Word32Array; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: LongWordArray; const NewLength: Integer); overload;
+procedure SetLengthAndZero(var V: CardinalArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: NativeUIntArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: ShortIntArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: SmallIntArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: LongIntArray; const NewLength: Integer); overload;
+procedure SetLengthAndZero(var V: IntegerArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: Int32Array; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: Int64Array; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: NativeIntArray; const NewLength: Integer); overload;
@@ -626,10 +638,12 @@ function  StringArrayFromIndexes(const V: StringArray;
 procedure DynArraySort(const V: ByteArray); overload;
 procedure DynArraySort(const V: WordArray); overload;
 procedure DynArraySort(const V: LongWordArray); overload;
+procedure DynArraySort(const V: CardinalArray); overload;
 procedure DynArraySort(const V: NativeUIntArray); overload;
 procedure DynArraySort(const V: ShortIntArray); overload;
 procedure DynArraySort(const V: SmallIntArray); overload;
 procedure DynArraySort(const V: LongIntArray); overload;
+procedure DynArraySort(const V: IntegerArray); overload;
 procedure DynArraySort(const V: Int64Array); overload;
 procedure DynArraySort(const V: NativeIntArray); overload;
 procedure DynArraySort(const V: SingleArray); overload;
@@ -710,6 +724,13 @@ begin
   V[Result] := R;
 end;
 
+function DynArrayAppend(var V: CardinalArray; const R: Cardinal): Integer;
+begin
+  Result := Length(V);
+  SetLength(V, Result + 1);
+  V[Result] := R;
+end;
+
 function DynArrayAppend(var V: NativeUIntArray; const R: NativeUInt): Integer;
 begin
   Result := Length(V);
@@ -739,6 +760,13 @@ begin
 end;
 
 function DynArrayAppend(var V: LongIntArray; const R: LongInt): Integer;
+begin
+  Result := Length(V);
+  SetLength(V, Result + 1);
+  V[Result] := R;
+end;
+
+function DynArrayAppend(var V: IntegerArray; const R: Integer): Integer;
 begin
   Result := Length(V);
   SetLength(V, Result + 1);
@@ -945,6 +973,18 @@ begin
     end;
 end;
 
+function DynArrayAppendLongIntArray(var V: LongIntArray; const R: array of LongInt): Integer;
+var L : Integer;
+begin
+  Result := Length(V);
+  L := Length(R);
+  if L > 0 then
+    begin
+      SetLength(V, Result + L);
+      Move(R[0], V[Result], Sizeof(LongInt) * L);
+    end;
+end;
+
 function DynArrayAppendInt32Array(var V: Int32Array; const R: array of Int32): Integer;
 var L : Integer;
 begin
@@ -957,7 +997,7 @@ begin
     end;
 end;
 
-function DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of LongInt): Integer;
+function DynArrayAppendIntegerArray(var V: IntegerArray; const R: array of Integer): Integer;
 var L : Integer;
 begin
   Result := Length(V);
@@ -965,7 +1005,7 @@ begin
   if L > 0 then
     begin
       SetLength(V, Result + L);
-      Move(R[0], V[Result], Sizeof(LongInt) * L);
+      Move(R[0], V[Result], Sizeof(Integer) * L);
     end;
 end;
 
@@ -1222,6 +1262,24 @@ begin
   Result := J;
 end;
 
+function DynArrayRemove(var V: CardinalArray; const Idx: Integer; const Count: Integer): Integer;
+var I, J, L, M: Integer;
+begin
+  L := Length(V);
+  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
+    begin
+      Result := 0;
+      exit;
+    end;
+  I := MaxInt(Idx, 0);
+  J := MinInt(Count, L - I);
+  M := L - J - I;
+  if M > 0 then
+    Move(V[I + J], V[I], M * SizeOf(Cardinal));
+  SetLength(V, L - J);
+  Result := J;
+end;
+
 function DynArrayRemove(var V: NativeUIntArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, L, M: Integer;
 begin
@@ -1290,6 +1348,24 @@ begin
   M := L - J - I;
   if M > 0 then
     Move(V[I + J], V[I], M * SizeOf(LongInt));
+  SetLength(V, L - J);
+  Result := J;
+end;
+
+function DynArrayRemove(var V: IntegerArray; const Idx: Integer; const Count: Integer): Integer;
+var I, J, L, M: Integer;
+begin
+  L := Length(V);
+  if (Idx >= L) or (Idx + Count <= 0) or (L = 0) or (Count = 0) then
+    begin
+      Result := 0;
+      exit;
+    end;
+  I := MaxInt(Idx, 0);
+  J := MinInt(Count, L - I);
+  M := L - J - I;
+  if M > 0 then
+    Move(V[I + J], V[I], M * SizeOf(Integer));
   SetLength(V, L - J);
   Result := J;
 end;
@@ -3390,6 +3466,56 @@ begin
     end;
 end;
 
+function DynArrayPosNext(const Find: Cardinal; const V: CardinalArray; const PrevPos: Integer;
+    const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Cardinal;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Length(V) - 1;
+          while L <= H do
+            begin
+              I := (L + H) div 2;
+              D := V[I];
+              if Find = D then
+                begin
+                  while (I > 0) and (V[I - 1] = Find) do
+                    Dec(I);
+                  Result := I;
+                  exit;
+                end else
+              if D > Find then
+                H := I - 1
+              else
+                L := I + 1;
+            end;
+          Result := -1;
+        end
+      else // find next
+        if PrevPos >= Length(V) - 1 then
+          Result := -1
+        else
+          if V[PrevPos + 1] = Find then
+            Result := PrevPos + 1
+          else
+            Result := -1;
+    end
+  else
+    begin // linear search
+      for I := MaxInt(PrevPos + 1, 0) to Length(V) - 1 do
+        if V[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
 function DynArrayPosNext(const Find: NativeUInt; const V: NativeUIntArray; const PrevPos: Integer;
     const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
@@ -3544,6 +3670,56 @@ function DynArrayPosNext(const Find: LongInt; const V: LongIntArray; const PrevP
     const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
     D       : LongInt;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Length(V) - 1;
+          while L <= H do
+            begin
+              I := (L + H) div 2;
+              D := V[I];
+              if Find = D then
+                begin
+                  while (I > 0) and (V[I - 1] = Find) do
+                    Dec(I);
+                  Result := I;
+                  exit;
+                end else
+              if D > Find then
+                H := I - 1
+              else
+                L := I + 1;
+            end;
+          Result := -1;
+        end
+      else // find next
+        if PrevPos >= Length(V) - 1 then
+          Result := -1
+        else
+          if V[PrevPos + 1] = Find then
+            Result := PrevPos + 1
+          else
+            Result := -1;
+    end
+  else
+    begin // linear search
+      for I := MaxInt(PrevPos + 1, 0) to Length(V) - 1 do
+        if V[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
+function DynArrayPosNext(const Find: Integer; const V: IntegerArray; const PrevPos: Integer;
+    const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Integer;
 begin
   if IsSortedAscending then // binary search
     begin
@@ -5637,7 +5813,7 @@ var I, L : Integer;
 begin
   L := Length(V);
   for I := 1 to L div 2 do
-    Swap(V[I - 1], V[L - I]);
+    SwapLW(V[I - 1], V[L - I]);
 end;
 
 procedure DynArrayReverse(var V: ShortIntArray);
@@ -5661,7 +5837,7 @@ var I, L : Integer;
 begin
   L := Length(V);
   for I := 1 to L div 2 do
-    Swap(V[I - 1], V[L - I]);
+    SwapLI(V[I - 1], V[L - I]);
 end;
 
 procedure DynArrayReverse(var V: Int64Array);
@@ -6441,6 +6617,21 @@ begin
   FillChar(Pointer(@V[OldLen])^, Sizeof(LongWord) * (NewLen - OldLen), #0);
 end;
 
+procedure SetLengthAndZero(var V: CardinalArray; const NewLength: Integer);
+var OldLen, NewLen : Integer;
+begin
+  NewLen := NewLength;
+  if NewLen < 0 then
+    NewLen := 0;
+  OldLen := Length(V);
+  if OldLen = NewLen then
+    exit;
+  SetLength(V, NewLen);
+  if OldLen > NewLen then
+    exit;
+  FillChar(Pointer(@V[OldLen])^, Sizeof(Cardinal) * (NewLen - OldLen), #0);
+end;
+
 procedure SetLengthAndZero(var V: NativeUIntArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -6499,6 +6690,21 @@ begin
   if OldLen > NewLen then
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(LongInt) * (NewLen - OldLen), #0);
+end;
+
+procedure SetLengthAndZero(var V: IntegerArray; const NewLength: Integer);
+var OldLen, NewLen : Integer;
+begin
+  NewLen := NewLength;
+  if NewLen < 0 then
+    NewLen := 0;
+  OldLen := Length(V);
+  if OldLen = NewLen then
+    exit;
+  SetLength(V, NewLen);
+  if OldLen > NewLen then
+    exit;
+  FillChar(Pointer(@V[OldLen])^, Sizeof(Integer) * (NewLen - OldLen), #0);
 end;
 
 procedure SetLengthAndZero(var V: Int32Array; const NewLength: Integer);
@@ -7352,6 +7558,54 @@ begin
     QuickSort(0, I - 1);
 end;
 
+procedure DynArraySort(const V: CardinalArray);
+
+  procedure QuickSort(L, R: Integer);
+  var I, J, M : Integer;
+      W, T    : Cardinal;
+  begin
+    repeat
+      I := L;
+      J := R;
+      M := (L + R) shr 1;
+      W := V[M];
+      repeat
+        while V[I] < W do
+          Inc(I);
+        while V[J] > W do
+          Dec(J);
+        if I <= J then
+          begin
+            T := V[I];
+            V[I] := V[J];
+            V[J] := T;
+            if M = I then
+              begin
+                M := J;
+                W := V[J];
+              end else
+              if M = J then
+                begin
+                  M := I;
+                  W := V[I];
+                end;
+            Inc(I);
+            Dec(J);
+          end;
+      until I > J;
+      if L < J then
+        QuickSort(L, J);
+      L := I;
+    until I >= R;
+  end;
+
+var I : Integer;
+begin
+  I := Length(V);
+  if I > 0 then
+    QuickSort(0, I - 1);
+end;
+
 procedure DynArraySort(const V: NativeUIntArray);
 
   procedure QuickSort(L, R: Integer);
@@ -7501,6 +7755,54 @@ procedure DynArraySort(const V: LongIntArray);
   procedure QuickSort(L, R: Integer);
   var I, J, M : Integer;
       W, T    : LongInt;
+  begin
+    repeat
+      I := L;
+      J := R;
+      M := (L + R) shr 1;
+      W := V[M];
+      repeat
+        while V[I] < W do
+          Inc(I);
+        while V[J] > W do
+          Dec(J);
+        if I <= J then
+          begin
+            T := V[I];
+            V[I] := V[J];
+            V[J] := T;
+            if M = I then
+              begin
+                M := J;
+                W := V[J];
+              end else
+              if M = J then
+                begin
+                  M := I;
+                  W := V[I];
+                end;
+            Inc(I);
+            Dec(J);
+          end;
+      until I > J;
+      if L < J then
+        QuickSort(L, J);
+      L := I;
+    until I >= R;
+  end;
+
+var I : Integer;
+begin
+  I := Length(V);
+  if I > 0 then
+    QuickSort(0, I - 1);
+end;
+
+procedure DynArraySort(const V: IntegerArray);
+
+  procedure QuickSort(L, R: Integer);
+  var I, J, M : Integer;
+      W, T    : Integer;
   begin
     repeat
       I := L;

@@ -71,7 +71,8 @@ uses
 {$IFDEF FREEPASCAL}
 {$IFDEF UNIX}
 uses
-  SysUtils;
+  BaseUnix,
+  Unix;
 {$ENDIF}
 {$ENDIF}
 

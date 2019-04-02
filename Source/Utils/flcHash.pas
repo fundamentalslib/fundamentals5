@@ -945,6 +945,9 @@ uses
   {$IFDEF MSWIN}
   Windows,
   {$ENDIF}
+  {$IFDEF DELPHI}{$IFDEF POSIX}
+  Posix.Unistd,
+  {$ENDIF}{$ENDIF}
 
   { Fundamentals }
   flcSysUtils;

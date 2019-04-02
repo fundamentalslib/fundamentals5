@@ -65,6 +65,7 @@
 {   Delphi XE7 Win64                    5.17  2019/03/02                       }
 {   Delphi 10 Win32                     5.14  2016/01/09                       }
 {   Delphi 10 Win64                     5.14  2016/01/09                       }
+{   Delphi 10.2 Linux64                 5.17  2019/04/02                       }
 {   FreePascal 3.0.4 Win32              5.17  2019/02/24                       }
 {                                                                              }
 { Todo:                                                                        }
@@ -3690,9 +3691,16 @@ end;
 {$IFDEF TEST}
 {$ASSERTIONS ON}
 procedure Test;
+{$IFDEF MSWINDOWS}
 const
   TempPath = 'c:\temp';
   TempFilename = 'c:\temp\cFileUtilsTest.txt';
+{$ENDIF}
+{$IFDEF POSIX}
+const
+  TempPath = './temp';
+  TempFilename = './temp/cFileUtilsTest.txt';
+{$ENDIF}
 begin
   // PathHasDriveLetter
   Assert(WinPathHasDriveLetterB('A:'), 'PathHasDriveLetter');

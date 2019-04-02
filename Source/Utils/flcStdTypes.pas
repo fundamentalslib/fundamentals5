@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStdTypes.pas                                          }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      Standard type definitions.                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -37,11 +37,13 @@
 {   2000-2018   1.01  Initial versions                                         }
 {   2018/07/11  5.02  Move to flcStdTypes unit from flcUtils.                  }
 {   2018/08/12  5.03  String type changes.                                     }
+{   2019/04/02  5.04  LongInt/LongWord changes.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.02  2018/07/11                       }
-{   Delphi 10.2 Win64                   5.02  2018/07/11                       }
+{   Delphi 10.2 Win32                   5.04  2019/04/02                       }
+{   Delphi 10.2 Win64                   5.04  2019/04/02                       }
+{   Delphi 10.2 Linux64                 5.04  2019/04/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -460,12 +462,12 @@ type
   WordArray = array of Word;
   Word32Array = array of Word32;
   LongWordArray = array of LongWord;
-  CardinalArray = LongWordArray;
+  CardinalArray = array of Cardinal;
   NativeUIntArray = array of NativeUInt;
   ShortIntArray = array of ShortInt;
   SmallIntArray = array of SmallInt;
   LongIntArray = array of LongInt;
-  IntegerArray = LongIntArray;
+  IntegerArray = array of Integer;
   NativeIntArray = array of NativeInt;
   Int32Array = array of Int32;
   Int64Array = array of Int64;
@@ -544,10 +546,12 @@ type
   TStaticWordArray = array[0..MaxWordArrayElements - 1] of Word;
   TStaticWord32Array = array[0..MaxWord32ArrayElements - 1] of Word32;
   TStaticLongWordArray = array[0..MaxLongWordArrayElements - 1] of LongWord;
+  TStaticCardinalArray = array[0..MaxCardinalArrayElements - 1] of Cardinal;
   TStaticNativeUIntArray = array[0..MaxNativeUIntArrayElements - 1] of NativeUInt;
   TStaticShortIntArray = array[0..MaxShortIntArrayElements - 1] of ShortInt;
   TStaticSmallIntArray = array[0..MaxSmallIntArrayElements - 1] of SmallInt;
   TStaticLongIntArray = array[0..MaxLongIntArrayElements - 1] of LongInt;
+  TStaticIntegerArray = array[0..MaxIntegerArrayElements - 1] of Integer;
   TStaticInt32Array = array[0..MaxInt32ArrayElements - 1] of Int32;
   TStaticInt64Array = array[0..MaxInt64ArrayElements - 1] of Int64;
   TStaticNativeIntArray = array[0..MaxNativeIntArrayElements - 1] of NativeInt;
@@ -573,8 +577,6 @@ type
   TStaticInterfaceArray = array[0..MaxInterfaceArrayElements - 1] of IInterface;
   TStaticCharSetArray = array[0..MaxCharSetArrayElements - 1] of ByteCharSet;
   TStaticByteSetArray = array[0..MaxByteSetArrayElements - 1] of ByteSet;
-  TStaticCardinalArray = TStaticLongWordArray;
-  TStaticIntegerArray = TStaticLongIntArray;
 
 { Static array pointers                                                        }
 type

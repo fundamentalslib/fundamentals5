@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.65                                                     }
+{   File version:     5.66                                                     }
 {   Description:      Utility functions.                                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
@@ -113,6 +113,7 @@
 {   2018/07/11  5.63  Moved standard types to unit flcStdTypes.                }
 {   2018/08/12  5.64  Removed WideString functions and CLR code.               }
 {   2018/08/14  5.65  ByteChar changes.                                        }
+{   2019/04/02  5.66  Swap changes.                                            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -331,17 +332,21 @@ procedure Swap(var X, Y: Word32); overload;
 procedure Swap(var X, Y: ShortInt); overload;
 procedure Swap(var X, Y: SmallInt); overload;
 procedure Swap(var X, Y: Int32); overload;
-procedure Swap(var X, Y: Int64); overload;
-procedure Swap(var X, Y: Single); overload;
-procedure Swap(var X, Y: Double); overload;
-procedure SwapExt(var X, Y: Extended); overload;
-procedure Swap(var X, Y: Currency); overload;
+procedure Swap(var X, Y: Int64); overload;     {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapLW(var X, Y: LongWord);          {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapLI(var X, Y: LongInt);           {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapInt(var X, Y: Integer);          {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapCrd(var X, Y: Cardinal);         {$IFDEF UseInline}inline;{$ENDIF}
+procedure Swap(var X, Y: Single); overload;    {$IFDEF UseInline}inline;{$ENDIF}
+procedure Swap(var X, Y: Double); overload;    {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapExt(var X, Y: Extended);         {$IFDEF UseInline}inline;{$ENDIF}
+procedure Swap(var X, Y: Currency); overload;  {$IFDEF UseInline}inline;{$ENDIF}
 {$IFDEF SupportAnsiString}
-procedure SwapA(var X, Y: AnsiString); overload;
+procedure SwapA(var X, Y: AnsiString);         {$IFDEF UseInline}inline;{$ENDIF}
 {$ENDIF}
-procedure SwapB(var X, Y: RawByteString);
-procedure SwapU(var X, Y: UnicodeString); overload;
-procedure Swap(var X, Y: String); overload;
+procedure SwapB(var X, Y: RawByteString);      {$IFDEF UseInline}inline;{$ENDIF}
+procedure SwapU(var X, Y: UnicodeString);      {$IFDEF UseInline}inline;{$ENDIF}
+procedure Swap(var X, Y: String); overload;    {$IFDEF UseInline}inline;{$ENDIF}
 procedure Swap(var X, Y: TObject); overload;
 procedure SwapObjects(var X, Y);
 procedure Swap(var X, Y: Pointer); overload;
@@ -1712,6 +1717,38 @@ end;
 
 procedure Swap(var X, Y: Int64);
 var F : Int64;
+begin
+  F := X;
+  X := Y;
+  Y := F;
+end;
+
+procedure SwapLW(var X, Y: LongWord);
+var F : LongWord;
+begin
+  F := X;
+  X := Y;
+  Y := F;
+end;
+
+procedure SwapLI(var X, Y: LongInt);
+var F : LongInt;
+begin
+  F := X;
+  X := Y;
+  Y := F;
+end;
+
+procedure SwapInt(var X, Y: Integer);
+var F : Integer;
+begin
+  F := X;
+  X := Y;
+  Y := F;
+end;
+
+procedure SwapCrd(var X, Y: Cardinal);
+var F : Cardinal;
 begin
   F := X;
   X := Y;
