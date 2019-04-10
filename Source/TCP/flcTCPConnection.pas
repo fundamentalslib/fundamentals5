@@ -1527,17 +1527,17 @@ var Len : Integer;
     TrackLastActivityTime : Boolean;
 begin
   try
-    Assert(FState <> cnsInit);
     Idle := True;
-    // handle closed socket
-    if FSocket.SocketHandleInvalid then
-      begin
-        Terminated := True;
-        exit;
-      end;
-    // check if read/write should process
     Lock;
     try
+      // handle closed socket
+      if FSocket.SocketHandleInvalid then
+        begin
+          Terminated := True;
+          exit;
+        end;
+      // check if read/write should process
+      Assert(FState <> cnsInit);
       //read
       ReadProcessPending := FReadProcessPending;
       if ReadProcessPending then
@@ -2248,7 +2248,12 @@ begin
   {$ENDIF}
   // Sends TCP FIN message to close connection and
   // disallow any further sending on the socket
-  FSocket.Shutdown(ssSend);
+  Lock;
+  try
+    FSocket.Shutdown(ssSend);
+  finally
+    Unlock;
+  end;
 end;
 
 procedure TTCPConnection.Shutdown;
@@ -2280,7 +2285,12 @@ begin
   if GetState = cnsClosed then
     exit;
   SetStateClosed;
-  FSocket.Close;
+  Lock;
+  try
+    FSocket.Close;
+  finally
+    Unlock;
+  end;
 end;
 
 procedure TTCPConnection.TerminateWorkerThread;

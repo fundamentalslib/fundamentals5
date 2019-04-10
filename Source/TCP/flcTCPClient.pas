@@ -253,7 +253,7 @@ type
     FLocalAddr         : TSocketAddr;
     FConnectAddr       : TSocketAddr;
     FConnection        : TTCPConnection;
-    FSyncListLog       : TList;
+    FSyncListLog       : TList; //// TList deprecated in Delphi
 
     {$IFDEF TCPCLIENT_TLS}
     FTLSProxy          : TTCPConnectionProxy;
@@ -1175,7 +1175,7 @@ begin
   if Assigned(FSyncListLog) then
     begin
       for I := FSyncListLog.Count - 1 downto 0 do
-        Dispose(FSyncListLog.Items[0]);
+        Dispose(FSyncListLog.Items[I]);
       FreeAndNil(FSyncListLog);
     end;
   if Assigned(FSocket) then
@@ -2202,6 +2202,7 @@ begin
   {$IFDEF TCP_DEBUG}
   Log(cltDebug, 'DoBind');
   {$ENDIF}
+
   if GetState = csClosed then
     raise ETCPClient.Create('Closed');
   FSocket.Bind(FLocalAddr);
@@ -2686,7 +2687,6 @@ begin
     Unlock;
   end;
 end;
-
 
 { TLS }
 
