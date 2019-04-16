@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPTests.pas                                          }
-{   File version:     5.09                                                     }
+{   File version:     5.10                                                     }
 {   Description:      TCP tests.                                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -45,6 +45,7 @@
 {   2015/04/26  4.07  Test for worker thread and blocking interface.           }
 {   2016/01/08  5.08  Update for Fundamentals 5.                               }
 {   2018/09/08  5.09  Server tests with high connection count.                 }
+{   2019/04/16  5.10  Shutdown test.                                           }
 {                                                                              }
 { Todo:                                                                        }
 { - Test case socks proxy                                                      }
@@ -1255,7 +1256,7 @@ end;
 {$IFDEF TCPSERVER_TEST}
 procedure Test_Server_Connections;
 const
-  MaxConns = 100;
+  MaxConns = 10;
 var
   T : Word32;
   S : TF5TCPServer;
@@ -1286,14 +1287,23 @@ begin
   I := 0;
   repeat
     Sleep(10);
-    Inc(I);
-  until (S.ClientCount = MaxConns) or (I > 1000);
+    Inc(I, 10);
+  until (S.ClientCount = MaxConns) or (I > 4000);
   Assert(S.ClientCount = MaxConns);
   T := Word32(TCPGetTick - T);
   Writeln(T / MaxConns:0:2);
 
-  S.Active := False;
+  for I := 1 to MaxConns do
+    C[I].Close;
+  for I := 1 to MaxConns do
+    C[I].Finalise;
+  for I := 1 to MaxConns do
+    FreeAndNil(C[I]);
 
+  S.Active := False;
+  Sleep(100);
+
+  S.Finalise;
   S.Free;
 end;
 
@@ -1341,17 +1351,100 @@ begin
   repeat
     Sleep(1);
     Inc(I);
-  until (S[MaxSrvrs].ClientCount = MaxConns) or (I > 30000);
+  until (S[MaxSrvrs].ClientCount = MaxConns) or (I > 10000);
   Assert(S[MaxSrvrs].ClientCount = MaxConns);
   T := Word32(TCPGetTick - T);
   Writeln(T / (MaxConns * MaxSrvrs):0:2);
   Sleep(1000);
 
+  for J := 1 to MaxSrvrs do
+    for I := 1 to MaxConns do
+      begin
+        C[J][I].Close;
+        C[J][I].Finalise;
+        C[J][I].Free;
+      end;
+
   for I := 1 to MaxSrvrs do
     S[I].Active := False;
 
   for I := 1 to MaxSrvrs do
-    S[I].Free;
+    begin
+      S[I].Finalise;
+      S[I].Free;
+    end;
+end;
+{$ENDIF}
+
+{$IFDEF TCPCLIENTSERVER_TEST}
+procedure Test_ClientServer_Shutdown;
+var
+  S : TF5TCPServer;
+  C : TF5TCPClient;
+  T : TTCPServerClient;
+  B, X : RawByteString;
+  I, L, N, M : Integer;
+begin
+  S := TF5TCPServer.Create(nil);
+  S.AddressFamily := iaIP4;
+  S.BindAddress := '127.0.0.1';
+  S.ServerPort := 12213;
+  S.MaxClients := -1;
+  S.Active := True;
+  Sleep(100);
+
+  C := TF5TCPClient.Create(nil);
+  C.LocalHost := '0.0.0.0';
+  C.Host := '127.0.0.1';
+  C.Port := '12213';
+  C.WaitForStartup := True;
+  C.UseWorkerThread := False;
+  C.Active := True;
+  Sleep(100);
+
+  Assert(C.State = csReady);
+
+  SetLength(B, 1024 * 1024);
+  for I := 1 to Length(B) do
+    B[I] := #1;
+  L := C.Connection.WriteStrB(B);
+  Assert(L > 1024);
+  Sleep(1);
+
+  Assert(not C.IsShutdownComplete);
+  C.Shutdown;
+  for I := 1 to 10 do
+    begin
+      if C.IsShutdownComplete then
+        break;
+      Sleep(50);
+    end;
+  Assert(C.IsShutdownComplete);
+
+  T := S.ClientIterateFirst;
+  Assert(Assigned(T));
+  SetLength(X, L);
+  M := 0;
+  repeat
+    N := T.Connection.Read(X[1], L);
+    Inc(M, N);
+    Sleep(10);
+  until N <= 0;
+  Assert(M = L);
+  Sleep(50);
+
+  Assert(C.State = csClosed);
+  Assert(T.State = scsClosed);
+
+  T.ReleaseReference;
+
+  C.Close;
+  C.Finalise;
+  C.Free;
+
+  S.Active := False;
+  S.Finalise;
+  S.Free;
 end;
 {$ENDIF}
 
@@ -1367,6 +1460,7 @@ begin
   Test_Client;
   {$ENDIF}
   {$IFDEF TCPCLIENTSERVER_TEST}
+  Test_ClientServer_Shutdown;
   Test_ClientServer_A;
   Test_ClientServer_Block;
   Test_ClientServer_RetryConnect;

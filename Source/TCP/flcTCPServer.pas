@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.20                                                     }
+{   File version:     5.22                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
@@ -56,12 +56,14 @@
 {   2018/09/07  5.18  Improve latency for large number of clients.             }
 {   2018/09/10  5.19  Change polling to use Sockets Poll function.             }
 {   2018/12/31  5.20  OnActivity events.                                       }
+{   2019/04/10  5.21  String changes.                                          }
+{   2019/04/16  5.22  Client shutdown events.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.19  2018/09/10                       }
-{   Delphi 10.2 Win64                   5.19  2018/09/10                       }
-{   Delphi 10.2 Linux64                 5.19  2018/09/10                       }
+{   Delphi 10.2 Win32                   5.22  2019/04/16                       }
+{   Delphi 10.2 Win64                   5.22  2019/04/16                       }
+{   Delphi 10.2 Linux64                 5.22  2019/04/16                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -141,13 +143,13 @@ type
     procedure Log(const LogType: TTCPLogType; const LogMsg: String; const LogArgs: array of const; const LogLevel: Integer = 0); overload;
 
     function  GetState: TTCPServerClientState;
-    function  GetStateStr: RawByteString;
+    function  GetStateStr: String;
     procedure SetState(const State: TTCPServerClientState);
 
     procedure SetNegotiating;
     procedure SetReady;
 
-    function  GetRemoteAddrStr: RawByteString;
+    function  GetRemoteAddrStr: String;
 
     function  GetBlockingConnection: TTCPBlockingConnection;
 
@@ -162,6 +164,8 @@ type
     procedure ConnectionWrite(Sender: TTCPConnection);
     procedure ConnectionReadActivity(Sender: TTCPConnection);
     procedure ConnectionWriteActivity(Sender: TTCPConnection);
+    procedure ConnectionReadShutdown(Sender: TTCPConnection);
+    procedure ConnectionShutdown(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
@@ -175,6 +179,8 @@ type
     procedure TriggerWrite;
     procedure TriggerReadActivity;
     procedure TriggerWriteActivity;
+    procedure TriggerReadShutdown;
+    procedure TriggerShutdown;
     procedure TriggerClose;
 
     procedure Start;
@@ -194,7 +200,7 @@ type
     procedure Finalise;
 
     property  State: TTCPServerClientState read GetState;
-    property  StateStr: RawByteString read GetStateStr;
+    property  StateStr: String read GetStateStr;
     property  Terminated: Boolean read FTerminated;
 
     // Connection has a non-blocking interface.
@@ -212,7 +218,7 @@ type
     {$ENDIF}
 
     property  RemoteAddr: TSocketAddr read FRemoteAddr;
-    property  RemoteAddrStr: RawByteString read GetRemoteAddrStr;
+    property  RemoteAddrStr: String read GetRemoteAddrStr;
 
     property  ClientID: Int64 read FClientID;
 
@@ -299,8 +305,6 @@ type
   TTCPServerIdleEvent = procedure (Sender: TF5TCPServer; Thread: TTCPServerThread) of object;
   TTCPServerAcceptEvent = procedure (Sender: TF5TCPServer; Address: TSocketAddr;
       var AcceptClient: Boolean) of object;
-  TTCPServerNameLookupEvent = procedure (Sender: TF5TCPServer; Address: TSocketAddr;
-      HostName: RawByteString; var AcceptClient: Boolean) of object;
   TTCPServerClientWorkerExecuteEvent = procedure (Sender: TTCPServerClient;
       Connection: TTCPBlockingConnection; var CloseOnExit: Boolean) of object;
 
@@ -316,11 +320,11 @@ type
     FMaxWriteBufferSize    : Integer;
     FTrackLastActivityTime : Boolean;
     {$IFDEF TCPSERVER_TLS}
-    FTLSEnabled         : Boolean;
+    FTLSEnabled            : Boolean;
     {$ENDIF}
-    FUseWorkerThread    : Boolean;
-    FUserTag            : NativeInt;
-    FUserObject         : TObject;
+    FUseWorkerThread       : Boolean;
+    FUserTag               : NativeInt;
+    FUserObject            : TObject;
 
     // event handlers
     FOnLog                 : TTCPServerLogEvent;
@@ -330,7 +334,6 @@ type
     FOnThreadIdle          : TTCPServerIdleEvent;
 
     FOnClientAccept        : TTCPServerAcceptEvent;
-    FOnClientNameLookup    : TTCPServerNameLookupEvent;
     FOnClientCreate        : TTCPServerClientEvent;
     FOnClientAdd           : TTCPServerClientEvent;
     FOnClientRemove        : TTCPServerClientEvent;
@@ -343,6 +346,8 @@ type
     FOnClientWrite         : TTCPServerClientEvent;
     FOnClientReadActivity  : TTCPServerClientEvent;
     FOnClientWriteActivity : TTCPServerClientEvent;
+    FOnClientReadShutdown  : TTCPServerClientEvent;
+    FOnClientShutdown      : TTCPServerClientEvent;
     FOnClientClose         : TTCPServerClientEvent;
     FOnClientWorkerExecute : TTCPServerClientWorkerExecuteEvent;
 
@@ -379,7 +384,7 @@ type
     procedure LogException(const Msg: String; const E: Exception);
 
     function  GetState: TTCPServerState;
-    function  GetStateStr: RawByteString;
+    function  GetStateStr: String;
     procedure SetState(const State: TTCPServerState);
     procedure CheckNotActive;
 
@@ -411,7 +416,6 @@ type
     procedure ClientLog(const Client: TTCPServerClient; const LogType: TTCPLogType; const LogMsg: String; const LogLevel: Integer);
 
     procedure TriggerClientAccept(const Address: TSocketAddr; var AcceptClient: Boolean); virtual;
-    procedure TriggerClientNameLookup(const Address: TSocketAddr; const HostName: RawByteString; var AcceptClient: Boolean); virtual;
     procedure TriggerClientCreate(const Client: TTCPServerClient); virtual;
     procedure TriggerClientAdd(const Client: TTCPServerClient); virtual;
     procedure TriggerClientRemove(const Client: TTCPServerClient); virtual;
@@ -424,6 +428,8 @@ type
     procedure TriggerClientWrite(const Client: TTCPServerClient); virtual;
     procedure TriggerClientReadActivity(const Client: TTCPServerClient); virtual;
     procedure TriggerClientWriteActivity(const Client: TTCPServerClient); virtual;
+    procedure TriggerClientReadShutdown(const Client: TTCPServerClient); virtual;
+    procedure TriggerClientShutdown(const Client: TTCPServerClient); virtual;
     procedure TriggerClientClose(const Client: TTCPServerClient); virtual;
     procedure TriggerClientWorkerExecute(const Client: TTCPServerClient;
               const Connection: TTCPBlockingConnection; var CloseOnExit: Boolean); virtual;
@@ -512,11 +518,13 @@ type
     property  OnClientWrite: TTCPServerClientEvent read FOnClientWrite write FOnClientWrite;
     property  OnClientReadActivity: TTCPServerClientEvent read FOnClientReadActivity write FOnClientReadActivity;
     property  OnClientWriteActivity: TTCPServerClientEvent read FOnClientWriteActivity write FOnClientWriteActivity;
+    property  OnClientReadShutdown: TTCPServerClientEvent read FOnClientReadShutdown write FOnClientReadShutdown;
+    property  OnClientShutdown: TTCPServerClientEvent read FOnClientShutdown write FOnClientShutdown;
     property  OnClientClose: TTCPServerClientEvent read FOnClientClose write FOnClientClose;
 
     // State
     property  State: TTCPServerState read GetState;
-    property  StateStr: RawByteString read GetStateStr;
+    property  StateStr: String read GetStateStr;
     property  Active: Boolean read FActive write SetActive default False;
     procedure Start;
     procedure Stop;
@@ -582,6 +590,8 @@ type
     property  OnClientWrite;
     property  OnClientReadActivity;
     property  OnClientWriteActivity;
+    property  OnClientReadShutdown;
+    property  OnClientShutdown;
     property  OnClientClose;
 
     property  UseWorkerThread;
@@ -607,14 +617,14 @@ const
   SError_NotAllowedWhileActive = 'Operation not allowed while server is active';
   SError_InvalidServerPort     = 'Invalid server port';
 
-  STCPServerState : array[TTCPServerState] of RawByteString = (
+  STCPServerState : array[TTCPServerState] of String = (
       'Initialise',
       'Starting',
       'Ready',
       'Failure',
       'Closed');
 
-  STCPServerClientState : array[TTCPServerClientState] of RawByteString = (
+  STCPServerClientState : array[TTCPServerClientState] of String = (
       'Initialise',
       'Starting',
       'Negotiating',
@@ -767,10 +777,14 @@ begin
   FConnection.ReadBufferMaxSize     := Server.FMaxReadBufferSize;
   FConnection.WriteBufferMaxSize    := Server.FMaxWriteBufferSize;
   FConnection.TrackLastActivityTime := Server.FTrackLastActivityTime;
+  {$IFDEF TCP_DEBUG}
   if Assigned(FServer.FOnLog) then
     FConnection.OnLog := ConnectionLog;
+  {$ENDIF}
   FConnection.OnStateChange    := ConnectionStateChange;
   FConnection.OnReady          := ConnectionReady;
+  FConnection.OnReadShutdown   := ConnectionReadShutdown;
+  FConnection.OnShutdown       := ConnectionShutdown;
   FConnection.OnClose          := ConnectionClose;
   FConnection.OnWorkerExecute  := ConnectionWorkerExecute;
   if Assigned(FServer.FOnClientRead) then
@@ -827,7 +841,7 @@ begin
   Result := FState;
 end;
 
-function TTCPServerClient.GetStateStr: RawByteString;
+function TTCPServerClient.GetStateStr: String;
 begin
   Result := STCPServerClientState[GetState];
 end;
@@ -853,9 +867,9 @@ begin
   TriggerReady;
 end;
 
-function TTCPServerClient.GetRemoteAddrStr: RawByteString;
+function TTCPServerClient.GetRemoteAddrStr: String;
 begin
-  Result := SocketAddrStrA(FRemoteAddr);
+  Result := SocketAddrStr(FRemoteAddr);
 end;
 
 function TTCPServerClient.GetBlockingConnection: TTCPBlockingConnection;
@@ -922,6 +936,16 @@ end;
 procedure TTCPServerClient.ConnectionWriteActivity(Sender: TTCPConnection);
 begin
   TriggerWriteActivity;
+end;
+
+procedure TTCPServerClient.ConnectionReadShutdown(Sender: TTCPConnection);
+begin
+  TriggerReadShutdown;
+end;
+
+procedure TTCPServerClient.ConnectionShutdown(Sender: TTCPConnection);
+begin
+  TriggerShutdown;
 end;
 
 procedure TTCPServerClient.ConnectionClose(Sender: TTCPConnection);
@@ -991,6 +1015,18 @@ begin
     FServer.TriggerClientWriteActivity(self);
 end;
 
+procedure TTCPServerClient.TriggerReadShutdown;
+begin
+  if Assigned(FServer) then
+    FServer.TriggerClientReadShutdown(self);
+end;
+
+procedure TTCPServerClient.TriggerShutdown;
+begin
+  if Assigned(FServer) then
+    FServer.TriggerClientShutdown(self);
+end;
+
 procedure TTCPServerClient.TriggerClose;
 begin
   if Assigned(FServer) then
@@ -1010,14 +1046,24 @@ procedure TTCPServerClient.Process(const ProcessRead, ProcessWrite: Boolean;
           const ActivityTime: TDateTime;
           var Idle, Terminated: Boolean);
 begin
-  FConnection.ProcessSocket(ProcessRead, ProcessWrite, ActivityTime, Idle, Terminated);
+  //FServer.Lock; //// client lock?
+  try
+    FConnection.ProcessSocket(ProcessRead, ProcessWrite, ActivityTime, Idle, Terminated);
+  finally
+    //FServer.Unlock; ////
+  end;
   if Terminated then
     FTerminated := True;
 end;
 
 procedure TTCPServerClient.AddReference;
 begin
-  Inc(FReferenceCount);
+  FServer.Lock;
+  try
+    Inc(FReferenceCount);
+  finally
+    FServer.Unlock;
+  end;
 end;
 
 procedure TTCPServerClient.SetClientOrphaned;
@@ -1459,7 +1505,7 @@ begin
   end;
 end;
 
-function TF5TCPServer.GetStateStr: RawByteString;
+function TF5TCPServer.GetStateStr: String;
 begin
   Result := STCPServerState[GetState];
 end;
@@ -1648,12 +1694,6 @@ begin
     FOnClientAccept(self, Address, AcceptClient);
 end;
 
-procedure TF5TCPServer.TriggerClientNameLookup(const Address: TSocketAddr; const HostName: RawByteString; var AcceptClient: Boolean);
-begin
-  if Assigned(FOnClientNameLookup) then
-    FOnClientNameLookup(self, Address, HostName, AcceptClient);
-end;
-
 procedure TF5TCPServer.TriggerClientCreate(const Client: TTCPServerClient);
 begin
   if Assigned(FOnClientCreate) then
@@ -1746,6 +1786,18 @@ begin
     FOnClientWriteActivity(Client);
 end;
 
+procedure TF5TCPServer.TriggerClientReadShutdown(const Client: TTCPServerClient);
+begin
+  if Assigned(FOnClientReadShutdown) then
+    FOnClientReadShutdown(Client);
+end;
+
+procedure TF5TCPServer.TriggerClientShutdown(const Client: TTCPServerClient);
+begin
+  if Assigned(FOnClientShutdown) then
+    FOnClientShutdown(Client);
+end;
+
 procedure TF5TCPServer.TriggerClientClose(const Client: TTCPServerClient);
 begin
   if Assigned(FOnClientClose) then
@@ -1821,14 +1873,16 @@ end;
 procedure TF5TCPServer.StopServerThreads;
 begin
   if Assigned(FProcessThread) then
+    FProcessThread.Terminate;
+  if Assigned(FControlThread) then
+    FControlThread.Terminate;
+  if Assigned(FProcessThread) then
     begin
-      FProcessThread.Terminate;
       FProcessThread.WaitFor;
       FProcessThread.Finalise;
     end;
   if Assigned(FControlThread) then
     begin
-      FControlThread.Terminate;
       FControlThread.WaitFor;
       FControlThread.Finalise;
     end;
@@ -2047,7 +2101,10 @@ begin
   Log(tlDebug, 'ClientDestroy');
   {$ENDIF}
   TriggerClientDestroy(DropCl);
+  DropCl.Finalise;
+  {$IFNDEF NEXTGEN}
   DropCl.Free;
+  {$ENDIF}
   Result := True;
 end;
 
@@ -2061,12 +2118,7 @@ var
   ClSt : TTCPServerClientState;
   ClFr : Boolean;
 begin
-  Client.AddReference;
-  try
-    Client.Process(ProcessRead, ProcessWrite, ActivityTime, ClientIdle, ClientTerminated);
-  finally
-    Client.ReleaseReference;
-  end;
+  Client.Process(ProcessRead, ProcessWrite, ActivityTime, ClientIdle, ClientTerminated);
   if ClientTerminated then
     begin
       Client.TerminateWorkerThread;
@@ -2076,8 +2128,6 @@ begin
         ClFr := Client.FReferenceCount = 0;
         FPollList.Remove(Client.FPollIndex);
         FClientList.Remove(Client);
-        if not ClFr then
-          FClientTerminatedList.Add(Client);
       finally
         Unlock;
       end;
@@ -2089,11 +2139,23 @@ begin
       TriggerClientRemove(Client);
       if ClFr then
         begin
+          {$IFDEF TCP_DEBUG}
+          Log(tlDebug, 'ClientDestroy');
+          {$ENDIF}
           TriggerClientDestroy(Client);
           Client.Finalise;
           {$IFNDEF NEXTGEN}
           Client.Free;
           {$ENDIF}
+        end
+      else
+        begin
+          Lock;
+          try
+            FClientTerminatedList.Add(Client);
+          finally
+            Unlock;
+          end;
         end;
     end;
 end;

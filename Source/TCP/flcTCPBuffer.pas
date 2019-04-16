@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPBuffer.pas                                         }
-{   File version:     5.06                                                     }
+{   File version:     5.07                                                     }
 {   Description:      TCP buffer.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -42,6 +42,7 @@
 {   2011/06/16  0.04  Minor change in PeekPtr routine.                         }
 {   2011/09/03  4.05  Revised for Fundamentals 4.                              }
 {   2016/01/09  5.06  Revised for Fundamentals 5.                              }
+{   2019/04/10  5.07  Change default buffer size.                              }
 {                                                                              }
 {******************************************************************************}
 
@@ -75,8 +76,8 @@ const
   ETHERNET_MTU_100MBIT = 1500;
   ETHERNET_MTU_1GBIT   = 9000;
 
-  TCP_BUFFER_DEFAULTMAXSIZE = ETHERNET_MTU_1GBIT   * 8; // 72,000 bytes
-  TCP_BUFFER_DEFAULTBUFSIZE = ETHERNET_MTU_100MBIT * 4; // 6,000 bytes
+  TCP_BUFFER_DEFAULTMAXSIZE = ETHERNET_MTU_1GBIT * 8; // 72,000 bytes
+  TCP_BUFFER_DEFAULTBUFSIZE = ETHERNET_MTU_1GBIT;     // 9,000 bytes
 
 procedure TCPBufferInitialise(
           var TCPBuf: TTCPBuffer;

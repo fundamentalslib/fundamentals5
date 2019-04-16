@@ -2,8 +2,8 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocket.pas                                            }
-{   File version:     5.10                                                     }
-{   Description:      System independent socket class.                         }
+{   File version:     5.11                                                     }
+{   Description:      Platform independent socket class.                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
 {                     All rights reserved.                                     }
@@ -46,6 +46,7 @@
 {   2016/01/09  5.08  Revised for Fundamentals 5.                              }
 {   2018/07/11  5.09  Type changes for Win64.                                  }
 {   2019/01/01  5.10  Cache local and remote addresses.                        }
+{   2019/04/14  5.11  Check closed socket.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -55,7 +56,9 @@
 {   Delphi XE6 Win64                    5.10  2019/03/02                       }
 {   Delphi XE7 Win32                    5.10  2019/03/02                       }
 {   Delphi XE7 Win64                    5.10  2019/03/02                       }
-{   Delphi 10 Win32                     5.08  2016/01/09                       }
+{   Delphi 10.2 Win32                   5.11  2019/04/16                       }
+{   Delphi 10.2 Win64                   5.11  2019/04/16                       }
+{   Delphi 10.2 Linux64                 5.11  2019/04/16                       }
 {   FreePascal 2.6.2 Linux i386         4.07  2014/04/23                       }
 {   FreePascal 2.6.2 Win32 i386         4.07  2014/04/23                       }
 {                                                                              }
@@ -68,7 +71,7 @@
   {$DEFINE SOCKET_TEST}
   {$DEFINE SOCKET_TEST_IP4}
   {.DEFINE SOCKET_TEST_IP4_INTERNET}
-  {$DEFINE DEBUG_SOCKET}
+  {.DEFINE DEBUG_SOCKET}
 {$ENDIF}
 {$ENDIF}
 
@@ -237,11 +240,12 @@ type
     property  AddressFamily: TIPAddressFamily read FAddressFamily;
     property  Protocol: TIPProtocol read FProtocol;
     property  Overlapped: Boolean read FOverlapped;
-    property  SocketHandle: TSocketHandle read FSocketHandle;
-    function  SocketHandleInvalid: Boolean;
 
+    property  SocketHandle: TSocketHandle read FSocketHandle;
+    function  IsSocketHandleInvalid: Boolean;
     procedure AllocateSocketHandle;
     function  ReleaseSocketHandle: TSocketHandle;
+
     procedure CloseSocket;
     procedure Close;
 
@@ -281,7 +285,7 @@ type
     function  GetLocalAddress: TSocketAddr;
     function  GetLocalAddressIP: TIP4Addr;
     function  GetLocalAddressIP6: TIP6Addr;
-    function  GetLocalAddressStr: RawByteString;
+    function  GetLocalAddressStrB: RawByteString;
     function  GetLocalPort: Integer;
     function  GetLocalPortStr: String;
 
@@ -304,11 +308,11 @@ type
     function  GetRemoteAddress: TSocketAddr;
     function  GetRemoteAddressIP: TIP4Addr;
     function  GetRemoteAddressIP6: TIP6Addr;
-    function  GetRemoteAddressStr: RawByteString;
-    function  GetRemoteHostName: RawByteString;
+    function  GetRemoteAddressStrB: RawByteString;
+    function  GetRemoteHostNameB: RawByteString;
 
-    function  Send(const Buf; const BufSize: Integer): Integer; overload;
-    function  Send(const Buf: RawByteString): Integer; overload;
+    function  Send(const Buf; const BufSize: Integer): Integer;
+    function  SendStrB(const Buf: RawByteString): Integer;
 
     function  SendTo(const Address: TSocketAddr; const Buf; const BufSize: Integer): Integer; overload;
     function  SendTo(const Host, Port: RawByteString; const Buf; const BufSize: Integer): Integer; overload;
@@ -365,10 +369,11 @@ const
 function SocketHandleMessageProc(
          const WindowHandle: HWND; const Msg: UINT;
          const wParam: WPARAM; const lParam: LPARAM): LRESULT; stdcall;
-var Events : Word;
-    Param  : Word;
-    Socket : TSysSocket;
-    EventsAsync : TSocketAsynchronousEvents;
+var
+  Events : Word;
+  Param  : Word;
+  Socket : TSysSocket;
+  EventsAsync : TSocketAsynchronousEvents;
 begin
   if Msg = WM_SOCKET then
     begin
@@ -476,6 +481,9 @@ end;
 {                                                                              }
 { TSysSocket                                                                   }
 {                                                                              }
+const
+  SError_SocketClosed = 'Socket closed';
+
 constructor TSysSocket.Create(
             const AddressFamily: TIPAddressFamily;
             const Protocol: TIPProtocol; const Overlapped: Boolean;
@@ -519,29 +527,30 @@ begin
 end;
 
 procedure TSysSocket.Finalise;
-var S : TSocketHandle;
-    {$IFDEF SOCKET_WIN}
-    W : HWND;
-    {$ENDIF}
+var
+  SckHnd : TSocketHandle;
+  {$IFDEF SOCKET_WIN}
+  WinHnd : HWND;
+  {$ENDIF}
 begin
   // close socket handle
   // note that the socket handle can be 0 (on exception during creation) or
   // INVALID_SOCKET (handle not allocated)
-  S := FSocketHandle;
-  if (S <> 0) and (S <> INVALID_SOCKETHANDLE) then
+  SckHnd := FSocketHandle;
+  if (SckHnd <> 0) and (SckHnd <> INVALID_SOCKETHANDLE) then
     begin
       FSocketHandle := INVALID_SOCKETHANDLE;
-      SocketClose(S); // don't check for CloseSocket errors during destruction
+      SocketClose(SckHnd); // don't check for CloseSocket errors during destruction
     end;
   {$IFDEF SOCKET_WIN}
   // destroy window handle
   // note that the window handle can be 0 (on exception during creation) or
   // INVALID_HANDLE_VALUE (handle not allocated)
-  W := FWindowHandle;
-  if (W <> 0) and (W <> INVALID_HANDLE_VALUE) then
+  WinHnd := FWindowHandle;
+  if (WinHnd <> 0) and (WinHnd <> INVALID_HANDLE_VALUE) then
     begin
       FWindowHandle := INVALID_HANDLE_VALUE;
-      DestroyWindow(W); // don't check for DestroyWindow errors during destruction
+      DestroyWindow(WinHnd); // don't check for DestroyWindow errors during destruction
     end;
   {$ENDIF}
 end;
@@ -557,16 +566,16 @@ begin
   Log(LogType, Format(Msg, Args));
 end;
 
+function TSysSocket.IsSocketHandleInvalid: Boolean;
+begin
+  Result := FSocketHandle = INVALID_SOCKETHANDLE;
+end;
+
 procedure TSysSocket.AllocateSocketHandle;
 begin
   if (FSocketHandle = INVALID_SOCKETHANDLE) or (FSocketHandle = 0) then
     FSocketHandle := flcSocketLib.AllocateSocketHandle(AddressFamily, Protocol,
         Overlapped)
-end;
-
-function TSysSocket.SocketHandleInvalid: Boolean;
-begin
-  Result := FSocketHandle = INVALID_SOCKETHANDLE;
 end;
 
 function TSysSocket.ReleaseSocketHandle: TSocketHandle;
@@ -576,44 +585,46 @@ begin
 end;
 
 procedure TSysSocket.CloseSocket;
-var S : TSocketHandle;
+var
+  SckHnd : TSocketHandle;
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'CloseSocket');
+  Log(sltDebug, 'CloseSocket:Handle=%d', [Ord(FSocketHandle)]);
   {$ENDIF}
   // close socket
-  S := FSocketHandle;
-  if S = INVALID_SOCKETHANDLE then
+  SckHnd := FSocketHandle;
+  if SckHnd = INVALID_SOCKETHANDLE then
     exit;
-  if SocketClose(S) < 0 then
+  if SocketClose(SckHnd) < 0 then
     raise ESocketLib.Create('Close failed', SocketGetLastError);
   FSocketHandle := INVALID_SOCKETHANDLE;
 end;
 
 procedure TSysSocket.Close;
-var S : TSocketHandle;
-    {$IFDEF SOCKET_WIN}
-    W : HWND;
-    {$ENDIF}
+var
+  SckHnd : TSocketHandle;
+  {$IFDEF SOCKET_WIN}
+  WinHnd : HWND;
+  {$ENDIF}
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Close:Handle:%d', [Ord(FSocketHandle)]);
+  Log(sltDebug, 'Close:Handle=%d', [Ord(FSocketHandle)]);
   {$ENDIF}
   // close socket
-  S := FSocketHandle;
-  if S <> INVALID_SOCKETHANDLE then
+  SckHnd := FSocketHandle;
+  if SckHnd <> INVALID_SOCKETHANDLE then
     begin
-      if SocketClose(S) < 0 then
+      if SocketClose(SckHnd) < 0 then
         raise ESocketLib.Create('Close failed', SocketGetLastError);
       FSocketHandle := INVALID_SOCKETHANDLE;
     end;
   {$IFDEF SOCKET_WIN}
   // destroy window handle
-  W := FWindowHandle;
-  if W <> INVALID_HANDLE_VALUE then
+  WinHnd := FWindowHandle;
+  if WinHnd <> INVALID_HANDLE_VALUE then
    begin
-     SetWindowLong(W, 0, 0);
-     if not DestroyWindow(W) then
+     SetWindowLong(WinHnd, 0, 0);
+     if not DestroyWindow(WinHnd) then
        raise ESysSocket.Create('Close failed: ' + SysErrorMessage(Windows.GetLastError));
      FWindowHandle := INVALID_HANDLE_VALUE;
    end;
@@ -623,8 +634,10 @@ end;
 procedure TSysSocket.SetBlocking(const Block: Boolean);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetBlocking:%d', [Ord(Block)]);
+  Log(sltDebug, 'SetBlocking:Block=%d', [Ord(Block)]);
   {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   flcSocketLib.SetSocketBlocking(FSocketHandle, Block);
 end;
 
@@ -637,6 +650,8 @@ begin
   {$IFDEF SOCKET_WIN}
   if AsyncEvents = FAsyncEvents then
     exit;
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   FAsyncEvents := AsyncEvents;
   if AsyncEvents <> [] then
     begin
@@ -728,98 +743,127 @@ end;
 
 function TSysSocket.GetReceiveTimeout: Integer;
 begin
-  Result := flcSocketLib.GetSocketReceiveTimeout(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketReceiveTimeout(FSocketHandle);
 end;
 
 procedure TSysSocket.SetReceiveTimeout(const TimeoutUs: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetReceiveTimeOut:%d', [TimeoutUs]);
+  Log(sltDebug, 'SetReceiveTimeOut:TimeoutUs=%d', [TimeoutUs]);
   {$ENDIF}
-  flcSocketLib.SetSocketReceiveTimeout(FSocketHandle, TimeoutUs);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketReceiveTimeout(FSocketHandle, TimeoutUs);
 end;
 
 function TSysSocket.GetSendTimeout: Integer;
 begin
-  Result := flcSocketLib.GetSocketSendTimeout(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketSendTimeout(FSocketHandle);
 end;
 
 procedure TSysSocket.SetSendTimeout(const TimeoutUs: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetSendTimeOut:%d', [TimeoutUs]);
+  Log(sltDebug, 'SetSendTimeOut:TimeoutUs=%d', [TimeoutUs]);
   {$ENDIF}
-  flcSocketLib.SetSocketSendTimeout(FSocketHandle, TimeoutUs);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketSendTimeout(FSocketHandle, TimeoutUs);
 end;
 
 function TSysSocket.GetReceiveBufferSize: Integer;
 begin
-  Result := flcSocketLib.GetSocketReceiveBufferSize(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketReceiveBufferSize(FSocketHandle);
 end;
 
 procedure TSysSocket.SetReceiveBufferSize(const BufferSize: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetReceiveBufferSize:%db', [BufferSize]);
+  Log(sltDebug, 'SetReceiveBufferSize:BufferSize=%db', [BufferSize]);
   {$ENDIF}
-  flcSocketLib.SetSocketReceiveBufferSize(FSocketHandle, BufferSize);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketReceiveBufferSize(FSocketHandle, BufferSize);
 end;
 
 function TSysSocket.GetSendBufferSize: Integer;
 begin
-  Result := flcSocketLib.GetSocketSendBufferSize(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketSendBufferSize(FSocketHandle);
 end;
 
 procedure TSysSocket.SetSendBufferSize(const BufferSize: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetSendBufferSize:%db', [BufferSize]);
+  Log(sltDebug, 'SetSendBufferSize:BufferSize=%db', [BufferSize]);
   {$ENDIF}
-  flcSocketLib.SetSocketSendBufferSize(FSocketHandle, BufferSize);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketSendBufferSize(FSocketHandle, BufferSize);
 end;
 
 function TSysSocket.GetBroadcastEnabled: Boolean;
 begin
-  Result := flcSocketLib.GetSocketBroadcast(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketBroadcast(FSocketHandle);
 end;
 
 procedure TSysSocket.SetBroadcastEnabled(const BroadcastEnabled: Boolean);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetBroadcastEnabled:%d', [Ord(BroadcastEnabled)]);
+  Log(sltDebug, 'SetBroadcastEnabled:Enabled=%d', [Ord(BroadcastEnabled)]);
   {$ENDIF}
-  flcSocketLib.SetSocketBroadcast(FSocketHandle, BroadcastEnabled);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketBroadcast(FSocketHandle, BroadcastEnabled);
 end;
 
 procedure TSysSocket.GetLingerOption(var LingerOption: Boolean; var LingerTimeSec: Integer);
 begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   {$IFDEF MSWIN}
-  flcSocketLib.GetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  GetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  {$ELSE}
+  raise ESysSocket.Create('GetLingerOption not supported');
   {$ENDIF}
 end;
 
 procedure TSysSocket.SetLingerOption(const LingerOption: Boolean; const LingerTimeSec: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SetLingerOption:%d:%ds', [Ord(LingerOption), LingerTimeSec]);
+  Log(sltDebug, 'SetLingerOption:Linger=%d:LingerTimeSec=%ds', [Ord(LingerOption), LingerTimeSec]);
   {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   {$IFDEF MSWIN}
-  flcSocketLib.SetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  SetSocketLinger(FSocketHandle, LingerOption, LingerTimeSec);
+  {$ELSE}
+  raise ESysSocket.Create('SetLingerOption not supported');
   {$ENDIF}
 end;
 
 procedure TSysSocket.Resolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
-var R : Boolean;
+var
+  R : Boolean;
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Resolve:%s:%s', [Host, Port]);
+  Log(sltDebug, 'Resolve:Host=%s:Port=%s', [Host, Port]);
   {$ENDIF}
   R := False;
   TriggerResolve(Host, Port, SockAddr, R);
   if not R then
     SockAddr := flcSocketLib.ResolveB(Host, Port, FAddressFamily, FProtocol);
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Resolve:Addr:%s', [SocketAddrStr(SockAddr)]);
+  Log(sltDebug, 'Resolve:Addr=%s', [SocketAddrStr(SockAddr)]);
   {$ENDIF}
 end;
 
@@ -835,8 +879,11 @@ end;
 function TSysSocket.Select(
          const WaitMicroseconds: Integer;
          var ReadSelect, WriteSelect, ErrorSelect: Boolean): Boolean;
-var Error : Integer;
+var
+  Error : Integer;
 begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   Error := SocketSelect(FSocketHandle, ReadSelect, WriteSelect, ErrorSelect, WaitMicroseconds);
   Result := Error > 0;
   if Error < 0 then
@@ -849,7 +896,7 @@ begin
     end;
   {$IFDEF SOCKET_DEBUG}
   if Result then
-    Log(sltDebug, 'Select:%d:r%d:w%d:e%d',
+    Log(sltDebug, 'Select:error=%d:readSel=%d:writeSel=%d:errorSel=%d',
         [Error, Ord(ReadSelect), Ord(WriteSelect), Ord(ErrorSelect)]);
   {$ENDIF}
 end;
@@ -862,21 +909,25 @@ end;
 procedure TSysSocket.Bind(const Address: TSocketAddr);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Bind:%s', [SocketAddrStr(Address)]);
+  Log(sltDebug, 'Bind:Address=%s', [SocketAddrStr(Address)]);
   {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   if SocketBind(FSocketHandle, Address) < 0 then
     raise ESocketLib.Create('Socket bind failed', SocketGetLastError);
 end;
 
 procedure TSysSocket.Bind(const Address: TIP4Addr; const Port: Word);
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddr(SockAddr, Address, Port);
   Bind(SockAddr);
 end;
 
 procedure TSysSocket.Bind(const Address: TIP6Addr; const Port: Word);
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddr(SockAddr, Address, Port);
   Bind(SockAddr);
@@ -890,7 +941,8 @@ begin
 end;
 
 procedure TSysSocket.Bind(const Host: RawByteString; const Port: Word);
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   Resolve(Host, '0', SockAddr);
   SetSocketAddrPort(SockAddr, Port);
@@ -898,85 +950,93 @@ begin
 end;
 
 function TSysSocket.GetLocalAddress: TSocketAddr;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   if not FLocalAddressCached then
     begin
-      InitSocketAddrNone(A);
-      if SocketGetSockName(FSocketHandle, A) < 0 then
+      InitSocketAddrNone(SockAddr);
+      if FSocketHandle = INVALID_SOCKETHANDLE then
+        raise ESysSocket.Create(SError_SocketClosed);
+      if SocketGetSockName(FSocketHandle, SockAddr) < 0 then
         raise ESocketLib.Create('Error retrieving local binding information', SocketGetLastError);
-      FLocalAddress := A;
+      FLocalAddress := SockAddr;
       FLocalAddressCached := True;
     end;
   Result := FLocalAddress;
 end;
 
 function TSysSocket.GetLocalAddressIP: TIP4Addr;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
-  A := GetLocalAddress;
-  if A.AddrFamily = iaIP4 then
-    Result := A.AddrIP4
+  SockAddr := GetLocalAddress;
+  if SockAddr.AddrFamily = iaIP4 then
+    Result := SockAddr.AddrIP4
   else
     Result := IP4AddrNone;
 end;
 
 function TSysSocket.GetLocalAddressIP6: TIP6Addr;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
-  A := GetLocalAddress;
-  if A.AddrFamily = iaIP6 then
-    Result := A.AddrIP6
+  SockAddr := GetLocalAddress;
+  if SockAddr.AddrFamily = iaIP6 then
+    Result := SockAddr.AddrIP6
   else
     IP6AddrSetZero(Result);
 end;
 
-function TSysSocket.GetLocalAddressStr: RawByteString;
-var A : TSocketAddr;
-    S : RawByteString;
+function TSysSocket.GetLocalAddressStrB: RawByteString;
+var
+  SockAddr : TSocketAddr;
+  AddrStr : RawByteString;
 begin
   if not FLocalAddressStrCached then
     begin
-      A := GetLocalAddress;
-      case A.AddrFamily of
+      SockAddr := GetLocalAddress;
+      case SockAddr.AddrFamily of
         iaIP4 :
-          if IP4AddrIsNone(A.AddrIP4) then
-            S := ''
+          if IP4AddrIsNone(SockAddr.AddrIP4) then
+            AddrStr := ''
           else
-            S := IP4AddressStrB(A.AddrIP4);
+            AddrStr := IP4AddressStrB(SockAddr.AddrIP4);
         iaIP6 :
-          if IP6AddrIsZero(A.AddrIP6) then
-            S := ''
+          if IP6AddrIsZero(SockAddr.AddrIP6) then
+            AddrStr := ''
           else
-            S := IP6AddressStrB(A.AddrIP6);
+            AddrStr := IP6AddressStrB(SockAddr.AddrIP6);
       else
-        S := '';
+        AddrStr := '';
       end;
-      FLocalAddressStr := S;
+      FLocalAddressStr := AddrStr;
       FLocalAddressStrCached := True;
     end;
   Result := FLocalAddressStr;
 end;
 
 function TSysSocket.GetLocalPort: Integer;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
-  A := GetLocalAddress;
-  case A.AddrFamily of
-    iaIP4 : Result := A.Port;
-    iaIP6 : Result := A.Port;
+  SockAddr := GetLocalAddress;
+  case SockAddr.AddrFamily of
+    iaIP4 : Result := SockAddr.Port;
+    iaIP6 : Result := SockAddr.Port;
   else
     Result := 0;
   end;
 end;
 
 function TSysSocket.GetLocalPortStr: String;
-var S : String;
+var
+  PortStr : String;
 begin
   if not FLocalPortStrCached then
     begin
-      S := IntToStr(GetLocalPort);
-      FLocalPortStr := S;
+      PortStr := IntToStr(GetLocalPort);
+      FLocalPortStr := PortStr;
       FLocalPortStrCached := True;
     end;
   Result := FLocalPortStr;
@@ -985,19 +1045,23 @@ end;
 procedure TSysSocket.Shutdown(const How: TSocketShutdown);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Shutdown:%d', [Ord(How)]);
+  Log(sltDebug, 'Shutdown:How=%d', [Ord(How)]);
   {$ENDIF}
-  Assert(FSocketHandle <> INVALID_SOCKETHANDLE);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   if SocketShutdown(FSocketHandle, How) < 0 then
     raise ESocketLib.Create('Shutdown failed', SocketGetLastError);
 end;
 
 function TSysSocket.Connect(const Address: TSocketAddr): Boolean;
-var ErrorCode : Integer;
+var
+  ErrorCode : Integer;
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Connect:%s', [SocketAddrStr(Address)]);
+  Log(sltDebug, 'Connect:Addr=%s', [SocketAddrStr(Address)]);
   {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   if SocketConnect(FSocketHandle, Address) < 0 then
     begin
       ErrorCode := flcSocketLib.SocketGetLastError;
@@ -1014,21 +1078,24 @@ begin
 end;
 
 function TSysSocket.Connect(const Address: TIP4Addr; const Port: Word): Boolean;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddr(SockAddr, Address, Port);
   Result := Connect(SockAddr);
 end;
 
 function TSysSocket.Connect(const Address: TIP6Addr; const Port: Word): Boolean;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddr(SockAddr, Address, Port);
   Result := Connect(SockAddr);
 end;
 
 function TSysSocket.Connect(const Host, Port: RawByteString): Boolean;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   ResolveRequired(Host, Port, SockAddr);
   Result := Connect(SockAddr);
@@ -1037,16 +1104,21 @@ end;
 procedure TSysSocket.Listen(const Backlog: Integer);
 begin
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Listen:%d', [Backlog]);
+  Log(sltDebug, 'Listen:Backlog=%d', [Backlog]);
   {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   if SocketListen(FSocketHandle, Backlog) < 0 then
     raise ESocketLib.Create('Listen failed', SocketGetLastError);
 end;
 
 // Returns INVALID_SOCKETHANDLE if no connection is waiting
 function TSysSocket.Accept(var Address: TSocketAddr): TSocketHandle;
-var ErrorCode  : Integer;
+var
+  ErrorCode  : Integer;
 begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   Result := SocketAccept(FSocketHandle, Address);
   if Result = INVALID_SOCKETHANDLE then
     begin
@@ -1059,7 +1131,8 @@ begin
 end;
 
 function TSysSocket.Accept(var Address: TIP4Addr): TSocketHandle;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   Result := Accept(SockAddr);
   if Result = INVALID_SOCKETHANDLE then
@@ -1072,7 +1145,8 @@ begin
 end;
 
 function TSysSocket.Accept(var Address: TIP6Addr): TSocketHandle;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   Result := Accept(SockAddr);
   if Result = INVALID_SOCKETHANDLE then
@@ -1085,7 +1159,8 @@ begin
 end;
 
 procedure TSysSocket.Accept(var Socket: TSysSocket; var Address: TSocketAddr);
-var SocketHandle : TSocketHandle;
+var
+  SocketHandle : TSocketHandle;
 begin
   SocketHandle := Accept(Address);
   if SocketHandle = INVALID_SOCKETHANDLE then
@@ -1095,7 +1170,8 @@ begin
 end;
 
 procedure TSysSocket.Accept(var Socket: TSysSocket; var Address: TIP4Addr);
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   Accept(Socket, SockAddr);
   if not Assigned(Socket) then
@@ -1108,7 +1184,8 @@ begin
 end;
 
 procedure TSysSocket.Accept(var Socket: TSysSocket; var Address: TIP6Addr);
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   Accept(Socket, SockAddr);
   if not Assigned(Socket) then
@@ -1124,6 +1201,8 @@ function TSysSocket.GetRemoteAddress: TSocketAddr;
 begin
   if not FRemoteAddressCached then
     begin
+      if FSocketHandle = INVALID_SOCKETHANDLE then
+        raise ESysSocket.Create(SError_SocketClosed);
       if SocketGetPeerName(FSocketHandle, FRemoteAddress) < 0 then
         raise ESocketLib.Create('Failed to get peer name', SocketGetLastError);
       FRemoteAddressCached := True;
@@ -1132,82 +1211,91 @@ begin
 end;
 
 function TSysSocket.GetRemoteAddressIP: TIP4Addr;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
-  A := GetRemoteAddress;
-  if A.AddrFamily = iaIP4 then
-    Result := A.AddrIP4
+  SockAddr := GetRemoteAddress;
+  if SockAddr.AddrFamily = iaIP4 then
+    Result := SockAddr.AddrIP4
   else
     Result := IP4AddrNone;
 end;
 
 function TSysSocket.GetRemoteAddressIP6: TIP6Addr;
-var A : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
-  A := GetRemoteAddress;
-  if A.AddrFamily = iaIP6 then
-    Result := A.AddrIP6
+  SockAddr := GetRemoteAddress;
+  if SockAddr.AddrFamily = iaIP6 then
+    Result := SockAddr.AddrIP6
   else
     IP6AddrSetZero(Result);
 end;
 
-function TSysSocket.GetRemoteAddressStr: RawByteString;
-var A : TSocketAddr;
-    S : RawByteString;
+function TSysSocket.GetRemoteAddressStrB: RawByteString;
+var
+  SockAddr : TSocketAddr;
+  AddrS : RawByteString;
 begin
   if not FRemoteAddressStrCached then
     begin
-      A := GetRemoteAddress;
-      case A.AddrFamily of
+      SockAddr := GetRemoteAddress;
+      case SockAddr.AddrFamily of
         iaIP4 :
-          if IP4AddrIsNone(A.AddrIP4) then
-            S := ''
+          if IP4AddrIsNone(SockAddr.AddrIP4) then
+            AddrS := ''
           else
-            S := IP4AddressStrB(A.AddrIP4);
+            AddrS := IP4AddressStrB(SockAddr.AddrIP4);
         iaIP6 :
-          if IP6AddrIsZero(A.AddrIP6) then
-            S := ''
+          if IP6AddrIsZero(SockAddr.AddrIP6) then
+            AddrS := ''
           else
-            S := IP6AddressStrB(A.AddrIP6);
+            AddrS := IP6AddressStrB(SockAddr.AddrIP6);
       else
-        S := '';
+        AddrS := '';
       end;
-      FRemoteAddressStr := S;
+      FRemoteAddressStr := AddrS;
       FRemoteAddressStrCached := True;
     end;
   Result := FRemoteAddressStr;
 end;
 
-function TSysSocket.GetRemoteHostName: RawByteString;
-var Address : TIP4Addr;
-    S : RawByteString;
+function TSysSocket.GetRemoteHostNameB: RawByteString;
+var
+  Address : TIP4Addr;
+  HostS : RawByteString;
 begin
   if not FRemoteHostNameCached then
     begin
       Address := GetRemoteAddressIP;
       if IP4AddrIsNone(Address) or IP4AddrIsZero(Address) then
-        S := ''
+        HostS := ''
       else
         begin
-          S := flcSocketLib.GetRemoteHostNameB(Address);
-          if S = '' then
-            S := IP4AddressStrB(Address);
+          HostS := flcSocketLib.GetRemoteHostNameB(Address);
+          if HostS = '' then
+            HostS := IP4AddressStrB(Address);
           {$IFDEF SOCKET_DEBUG}
-          Log(sltDebug, 'RemoteHostName:%s', [S]);
+          Log(sltDebug, 'RemoteHostName:%s', [HostS]);
           {$ENDIF}
         end;
-      FRemoteHostName := S;
+      FRemoteHostName := HostS;
       FRemoteHostNameCached := True;
     end;
   Result := FRemoteHostName;
 end;
 
 function TSysSocket.Send(const Buf; const BufSize: Integer): Integer;
-var ErrorCode : Integer;
+var
+  SckHnd : TSocketHandle;
+  ErrorCode : Integer;
 begin
-  Result := SocketSend(FSocketHandle, Buf, BufSize, 0);
+  SckHnd := FSocketHandle;
+  if SckHnd = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := SocketSend(SckHnd, Buf, BufSize, 0);
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'Send:%db:%db', [BufSize, Result]);
+  Log(sltDebug, 'Send:BufSize=%db:Result=%db', [BufSize, Result]);
   {$ENDIF}
   if Result < 0 then
     begin
@@ -1219,22 +1307,26 @@ begin
     end;
 end;
 
-function TSysSocket.Send(const Buf: RawByteString): Integer;
-var L : Integer;
+function TSysSocket.SendStrB(const Buf: RawByteString): Integer;
+var
+  Len : Integer;
 begin
-  L := Length(Buf);
-  if L = 0 then
+  Len := Length(Buf);
+  if Len = 0 then
     Result := 0
   else
-    Result := Send(Pointer(Buf)^, L);
+    Result := Send(Pointer(Buf)^, Len);
 end;
 
 function TSysSocket.SendTo(const Address: TSocketAddr; const Buf; const BufSize: Integer): Integer;
-var ErrorCode : Integer;
+var
+  ErrorCode : Integer;
 begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
   Result := SocketSendTo(FSocketHandle, Buf, BufSize, 0, Address);
   {$IFDEF SOCKET_DEBUG}
-  Log(sltDebug, 'SendTo:%s:%db:%db', [SocketAddrStr(Address), BufSize, Result]);
+  Log(sltDebug, 'SendTo:Addr=%s:BufSize=%db:Result=%db', [SocketAddrStr(Address), BufSize, Result]);
   {$ENDIF}
   if Result < 0 then
     begin
@@ -1245,16 +1337,18 @@ begin
 end;
 
 function TSysSocket.SendTo(const Host, Port: RawByteString; const Buf; const BufSize: Integer): Integer;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   ResolveRequired(Host, Port, SockAddr);
   Result := SendTo(SockAddr, Buf, BufSize);
 end;
 
 procedure TSysSocket.SendToBroadcast(const Port: Word; const Data; const DataSize: Integer);
-var Addr : TSocketAddr;
-    In4  : TIP4Addr;
-    In6  : TIP6Addr;
+var
+  Addr : TSocketAddr;
+  In4  : TIP4Addr;
+  In6  : TIP6Addr;
 begin
   case FAddressFamily of
     iaIP4 : begin
@@ -1272,11 +1366,16 @@ begin
 end;
 
 function TSysSocket.Recv(var Buf; const BufSize: Integer): Integer;
-var ErrorCode : Integer;
+var
+  SckHnd : TSocketHandle;
+  ErrorCode : Integer;
 begin
-  Result := SocketRecv(FSocketHandle, Buf, BufSize, []);
+  SckHnd := FSocketHandle;
+  if SckHnd = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := SocketRecv(SckHnd, Buf, BufSize, []);
   {$IFDEF SOCKET_DEBUG}
-  //Log(sltDebug, 'Recv:%db:%db', [BufSize, Result]);
+  //Log(sltDebug, 'Recv:BufSize=%db:Result=%db', [BufSize, Result]);
   {$ENDIF}
   if Result < 0 then
     begin
@@ -1287,9 +1386,14 @@ begin
 end;
 
 function TSysSocket.Peek(var Buf; const BufSize: Integer): Integer;
-var ErrorCode : Integer;
+var
+  SckHnd : TSocketHandle;
+  ErrorCode : Integer;
 begin
-  Result := SocketRecv(FSocketHandle, Buf, BufSize, [srfPeek]);
+  SckHnd := FSocketHandle;
+  if SckHnd = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := SocketRecv(SckHnd, Buf, BufSize, [srfPeek]);
   if Result < 0 then
     begin
       ErrorCode := flcSocketLib.SocketGetLastError;
@@ -1300,9 +1404,14 @@ end;
 
 function TSysSocket.RecvFromEx(var Buf; const BufSize: Integer; var From: TSocketAddr;
          var Truncated: Boolean): Integer;
-var ErrorCode : Integer;
+var
+  SckHnd : TSocketHandle;
+  ErrorCode : Integer;
 begin
-  Result := SocketRecvFrom(FSocketHandle, Buf, BufSize, [], From);
+  SckHnd := FSocketHandle;
+  if SckHnd = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := SocketRecvFrom(SckHnd, Buf, BufSize, [], From);
   Truncated := False;
   if Result < 0 then
     begin
@@ -1321,13 +1430,15 @@ begin
 end;
 
 function TSysSocket.RecvFrom(var Buf; const BufSize: Integer; var From: TSocketAddr): Integer;
-var T : Boolean;
+var
+  Trnc : Boolean;
 begin
-  Result := RecvFromEx(Buf, BufSize, From, T);
+  Result := RecvFromEx(Buf, BufSize, From, Trnc);
 end;
 
 function TSysSocket.RecvFrom(var Buf; const BufSize: Integer; var FromAddr: TIP4Addr; var FromPort: Word): Integer;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddrNone(SockAddr);
   Result := RecvFrom(Buf, BufSize, SockAddr);
@@ -1344,7 +1455,8 @@ begin
 end;
 
 function TSysSocket.RecvFrom(var Buf; const BufSize: Integer; var FromAddr: TIP6Addr; var FromPort: Word): Integer;
-var SockAddr : TSocketAddr;
+var
+  SockAddr : TSocketAddr;
 begin
   InitSocketAddrNone(SockAddr);
   Result := RecvFrom(Buf, BufSize, SockAddr);
@@ -1362,7 +1474,10 @@ end;
 
 function TSysSocket.AvailableToRecv: Integer;
 begin
-  Result := GetSocketAvailableToRecv(FSocketHandle);
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    Result := 0
+  else
+    Result := GetSocketAvailableToRecv(FSocketHandle);
 end;
 
 
@@ -1397,7 +1512,7 @@ begin
     Assert(not S.Select(0, R, W, E));
     Assert(not R and not W and not E);
 
-    Assert(S.GetLocalAddressStr = '127.0.0.1');
+    Assert(S.GetLocalAddressStrB = '127.0.0.1');
     Assert(S.GetLocalPort = 12345);
 
     Assert(T.SocketHandle <> 0, 'TSysSocket.Create');
@@ -1408,7 +1523,7 @@ begin
     {$ENDIF}
     T.Connect('127.0.0.1', '12345');
 
-    Assert(T.GetLocalAddressStr <> '');
+    Assert(T.GetLocalAddressStrB <> '');
     Assert(T.GetLocalPort <> 0);
 
     Assert(T.ReceiveTimeout = 0);
@@ -1429,12 +1544,12 @@ begin
     Assert(C.Select(20, R, W, E));
     Assert(not R and W and not E);
 
-    Assert(T.GetRemoteAddressStr = '127.0.0.1');
-    Assert(C.GetRemoteAddressStr = '127.0.0.1');
-    Assert(T.GetRemoteHostName <> '');
-    Assert(C.GetRemoteHostName <> '');
+    Assert(T.GetRemoteAddressStrB = '127.0.0.1');
+    Assert(C.GetRemoteAddressStrB = '127.0.0.1');
+    Assert(T.GetRemoteHostNameB <> '');
+    Assert(C.GetRemoteHostNameB <> '');
 
-    T.Send('abc');
+    T.SendStrB('abc');
     Sleep(1);
 
     R := True; W := True; E := True;
@@ -1468,7 +1583,7 @@ begin
     Assert(FD.revents and POLLIN = 0);
     Assert(FD.revents and POLLOUT <> 0);
 
-    C.Send('de');
+    C.SendStrB('de');
     Sleep(1);
 
     {$IFNDEF SOCKET_POSIX_DELPHI}
@@ -1478,7 +1593,7 @@ begin
     Assert((B[0] = 'd') and (B[1] = 'e'));
     Assert(T.AvailableToRecv = 0);
 
-    T.Send('fghi');
+    T.SendStrB('fghi');
     Sleep(1);
 
     {$IFNDEF SOCKET_POSIX_DELPHI}

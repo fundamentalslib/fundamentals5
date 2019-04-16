@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.19                                                     }
+{   File version:     5.21                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
@@ -57,12 +57,14 @@
 {   2018/08/30  5.17  Close socket before thread shutdown to prevent blocking. }
 {   2018/09/01  5.18  Handle client stopping in process thread.                }
 {   2018/12/31  5.19  OnActivity events.                                       }
+{   2019/04/10  5.20  Locking changes.                                         }
+{   2019/04/16  5.21  Shutdown events.                                         }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.18  2018/09/10                       }
-{   Delphi 10.2 Win64                   5.18  2018/09/10                       }
-{   Delphi 10.2 Linux64                 5.18  2018/09/10                       }
+{   Delphi 10.2 Win32                   5.21  2019/04/16                       }
+{   Delphi 10.2 Win64                   5.21  2019/04/16                       }
+{   Delphi 10.2 Linux64                 5.21  2019/04/16                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -233,6 +235,8 @@ type
     FOnWrite             : TTCPClientNotifyEvent;
     FOnReadActivity      : TTCPClientNotifyEvent;
     FOnWriteActivity     : TTCPClientNotifyEvent;
+    FOnReadShutdown      : TTCPClientNotifyEvent;
+    FOnShutdown          : TTCPClientNotifyEvent;
     FOnClose             : TTCPClientNotifyEvent;
     FOnStopped           : TTCPClientNotifyEvent;
     FOnMainThreadWait    : TTCPClientNotifyEvent;
@@ -345,6 +349,8 @@ type
     procedure SyncTriggerWrite;
     procedure SyncTriggerReadActivity;
     procedure SyncTriggerWriteActivity;
+    procedure SyncTriggerReadShutdown;
+    procedure SyncTriggerShutdown;
     procedure SyncTriggerClose;
     procedure SyncTriggerStopped;
 
@@ -364,6 +370,8 @@ type
     procedure TriggerWrite; virtual;
     procedure TriggerReadActivity; virtual;
     procedure TriggerWriteActivity; virtual;
+    procedure TriggerReadShutdown; virtual;
+    procedure TriggerShutdown; virtual;
     procedure TriggerClose; virtual;
     procedure TriggerStopped; virtual;
 
@@ -383,6 +391,8 @@ type
     procedure ConnectionWrite(Sender: TTCPConnection);
     procedure ConnectionReadActivity(Sender: TTCPConnection);
     procedure ConnectionWriteActivity(Sender: TTCPConnection);
+    procedure ConnectionReadShutdown(Sender: TTCPConnection);
+    procedure ConnectionShutdown(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
@@ -503,6 +513,8 @@ type
     property  OnWrite: TTCPClientNotifyEvent read FOnWrite write FOnWrite;
     property  OnReadActivity: TTCPClientNotifyEvent read FOnReadActivity write FOnReadActivity;
     property  OnWriteActivity: TTCPClientNotifyEvent read FOnWriteActivity write FOnWriteActivity;
+    property  OnReadShutdown: TTCPClientNotifyEvent read FOnReadShutdown write FOnReadShutdown;
+    property  OnShutdown: TTCPClientNotifyEvent read FOnShutdown write FOnShutdown;
     property  OnClose: TTCPClientNotifyEvent read FOnClose write FOnClose;
     property  OnStopped: TTCPClientNotifyEvent read FOnStopped write FOnStopped;
 
@@ -514,6 +526,7 @@ type
     function  IsConnectingOrConnected: Boolean;
     function  IsConnected: Boolean;
     function  IsConnectionClosed: Boolean;
+    function  IsShutdownComplete: Boolean;
     function  IsStopping: Boolean;
 
     // When WaitForStartup is set, the call to Start or Active := True will only return
@@ -528,6 +541,9 @@ type
     property  Active: Boolean read FActive write SetActive default False;
     procedure Start;
     procedure Stop;
+
+    procedure Shutdown;
+    procedure Close;
 
     property  ErrorMessage: String read FErrorMsg;
     property  ErrorCode: Integer read FErrorCode;
@@ -634,6 +650,8 @@ type
     property  OnReady;
     property  OnRead;
     property  OnWrite;
+    property  OnReadShutdown;
+    property  OnShutdown;
     property  OnClose;
     property  OnStopped;
 
@@ -1685,6 +1703,22 @@ begin
     FOnWriteActivity(self);
 end;
 
+procedure TF5TCPClient.SyncTriggerReadShutdown;
+begin
+  if csDestroying in ComponentState then
+    exit;
+  if Assigned(FOnReadShutdown) then
+    FOnReadShutdown(self);
+end;
+
+procedure TF5TCPClient.SyncTriggerShutdown;
+begin
+  if csDestroying in ComponentState then
+    exit;
+  if Assigned(FOnShutdown) then
+    FOnShutdown(self);
+end;
+
 procedure TF5TCPClient.SyncTriggerClose;
 begin
   if csDestroying in ComponentState then
@@ -1888,6 +1922,30 @@ begin
       FOnWriteActivity(self);
 end;
 
+procedure TF5TCPClient.TriggerShutdown;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(cltDebug, 'Shutdown');
+  {$ENDIF}
+  if Assigned(FOnShutdown) then
+    if FSynchronisedEvents then
+      Synchronize(SyncTriggerShutdown)
+    else
+      FOnShutdown(self);
+end;
+
+procedure TF5TCPClient.TriggerReadShutdown;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(cltDebug, 'ReadShutdown');
+  {$ENDIF}
+  if Assigned(FOnReadShutdown) then
+    if FSynchronisedEvents then
+      Synchronize(SyncTriggerReadShutdown)
+    else
+      FOnReadShutdown(self);
+end;
+
 procedure TF5TCPClient.TriggerClose;
 begin
   {$IFDEF TCP_DEBUG}
@@ -1948,7 +2006,7 @@ end;
 
 procedure TF5TCPClient.SetClosed;
 begin
-  if GetState in [csClosed, csStopped] then
+  if GetState in [csInit, csClosed, csStopped] then
     exit;
   SetState(csClosed);
   TriggerClose;
@@ -2019,6 +2077,22 @@ begin
   Log(cltDebug, 'Connection_WriteActivity');
   {$ENDIF}
   TriggerWriteActivity;
+end;
+
+procedure TF5TCPClient.ConnectionReadShutdown(Sender: TTCPConnection);
+begin
+  {$IFDEF TCP_DEBUG_CONNECTION}
+  Log(cltDebug, 'Connection_ReadShutdown');
+  {$ENDIF}
+  TriggerReadShutdown;
+end;
+
+procedure TF5TCPClient.ConnectionShutdown(Sender: TTCPConnection);
+begin
+  {$IFDEF TCP_DEBUG_CONNECTION}
+  Log(cltDebug, 'Connection_Shutdown');
+  {$ENDIF}
+  TriggerShutdown;
 end;
 
 procedure TF5TCPClient.ConnectionClose(Sender: TTCPConnection);
@@ -2111,9 +2185,13 @@ begin
     {$ENDIF}
 
     FConnection := TTCPConnection.Create(FSocket);
+    {$IFDEF TCP_DEBUG}
+    FConnection.OnLog := ConnectionLog;
+    {$ENDIF}
 
-    FConnection.OnLog           := ConnectionLog;
     FConnection.OnStateChange   := ConnectionStateChange;
+    FConnection.OnReadShutdown  := ConnectionReadShutdown;
+    FConnection.OnShutdown      := ConnectionShutdown;
     FConnection.OnClose         := ConnectionClose;
     FConnection.OnWorkerExecute := ConnectionWorkerExecute;
 
@@ -2164,10 +2242,15 @@ end;
 
 function TF5TCPClient.GetBlockingConnection: TTCPBlockingConnection;
 begin
-  if Assigned(FConnection) then
-    Result := FConnection.BlockingConnection
-  else
-    Result := nil;
+  Lock;
+  try
+    if Assigned(FConnection) then
+      Result := FConnection.BlockingConnection
+    else
+      Result := nil;
+  finally
+    Unlock;
+  end;
 end;
 
 { Resolve }
@@ -2220,14 +2303,9 @@ begin
   Log(cltDebug, 'DoResolve');
   {$ENDIF}
 
-  Lock;
-  try
-    if FState = csClosed then
-      raise ETCPClient.Create('Closed');
-    SetState(csResolving);
-  finally
-    Unlock;
-  end;
+  if GetState = csClosed then
+    raise ETCPClient.Create('Closed');
+  SetState(csResolving);
   ConAddr := flcSocketLib.Resolve(FHost, FPort, FIPAddressFamily, ipTCP);
 
   Lock;
@@ -2261,14 +2339,9 @@ begin
   Log(cltDebug, 'DoConnect');
   {$ENDIF}
 
-  Lock;
-  try
-    if FState = csClosed then
-      raise ETCPClient.Create('Closed');
-    SetState(csConnecting);
-  finally
-    Unlock;
-  end;
+  if GetState = csClosed then
+    raise ETCPClient.Create('Closed');
+  SetState(csConnecting);
   FSocket.Connect(FConnectAddr);
   SetConnected;
 end;
@@ -2656,6 +2729,34 @@ begin
   DoStop;
 end;
 
+procedure TF5TCPClient.Shutdown;
+begin
+  Lock;
+  try
+    if not FActive or FIsStopping then
+      exit;
+    if FState in [csInit, csClosed, csStopped] then
+      exit;
+  finally
+    Unlock;
+  end;
+  FConnection.Shutdown;
+end;
+
+procedure TF5TCPClient.Close;
+begin
+  Lock;
+  try
+    if not FActive or FIsStopping then
+      exit;
+    if FState in [csInit, csClosed, csStopped] then
+      exit;
+  finally
+    Unlock;
+  end;
+  DoClose;
+end;
+
 { Connect state }
 
 function TF5TCPClient.IsConnecting: Boolean;
@@ -2676,6 +2777,18 @@ end;
 function TF5TCPClient.IsConnectionClosed: Boolean;
 begin
   Result := GetState in TCPClientStates_Closed;
+end;
+
+function TF5TCPClient.IsShutdownComplete: Boolean;
+begin
+  Lock;
+  try
+    Result :=
+        (FState in [csClosed, csStopped]) or
+        (FActive and FConnection.IsShutdownComplete);
+  finally
+    Unlock;
+  end;
 end;
 
 function TF5TCPClient.IsStopping: Boolean;

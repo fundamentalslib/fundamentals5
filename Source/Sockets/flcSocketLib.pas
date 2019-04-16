@@ -3,9 +3,9 @@
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
 {   File version:     5.21                                                     }
-{   Description:      Socket library.                                          }
+{   Description:      Platform independent socket library.                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -72,11 +72,9 @@
 {   Delphi XE6 Win64                    5.21  2019/03/02                       }
 {   Delphi XE7 Win32                    5.21  2019/03/02                       }
 {   Delphi XE7 Win64                    5.21  2019/03/02                       }
-{   Delphi 10 Win32                     5.18  2016/01/09                       }
-{   Delphi 10 Win64                     5.18  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.19  2018/07/17                       }
-{   Delphi 10.2 Win64                   5.19  2018/07/17                       }
-{   Delphi 10.2 Linux64                 5.19  2018/07/17                       }
+{   Delphi 10.2 Win32                   5.21  2019/04/16                       }
+{   Delphi 10.2 Win64                   5.21  2019/04/16                       }
+{   Delphi 10.2 Linux64                 5.21  2019/04/16                       }
 {   Delphi 10.2 OSX32                   5.21  2018/09/24                       }
 {   FreePascal 2.6.2 Linux i386         4.15  2014/04/23                       }
 {   FreePascal 2.6.2 Linux x64          4.15  2015/04/01                       }
@@ -137,7 +135,7 @@ type
       iaIP6);
 
 function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): Int32; {$IFDEF UseInline}inline;{$ENDIF}
-function AFToIPAddressFamily(const AF: Int32): TIPAddressFamily;
+function AFToIPAddressFamily(const AF: Int32): TIPAddressFamily; {$IFDEF UseInline}inline;{$ENDIF}
 
 type
   TIPProtocol = (
@@ -1497,7 +1495,7 @@ begin
   {$ENDIF}
 end;
 
-function SocketRecvFlagsToFlags(const Flags: TSocketRecvFlags): Int32;
+function SocketRecvFlagsToFlags(const Flags: TSocketRecvFlags): Int32; {$IFDEF UseInline}inline;{$ENDIF}
 var F : Int32;
 begin
   F := 0;
@@ -2051,6 +2049,7 @@ begin
   Address.Addr8[1] := Address.Addr8[2];
   Address.Addr8[2] := A;
 end;
+
 
 
 {                                                                              }
