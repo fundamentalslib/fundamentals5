@@ -367,6 +367,7 @@ function  StrMatchNoAsciiCaseU(const S, M: UnicodeString; const Index: Integer =
 function  StrMatchNoAsciiCaseAU(const S: UnicodeString; const M: AnsiString; const Index: Integer = 1): Boolean;
 function  StrMatchNoAsciiCaseAS(const S: String; const M: AnsiString; const Index: Integer = 1): Boolean;
 {$ENDIF}
+function  StrMatchNoAsciiCaseBU(const S: UnicodeString; const M: RawByteString; const Index: Integer = 1): Boolean;
 function  StrMatchNoAsciiCase(const S, M: String; const Index: Integer = 1): Boolean;
 
 {$IFDEF SupportAnsiString}
@@ -377,6 +378,7 @@ function  StrMatchLeftU(const S, M: UnicodeString; const AsciiCaseSensitive: Boo
 {$IFDEF SupportAnsiString}
 function  StrMatchLeftAU(const S: UnicodeString; const M: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
 {$ENDIF}
+function  StrMatchLeftBU(const S: UnicodeString; const M: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrMatchLeft(const S, M: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
 {$IFDEF SupportAnsiString}
@@ -422,8 +424,8 @@ function  StrEqualB(const A, B: RawByteString; const AsciiCaseSensitive: Boolean
 function  StrEqualU(const A, B: UnicodeString; const AsciiCaseSensitive: Boolean = True): Boolean;
 {$IFDEF SupportAnsiString}
 function  StrEqualAU(const A: UnicodeString; const B: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
-function  StrEqualBU(const A: UnicodeString; const B: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
 {$ENDIF}
+function  StrEqualBU(const A: UnicodeString; const B: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrEqual(const A, B: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
 {$IFDEF SupportAnsiString}
@@ -2499,6 +2501,22 @@ begin
 end;
 {$ENDIF}
 
+function StrMatchNoAsciiCaseBU(const S: UnicodeString; const M: RawByteString; const Index: Integer): Boolean;
+var N, T : Integer;
+    Q    : PWideChar;
+begin
+  N := Length(M);
+  T := Length(S);
+  if (N = 0) or (T = 0) or (Index < 1) or (Index + N - 1 > T) then
+    begin
+      Result := False;
+      exit;
+    end;
+  Q := Pointer(S);
+  Inc(Q, Index - 1);
+  Result := StrPMatchNoAsciiCaseBW(Q, Pointer(M), N);
+end;
+
 function StrMatchNoAsciiCase(const S, M: String; const Index: Integer = 1): Boolean;
 var N, T : Integer;
     Q    : PChar;
@@ -2550,6 +2568,14 @@ begin
     Result := StrMatchNoAsciiCaseAU(S, M, 1);
 end;
 {$ENDIF}
+
+function StrMatchLeftBU(const S: UnicodeString; const M: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+begin
+  if AsciiCaseSensitive then
+    Result := StrMatchBU(S, M, 1)
+  else
+    Result := StrMatchNoAsciiCaseBU(S, M, 1);
+end;
 
 function StrMatchLeft(const S, M: String; const AsciiCaseSensitive: Boolean): Boolean;
 begin

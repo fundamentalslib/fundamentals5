@@ -144,6 +144,7 @@ function  StrZPosU(const F: UnicodeString; const S: PWideChar): Integer;
 {$IFDEF SupportAnsiString}
 function  StrZPosAW(const F: AnsiString; const S: PWideChar): Integer;
 {$ENDIF}
+function  StrZPosBW(const F: RawByteString; const S: PWideChar): Integer;
 
 
 
@@ -198,6 +199,7 @@ function  StrZSkipStrU(var P: PWideChar; const S: UnicodeString; const AsciiCase
 {$IFDEF SupportAnsiString}
 function  StrZSkipStrAW(var P: PWideChar; const S: AnsiString; const AsciiCaseSensitive: Boolean = True): Boolean;
 {$ENDIF}
+function  StrZSkipStrBW(var P: PWideChar; const S: RawByteString; const AsciiCaseSensitive: Boolean = True): Boolean;
 function  StrZSkipStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean = True): Boolean;
 
 
@@ -1245,6 +1247,31 @@ begin
 end;
 {$ENDIF}
 
+function StrZPosBW(const F: RawByteString; const S: PWideChar): Integer;
+var C : WideChar;
+    P : PWideChar;
+begin
+  if not Assigned(S) or (Length(F) = 0) then
+    Result := -1
+  else
+    begin
+      Result := 0;
+      P := S;
+      repeat
+        C := P^;
+        if C = #0 then
+          begin
+            Result := -1;
+            exit;
+          end;
+        if StrZMatchStrBW(P, F) then
+          break;
+        Inc(Result);
+        Inc(P);
+      until False;
+    end;
+end;
+
 
 
 {                                                                              }
@@ -1848,6 +1875,13 @@ begin
 end;
 {$ENDIF}
 
+function StrZSkipStrBW(var P: PWideChar; const S: RawByteString; const AsciiCaseSensitive: Boolean): Boolean;
+begin
+  Result := StrZMatchStrAsciiBW(P, S, AsciiCaseSensitive);
+  if Result then
+    Inc(P, Length(S));
+end;
+
 function StrZSkipStr(var P: PChar; const S: String; const AsciiCaseSensitive: Boolean): Boolean;
 begin
   Result := StrZMatchStrAscii(P, S, AsciiCaseSensitive);
@@ -2189,4 +2223,5 @@ end;
 
 
 end.
+
 

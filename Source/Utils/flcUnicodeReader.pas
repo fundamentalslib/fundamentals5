@@ -70,7 +70,6 @@ uses
 
   { Fundamentals }
   flcStdTypes,
-  flcStrings,
   flcStreams,
   flcUnicodeCodecs;
 

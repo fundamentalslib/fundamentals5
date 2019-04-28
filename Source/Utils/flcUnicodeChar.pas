@@ -2,8 +2,8 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeChar.pas                                       }
-{   File version:     5.05                                                     }
-{   Description:      Unicode char utility functions                           }
+{   File version:     5.06                                                     }
+{   Description:      Unicode character functions                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
@@ -40,6 +40,7 @@
 {   2018/08/12  5.04  String type changes.                                     }
 {   2019/03/15  5.05  UnicodeIsNoBreakSpace, UnicodeIsSpace,                   }
 {                     UnicodeSpaceWidth, UnicodeIsLineBreak                    }
+{   2019/04/03  5.06  Update few functions for Unicode 12.0.0.                 }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -55,7 +56,7 @@
 {                                                                              }
 { Notes:                                                                       }
 {   Unicode functions in this unit work from data in source code form.         }
-{   All tables were generated from the Unicode 3.2 data.                       }
+{   Most tables were generated from the Unicode 3.2 data.                      }
 {                                                                              }
 {******************************************************************************}
 
@@ -161,7 +162,9 @@ function  UnicodeIsIgnorable(const Ch: UCS4Char): Boolean;
 
 function  UnicodeIsDash(const Ch: WideChar): Boolean;
 function  UnicodeIsHyphen(const Ch: WideChar): Boolean;
-function  UnicodeIsFullStop(const Ch: WideChar): Boolean;
+function  UnicodeIsDashOrHyphen(const Ch: WideChar): Boolean;
+function  UnicodeIsFullStop(const Ch: UCS4Char): Boolean; overload;
+function  UnicodeIsFullStop(const Ch: WideChar): Boolean; overload;
 function  UnicodeIsComma(const Ch: WideChar): Boolean;
 function  UnicodeIsExclamationMark(const Ch: WideChar): Boolean;
 function  UnicodeIsQuestionMark(const Ch: WideChar): Boolean;
@@ -207,6 +210,9 @@ function  UnicodeLowCase(const Ch: WideChar): WideChar;
 function  UnicodeCharIsEqualNoCase(const A, B: WideChar): Boolean;
 
 function  UnicodeGetCombiningClass(const Ch: WideChar): Byte;
+
+function  UnicodeLocateFoldingUpperCase(const Ch: WideChar): UnicodeString;
+function  UnicodeLocateFoldingTitleCase(const Ch: WideChar): UnicodeString;
 
 function  UnicodeUpCaseFoldingU(const Ch: WideChar): UnicodeString;
 function  UnicodeLowCaseFoldingU(const Ch: WideChar): UnicodeString;
@@ -352,6 +358,7 @@ begin
   end;
 end;
 
+// Unicode 12.0.0: Property White_Space
 function UnicodeIsWhiteSpace(const Ch: WideChar): Boolean;
 begin
   case Ch of
@@ -364,6 +371,7 @@ begin
     #$2028,            // LINE SEPARATOR
     #$2029,            // PARAGRAPH SEPARATOR
     #$202F,            // NARROW NO-BREAK SPACE
+    #$205F,            // MEDIUM MATHEMATICAL SPACE
     #$3000 :           // IDEOGRAPHIC SPACE
       Result := True;
   else
@@ -421,20 +429,35 @@ begin
   end;
 end;
 
+// Unicode 12.0.0: Property Dash
 function UnicodeIsDash(const Ch: WideChar): Boolean;
 begin
   case Ch of
     #$002D,            // HYPHEN-MINUS
-    #$00AD,            // SOFT HYPHEN
     #$058A,            // ARMENIAN HYPHEN
+    #$05BE,	           // HEBREW PUNCTUATION MAQAF
+    #$1400,	           // CANADIAN SYLLABICS HYPHEN
     #$1806,            // MONGOLIAN TODO SOFT HYPHEN
-    #$2010..#$2015,    // HYPHEN..HORIZONTAL BAR
+    #$2010,	           // HYPHEN
+    #$2011,	           // NON-BREAKING HYPHEN
+    #$2012,	           // FIGURE DASH
+    #$2013,	           // EN DASH
+    #$2014,	           // EM DASH
+    #$2015,            // HORIZONTAL BAR
+    #$2053,            // SWUNG DASH
     #$207B,            // SUPERSCRIPT MINUS
     #$208B,            // SUBSCRIPT MINUS
     #$2212,            // MINUS SIGN
+    #$2E17,	           // DOUBLE OBLIQUE HYPHEN
+    #$2E1A,            //	HYPHEN WITH DIAERESIS
+    #$2E3A,            //	TWO-EM DASH
+    #$2E3B,	           // THREE-EM DASH
+    #$2E40,	           // DOUBLE HYPHEN
     #$301C,            // WAVE DASH
     #$3030,            // WAVY DASH
-    #$FE31..#$FE32,    // PRESENTATION FORM FOR VERTICAL EM DASH..PRESENTATION FORM FOR VERTICAL EN DASH
+    #$30A0,	           // KATAKANA-HIRAGANA DOUBLE HYPHEN
+    #$FE31,            // PRESENTATION FORM FOR VERTICAL EM DASH
+    #$FE32,            // PRESENTATION FORM FOR VERTICAL EN DASH
     #$FE58,            // SMALL EM DASH
     #$FE63,            // SMALL HYPHEN-MINUS
     #$FF0D :           // FULLWIDTH HYPHEN-MINUS
@@ -444,6 +467,7 @@ begin
   end;
 end;
 
+// Unicode 12.0.0: Property Hyphen
 function UnicodeIsHyphen(const Ch: WideChar): Boolean;
 begin
   case Ch of
@@ -451,7 +475,9 @@ begin
     #$00AD,            // SOFT HYPHEN
     #$058A,            // ARMENIAN HYPHEN
     #$1806,            // MONGOLIAN TODO SOFT HYPHEN
-    #$2010..#$2011,    // HYPHEN..NON-BREAKING HYPHEN
+    #$2010,	           // HYPHEN
+    #$2011,	           // NON-BREAKING HYPHEN
+    #$2E17,	           // DOUBLE OBLIQUE HYPHEN
     #$30FB,            // KATAKANA MIDDLE DOT
     #$FE63,            // SMALL HYPHEN-MINUS
     #$FF0D,            // FULLWIDTH HYPHEN-MINUS
@@ -462,9 +488,25 @@ begin
   end;
 end;
 
-function UnicodeIsFullStop(const Ch: WideChar): Boolean;
+// Unicode 12.0.0: Property Dash or Property Hyphen
+function UnicodeIsDashOrHyphen(const Ch: WideChar): Boolean;
 begin
-  case Ord(Ch) of
+  if UnicodeIsDash(Ch) then
+    Result := True
+  else
+    case Ch of
+      #$00AD,  // SOFT HYPHEN
+      #$30FB,  // KATAKANA MIDDLE DOT
+      #$FF65 : // HALFWIDTH KATAKANA MIDDLE DOT
+        Result := True;
+    else
+      Result := False;
+    end;
+end;
+
+function UnicodeIsFullStop(const Ch: UCS4Char): Boolean;
+begin
+  case Ch of
     $002E,  // FULL STOP
     $0589,  // ARMENIAN FULL STOP
     $06D4,  // ARABIC FULL STOP
@@ -474,14 +516,30 @@ begin
     $166E,  // CANADIAN SYLLABICS FULL STOP
     $1803,  // MONGOLIAN FULL STOP
     $1809,  // MONGOLIAN MANCHU FULL STOP
+    $2CF9,  // COPTIC OLD NUBIAN FULL STOP
+    $2CFE,  // COPTIC FULL STOP
+    $2E3C,  // STENOGRAPHIC FULL STOP
     $3002,  // IDEOGRAPHIC FULL STOP
+    $A4FF,  // LISU PUNCTUATION FULL STOP
+    $A60E,  // VAI FULL STOP
+    $A6F3,  // BAMUM FULL STOP
+    $FE12,  // PRESENTATION FORM FOR VERTICAL IDEOGRAPHIC FULL STOP
     $FE52,  // SMALL FULL STOP
     $FF0E,  // FULLWIDTH FULL STOP
-    $FF61 : // HALFWIDTH IDEOGRAPHIC FULL STOP
+    $FF61,  // HALFWIDTH IDEOGRAPHIC FULL STOP
+    $16AF5, // BASSA VAH FULL STOP
+    $16E98, // MEDEFAIDRIN FULL STOP
+    $1BC9F, // DUPLOYAN PUNCTUATION CHINOOK FULL STOP
+    $1DA88: // SIGNWRITING FULL STOP
       Result := True;
   else
     Result := False;
   end;
+end;
+
+function UnicodeIsFullStop(const Ch: WideChar): Boolean;
+begin
+  Result := UnicodeIsFullStop(Ord(Ch));
 end;
 
 function UnicodeIsComma(const Ch: WideChar): Boolean;

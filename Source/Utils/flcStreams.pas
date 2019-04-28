@@ -3139,8 +3139,7 @@ begin
   {$IFDEF OSX}
   raise EFileWriter.Create('TruncateFile not implemented');
   {$ELSE}
-  if not TruncateFile(FHandle, Size) then
-    raise EFileWriter.CreateFmt(SFileResizeError, [GetLastOSErrorMessage]);
+  raise EFileWriter.Create('TruncateFile not implemented');
   {$ENDIF}
   {$ENDIF}{$ENDIF}
   {$ENDIF}

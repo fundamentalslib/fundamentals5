@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeCodecs.pas                                     }
-{   File version:     5.24                                                     }
+{   File version:     5.25                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2019                                  }
@@ -89,6 +89,7 @@
 {   2016/01/09  5.22  Revised for Fundamentals 5.                              }
 {   2016/04/16  5.23  Use virtual GetAlias instead of GetAliasList.            }
 {   2018/08/12  5.24  String type changes.                                     }
+{   2019/04/28  5.25  Reduce dependencies.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1332,9 +1333,7 @@ uses
   Windows,
   {$ENDIF}
   { Fundamentals }
-  flcUtils,
-  flcUTF,
-  flcUnicodeChar;
+  flcUTF;
 
 
 
@@ -1430,6 +1429,37 @@ begin
         exit;
       end;
   raise EConvertError.CreateFmt(SCannotConvert, [Ord(Ch), Encoding]);
+end;
+
+procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: Integer;
+    const DestBuf: Pointer);
+var I : Integer;
+    P : Pointer;
+    Q : Pointer;
+    V : Word32;
+begin
+  if BufSize <= 0 then
+    exit;
+  P := Buf;
+  Q := DestBuf;
+  for I := 1 to BufSize div 4 do
+    begin
+      // convert 4 characters per iteration
+      V := PWord32(P)^;
+      Inc(PWord32(P));
+      PWord32(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(PWord32(Q));
+      V := V shr 16;
+      PWord32(Q)^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(PWord32(Q));
+    end;
+  // convert remaining (<4)
+  for I := 1 to BufSize mod 4 do
+    begin
+      PWord(Q)^ := PByte(P)^;
+      Inc(PByte(P));
+      Inc(PWord(Q));
+    end;
 end;
 
 
@@ -1828,6 +1858,11 @@ begin
   if Assigned(FOnWrite) then
     FOnWrite(self, Buf, Count);
 end;
+
+const
+  UCS4_STRING_TERMINATOR = $9C;
+  UCS4_LF                = $0A;
+  UCS4_CR                = $0D;
 
 procedure TCustomUnicodeCodec.ReadUCS4Char(out C: UCS4Char;
     out ByteCount: Integer);
