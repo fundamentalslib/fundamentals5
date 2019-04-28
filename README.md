@@ -24,3 +24,4 @@ Includes:
 * HTTP Client
 * HTTP Server
 * HTML Parser
+* XML Parser
