@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
@@ -58,11 +58,12 @@
 {   2018/12/31  5.20  OnActivity events.                                       }
 {   2019/04/10  5.21  String changes.                                          }
 {   2019/04/16  5.22  Client shutdown events.                                  }
+{   2019/05/19  5.23  Multiple processing threads.                             }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.22  2019/04/16                       }
-{   Delphi 10.2 Win64                   5.22  2019/04/16                       }
+{   Delphi 10.2 Win32                   5.23  2019/05/19                       }
+{   Delphi 10.2 Win64                   5.23  2019/05/19                       }
 {   Delphi 10.2 Linux64                 5.22  2019/04/16                       }
 {                                                                              }
 {******************************************************************************}
@@ -100,6 +101,7 @@ uses
 const
   TCP_SERVER_DEFAULT_MaxBacklog = 64;
   TCP_SERVER_DEFAULT_MaxClients = -1;
+  TCP_SERVER_DEFAULT_ProcessThreadCount = 1;
 
 
 
@@ -297,6 +299,11 @@ type
       ssFailure,
       ssClosed);
 
+  TTCPServerControlThreadState = (
+      sctsInit,
+      sctsPollReady,
+      sctsPollProcess);
+
   TTCPServerNotifyEvent = procedure (Sender: TF5TCPServer) of object;
   TTCPServerLogEvent = procedure (Sender: TF5TCPServer; LogType: TTCPLogType;
       Msg: String; LogLevel: Integer) of object;
@@ -319,6 +326,7 @@ type
     FMaxReadBufferSize     : Integer;
     FMaxWriteBufferSize    : Integer;
     FTrackLastActivityTime : Boolean;
+    FProcessThreadCount    : Integer;
     {$IFDEF TCPSERVER_TLS}
     FTLSEnabled            : Boolean;
     {$ENDIF}
@@ -357,13 +365,20 @@ type
     FActiveOnLoaded       : Boolean;
     FState                : TTCPServerState;
     FControlThread        : TTCPServerThread;
-    FProcessThread        : TTCPServerThread;
+    FControlState         : TTCPServerControlThreadState;
+    FProcessThreads       : array of TTCPServerThread;
+    FProcessThreadsRun    : Integer;
+    FProcessThreadsReady  : Integer;
     FServerSocket         : TSysSocket;
     FBindAddress          : TSocketAddr;
     FClientList           : TTCPServerClientList;
     FClientAcceptedList   : TTCPServerClientList;
     FClientTerminatedList : TTCPServerClientList;
     FPollList             : TTCPServerPollList;
+    FPollTime             : TDateTime;
+    FPollEntBuf           : Pointer;
+    FPollEntCount         : Integer;
+    FPollProcessIdx       : Integer;
     FClientIDCounter      : Int64;
     FWhitelist            : TSocketAddrArray;
     FBlacklist            : TSocketAddrArray;
@@ -399,6 +414,10 @@ type
 
     procedure SetReadBufferSize(const ReadBufferSize: Integer);
     procedure SetWriteBufferSize(const WriteBufferSize: Integer);
+
+    procedure SetTrackLastActivityTime(const Track: Boolean);
+
+    procedure SetProcessThreadCount(const ThreadCount: Integer);
 
     {$IFDEF TCPSERVER_TLS}
     procedure SetTLSEnabled(const TLSEnabled: Boolean);
@@ -446,7 +465,7 @@ type
     {$ENDIF}
 
     procedure StartControlThread;
-    procedure StartProcessThread;
+    procedure StartProcessThreads;
     procedure StopServerThreads;
 
     procedure DoStart;
@@ -462,7 +481,8 @@ type
               const ProcessRead, ProcessWrite: Boolean;
               const ActivityTime: TDateTime;
               out ClientIdle, ClientTerminated: Boolean);
-    function  ServerProcessClients: Boolean;
+    function  ServerProcessClient: Boolean;
+    procedure ServerPoll(out Idle: Boolean; out ProcessPending: Boolean);
 
     procedure ControlThreadExecute(const Thread: TTCPServerThread);
     procedure ProcessThreadExecute(const Thread: TTCPServerThread);
@@ -488,7 +508,8 @@ type
     property  MaxClients: Integer read FMaxClients write SetMaxClients default TCP_SERVER_DEFAULT_MaxClients;
     property  MaxReadBufferSize: Integer read FMaxReadBufferSize write SetReadBufferSize;
     property  MaxWriteBufferSize: Integer read FMaxWriteBufferSize write SetWriteBufferSize;
-    property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write FTrackLastActivityTime;
+    property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write SetTrackLastActivityTime default True;
+    property  ProcessThreadCount: Integer read FProcessThreadCount write SetProcessThreadCount default TCP_SERVER_DEFAULT_ProcessThreadCount;
 
     // TLS
     {$IFDEF TCPSERVER_TLS}
@@ -1342,10 +1363,12 @@ begin
       end;
     except
       on E : Exception do
-        FServer.ThreadError(self, E);
+        if not Terminated then
+          FServer.ThreadError(self, E);
     end;
   finally
-    FServer.ThreadTerminate(self);
+    if not Terminated then
+      FServer.ThreadTerminate(self);
     FServer := nil;
   end;
 end;
@@ -1386,6 +1409,7 @@ begin
   FMaxReadBufferSize := TCP_BUFFER_DEFAULTBUFSIZE;
   FMaxWriteBufferSize := TCP_BUFFER_DEFAULTBUFSIZE;
   FTrackLastActivityTime := True;
+  FProcessThreadCount := TCP_SERVER_DEFAULT_ProcessThreadCount;
   {$IFDEF TCPSERVER_TLS}
   FTLSEnabled := False;
   {$ENDIF}
@@ -1629,6 +1653,22 @@ begin
   FMaxWriteBufferSize := WriteBufferSize;
 end;
 
+procedure TF5TCPServer.SetTrackLastActivityTime(const Track: Boolean);
+begin
+  if Track = FTrackLastActivityTime then
+    exit;
+  CheckNotActive;
+  FTrackLastActivityTime := Track;
+end;
+
+procedure TF5TCPServer.SetProcessThreadCount(const ThreadCount: Integer);
+begin
+  if ThreadCount = FProcessThreadCount then
+    exit;
+  CheckNotActive;
+  FProcessThreadCount := ThreadCount;
+end;
+
 {$IFDEF TCPSERVER_TLS}
 procedure TF5TCPServer.SetTLSEnabled(const TLSEnabled: Boolean);
 begin
@@ -1667,10 +1707,7 @@ begin
   if Assigned(FOnThreadIdle) then
     FOnThreadIdle(self, Thread)
   else
-    if Thread.FTask = sttProcess then
-      Sleep(1)
-    else
-      Sleep(10);
+    Sleep(1);
 end;
 
 procedure TF5TCPServer.ServerSocketLog(Sender: TSysSocket; LogType: TSysSocketLogType; Msg: String);
@@ -1861,33 +1898,64 @@ end;
 procedure TF5TCPServer.StartControlThread;
 begin
   Assert(not Assigned(FControlThread));
+  FControlState := sctsInit;
   FControlThread := TTCPServerThread.Create(self, sttControl);
 end;
 
-procedure TF5TCPServer.StartProcessThread;
+procedure TF5TCPServer.StartProcessThreads;
+var
+  L, I : Integer;
 begin
-  Assert(not Assigned(FProcessThread));
-  FProcessThread := TTCPServerThread.Create(self, sttProcess);
+  Assert(FProcessThreads = nil);
+  L := FProcessThreadCount;
+  if L <= 0 then
+    L := TCP_SERVER_DEFAULT_ProcessThreadCount;
+  FProcessThreadsRun := L;
+  SetLength(FProcessThreads, L);
+  for I := 0 to L - 1 do
+    FProcessThreads[I] := nil;
+  for I := 0 to L - 1 do
+    FProcessThreads[I] := TTCPServerThread.Create(self, sttProcess);
 end;
 
 procedure TF5TCPServer.StopServerThreads;
+var
+  C : TTCPServerThread;
+  T : TTCPServerThread;
+  L, I : Integer;
 begin
-  if Assigned(FProcessThread) then
-    FProcessThread.Terminate;
-  if Assigned(FControlThread) then
-    FControlThread.Terminate;
-  if Assigned(FProcessThread) then
+  C := FControlThread;
+  if Assigned(C) then
+    C.Terminate;
+  L := Length(FProcessThreads);
+  for I := 0 to L - 1 do
     begin
-      FProcessThread.WaitFor;
-      FProcessThread.Finalise;
+      T := FProcessThreads[I];
+      if Assigned(T) then
+        T.Terminate;
     end;
-  if Assigned(FControlThread) then
+  if Assigned(C) then
     begin
-      FControlThread.WaitFor;
-      FControlThread.Finalise;
+      C.WaitFor;
+      C.Finalise;
     end;
-  FreeAndNil(FProcessThread);
-  FreeAndNil(FControlThread);
+  for I := 0 to L - 1 do
+    begin
+      T := FProcessThreads[I];
+      if Assigned(T) then
+        begin
+          FProcessThreads[I] := nil;
+          T.WaitFor;
+          T.Finalise;
+          FreeAndNil(T);
+        end;
+    end;
+  FProcessThreads := nil;
+  if Assigned(C) then
+    begin
+      FControlThread := nil;
+      FreeAndNil(C);
+    end;
 end;
 
 procedure TF5TCPServer.DoStart;
@@ -1903,7 +1971,9 @@ begin
   if FTLSEnabled then
     FTLSServer.Start;
   {$ENDIF}
+  FProcessThreadsReady := 0;
   StartControlThread;
+  StartProcessThreads;
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Started');
   {$ENDIF}
@@ -1989,7 +2059,7 @@ begin
     if M = 0 then // paused
       Result := False
     else
-      Result := FClientList.Count < M;
+      Result := FClientList.Count + FClientAcceptedList.Count < M;
   finally
     Unlock;
   end;
@@ -2160,20 +2230,68 @@ begin
     end;
 end;
 
+function TF5TCPServer.ServerProcessClient: Boolean;
+var
+  IdxStart, Cnt, Idx : Integer;
+  ItemP : PPollfd;
+  Ev : Int16;
+  Cl : TTCPServerClient;
+  ClientIdle, ClientTerminated : Boolean;
+begin
+  Ev := 0;
+  Cl := nil;
+  Lock;
+  try
+    IdxStart := FPollProcessIdx;
+    Cnt := FPollEntCount;
+    if IdxStart >= Cnt then
+      begin
+        Result := False;
+        exit;
+      end;
+    ItemP := FPollEntBuf;
+    Inc(ItemP, IdxStart);
+    for Idx := IdxStart to Cnt - 1 do
+      begin
+        Ev := ItemP^.revents;
+        if (ItemP^.fd <> INVALID_SOCKET) and (Ev <> 0) then
+          begin
+            Cl := FPollList.GetClientByIndex(Idx);
+            Assert(Assigned(Cl));
+            ItemP^.revents := 0;
+            FPollProcessIdx := Idx + 1;
+            break;
+          end;
+        Inc(ItemP);
+      end;
+  finally
+    Unlock;
+  end;
+  if not Assigned(Cl) then
+    begin
+      Result := False;
+      exit;
+    end;
+  ProcessClient(Cl,
+      Ev and (POLLIN or POLLHUP or POLLERR) <> 0,
+      Ev and (POLLOUT or POLLHUP or POLLERR) <> 0,
+      FPollTime,
+      ClientIdle, ClientTerminated);
+  Result := True;
+end;
+
 // Add newly accepted clients to poll list
 // Poll to determine which clients to process
-// Process clients with signalled events
-function TF5TCPServer.ServerProcessClients: Boolean;
+procedure TF5TCPServer.ServerPoll(out Idle: Boolean; out ProcessPending: Boolean);
 var
+  Cl, Nx : TTCPServerClient;
   FdPtr : Pointer;
   FdCnt : Integer;
-  PollRes : Integer;
-  Idx : Integer;
   ItemP : PPollfd;
-  Cl, Nx : TTCPServerClient;
+  Idx : Integer;
+  WritePoll : Boolean;
   Ev : Int16;
-  WritePoll, ClientIdle, ClientTerminated : Boolean;
-  ActivityTime : TDateTime;
+  PollRes : Integer;
 begin
   Lock;
   try
@@ -2189,10 +2307,10 @@ begin
   finally
     Unlock;
   end;
-
   if FPollList.ClientCount = 0 then
     begin
-      Result := False;
+      Idle := True;
+      ProcessPending := False;
       exit;
     end;
   FPollList.GetPollBuffer(FdPtr, FdCnt);
@@ -2214,28 +2332,25 @@ begin
       Inc(ItemP);
     end;
   Assert(FdCnt > 0);
-  PollRes := SocketsPoll(FdPtr, FdCnt, 100);
-  if PollRes > 0 then
+  PollRes := SocketsPoll(FdPtr, FdCnt, 25);
+  if PollRes < 0 then
     begin
-      ActivityTime := Now;
-      ItemP := FdPtr;
-      for Idx := 0 to FdCnt - 1 do
-        begin
-          Ev := ItemP^.revents;
-          if (ItemP^.fd <> INVALID_SOCKET) and (Ev <> 0) then
-            begin
-              Cl := FPollList.GetClientByIndex(Idx);
-              Assert(Assigned(Cl));
-              ProcessClient(Cl,
-                  Ev and (POLLIN or POLLHUP or POLLERR) <> 0,
-                  Ev and (POLLOUT or POLLHUP or POLLERR) <> 0,
-                  ActivityTime,
-                  ClientIdle, ClientTerminated);
-            end;
-          Inc(ItemP);
-        end;
+      Idle := True;
+      ProcessPending := False;
+      exit;
     end;
-  Result := False;
+  if PollRes = 0 then
+    begin
+      Idle := False;
+      ProcessPending := False;
+      exit;
+    end;
+  FPollEntBuf := FdPtr;
+  FPollEntCount := FdCnt;
+  FPollTime := Now;
+  FPollProcessIdx := 0;
+  Idle := False;
+  ProcessPending := True;
 end;
 
 // The control thread handles accepting new clients and removing deleted client
@@ -2249,10 +2364,13 @@ procedure TF5TCPServer.ControlThreadExecute(const Thread: TTCPServerThread);
 
 var
   IsIdle : Boolean;
+  DoPoll : Boolean;
+  PollIdle, PollProcess : Boolean;
 begin
   {$IFDEF TCP_DEBUG_THREAD}
   Log(tlDebug, 'ControlThreadExecute');
   {$ENDIF}
+  Assert(FControlState = sctsInit);
   Assert(FState = ssStarting);
   Assert(not Assigned(FServerSocket));
   Assert(Assigned(Thread));
@@ -2281,7 +2399,14 @@ begin
   // server socket ready
   FServerSocket.SetBlocking(False);
   SetReady;
-  StartProcessThread;
+  if IsTerminated then
+    exit;
+  Lock;
+  try
+    FControlState := sctsPollReady;
+  finally
+    Unlock;
+  end;
   // loop until thread termination
   while not IsTerminated do
     begin
@@ -2295,6 +2420,46 @@ begin
       if CanAcceptClient then
         if ServerAcceptClient then
           IsIdle := False;
+      // poll / managed process threads
+      if IsTerminated then
+        break;
+      Lock;
+      try
+        // wait process threads ready to poll
+        DoPoll :=
+            (FControlState = sctsPollReady) and
+            (FProcessThreadsReady = FProcessThreadsRun);
+        // wait process theads complete
+        if (FControlState = sctsPollProcess) and
+           (FProcessThreadsReady = FProcessThreadsRun) then
+          begin
+            // start next poll
+            FProcessThreadsReady := 0;
+            FControlState := sctsPollReady;
+            IsIdle := False;
+          end;
+      finally
+        Unlock;
+      end;
+      if DoPoll then
+        begin
+          ServerPoll(PollIdle, PollProcess);
+          if IsTerminated then
+            break;
+          if not PollIdle then
+            IsIdle := False;
+          if PollProcess then
+            begin
+              Lock;
+              try
+                // start clients process
+                FProcessThreadsReady := 0;
+                FControlState := sctsPollProcess;
+              finally
+                Unlock;
+              end;
+            end;
+        end;
       // sleep if idle
       if IsTerminated then
         break;
@@ -2313,28 +2478,71 @@ procedure TF5TCPServer.ProcessThreadExecute(const Thread: TTCPServerThread);
     Result := Thread.Terminated;
   end;
 
-var
-  IsIdle : Boolean;
+  procedure SetThreadReady;
+  begin
+    Lock;
+    try
+      Inc(FProcessThreadsReady);
+    finally
+      Unlock;
+    end;
+  end;
+
+  function WaitState(const AState: TTCPServerControlThreadState): Boolean;
+  var
+    WaitFin : Boolean;
+  begin
+    repeat
+      if IsTerminated then
+        begin
+          Result := False;
+          exit;
+        end;
+      Lock;
+      try
+        WaitFin := FControlState = AState;
+      finally
+        Unlock;
+      end;
+      if IsTerminated then
+        begin
+          Result := False;
+          exit;
+        end;
+      if WaitFin then
+        begin
+          Result := True;
+          exit;
+        end;
+      TriggerThreadIdle(Thread);
+    until False;
+  end;
+
 begin
+  Assert(Assigned(Thread));
+
   {$IFDEF TCP_DEBUG_THREAD}
   Log(tlDebug, 'ProcessThreadExecute');
   {$ENDIF}
-  Assert(FState = ssReady);
-  Assert(Assigned(Thread));
-  if IsTerminated then
-    exit;
+
   // loop until thread termination
   while not IsTerminated do
     begin
-      // process clients
-      IsIdle := True;
-      if ServerProcessClients then
-        IsIdle := False;
-      // sleep if idle
-      if IsTerminated then
+      // wait to process
+      SetThreadReady;
+      if not WaitState(sctsPollProcess) then
         break;
-      if IsIdle then
-        TriggerThreadIdle(Thread);
+      // process clients
+      repeat
+        if not ServerProcessClient then
+          break;
+        if IsTerminated then
+          exit;
+      until False;
+      // wait for next poll
+      SetThreadReady;
+      if not WaitState(sctsPollReady) then
+        break;
     end;
 end;
 

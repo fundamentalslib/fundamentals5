@@ -439,6 +439,7 @@ type
     property  WorkerErrorClass: String read FWorkerErrorClass;
     property  WorkerErrorMsg: String read FWorkerErrorMsg;
     procedure TerminateWorkerThread;
+    procedure WaitForWorkerThread;
 
     // Blocking
     // The blocking interface is available from the worker thread.
@@ -2469,6 +2470,17 @@ begin
   try
     if Assigned(FWorkerThread) then
       FWorkerThread.Terminate;
+  finally
+    Unlock;
+  end;
+end;
+
+procedure TTCPConnection.WaitForWorkerThread;
+begin
+  Lock;
+  try
+    if Assigned(FWorkerThread) then
+      FWorkerThread.WaitFor;
   finally
     Unlock;
   end;

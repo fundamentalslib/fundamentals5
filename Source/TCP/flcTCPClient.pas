@@ -423,13 +423,14 @@ type
     procedure DoConnect;
     procedure DoClose;
 
-    procedure StartThread;
-    procedure StopThread;
+    procedure StartProcessThread;
+    procedure StopProcessThread;
     {$IFDEF OS_MSWIN}
     function  ProcessMessage(var MsgTerminated: Boolean): Boolean;
     {$ENDIF}
-    procedure ThreadExecute(const Thread: TTCPClientProcessThread);
+    procedure ProcessThreadExecute(const Thread: TTCPClientProcessThread);
 
+    procedure TerminateProcessThread;
     procedure TerminateWorkerThread;
 
     procedure DoStart;
@@ -1121,7 +1122,7 @@ end;
 procedure TTCPClientProcessThread.Execute;
 begin
   Assert(Assigned(FTCPClient));
-  FTCPClient.ThreadExecute(self);
+  FTCPClient.ProcessThreadExecute(self);
   FTCPClient := nil;
 end;
 
@@ -1974,6 +1975,9 @@ end;
 
 procedure TF5TCPClient.SetError(const ErrorMsg: String; const ErrorCode: Integer);
 begin
+  {$IFDEF TCP_DEBUG}
+  Log(cltDebug, 'Error:%d:%s', [ErrorCode, ErrorMsg]);
+  {$ENDIF}
   FErrorMsg := ErrorMsg;
   FErrorCode := ErrorCode;
   TriggerError;
@@ -2360,24 +2364,23 @@ end;
 
 { Thread }
 
-procedure TF5TCPClient.StartThread;
+procedure TF5TCPClient.StartProcessThread;
 begin
   {$IFDEF TCP_DEBUG_THREAD}
-  Log(cltDebug, 'StartThread');
+  Log(cltDebug, 'StartProcessThread');
   {$ENDIF}
   FProcessThread := TTCPClientProcessThread.Create(self);
 end;
 
-procedure TF5TCPClient.StopThread;
+procedure TF5TCPClient.StopProcessThread;
 begin
+  if not Assigned(FProcessThread) then
+    exit;
   {$IFDEF TCP_DEBUG_THREAD}
-  Log(cltDebug, 'StopThread');
+  Log(cltDebug, 'StopProcessThread');
   {$ENDIF}
-  if Assigned(FProcessThread) then
-    begin
-      FProcessThread.Terminate;
-      FProcessThread.WaitFor;
-    end;
+  FProcessThread.Terminate;
+  FProcessThread.WaitFor;
   FreeAndNil(FProcessThread);
 end;
 
@@ -2400,7 +2403,7 @@ end;
 
 // The client thread is responsible for connecting and processing the socket.
 // Events are dispatches from this thread.
-procedure TF5TCPClient.ThreadExecute(const Thread: TTCPClientProcessThread);
+procedure TF5TCPClient.ProcessThreadExecute(const Thread: TTCPClientProcessThread);
 
   function IsTerminated: Boolean;
   begin
@@ -2498,6 +2501,9 @@ begin
                 SetErrorFromException(E);
                 TriggerConnectFailed;
               end;
+            {$IFDEF TCP_DEBUG_THREAD}
+            Log(cltDebug, 'ThreadExit:Local bind failed:%s', [E.Message]);
+            {$ENDIF}
             exit;
           end;
       end;
@@ -2540,6 +2546,9 @@ begin
                       SetErrorFromException(E);
                       TriggerConnectFailed;
                     end;
+                  {$IFDEF TCP_DEBUG_THREAD}
+                  Log(cltDebug, 'ThreadExit:Connection failed:%s', [E.Message]);
+                  {$ENDIF}
                   exit;
                 end;
               {$IFDEF TCP_DEBUG}
@@ -2588,7 +2597,12 @@ begin
       except
         on E : Exception do
           if not IsTerminated then
-            SetErrorFromException(E);
+            begin
+              {$IFDEF TCP_DEBUG_THREAD}
+              Log(cltDebug, 'PollLoop:Error:%s', [E.Message]);
+              {$ENDIF}
+              SetErrorFromException(E);
+            end;
       end;
       Reconnect := not IsTerminated and FReconnectOnDisconnect;
     until not Reconnect;
@@ -2599,6 +2613,12 @@ begin
   {$IFDEF TCP_DEBUG_THREAD}
   Log(cltDebug, 'ThreadTerminate:Terminated=%d', [Ord(IsTerminated)]);
   {$ENDIF}
+end;
+
+procedure TF5TCPClient.TerminateProcessThread;
+begin
+  if Assigned(FProcessThread) then
+    FProcessThread.Terminate;
 end;
 
 procedure TF5TCPClient.TerminateWorkerThread;
@@ -2663,7 +2683,7 @@ begin
     Unlock;
   end;
   // start thread
-  StartThread;
+  StartProcessThread;
   // wait for thread to complete startup
   if WaitForStart then
     if WaitForState(TCPClientStates_All - [csStarting], ThreadStartupTimeOut) = csStarting then
@@ -2701,9 +2721,12 @@ begin
   // stop
   try
     TriggerStop;
-    DoClose;
-    StopThread;
+    // terminate threads and close socket before waiting for threads to terminate
     TerminateWorkerThread;
+    TerminateProcessThread;
+    DoClose;
+    StopProcessThread;
+    FConnection.WaitForWorkerThread;
     FActive := False;
     TriggerInactive;
     SetStopped;

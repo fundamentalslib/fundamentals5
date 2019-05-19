@@ -173,12 +173,14 @@ type
     FLocalPortStr          : String;
 
     // RemoteAddress cache
-    FRemoteAddressCached    : Boolean;
-    FRemoteAddress          : TSocketAddr;
-    FRemoteAddressStrCached : Boolean;
-    FRemoteAddressStr       : RawByteString;
-    FRemoteHostNameCached   : Boolean;
-    FRemoteHostName         : RawByteString;
+    FRemoteAddressCached     : Boolean;
+    FRemoteAddress           : TSocketAddr;
+    FRemoteAddressStrBCached : Boolean;
+    FRemoteAddressStrB       : RawByteString;
+    FRemoteAddressStrCached  : Boolean;
+    FRemoteAddressStr        : String;
+    FRemoteHostNameCached    : Boolean;
+    FRemoteHostName          : RawByteString;
 
     // Init
     procedure Init(
@@ -308,6 +310,7 @@ type
     function  GetRemoteAddress: TSocketAddr;
     function  GetRemoteAddressIP: TIP4Addr;
     function  GetRemoteAddressIP6: TIP6Addr;
+    function  GetRemoteAddressStr: String;
     function  GetRemoteAddressStrB: RawByteString;
     function  GetRemoteHostNameB: RawByteString;
 
@@ -1232,12 +1235,40 @@ begin
     IP6AddrSetZero(Result);
 end;
 
+function TSysSocket.GetRemoteAddressStr: String;
+var
+  SockAddr : TSocketAddr;
+  AddrS : String;
+begin
+  if not FRemoteAddressStrCached then
+    begin
+      SockAddr := GetRemoteAddress;
+      case SockAddr.AddrFamily of
+        iaIP4 :
+          if IP4AddrIsNone(SockAddr.AddrIP4) then
+            AddrS := ''
+          else
+            AddrS := IP4AddressStr(SockAddr.AddrIP4);
+        iaIP6 :
+          if IP6AddrIsZero(SockAddr.AddrIP6) then
+            AddrS := ''
+          else
+            AddrS := IP6AddressStr(SockAddr.AddrIP6);
+      else
+        AddrS := '';
+      end;
+      FRemoteAddressStr := AddrS;
+      FRemoteAddressStrCached := True;
+    end;
+  Result := FRemoteAddressStr;
+end;
+
 function TSysSocket.GetRemoteAddressStrB: RawByteString;
 var
   SockAddr : TSocketAddr;
   AddrS : RawByteString;
 begin
-  if not FRemoteAddressStrCached then
+  if not FRemoteAddressStrBCached then
     begin
       SockAddr := GetRemoteAddress;
       case SockAddr.AddrFamily of
@@ -1254,10 +1285,10 @@ begin
       else
         AddrS := '';
       end;
-      FRemoteAddressStr := AddrS;
-      FRemoteAddressStrCached := True;
+      FRemoteAddressStrB := AddrS;
+      FRemoteAddressStrBCached := True;
     end;
-  Result := FRemoteAddressStr;
+  Result := FRemoteAddressStrB;
 end;
 
 function TSysSocket.GetRemoteHostNameB: RawByteString;
