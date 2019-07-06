@@ -10,7 +10,8 @@ uses
   flcHTMLCharEntity,
   flcHTMLProperties,
   flcHTMLLexer,
-  flcHTMLParser;
+  flcHTMLParser,
+  flcHTMLElements;
 
 procedure Test;
 begin
@@ -18,6 +19,7 @@ begin
   flcHTMLProperties.Test;
   flcHTMLLexer.Test;
   flcHTMLParser.Test;
+  flcHTMLElements.Test;
 end;
 
 
