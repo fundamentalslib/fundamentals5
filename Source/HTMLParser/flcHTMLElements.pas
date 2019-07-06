@@ -405,7 +405,9 @@ function  htmlAutoOpenTag(const OpenTagID, TagID: ThtmlTagID): ThtmlTagID;
 {                                                                              }
 { Tests                                                                        }
 {                                                                              }
+{$IFDEF HTML_TEST}
 procedure Test;
+{$ENDIF}
 
 
 
