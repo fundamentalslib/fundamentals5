@@ -998,7 +998,9 @@
 
 {$IFDEF DELPHIXE2_UP}
   {$IFNDEF WIN32}
+    {$IFNDEF WIN64}
     {$DEFINE ExtendedIsDouble}
+    {$ENDIF}
   {$ENDIF}
 {$ENDIF}
 
@@ -1201,13 +1203,12 @@
   {$DEFINE SupportUnicodeString}
   {$DEFINE SupportRawByteString}
   {$DEFINE SupportStringRefCount}
-
   {$IFDEF CPUX86_64}
+  {$IFNDEF LINUX}
     {$DEFINE ExtendedIsDouble}
   {$ENDIF}
+  {$ENDIF}
 {$ENDIF}
-
-
 
 {                                                                              }
 { Operating System                                                             }

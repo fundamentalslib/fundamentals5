@@ -53,30 +53,23 @@ function GetLastOSErrorMessage: String;
 
 implementation
 
-{$IFDEF MSWINDOWS}
 uses
-  SysUtils,
-  Windows;
-{$ENDIF}
-
-{$IFDEF POSIX}
-{$IFDEF DELPHI}
-uses
-  SysUtils,
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
+  {$IFDEF POSIX}
+  {$IFDEF DELPHI}
   Posix.Errno,
-  Posix.Unistd;
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL}
-{$IFDEF UNIX}
-uses
+  Posix.Unistd,
+  {$ENDIF}
+  {$ENDIF}
+  {$IFDEF FREEPASCAL}
+  {$IFDEF UNIX}
   BaseUnix,
-  Unix;
-{$ENDIF}
-{$ENDIF}
-
-
+  Unix,
+  {$ENDIF}
+  {$ENDIF}
+  Sysutils;
 
 {$IFDEF MSWINDOWS}
 function GetLastOSErrorCode: NativeInt;

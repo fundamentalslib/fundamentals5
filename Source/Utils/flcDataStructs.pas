@@ -13484,7 +13484,11 @@ end;
 
 procedure TExtendedArray.Assign(const V: Array of Extended);
 begin
+{$IFNDEF ExtendedIsDouble}
   FData := AsExtendedArray(V);
+{$ELSE}
+  FData := AsDoubleArray(V);
+{$ENDIF}
   FCount := Length(FData);
   FCapacity := FCount;
 end;

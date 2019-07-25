@@ -4011,8 +4011,11 @@ procedure THTTPContentWriter.SendContent;
     L : Integer;
   begin
     L := S.Read(ContentBuf[0], ContentBufSize);
-    if L > 0 then
-      WriteBuf(ContentBuf[0], L);
+    while L > 0 do
+      begin
+        WriteBuf(ContentBuf[0], L);
+        L := S.Read(ContentBuf[0], ContentBufSize);
+      end;
     FContentComplete := S.Position >= S.Size;
   end;
 

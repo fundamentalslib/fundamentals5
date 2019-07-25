@@ -132,7 +132,9 @@ function  DynArrayAppend(var V: Int64Array; const R: Int64): Integer; overload; 
 function  DynArrayAppend(var V: NativeIntArray; const R: NativeInt): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: SingleArray; const R: Single): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: DoubleArray; const R: Double): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayAppend(var V: ExtendedArray; const R: Extended): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
+{$ENDIF}
 function  DynArrayAppend(var V: CurrencyArray; const R: Currency): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 function  DynArrayAppend(var V: BooleanArray; const R: Boolean): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}
 {$IFDEF SupportAnsiString}
@@ -161,7 +163,9 @@ function  DynArrayAppendInt64Array(var V: Int64Array; const R: array of Int64): 
 function  DynArrayAppendNativeIntArray(var V: NativeIntArray; const R: array of NativeInt): Integer; overload;
 function  DynArrayAppendSingleArray(var V: SingleArray; const R: array of Single): Integer; overload;
 function  DynArrayAppendDoubleArray(var V: DoubleArray; const R: array of Double): Integer; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayAppendExtendedArray(var V: ExtendedArray; const R: array of Extended): Integer; overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayAppendAnsiStringArray(var V: AnsiStringArray; const R: array of AnsiString): Integer; overload;
 {$ENDIF}
@@ -189,7 +193,9 @@ function  DynArrayRemove(var V: Int64Array; const Idx: Integer; const Count: Int
 function  DynArrayRemove(var V: NativeIntArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: SingleArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 function  DynArrayRemove(var V: DoubleArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayRemove(var V: ExtendedArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayRemoveA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer = 1): Integer; overload;
 {$ENDIF}
@@ -211,7 +217,9 @@ procedure DynArrayRemoveDuplicates(var V: LongIntArray; const IsSorted: Boolean)
 procedure DynArrayRemoveDuplicates(var V: Int64Array; const IsSorted: Boolean); overload;
 procedure DynArrayRemoveDuplicates(var V: SingleArray; const IsSorted: Boolean); overload;
 procedure DynArrayRemoveDuplicates(var V: DoubleArray; const IsSorted: Boolean); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayRemoveDuplicates(var V: ExtendedArray; const IsSorted: Boolean); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArrayRemoveDuplicatesA(var V: AnsiStringArray; const IsSorted: Boolean); overload;
 {$ENDIF}
@@ -228,7 +236,9 @@ procedure DynArrayTrimLeft(var S: LongIntArray; const TrimList: array of LongInt
 procedure DynArrayTrimLeft(var S: Int64Array; const TrimList: array of Int64); overload;
 procedure DynArrayTrimLeft(var S: SingleArray; const TrimList: array of Single); overload;
 procedure DynArrayTrimLeft(var S: DoubleArray; const TrimList: array of Double); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayTrimLeft(var S: ExtendedArray; const TrimList: array of Extended); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimLeftA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
 {$ENDIF}
@@ -244,7 +254,9 @@ procedure DynArrayTrimRight(var S: LongIntArray; const TrimList: array of LongIn
 procedure DynArrayTrimRight(var S: Int64Array; const TrimList: array of Int64); overload;
 procedure DynArrayTrimRight(var S: SingleArray; const TrimList: array of Single); overload;
 procedure DynArrayTrimRight(var S: DoubleArray; const TrimList: array of Double); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayTrimRight(var S: ExtendedArray; const TrimList: array of Extended); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimRightA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
 {$ENDIF}
@@ -265,7 +277,9 @@ function  DynArrayInsert(var V: Int64Array; const Idx: Integer; const Count: Int
 function  DynArrayInsert(var V: NativeIntArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsert(var V: SingleArray; const Idx: Integer; const Count: Integer): Integer; overload;
 function  DynArrayInsert(var V: DoubleArray; const Idx: Integer; const Count: Integer): Integer; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayInsert(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer; overload;
+{$ENDIF}
 function  DynArrayInsert(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayInsertA(var V: AnsiStringArray; const Idx: Integer; const Count: Integer): Integer; overload;
@@ -307,8 +321,10 @@ function  DynArrayPosNext(const Find: Single; const V: SingleArray; const PrevPo
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayPosNext(const Find: Double; const V: DoubleArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayPosNext(const Find: Extended; const V: ExtendedArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
+{$ENDIF}
 function  DynArrayPosNext(const Find: Boolean; const V: BooleanArray; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;
 {$IFDEF SupportAnsiString}
@@ -348,8 +364,10 @@ function  DynArrayCount(const Find: Single; const V: SingleArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
 function  DynArrayCount(const Find: Double; const V: DoubleArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayCount(const Find: Extended; const V: ExtendedArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayCountA(const Find: AnsiString; const V: AnsiStringArray;
           const IsSortedAscending: Boolean = False): Integer; overload;
@@ -381,8 +399,10 @@ procedure DynArrayRemoveAll(const Find: Single; var V: SingleArray;
           const IsSortedAscending: Boolean = False); overload; 
 procedure DynArrayRemoveAll(const Find: Double; var V: DoubleArray;
           const IsSortedAscending: Boolean = False); overload; 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayRemoveAll(const Find: Extended; var V: ExtendedArray;
           const IsSortedAscending: Boolean = False); overload; 
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArrayRemoveAllA(const Find: AnsiString; var V: AnsiStringArray;
           const IsSortedAscending: Boolean = False); overload; 
@@ -410,8 +430,10 @@ function  DynArrayIntersection(const V1, V2: SingleArray;
           const IsSortedAscending: Boolean = False): SingleArray; overload;
 function  DynArrayIntersection(const V1, V2: DoubleArray;
           const IsSortedAscending: Boolean = False): DoubleArray; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayIntersection(const V1, V2: ExtendedArray;
           const IsSortedAscending: Boolean = False): ExtendedArray; overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayIntersectionA(const V1, V2: AnsiStringArray;
           const IsSortedAscending: Boolean = False): AnsiStringArray; overload;
@@ -439,8 +461,10 @@ function  DynArrayDifference(const V1, V2: SingleArray;
           const IsSortedAscending: Boolean = False): SingleArray; overload;
 function  DynArrayDifference(const V1, V2: DoubleArray;
           const IsSortedAscending: Boolean = False): DoubleArray; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayDifference(const V1, V2: ExtendedArray;
           const IsSortedAscending: Boolean = False): ExtendedArray; overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  DynArrayDifferenceA(const V1, V2: AnsiStringArray;
           const IsSortedAscending: Boolean = False): AnsiStringArray; overload;
@@ -459,7 +483,9 @@ procedure DynArrayReverse(var V: LongIntArray); overload;
 procedure DynArrayReverse(var V: Int64Array); overload;
 procedure DynArrayReverse(var V: SingleArray); overload;
 procedure DynArrayReverse(var V: DoubleArray); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayReverse(var V: ExtendedArray); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArrayReverseA(var V: AnsiStringArray); overload;
 {$ENDIF}
@@ -484,7 +510,9 @@ function  AsInt64Array(const V: array of Int64): Int64Array; overload;
 function  AsNativeIntArray(const V: array of NativeInt): NativeIntArray; overload;
 function  AsSingleArray(const V: array of Single): SingleArray; overload;
 function  AsDoubleArray(const V: array of Double): DoubleArray; overload;
+{$IFNDEF ExtendedIsDouble}
 function  AsExtendedArray(const V: array of Extended): ExtendedArray; overload;
+{$ENDIF}
 function  AsCurrencyArray(const V: array of Currency): CurrencyArray; overload;
 {$IFDEF SupportAnsiString}
 function  AsAnsiStringArray(const V: array of AnsiString): AnsiStringArray; overload;
@@ -519,8 +547,10 @@ function  DynArrayRangeSingle(const First: Single; const Count: Integer;
           const Increment: Single = 1): SingleArray;
 function  DynArrayRangeDouble(const First: Double; const Count: Integer;
           const Increment: Double = 1): DoubleArray;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayRangeExtended(const First: Extended; const Count: Integer;
           const Increment: Extended = 1): ExtendedArray;
+{$ENDIF}
 
 function  DynArrayDupByte(const V: Byte; const Count: Integer): ByteArray;
 function  DynArrayDupWord(const V: Word; const Count: Integer): WordArray;
@@ -535,7 +565,9 @@ function  DynArrayDupInt64(const V: Int64; const Count: Integer): Int64Array;
 function  DynArrayDupNativeInt(const V: NativeInt; const Count: Integer): NativeIntArray;
 function  DynArrayDupSingle(const V: Single; const Count: Integer): SingleArray;
 function  DynArrayDupDouble(const V: Double; const Count: Integer): DoubleArray;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayDupExtended(const V: Extended; const Count: Integer): ExtendedArray;
+{$ENDIF}
 function  DynArrayDupCurrency(const V: Currency; const Count: Integer): CurrencyArray;
 {$IFDEF SupportAnsiString}
 function  DynArrayDupAnsiString(const V: AnsiString; const Count: Integer): AnsiStringArray;
@@ -560,7 +592,9 @@ procedure SetLengthAndZero(var V: Int64Array; const NewLength: Integer); overloa
 procedure SetLengthAndZero(var V: NativeIntArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: SingleArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: DoubleArray; const NewLength: Integer); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure SetLengthAndZero(var V: ExtendedArray; const NewLength: Integer); overload;
+{$ENDIF}
 procedure SetLengthAndZero(var V: CurrencyArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: ByteCharSetArray; const NewLength: Integer); overload;
 procedure SetLengthAndZero(var V: BooleanArray; const NewLength: Integer); overload;
@@ -577,7 +611,9 @@ function  DynArrayIsEqual(const V1, V2: LongIntArray): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: Int64Array): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: SingleArray): Boolean; overload;
 function  DynArrayIsEqual(const V1, V2: DoubleArray): Boolean; overload;
+{$IFNDEF ExtendedIsDouble}
 function  DynArrayIsEqual(const V1, V2: ExtendedArray): Boolean; overload;
+{$ENDIF}
 function  DynArrayIsEqual(const V1, V2: CurrencyArray): Boolean; overload;
 {$IFDEF SupportAnsiString}
 function  DynArrayIsEqualA(const V1, V2: AnsiStringArray): Boolean; overload;
@@ -594,19 +630,27 @@ function  SmallIntArrayToLongIntArray(const V: SmallIntArray): LongIntArray;
 function  LongIntArrayToInt64Array(const V: LongIntArray): Int64Array;
 function  LongIntArrayToSingleArray(const V: LongIntArray): SingleArray;
 function  LongIntArrayToDoubleArray(const V: LongIntArray): DoubleArray;
+{$IFNDEF ExtendedIsDouble}
 function  LongIntArrayToExtendedArray(const V: LongIntArray): ExtendedArray;
+{$ENDIF}
 function  SingleArrayToDoubleArray(const V: SingleArray): DoubleArray;
+{$IFNDEF ExtendedIsDouble}
 function  SingleArrayToExtendedArray(const V: SingleArray): ExtendedArray;
+{$ENDIF}
 function  SingleArrayToCurrencyArray(const V: SingleArray): CurrencyArray;
 function  SingleArrayToLongIntArray(const V: SingleArray): LongIntArray;
 function  SingleArrayToInt64Array(const V: SingleArray): Int64Array;
+{$IFNDEF ExtendedIsDouble}
 function  DoubleArrayToExtendedArray(const V: DoubleArray): ExtendedArray;
+{$ENDIF}
 function  DoubleArrayToCurrencyArray(const V: DoubleArray): CurrencyArray;
 function  DoubleArrayToLongIntArray(const V: DoubleArray): LongIntArray;
 function  DoubleArrayToInt64Array(const V: DoubleArray): Int64Array;
+{$IFNDEF ExtendedIsDouble}
 function  ExtendedArrayToCurrencyArray(const V: ExtendedArray): CurrencyArray;
 function  ExtendedArrayToLongIntArray(const V: ExtendedArray): LongIntArray;
 function  ExtendedArrayToInt64Array(const V: ExtendedArray): Int64Array;
+{$ENDIF}
 
 function  ByteArrayFromIndexes(const V: ByteArray;
           const Indexes: IntegerArray): ByteArray;
@@ -630,8 +674,10 @@ function  SingleArrayFromIndexes(const V: SingleArray;
           const Indexes: IntegerArray): SingleArray;
 function  DoubleArrayFromIndexes(const V: DoubleArray;
           const Indexes: IntegerArray): DoubleArray;
+{$IFNDEF ExtendedIsDouble}
 function  ExtendedArrayFromIndexes(const V: ExtendedArray;
           const Indexes: IntegerArray): ExtendedArray;
+{$ENDIF}
 function  StringArrayFromIndexes(const V: StringArray;
           const Indexes: IntegerArray): StringArray;
 
@@ -648,7 +694,9 @@ procedure DynArraySort(const V: Int64Array); overload;
 procedure DynArraySort(const V: NativeIntArray); overload;
 procedure DynArraySort(const V: SingleArray); overload;
 procedure DynArraySort(const V: DoubleArray); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const V: ExtendedArray); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArraySortA(const V: AnsiStringArray); overload;
 {$ENDIF}
@@ -661,24 +709,36 @@ procedure DynArraySort(const Key: IntegerArray; const Data: Int64Array); overloa
 {$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: IntegerArray; const Data: AnsiStringArray); overload;
 {$ENDIF}
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray); overload;
+{$ENDIF}
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray); overload;
+{$ENDIF}
 {$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: IntegerArray); overload;
 procedure DynArraySort(const Key: AnsiStringArray; const Data: Int64Array); overload;
 procedure DynArraySort(const Key: AnsiStringArray; const Data: AnsiStringArray); overload;
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: ExtendedArray); overload;
+{$ENDIF}
+{$ENDIF}
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: PointerArray); overload;
 {$ENDIF}
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: ExtendedArray; const Data: IntegerArray); overload;
 procedure DynArraySort(const Key: ExtendedArray; const Data: Int64Array); overload;
 {$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: ExtendedArray; const Data: AnsiStringArray); overload;
 {$ENDIF}
 procedure DynArraySort(const Key: ExtendedArray; const Data: ExtendedArray); overload;
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: ExtendedArray; const Data: PointerArray); overload;
 
 
+{$ENDIF}
+{$ENDIF}
 
 {                                                                              }
 { Test cases                                                                   }
@@ -801,12 +861,14 @@ begin
   V[Result] := R;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayAppend(var V: ExtendedArray; const R: Extended): Integer;
 begin
   Result := Length(V);
   SetLength(V, Result + 1);
   V[Result] := R;
 end;
+{$ENDIF}
 
 function DynArrayAppend(var V: CurrencyArray; const R: Currency): Integer;
 begin
@@ -829,8 +891,8 @@ begin
   SetLength(V, Result + 1);
   V[Result] := R;
 end;
-
 {$ENDIF}
+
 function DynArrayAppendB(var V: RawByteStringArray; const R: RawByteString): Integer;
 begin
   Result := Length(V);
@@ -1460,6 +1522,7 @@ begin
   Result := J;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayRemove(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, L, M: Integer;
 begin
@@ -1477,6 +1540,7 @@ begin
   SetLength(V, L - J);
   Result := J;
 end;
+{$ENDIF}
 
 function DynArrayRemove(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer;
 var I, J, L, M: Integer;
@@ -1993,6 +2057,7 @@ begin
     end;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayRemoveDuplicates(var V: ExtendedArray; const IsSorted: Boolean);
 var I, C, J, L : Integer;
     F          : Extended;
@@ -2032,6 +2097,7 @@ begin
       until J >= Length(V);
     end;
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArrayRemoveDuplicatesA(var V: AnsiStringArray; const IsSorted: Boolean);
@@ -2073,8 +2139,8 @@ begin
       until J >= Length(V);
     end;
 end;
-
 {$ENDIF}
+
 procedure DynArrayRemoveDuplicatesU(var V: UnicodeStringArray; const IsSorted: Boolean);
 var I, C, J, L : Integer;
     F          : UnicodeString;
@@ -2386,6 +2452,7 @@ begin
     DynArrayRemove(S, 0, I - 1);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayTrimLeft(var S: ExtendedArray; const TrimList: array of Extended); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -2406,6 +2473,7 @@ begin
   if I > 0 then
     DynArrayRemove(S, 0, I - 1);
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimLeftA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
@@ -2428,8 +2496,8 @@ begin
   if I > 0 then
     DynArrayRemoveA(S, 0, I - 1);
 end;
-
 {$ENDIF}
+
 procedure DynArrayTrimLeftU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -2683,6 +2751,7 @@ begin
     SetLength(S, I + 1);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayTrimRight(var S: ExtendedArray; const TrimList: array of Extended); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -2703,6 +2772,7 @@ begin
   if I < Length(S) - 1 then
     SetLength(S, I + 1);
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArrayTrimRightA(var S: AnsiStringArray; const TrimList: array of AnsiString); overload;
@@ -2725,8 +2795,8 @@ begin
   if I < Length(S) - 1 then
     SetLength(S, I + 1);
 end;
-
 {$ENDIF}
+
 procedure DynArrayTrimRightU(var S: UnicodeStringArray; const TrimList: array of UnicodeString); overload;
 var I, J : Integer;
     R    : Boolean;
@@ -3067,6 +3137,7 @@ begin
   Result := I;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayInsert(var V: ExtendedArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -3087,6 +3158,7 @@ begin
   FillChar(P^, Count * Sizeof(Extended), #0);
   Result := I;
 end;
+{$ENDIF}
 
 function DynArrayInsert(var V: CurrencyArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
@@ -3130,8 +3202,8 @@ begin
   FillChar(P^, Count * Sizeof(AnsiString), #0);
   Result := I;
 end;
-
 {$ENDIF}
+
 function DynArrayInsertB(var V: RawByteStringArray; const Idx: Integer; const Count: Integer): Integer;
 var I, L : Integer;
     P    : Pointer;
@@ -4016,6 +4088,7 @@ begin
     end;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayPosNext(const Find: Extended; const V: ExtendedArray; const PrevPos: Integer;
     const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
@@ -4065,6 +4138,7 @@ begin
       Result := -1;
     end;
 end;
+{$ENDIF}
 
 function DynArrayPosNext(const Find: Boolean; const V: BooleanArray; const PrevPos: Integer;
     const IsSortedAscending: Boolean): Integer;
@@ -4166,8 +4240,8 @@ begin
       Result := -1;
     end;
 end;
-
 {$ENDIF}
+
 function DynArrayPosNextB(const Find: RawByteString; const V: RawByteStringArray; const PrevPos: Integer;
     const IsSortedAscending: Boolean): Integer;
 var I, L, H : Integer;
@@ -4645,6 +4719,7 @@ begin
     end;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayCount(const Find: Extended; const V: ExtendedArray; const IsSortedAscending: Boolean = False): Integer;
 var I, J : Integer;
 begin
@@ -4674,6 +4749,7 @@ begin
       until I < 0;
     end;
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function DynArrayCountA(const Find: AnsiString; const V: AnsiStringArray; const IsSortedAscending: Boolean = False): Integer;
@@ -4705,8 +4781,8 @@ begin
       until I < 0;
     end;
 end;
-
 {$ENDIF}
+
 function DynArrayCountB(const Find: RawByteString; const V: RawByteStringArray; const IsSortedAscending: Boolean = False): Integer;
 var I, J : Integer;
 begin
@@ -4958,6 +5034,7 @@ begin
     end;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayRemoveAll(const Find: Extended; var V: ExtendedArray; const IsSortedAscending: Boolean = False);
 var I, J : Integer;
 begin
@@ -4971,6 +5048,7 @@ begin
       I := DynArrayPosNext(Find, V, I, IsSortedAscending);
     end;
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArrayRemoveAllA(const Find: AnsiString; var V: AnsiStringArray; const IsSortedAscending: Boolean = False);
@@ -4986,8 +5064,8 @@ begin
       I := DynArrayPosNextA(Find, V, I, IsSortedAscending);
     end;
 end;
-
 {$ENDIF}
+
 procedure DynArrayRemoveAllU(const Find: UnicodeString; var V: UnicodeStringArray; const IsSortedAscending: Boolean = False);
 var I, J : Integer;
 begin
@@ -5080,6 +5158,7 @@ begin
         DynArrayAppend(Result, V1[I]);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayIntersection(const V1, V2: ExtendedArray; const IsSortedAscending: Boolean): ExtendedArray;
 var I, J, L, LV : Integer;
 begin
@@ -5108,6 +5187,7 @@ begin
       if (DynArrayPosNext(V1[I], V2) >= 0) and (DynArrayPosNext(V1[I], Result) = -1) then
         DynArrayAppend(Result, V1[I]);
 end;
+{$ENDIF}
 
 function DynArrayIntersection(const V1, V2: ByteArray; const IsSortedAscending: Boolean): ByteArray;
 var I, J, L, LV : Integer;
@@ -5341,8 +5421,8 @@ begin
       if (DynArrayPosNextA(V1[I], V2) >= 0) and (DynArrayPosNextA(V1[I], Result) = -1) then
         DynArrayAppendA(Result, V1[I]);
 end;
-
 {$ENDIF}
+
 function DynArrayIntersectionU(const V1, V2: UnicodeStringArray; const IsSortedAscending: Boolean): UnicodeStringArray;
 var I, J, L, LV : Integer;
 begin
@@ -5466,6 +5546,7 @@ begin
         DynArrayAppend(Result, V1[I]);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayDifference(const V1, V2: ExtendedArray; const IsSortedAscending: Boolean): ExtendedArray;
 var I, J, L, LV : Integer;
 begin
@@ -5494,6 +5575,7 @@ begin
       if (DynArrayPosNext(V1[I], V2) = -1) and (DynArrayPosNext(V1[I], Result) = -1) then
         DynArrayAppend(Result, V1[I]);
 end;
+{$ENDIF}
 
 function DynArrayDifference(const V1, V2: ByteArray; const IsSortedAscending: Boolean): ByteArray;
 var I, J, L, LV : Integer;
@@ -5727,8 +5809,8 @@ begin
       if (DynArrayPosNextA(V1[I], V2) = -1) and (DynArrayPosNextA(V1[I], Result) = -1) then
         DynArrayAppendA(Result, V1[I]);
 end;
-
 {$ENDIF}
+
 function DynArrayDifferenceU(const V1, V2: UnicodeStringArray; const IsSortedAscending: Boolean): UnicodeStringArray;
 var I, J, L, LV : Integer;
 begin
@@ -5856,8 +5938,8 @@ begin
   for I := 1 to L div 2 do
     SwapA(V[I - 1], V[L - I]);
 end;
-
 {$ENDIF}
+
 procedure DynArrayReverseU(var V: UnicodeStringArray);
 var I, L : Integer;
 begin
@@ -5906,6 +5988,7 @@ begin
     Swap(V[I - 1], V[L - I]);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArrayReverse(var V: ExtendedArray);
 var I, L : Integer;
 begin
@@ -5913,7 +5996,7 @@ begin
   for I := 1 to L div 2 do
     SwapExt(V[I - 1], V[L - I]);
 end;
-
+{$ENDIF}
 
 
 {                                                                              }
@@ -6047,6 +6130,7 @@ begin
     Result[I] := V[I];
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function AsExtendedArray(const V: array of Extended): ExtendedArray;
 var I : Integer;
 begin
@@ -6054,6 +6138,7 @@ begin
   for I := 0 to High(V) do
     Result[I] := V[I];
 end;
+{$ENDIF}
 
 function AsCurrencyArray(const V: array of Currency): CurrencyArray;
 var I : Integer;
@@ -6071,8 +6156,8 @@ begin
   for I := 0 to High(V) do
     Result[I] := V[I];
 end;
-
 {$ENDIF}
+
 function AsRawByteStringArray(const V: array of RawByteString): RawByteStringArray;
 var I : Integer;
 begin
@@ -6274,6 +6359,7 @@ begin
     end;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayRangeExtended(const First: Extended; const Count: Integer; const Increment: Extended): ExtendedArray;
 var I : Integer;
     J : Extended;
@@ -6286,7 +6372,7 @@ begin
       J := J + Increment;
     end;
 end;
-
+{$ENDIF}
 
 
 {                                                                              }
@@ -6459,6 +6545,7 @@ begin
     Result[I] := V;
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayDupExtended(const V: Extended; const Count: Integer): ExtendedArray;
 var I : Integer;
 begin
@@ -6471,6 +6558,7 @@ begin
   for I := 0 to Count - 1 do
     Result[I] := V;
 end;
+{$ENDIF}
 
 function DynArrayDupCurrency(const V: Currency; const Count: Integer): CurrencyArray;
 var I : Integer;
@@ -6498,8 +6586,8 @@ begin
   for I := 0 to Count - 1 do
     Result[I] := V;
 end;
-
 {$ENDIF}
+
 function DynArrayDupUnicodeString(const V: UnicodeString; const Count: Integer): UnicodeStringArray;
 var I : Integer;
 begin
@@ -6782,6 +6870,7 @@ begin
   FillChar(Pointer(@V[OldLen])^, Sizeof(Double) * (NewLen - OldLen), #0);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure SetLengthAndZero(var V: ExtendedArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
 begin
@@ -6796,6 +6885,7 @@ begin
     exit;
   FillChar(Pointer(@V[OldLen])^, Sizeof(Extended) * (NewLen - OldLen), #0);
 end;
+{$ENDIF}
 
 procedure SetLengthAndZero(var V: CurrencyArray; const NewLength: Integer);
 var OldLen, NewLen : Integer;
@@ -6986,6 +7076,7 @@ begin
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Double) * L);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DynArrayIsEqual(const V1, V2: ExtendedArray): Boolean;
 var L : Integer;
 begin
@@ -6997,6 +7088,7 @@ begin
     end;
   Result := EqualMem(Pointer(V1)^, Pointer(V2)^, Sizeof(Extended) * L);
 end;
+{$ENDIF}
 
 function DynArrayIsEqual(const V1, V2: CurrencyArray): Boolean;
 var L : Integer;
@@ -7028,8 +7120,8 @@ begin
       end;
   Result := True;
 end;
-
 {$ENDIF}
+
 function DynArrayIsEqualB(const V1, V2: RawByteStringArray): Boolean;
 var I, L : Integer;
 begin
@@ -7170,6 +7262,7 @@ begin
     Result[I] := V[I];
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function LongIntArrayToExtendedArray(const V: LongIntArray): ExtendedArray;
 var I, L : Integer;
 begin
@@ -7178,6 +7271,7 @@ begin
   for I := 0 to L - 1 do
     Result[I] := V[I];
 end;
+{$ENDIF}
 
 function SingleArrayToDoubleArray(const V: SingleArray): DoubleArray;
 var I, L : Integer;
@@ -7188,6 +7282,7 @@ begin
     Result[I] := V[I];
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function SingleArrayToExtendedArray(const V: SingleArray): ExtendedArray;
 var I, L : Integer;
 begin
@@ -7196,6 +7291,7 @@ begin
   for I := 0 to L - 1 do
     Result[I] := V[I];
 end;
+{$ENDIF}
 
 function SingleArrayToCurrencyArray(const V: SingleArray): CurrencyArray;
 var I, L : Integer;
@@ -7224,6 +7320,7 @@ begin
     Result[I] := Trunc(V[I]);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function DoubleArrayToExtendedArray(const V: DoubleArray): ExtendedArray;
 var I, L : Integer;
 begin
@@ -7232,6 +7329,7 @@ begin
   for I := 0 to L - 1 do
     Result[I] := V[I];
 end;
+{$ENDIF}
 
 function DoubleArrayToCurrencyArray(const V: DoubleArray): CurrencyArray;
 var I, L : Integer;
@@ -7260,6 +7358,7 @@ begin
     Result[I] := Trunc(V[I]);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function ExtendedArrayToCurrencyArray(const V: ExtendedArray): CurrencyArray;
 var I, L : Integer;
 begin
@@ -7286,7 +7385,7 @@ begin
   for I := 0 to L - 1 do
     Result[I] := Trunc(V[I]);
 end;
-
+{$ENDIF}
 
 
 {                                                                              }
@@ -7391,6 +7490,7 @@ begin
     Result[I] := V[Indexes[I]];
 end;
 
+{$IFNDEF ExtendedIsDouble}
 function ExtendedArrayFromIndexes(const V: ExtendedArray; const Indexes: IntegerArray): ExtendedArray;
 var I, L : Integer;
 begin
@@ -7399,6 +7499,7 @@ begin
   for I := 0 to L - 1 do
     Result[I] := V[Indexes[I]];
 end;
+{$ENDIF}
 
 function StringArrayFromIndexes(const V: StringArray; const Indexes: IntegerArray): StringArray;
 var I, L : Integer;
@@ -8038,6 +8139,7 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const V: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8085,6 +8187,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArraySortA(const V: AnsiStringArray);
@@ -8134,8 +8237,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-
 {$ENDIF}
+
 procedure DynArraySortB(const V: RawByteStringArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8474,8 +8577,9 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-
 {$ENDIF}
+
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: IntegerArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8539,7 +8643,9 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
+{$ENDIF}
 
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: IntegerArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8603,6 +8709,7 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
+{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: IntegerArray);
@@ -8797,6 +8904,7 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8860,7 +8968,9 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
+{$ENDIF}
 
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: AnsiStringArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -8924,8 +9034,10 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-
 {$ENDIF}
+{$ENDIF}
+
+{$IFNDEF ExtendedIsDouble}
 procedure DynArraySort(const Key: ExtendedArray; const Data: IntegerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9118,8 +9230,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-
 {$ENDIF}
+
 procedure DynArraySort(const Key: ExtendedArray; const Data: ExtendedArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9184,6 +9296,7 @@ begin
     QuickSort(0, I - 1);
 end;
 
+{$IFNDEF ManagedCode}
 procedure DynArraySort(const Key: ExtendedArray; const Data: PointerArray);
 
   procedure QuickSort(L, R: Integer);
@@ -9247,7 +9360,8 @@ begin
   if I > 0 then
     QuickSort(0, I - 1);
 end;
-
+{$ENDIF}
+{$ENDIF}
 
 
 

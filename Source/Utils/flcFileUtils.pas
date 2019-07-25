@@ -103,8 +103,15 @@ uses
 const
   PosixPathSeparator = '/';
   WinPathSeparator   = '\';
-  PathSeparator = {$IFDEF POSIX} PosixPathSeparator {$ENDIF}
-                  {$IFDEF MSWIN} WinPathSeparator   {$ENDIF};
+  {$IFDEF POSIX}
+  PathSeparator = PosixPathSeparator;
+  {$ELSE}
+  {$IFDEF MSWIN}
+  PathSeparator = WinPathSeparator;
+  {$ELSE}
+  PathSeparator = PosixPathSeparator;
+  {$ENDIF}
+  {$ENDIF}
 
 function  WinPathHasDriveLetterB(const Path: RawByteString): Boolean;
 function  WinPathHasDriveLetterU(const Path: UnicodeString): Boolean;
@@ -645,10 +652,9 @@ type
 
 function  DriveIsValidA(const Drive: ByteChar): Boolean;
 function  DriveIsValidW(const Drive: WideChar): Boolean;
-
 function  DriveGetTypeA(const Path: AnsiString): TLogicalDriveType;
-
 function  DriveFreeSpaceA(const Path: AnsiString): Int64;
+function  DriveSizeSpaceA(const Path: AnsiString): Int64;
 {$ENDIF}
 
 
@@ -2006,9 +2012,7 @@ var FileHandle     : Integer;
     WaitStart      : LongWord;
     WaitOpen       : Boolean;
     {$ENDIF}
-    {$IFDEF POSIX}
     FileNameStr    : String;
-    {$ENDIF}
 begin
   {$IFDEF MSWINDOWS}
   FileFlags := FileOpenFlagsToWinFileFlags(FileOpenFlags);
@@ -3679,6 +3683,22 @@ begin
   else
     D := 0;
   Result := DiskFree(D);
+end;
+
+function DriveSizeSpaceA(const Path: AnsiString): Int64;
+var D: Byte;
+begin
+  if WinPathHasDriveLetterB(Path) then
+    D := Ord(UpCase(PAnsiChar(Path)^)) - Ord('A') + 1
+  else
+  if PathIsUNCPathB(Path) then
+    begin
+      Result := -1;
+      exit;
+    end
+  else
+    D := 0;
+  Result := DiskSize(D);
 end;
 {$ENDIF}
 
