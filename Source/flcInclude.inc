@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2018/07/11                                               }
+{   File updated:     2019/07/29                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Github:           https://github.com/fundamentalslib                       }
@@ -44,6 +44,7 @@
 {     DELPHI10        - Delphi 10.                                             }
 {     DELPHI10_1      - Delphi 10.1.                                           }
 {     DELPHI10_2      - Delphi 10.2.                                           }
+{     DELPHI10_3      - Delphi 10.3.                                           }
 {                                                                              }
 {     DELPHI2_UP      - Delphi 2 or later.                                     }
 {     DELPHI3_UP      - Delphi 3 or later.                                     }
@@ -68,6 +69,7 @@
 {     DELPHI10_UP     - Delphi 10 or later.                                    }
 {     DELPHI10_1_UP   - Delphi 10.1 or later.                                  }
 {     DELPHI10_2_UP   - Delphi 10.2 or later.                                  }
+{     DELPHI10_3_UP   - Delphi 10.3 or later.                                  }
 {                                                                              }
 {     DELPHI3_DOWN    - Delphi 3 or earlier.                                   }
 {     DELPHI4_DOWN    - Delphi 4 or earlier.                                   }
@@ -136,20 +138,30 @@
 {   StringIsUnicode     - Default String type is UnicodeString.                }
 {   ExtendedIsDouble    - Extended type is Double.                             }
 {   TBytesDeclared      - System defines TBytes type.                          }
+{   ObjectARC           - Objects has Automatic Reference Countinging (ARC).   }
 {                                                                              }
 {   UseInline         - SupportInline and not PurePascal.                      }
 {                                                                              }
 {   OS_UNIX           - Unix type operating system.                            }
+{   OS_POSIX          - Posix type operating system.                           }
 {     OS_BSD          - BSD type operating system.                             }
 {       OS_FREEBSD    - FreeBSD operating system.                              }
 {       OS_NETBSD     - NetBSD operating system.                               }
 {       OS_OPENBSD    - OpenBSD operating system.                              }
 {     OS_LINUX        - Linux operating system.                                }
+{     OS_LINUX32      - Linux 32-bit operating system.                         }
+{     OS_LINUX64      - Linux 64-bit operating system.                         }
 {     OS_MACOSX       - MacOSX operating system.                               }
+{     OS_MACOSX32     - MacOSX 32-bit operating system.                        }
+{     OS_MACOSX64     - MacOSX 64-bit operating system.                        }
 {     OS_SOLARIS      - Sun Solaris operating system.                          }
 {   OS_MOBILE         - Mobile operating system.                               }
 {     OS_IOS          - Apple iOS operating system.                            }
+{     OS_IOS32        - Apple iOS 32-bit.                                      }
+{     OS_IOS64        - Apple iOS 64-bit.                                      }
 {     OS_ANDROID      - Android operating system.                              }
+{     OS_ANDROID32    - Android 32-bit operating system.                       }
+{     OS_ANDROID64    - Android 64-bit operating system.                       }
 {   OS_MSWIN          - MS Windows type operating system.                      }
 {     OS_WIN16        - Win16 operating system.                                }
 {     OS_WIN32        - Win32 operating system.                                }
@@ -181,6 +193,8 @@
 {   ASM386_FREEPASCAL - Compiler supports 386 assembler (FreePascal style)     }
 {   ASM386            - Compiler supports 386 assembler (Generic)              }
 {   ASMX86_64         - Compiler supports x86-64 assembler (Generic)           }
+{                                                                              }
+{   IsConsoleApp      - Console application.                                   }
 {                                                                              }
 {******************************************************************************}
 
@@ -228,7 +242,6 @@
 {$IFDEF VER100}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI3}
-  {$DEFINE DELPHI2_UP}
   {$DEFINE DELPHI3_UP}
   {$DEFINE DELPHI3_DOWN}
   {$DEFINE DELPHI4_DOWN}
@@ -249,8 +262,6 @@
 {$IFDEF VER120}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI4}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
   {$DEFINE DELPHI4_UP}
   {$DEFINE DELPHI4_DOWN}
   {$DEFINE DELPHI5_DOWN}
@@ -270,9 +281,6 @@
 {$IFDEF VER130}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI5}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
   {$DEFINE DELPHI5_UP}
   {$DEFINE DELPHI5_DOWN}
   {$DEFINE DELPHI6_DOWN}
@@ -291,10 +299,6 @@
 {$IFDEF VER140}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI6}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
   {$DEFINE DELPHI6_UP}
   {$DEFINE DELPHI6_DOWN}
   {$DEFINE DELPHI7_DOWN}
@@ -311,11 +315,6 @@
 {$IFDEF VER150}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI7}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
   {$DEFINE DELPHI7_UP}
   {$DEFINE DELPHI7_DOWN}
   {$IFDEF LINUX}
@@ -332,12 +331,6 @@
   {$DEFINE DOT_NET}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI8}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
   {$DEFINE DELPHI8_UP}
 {$ENDIF}
 
@@ -349,13 +342,6 @@
 {$IFDEF VER170}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2005}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
   {$DEFINE DELPHI2005_UP}
 {$ENDIF}
 
@@ -370,14 +356,6 @@
 {$IFNDEF VER185}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2006}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
   {$DEFINE DELPHI2006_UP}
 {$ENDIF}
 {$ENDIF}
@@ -389,15 +367,6 @@
 {$IFDEF VER185}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2007}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
   {$DEFINE DELPHI2007_UP}
 {$ENDIF}
 
@@ -410,15 +379,6 @@
   {$DEFINE DOT_NET}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2007}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
   {$DEFINE DELPHI2007_UP}
 {$ENDIF}
 
@@ -430,16 +390,6 @@
 {$IFDEF VER200}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2009}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
   {$DEFINE DELPHI2009_UP}
 {$ENDIF}
 
@@ -451,17 +401,6 @@
 {$IFDEF VER210}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI2010}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
   {$DEFINE DELPHI2010_UP}
 {$ENDIF}
 
@@ -472,18 +411,6 @@
 {$IFDEF VER220}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
   {$DEFINE DELPHIXE_UP}
 {$ENDIF}
 
@@ -495,19 +422,6 @@
 {$IFDEF VER230}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE2}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
   {$DEFINE DELPHIXE2_UP}
 {$ENDIF}
 
@@ -519,20 +433,6 @@
 {$IFDEF VER240}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE3}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
   {$DEFINE DELPHIXE3_UP}
 {$ENDIF}
 
@@ -544,21 +444,6 @@
 {$IFDEF VER250}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE4}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
   {$DEFINE DELPHIXE4_UP}
 {$ENDIF}
 
@@ -570,22 +455,6 @@
 {$IFDEF VER260}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE5}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
   {$DEFINE DELPHIXE5_UP}
 {$ENDIF}
 
@@ -597,23 +466,6 @@
 {$IFDEF VER270}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE6}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
   {$DEFINE DELPHIXE6_UP}
 {$ENDIF}
 
@@ -625,24 +477,6 @@
 {$IFDEF VER280}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE7}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
   {$DEFINE DELPHIXE7_UP}
 {$ENDIF}
 
@@ -654,25 +488,6 @@
 {$IFDEF VER290}
   {$DEFINE DELPHI}
   {$DEFINE DELPHIXE8}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
-  {$DEFINE DELPHIXE7_UP}
   {$DEFINE DELPHIXE8_UP}
 {$ENDIF}
 
@@ -684,26 +499,6 @@
 {$IFDEF VER300}
   {$DEFINE DELPHI}
   {$DEFINE DELPHI10}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
-  {$DEFINE DELPHIXE7_UP}
-  {$DEFINE DELPHIXE8_UP}
   {$DEFINE DELPHI10_UP}
 {$ENDIF}
 
@@ -714,28 +509,7 @@
 {                                                                              }
 {$IFDEF VER310}
   {$DEFINE DELPHI}
-  {$DEFINE DELPHI10}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
-  {$DEFINE DELPHIXE7_UP}
-  {$DEFINE DELPHIXE8_UP}
-  {$DEFINE DELPHI10_UP}
+  {$DEFINE DELPHI10_1}
   {$DEFINE DELPHI10_1_UP}
 {$ENDIF}
 
@@ -746,30 +520,19 @@
 {                                                                              }
 {$IFDEF VER320}
   {$DEFINE DELPHI}
-  {$DEFINE DELPHI10}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
-  {$DEFINE DELPHIXE7_UP}
-  {$DEFINE DELPHIXE8_UP}
-  {$DEFINE DELPHI10_UP}
-  {$DEFINE DELPHI10_1_UP}
+  {$DEFINE DELPHI10_2}
   {$DEFINE DELPHI10_2_UP}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Delphi 10.3 Rio                                                              }
+{                                                                              }
+{$IFDEF VER330}
+  {$DEFINE DELPHI}
+  {$DEFINE DELPHI10_3}
+  {$DEFINE DELPHI10_3_UP}
 {$ENDIF}
 
 
@@ -777,9 +540,6 @@
 {                                                                              }
 { Future Delphi versions                                                       }
 {                                                                              }
-{$IFDEF VER330}
-  {$DEFINE DELPHI_Future}
-{$ENDIF}
 {$IFDEF VER340}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
@@ -789,32 +549,93 @@
 {$IFDEF VER360}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
+{$IFDEF VER370}
+  {$DEFINE DELPHI_Future}
+{$ENDIF}
+
+{$IFDEF CONDITIONALEXPRESSIONS}
+  {$IF CompilerVersion > 33.0}
+    {$DEFINE DELPHI_Future}
+  {$ENDIF}
+{$ENDIF}
 
 {$IFDEF DELPHI_Future}
   {$DEFINE DELPHI}
-  {$DEFINE DELPHI2_UP}
-  {$DEFINE DELPHI3_UP}
-  {$DEFINE DELPHI4_UP}
-  {$DEFINE DELPHI5_UP}
-  {$DEFINE DELPHI6_UP}
-  {$DEFINE DELPHI7_UP}
-  {$DEFINE DELPHI8_UP}
-  {$DEFINE DELPHI2005_UP}
-  {$DEFINE DELPHI2006_UP}
-  {$DEFINE DELPHI2007_UP}
-  {$DEFINE DELPHI2009_UP}
-  {$DEFINE DELPHI2010_UP}
-  {$DEFINE DELPHIXE_UP}
-  {$DEFINE DELPHIXE2_UP}
-  {$DEFINE DELPHIXE3_UP}
-  {$DEFINE DELPHIXE4_UP}
-  {$DEFINE DELPHIXE5_UP}
-  {$DEFINE DELPHIXE6_UP}
-  {$DEFINE DELPHIXE7_UP}
-  {$DEFINE DELPHIXE8_UP}
-  {$DEFINE DELPHI10_UP}
-  {$DEFINE DELPHI10_1_UP}
+  {$DEFINE DELPHI10_3_UP}
+{$ENDIF}
+
+
+{                                                                              }
+{ DELPHI_xx_UP defines                                                         }
+{                                                                              }
+{$IFDEF DELPHI10_3_UP}
   {$DEFINE DELPHI10_2_UP}
+{$ENDIF}
+{$IFDEF DELPHI10_2_UP}
+  {$DEFINE DELPHI10_1_UP}
+{$ENDIF}
+{$IFDEF DELPHI10_1_UP}
+  {$DEFINE DELPHI10_UP}
+{$ENDIF}
+{$IFDEF DELPHI10_UP}
+  {$DEFINE DELPHIXE8_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE8_UP}
+  {$DEFINE DELPHIXE7_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE7_UP}
+  {$DEFINE DELPHIXE6_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE6_UP}
+  {$DEFINE DELPHIXE5_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE5_UP}
+  {$DEFINE DELPHIXE4_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE4_UP}
+  {$DEFINE DELPHIXE3_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE3_UP}
+  {$DEFINE DELPHIXE2_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE2_UP}
+  {$DEFINE DELPHIXE_UP}
+{$ENDIF}
+{$IFDEF DELPHIXE_UP}
+  {$DEFINE DELPHI2010_UP}
+{$ENDIF}
+{$IFDEF DELPHI2010_UP}
+  {$DEFINE DELPHI2009_UP}
+{$ENDIF}
+{$IFDEF DELPHI2009_UP}
+  {$DEFINE DELPHI2007_UP}
+{$ENDIF}
+{$IFDEF DELPHI2007_UP}
+  {$DEFINE DELPHI2006_UP}
+{$ENDIF}
+{$IFDEF DELPHI2006_UP}
+  {$DEFINE DELPHI2005_UP}
+{$ENDIF}
+{$IFDEF DELPHI2005_UP}
+  {$DEFINE DELPHI8_UP}
+{$ENDIF}
+{$IFDEF DELPHI8_UP}
+  {$DEFINE DELPHI7_UP}
+{$ENDIF}
+{$IFDEF DELPHI7_UP}
+  {$DEFINE DELPHI6_UP}
+{$ENDIF}
+{$IFDEF DELPHI6_UP}
+  {$DEFINE DELPHI5_UP}
+{$ENDIF}
+{$IFDEF DELPHI5_UP}
+  {$DEFINE DELPHI4_UP}
+{$ENDIF}
+{$IFDEF DELPHI4_UP}
+  {$DEFINE DELPHI3_UP}
+{$ENDIF}
+{$IFDEF DELPHI3_UP}
+  {$DEFINE DELPHI2_UP}
 {$ENDIF}
 
 
@@ -886,16 +707,33 @@
       {$DEFINE OS_MACOSX}
     {$ENDIF}
     {$IFDEF MACOS32}
-      {$DEFINE OS_MACOSX}
+      {$DEFINE OS_MACOSX32}
+    {$ENDIF}
+    {$IFDEF MACOS64}
+      {$DEFINE OS_MACOSX64}
     {$ENDIF}
     {$IFDEF WIN64}
       {$DEFINE OS_WIN64}
     {$ENDIF}
-    // Delphi XE4+
-    {$IFDEF DELPHIXE4_UP}
+    {$IFDEF POSIX}
+      {$DEFINE OS_POSIX}
+    {$ENDIF}
+    {$IFDEF POSIX32}
+      {$DEFINE OS_POSIX32}
+    {$ENDIF}
+    {$IFDEF POSIX64}
+      {$DEFINE OS_POSIX64}
+    {$ENDIF}
+    // Delphi XE3+
+    {$IFDEF DELPHIXE3_UP}
       {$IFDEF IOS}
         {$DEFINE OS_IOS}
-        {$DEFINE OS_MOBILE}
+      {$ENDIF}
+      {$IFDEF IOS32}
+        {$DEFINE OS_IOS32}
+      {$ENDIF}
+      {$IFDEF IOS64}
+        {$DEFINE OS_IOS64}
       {$ENDIF}
       {$IFDEF CPUARM}
         {$DEFINE CPU_ARM}
@@ -905,7 +743,21 @@
     {$IFDEF DELPHIXE5_UP}
       {$IFDEF ANDROID}
         {$DEFINE OS_ANDROID}
-        {$DEFINE OS_MOBILE}
+      {$ENDIF}
+      {$IFDEF ANDROID32}
+        {$DEFINE OS_ANDROID32}
+      {$ENDIF}
+    {$ENDIF}
+    // Delphi 10.2+
+    {$IFDEF DELPHIXE10_2_UP}
+      {$IFDEF LINUX}
+        {$DEFINE OS_LINUX}
+      {$ENDIF}
+      {$IFDEF LINUX32}
+        {$DEFINE OS_LINUX32}
+      {$ENDIF}
+      {$IFDEF LINUX64}
+        {$DEFINE OS_LINUX64}
       {$ENDIF}
     {$ENDIF}
   {$ENDIF}
@@ -998,7 +850,9 @@
 
 {$IFDEF DELPHIXE2_UP}
   {$IFNDEF WIN32}
+  {$IFNDEF WIN64}
     {$DEFINE ExtendedIsDouble}
+  {$ENDIF}
   {$ENDIF}
 {$ENDIF}
 
@@ -1030,6 +884,19 @@
 
 {$IFDEF DELPHI10_UP}
   {$DEFINE SupportUTF8Char}
+{$ENDIF}
+
+{$IFDEF DELPHI10_3_UP}
+  {$IFDEF LINUX}
+    {$DEFINE SupportAnsiChar}
+    {$DEFINE SupportAnsiString}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF AUTOREFCOUNT}
+    {$DEFINE ObjectARC}
+  {$ENDIF}
 {$ENDIF}
 
 
@@ -1203,7 +1070,9 @@
   {$DEFINE SupportStringRefCount}
 
   {$IFDEF CPUX86_64}
+  {$IFNDEF LINUX}
     {$DEFINE ExtendedIsDouble}
+  {$ENDIF}
   {$ENDIF}
 {$ENDIF}
 
@@ -1213,8 +1082,8 @@
 { Operating System                                                             }
 {                                                                              }
 
-{ Windows }
-// OS_WINxx
+{ OS_WINxx }
+
 {$IFDEF WIN16}
   {$DEFINE OS_WIN16}
 {$ENDIF}
@@ -1224,7 +1093,9 @@
 {$IFDEF WIN64}
   {$DEFINE OS_WIN64}
 {$ENDIF}
-// OS_MSWIN
+
+{ OS_MSWIN }
+
 {$IFDEF OS_WIN16}
   {$DEFINE OS_MSWIN}
 {$ENDIF}
@@ -1237,44 +1108,127 @@
 {$IFDEF MSWINDOWS}
   {$DEFINE OS_MSWIN}
 {$ENDIF}
-// OS_MSWIN aliases
+
+{ OS_MSWIN aliases }
+
 {$IFDEF OS_MSWIN}
   {$DEFINE MSWIN}
   {$DEFINE OS_WIN}
   {$DEFINE WIN}
 {$ENDIF}
 
-{ Unix-family }
+{ OS Posix }
+
+{$IFDEF MACOSX}
+  {$DEFINE OS_MACOSX}
+{$ENDIF}
 {$IFDEF LINUX}
-  {$DEFINE UNIX}
   {$DEFINE OS_LINUX}
 {$ENDIF}
 {$IFDEF FREEBSD}
-  {$DEFINE BSD}
   {$DEFINE OS_FREEBSD}
 {$ENDIF}
 {$IFDEF NETBSD}
-  {$DEFINE BSD}
   {$DEFINE OS_NETBSD}
 {$ENDIF}
 {$IFDEF OPENBSD}
-  {$DEFINE BSD}
   {$DEFINE OS_OPENBSD}
 {$ENDIF}
-{$IFDEF BSD}
-  {$DEFINE UNIX}
-  {$DEFINE OS_BSD}
+{$IFDEF POSIX}
+  {$DEFINE OS_POSIX}
 {$ENDIF}
-{$IFDEF MACOSX}
-  {$DEFINE UNIX}
-  {$DEFINE OS_MACOSX}
+{$IFDEF POSIX32}
+  {$DEFINE OS_POSIX32}
 {$ENDIF}
-// OS_UNIX
+{$IFDEF POSIX64}
+  {$DEFINE OS_POSIX64}
+{$ENDIF}
 {$IFDEF UNIX}
   {$DEFINE OS_UNIX}
 {$ENDIF}
 
+{ OS_BSD, OS_POSIX }
+
+{$IFDEF OS_MACOSX}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+{$IFDEF OS_LINUX}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+{$IFDEF OS_FREEBSD}
+  {$DEFINE OS_BSD}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+{$IFDEF OS_NETBSD}
+  {$DEFINE OS_BSD}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+{$IFDEF OS_OPENBSD}
+  {$DEFINE OS_BSD}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+
+{$IFDEF OS_BSD}
+  {$DEFINE BSD}
+{$ENDIF}
+
+{$IFDEF OS_POSIX}
+  {$DEFINE POSIX}
+  {$DEFINE OS_UNIX}
+{$ENDIF}
+
+{$IFDEF OS_UNIX}
+  {$DEFINE POSIX}
+  {$DEFINE OS_POSIX}
+{$ENDIF}
+
+{ OS_MOBILE }
+
+{$IFDEF OS_ANDROID}
+  {$DEFINE OS_MOBILE}
+{$ENDIF}
+{$IFDEF OS_IOS}
+  {$DEFINE OS_MOBILE}
+{$ENDIF}
+
+{ OS bits }
+
+{$IFDEF OS_DOS32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_WIN32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_WIN64}
+  {$DEFINE OS_64}
+{$ENDIF}
+{$IFDEF OS_MACOSX32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_MACOSX64}
+  {$DEFINE OS_64}
+{$ENDIF}
+{$IFDEF OS_LINUX32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_LINUX64}
+  {$DEFINE OS_64}
+{$ENDIF}
+{$IFDEF OS_ANDROID32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_ANDROID64}
+  {$DEFINE OS_64}
+{$ENDIF}
+{$IFDEF OS_IOS32}
+  {$DEFINE OS_32}
+{$ENDIF}
+{$IFDEF OS_IOS64}
+  {$DEFINE OS_64}
+{$ENDIF}
+
 { Other }
+
 {$IFDEF OS2}
   {$DEFINE OS_OS2}
 {$ENDIF}
@@ -1284,17 +1238,6 @@
 {$ENDIF}
 {$IFDEF DOS}
   {$DEFINE OS_DOS}
-{$ENDIF}
-
-{ OS bits }
-{$IFDEF OS_DOS32}
-  {$DEFINE OS_32}
-{$ENDIF}
-{$IFDEF OS_WIN32}
-  {$DEFINE OS_32}
-{$ENDIF}
-{$IFDEF OS_WIN64}
-  {$DEFINE OS_64}
 {$ENDIF}
 
 
@@ -1335,6 +1278,7 @@
 {$ENDIF}
 
 { CPU types }
+
 {$IFDEF CPU386}
   {$DEFINE INTEL386}
   {$DEFINE CPU_INTEL386}
@@ -1357,8 +1301,21 @@
 {$IFDEF CPUARM}
   {$DEFINE CPU_ARM}
 {$ENDIF}
+{$IFDEF CPUARM32}
+  {$DEFINE CPU_ARM32}
+{$ENDIF}
+{$IFDEF CPUARM64}
+  {$DEFINE CPU_ARM64}
+{$ENDIF}
 
 { CPU bits }
+
+{$IFDEF CPU32BITS}
+  {$DEFINE CPU_32}
+{$ENDIF}
+{$IFDEF CPU32BITS}
+  {$DEFINE CPU_64}
+{$ENDIF}
 {$IFDEF CPU_INTEL386}
   {$DEFINE CPU_32}
 {$ENDIF}
@@ -1405,6 +1362,17 @@
         {$DEFINE ASM386_FREEPASCAL}
       {$ENDIF}
     {$ENDIF}
+  {$ENDIF}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Framework                                                                    }
+{                                                                              }
+{$IFDEF DELPHIXE2_UP}
+  {$IFDEF CONSOLE}
+    {$DEFINE IsConsoleApp}
   {$ENDIF}
 {$ENDIF}
 
