@@ -51,6 +51,7 @@
 {   2016/02/01  5.15  Unicode update.                                          }
 {   2016/04/10  5.16  Change to FileOpenWait.                                  }
 {   2018/08/13  5.17  String type changes.                                     }
+{   2019/07/29  5.18  DriveSizeA function.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -67,6 +68,7 @@
 {   Delphi 10 Win64                     5.14  2016/01/09                       }
 {   Delphi 10.2 Linux64                 5.17  2019/04/02                       }
 {   FreePascal 3.0.4 Win32              5.17  2019/02/24                       }
+{   FreePascal 3.0.4 Linux              5.18  2019/07/29                       }
 {                                                                              }
 { Todo:                                                                        }
 {  - IFDef win certain functions                                               }
@@ -649,6 +651,7 @@ function  DriveIsValidW(const Drive: WideChar): Boolean;
 function  DriveGetTypeA(const Path: AnsiString): TLogicalDriveType;
 
 function  DriveFreeSpaceA(const Path: AnsiString): Int64;
+function  DriveSizeA(const Path: AnsiString): Int64;
 {$ENDIF}
 
 
@@ -3679,6 +3682,22 @@ begin
   else
     D := 0;
   Result := DiskFree(D);
+end;
+
+function DriveSizeA(const Path: AnsiString): Int64;
+var D: Byte;
+begin
+  if WinPathHasDriveLetterB(Path) then
+    D := Ord(UpCase(PAnsiChar(Path)^)) - Ord('A') + 1
+  else
+  if PathIsUNCPathB(Path) then
+    begin
+      Result := -1;
+      exit;
+    end
+  else
+    D := 0;
+  Result := DiskSize(D);
 end;
 {$ENDIF}
 
