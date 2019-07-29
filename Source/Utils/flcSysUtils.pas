@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSysUtils.pas                                          }
-{   File version:     5.01                                                     }
+{   File version:     5.02                                                     }
 {   Description:      System utility functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -35,6 +35,7 @@
 { Revision history:                                                            }
 {                                                                              }
 {   2018/08/13  5.01  Initial version from other units.                        }
+{   2019/07/29  5.02  FPC/Linux fixes.                                         }
 {                                                                              }
 {******************************************************************************}
 
@@ -53,28 +54,26 @@ function GetLastOSErrorMessage: String;
 
 implementation
 
-{$IFDEF MSWINDOWS}
 uses
-  SysUtils,
-  Windows;
-{$ENDIF}
+  {$IFDEF MSWINDOWS}
+  Windows,
+  {$ENDIF}
 
-{$IFDEF POSIX}
-{$IFDEF DELPHI}
-uses
-  SysUtils,
+  {$IFDEF POSIX}
+  {$IFDEF DELPHI}
   Posix.Errno,
-  Posix.Unistd;
-{$ENDIF}
-{$ENDIF}
+  Posix.Unistd,
+  {$ENDIF}
+  {$ENDIF}
 
-{$IFDEF FREEPASCAL}
-{$IFDEF UNIX}
-uses
+  {$IFDEF FREEPASCAL}
+  {$IFDEF UNIX}
   BaseUnix,
-  Unix;
-{$ENDIF}
-{$ENDIF}
+  Unix,
+  {$ENDIF}
+  {$ENDIF}
+
+  SysUtils;
 
 
 
