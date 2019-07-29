@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHTTPUtils.pas                                         }
-{   File version:     5.11                                                     }
+{   File version:     5.12                                                     }
 {   Description:      HTTP utilities.                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2011-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2011-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -47,6 +47,7 @@
 {   2015/02/28  0.09  Decode url-encoded content.                              }
 {   2015/03/14  0.10  RawByteString changes.                                   }
 {   2016/01/09  5.11  Revised for Fundamentals 5.                              }
+{   2019/07/29  5.12  SendContent fix.                                         }
 {                                                                              }
 { References:                                                                  }
 { * HTTP/1.1 : http://www.w3.org/Protocols/rfc2616/rfc2616.html                }
@@ -4011,8 +4012,11 @@ procedure THTTPContentWriter.SendContent;
     L : Integer;
   begin
     L := S.Read(ContentBuf[0], ContentBufSize);
-    if L > 0 then
-      WriteBuf(ContentBuf[0], L);
+    while L > 0 do
+      begin
+        WriteBuf(ContentBuf[0], L);
+        L := S.Read(ContentBuf[0], ContentBufSize);
+      end;
     FContentComplete := S.Position >= S.Size;
   end;
 
