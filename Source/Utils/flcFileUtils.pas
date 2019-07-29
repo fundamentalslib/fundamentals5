@@ -2008,8 +2008,7 @@ var FileHandle     : Integer;
     Retry          : Boolean;
     WaitStart      : LongWord;
     WaitOpen       : Boolean;
-    {$ENDIF}
-    {$IFDEF POSIX}
+    {$ELSE}
     FileNameStr    : String;
     {$ENDIF}
 begin
