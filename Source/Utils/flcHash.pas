@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
@@ -58,6 +58,7 @@
 {   2016/01/29  5.20  Fix in SecureClear for constant string references.       }
 {   2018/07/11  5.21  Word32 type changes.                                     }
 {   2018/08/12  5.22  String type changes.                                     }
+{   2019/09/24  5.23  Optimise RipeMD/SHA1/SHA256/SHA512.                      }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1940,6 +1941,9 @@ end;
 { Utility functions SwapEndian, RotateLeftBits, RotateRightBits.               }
 { Used by SHA1 and SHA256.                                                     }
 {                                                                              }
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
+
 {$IFDEF ASM386}
 function SwapEndian(const Value: Word32): Word32; register; assembler;
 asm
@@ -1948,7 +1952,7 @@ asm
       XCHG    AH, AL
 end;
 {$ELSE}
-function SwapEndian(const Value: Word32): Word32;
+function SwapEndian(const Value: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := ((Value and $000000FF) shl 24)  or
             ((Value and $0000FF00) shl 8)   or
@@ -1976,17 +1980,11 @@ asm
       ROL     EAX, CL
 end;
 {$ELSE}
-function RotateLeftBits(const Value: Word32; const Bits: Byte): Word32;
-var I : Integer;
-    R : Word32;
+function RotateLeftBits(const Value: Word32; const Bits: Byte): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  R := Value;
-  for I := 1 to Bits do
-    if R and $80000000 = 0 then
-      R := Word32(R shl 1)
-    else
-      R := Word32(R shl 1) or 1;
-  Result := R;
+  Assert(Bits > 0);
+  Assert(Bits < 32);
+  Result := (Value shl Bits) or Word32(Value shr (32 - Bits));
 end;
 {$ENDIF}
 
@@ -1997,21 +1995,16 @@ asm
       ROR     EAX, CL
 end;
 {$ELSE}
-function RotateRightBits(const Value: Word32; const Bits: Byte): Word32;
-var I, B : Integer;
+function RotateRightBits(const Value: Word32; const Bits: Byte): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Result := Value;
-  if Bits >= 32 then
-    B := Bits mod 32
-  else
-    B := Bits;
-  for I := 1 to B do
-    if Result and 1 = 0 then
-      Result := Result shr 1
-    else
-      Result := (Result shr 1) or $80000000;
+  Assert(Bits > 0);
+  Assert(Bits < 32);
+  Result := (Value shr Bits) or Word32(Value shl (32 - Bits));
 end;
 {$ENDIF}
+
+{$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 
 
@@ -2019,53 +2012,88 @@ end;
 { Utility functions for Word64 arithmetic                                      }
 { Used by SHA-512                                                              }
 {                                                                              }
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 procedure Word64InitZero(var A: Word64);
 begin
   A.Word32s[0] := 0;
   A.Word32s[1] := 0;
 end;
 
-procedure Word64Not(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Not(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  PUInt64(@A)^ := not PUInt64(@A)^;
+end;
+{$ELSE}
+procedure Word64Not(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
   A.Word32s[0] := not A.Word32s[0];
   A.Word32s[1] := not A.Word32s[1];
 end;
+{$ENDIF}
 
-procedure Word64AndWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  PUInt64(@A)^ := PUInt64(@A)^ and PUInt64(@B)^;
+end;
+{$ELSE}
+procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
   A.Word32s[0] := A.Word32s[0] and B.Word32s[0];
   A.Word32s[1] := A.Word32s[1] and B.Word32s[1];
 end;
+{$ENDIF}
 
-procedure Word64XorWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  PUInt64(@A)^ := PUInt64(@A)^ xor PUInt64(@B)^;
+end;
+{$ELSE}
+procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
   A.Word32s[0] := A.Word32s[0] xor B.Word32s[0];
   A.Word32s[1] := A.Word32s[1] xor B.Word32s[1];
 end;
+{$ENDIF}
 
-procedure Word64AddWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64AddWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  PUInt64(@A)^ := UInt64(PUInt64(@A)^ + PUInt64(@B)^);
+end;
+{$ELSE}
+procedure Word64AddWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 var C, D : Int64;
 begin
   C := Int64(A.Word32s[0]) + B.Word32s[0];
   D := Int64(A.Word32s[1]) + B.Word32s[1];
-  if C >= $100000000 then
-    Inc(D);
+  Inc(D, C shr 32);
   A.Word32s[0] := C and $FFFFFFFF;
   A.Word32s[1] := D and $FFFFFFFF;
 end;
+{$ENDIF}
 
-procedure Word64Shr(var A: Word64; const B: Byte);
-var C : Byte;
+{$IFDEF SupportUInt64}
+procedure Word64Shr(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  if B = 0 then
-    exit;
-  if B >= 64 then
-    Word64InitZero(A) else
+  PUInt64(@A)^ := PUInt64(@A)^ shr B;
+end;
+{$ELSE}
+procedure Word64Shr(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+var C : Byte;
+    A1 : Word32;
+begin
+  Assert(B > 0);
+  Assert(B < 64);
   if B < 32 then
     begin
       C := 32 - B;
-      A.Word32s[0] := (A.Word32s[0] shr B) or (A.Word32s[1] shl C);
-      A.Word32s[1] := A.Word32s[1] shr B;
+      A1 := A.Word32s[1];
+      A.Word32s[0] := (A.Word32s[0] shr B) or (A1 shl C);
+      A.Word32s[1] := A1 shr B;
     end
   else
     begin
@@ -2074,32 +2102,49 @@ begin
       A.Word32s[1] := 0;
     end;
 end;
+{$ENDIF}
 
-procedure Word64Ror(var A: Word64; const B: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64Ror(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : UInt64;
+  D : Byte;
+begin
+  C := PUInt64(@A)^;
+  D := 64 - B;
+  PUInt64(@A)^ := (C shr B) or (C shl D);
+end;
+{$ELSE}
+procedure Word64Ror(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 var C, D : Byte;
+    A0, A1 : Word32;
     E, F : Word32;
 begin
-  C := B mod 64;
-  if C = 0 then
-    exit;
-  if C < 32 then
+  Assert(B > 0);
+  Assert(B < 64);
+  if B < 32 then
     begin
-      D := 32 - C;
-      E := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
-      F := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
+      D := 32 - B;
+      A0 := A.Word32s[0];
+      A1 := A.Word32s[1];
+      E := (A1 shr B) or (A0 shl D);
+      F := (A0 shr B) or (A1 shl D);
     end
   else
     begin
-      Dec(C, 32);
+      C := B - 32;
       D := 32 - C;
-      E := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
-      F := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
+      A0 := A.Word32s[0];
+      A1 := A.Word32s[1];
+      E := (A0 shr C) or (A1 shl D);
+      F := (A1 shr C) or (A0 shl D);
     end;
   A.Word32s[1] := E;
   A.Word32s[0] := F;
 end;
+{$ENDIF}
 
-procedure Word64SwapEndian(var A: Word64);
+procedure Word64SwapEndian(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 var B : Word64;
     I : Integer;
 begin
@@ -2119,6 +2164,8 @@ begin
       Inc(P);
     end;
 end;
+{$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 
 
@@ -2149,6 +2196,7 @@ const
 
 { Calculates a MD5 Digest (16 bytes) given a Buffer (64 bytes)                 }
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 type
   TMD5Buffer = array[0..15] of Word32;
   PMD5Buffer = ^TMD5Buffer;
@@ -2182,8 +2230,8 @@ begin
     begin
       J := I * 4;
       Inc(A, Buf^[J + 1]           + P^ + (C xor (D and (B xor C)))); A := A shl  5 or A shr 27 + B; Inc(P);
-      Inc(D, Buf^[(J + 6) mod 16]  + P^ + (B xor (C and (A xor B)))); D := D shl  9 or D shr 23 + A; Inc(P);
-      Inc(C, Buf^[(J + 11) mod 16] + P^ + (A xor (B and (D xor A)))); C := C shl 14 or C shr 18 + D; Inc(P);
+      Inc(D, Buf^[(J + 6) and $F]  + P^ + (B xor (C and (A xor B)))); D := D shl  9 or D shr 23 + A; Inc(P);
+      Inc(C, Buf^[(J + 11) and $F] + P^ + (A xor (B and (D xor A)))); C := C shl 14 or C shr 18 + D; Inc(P);
       Inc(B, Buf^[J]               + P^ + (D xor (A and (C xor D)))); B := B shl 20 or B shr 12 + C; Inc(P);
     end;
 
@@ -2191,20 +2239,20 @@ begin
   for I := 0 to 3 do
     begin
       J := 16 - (I * 4);
-      Inc(A, Buf^[(J + 5) mod 16]  + P^ + (B xor C xor D)); A := A shl  4 or A shr 28 + B; Inc(P);
-      Inc(D, Buf^[(J + 8) mod 16]  + P^ + (A xor B xor C)); D := D shl 11 or D shr 21 + A; Inc(P);
-      Inc(C, Buf^[(J + 11) mod 16] + P^ + (D xor A xor B)); C := C shl 16 or C shr 16 + D; Inc(P);
-      Inc(B, Buf^[(J + 14) mod 16] + P^ + (C xor D xor A)); B := B shl 23 or B shr  9 + C; Inc(P);
+      Inc(A, Buf^[(J + 5) and $F]  + P^ + (B xor C xor D)); A := A shl  4 or A shr 28 + B; Inc(P);
+      Inc(D, Buf^[(J + 8) and $F]  + P^ + (A xor B xor C)); D := D shl 11 or D shr 21 + A; Inc(P);
+      Inc(C, Buf^[(J + 11) and $F] + P^ + (D xor A xor B)); C := C shl 16 or C shr 16 + D; Inc(P);
+      Inc(B, Buf^[(J + 14) and $F] + P^ + (C xor D xor A)); B := B shl 23 or B shr  9 + C; Inc(P);
     end;
 
   P := @MD5Table_4;
   for I := 0 to 3 do
     begin
       J := 16 - (I * 4);
-      Inc(A, Buf^[J mod 16]        + P^ + (C xor (B or not D))); A := A shl  6 or A shr 26 + B; Inc(P);
-      Inc(D, Buf^[(J + 7) mod 16]  + P^ + (B xor (A or not C))); D := D shl 10 or D shr 22 + A; Inc(P);
-      Inc(C, Buf^[(J + 14) mod 16] + P^ + (A xor (D or not B))); C := C shl 15 or C shr 17 + D; Inc(P);
-      Inc(B, Buf^[(J + 5) mod 16]  + P^ + (D xor (C or not A))); B := B shl 21 or B shr 11 + C; Inc(P);
+      Inc(A, Buf^[J and $F]        + P^ + (C xor (B or not D))); A := A shl  6 or A shr 26 + B; Inc(P);
+      Inc(D, Buf^[(J + 7) and $F]  + P^ + (B xor (A or not C))); D := D shl 10 or D shr 22 + A; Inc(P);
+      Inc(C, Buf^[(J + 14) and $F] + P^ + (A xor (D or not B))); C := C shl 15 or C shr 17 + D; Inc(P);
+      Inc(B, Buf^[(J + 5) and $F]  + P^ + (D xor (C or not A))); B := B shl 21 or B shr 11 + C; Inc(P);
     end;
 
   Inc(Digest.Word32s[0], A);
@@ -2213,6 +2261,7 @@ begin
   Inc(Digest.Word32s[3], D);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 procedure MD5InitDigest(var Digest: T128BitDigest);
 begin
@@ -2307,6 +2356,7 @@ end;
 
 { Calculates a SHA Digest (20 bytes) given a Buffer (64 bytes)                 }
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 procedure TransformSHABuffer(var Digest: T160BitDigest; const Buffer; const SHA1: Boolean);
 var A, B, C, D, E : Word32;
     W : array[0..79] of Word32;
@@ -2389,6 +2439,7 @@ begin
   Inc(Digest.Word32s[4], E);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 procedure SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
 var P : PByte;
@@ -2552,22 +2603,24 @@ begin
   Digest.Word32s[7] := $5be0cd19;
 end;
 
-function SHA256Transform1(const A: Word32): Word32;
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
+function SHA256Transform1(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := RotateRightBits(A, 7) xor RotateRightBits(A, 18) xor (A shr 3);
 end;
 
-function SHA256Transform2(const A: Word32): Word32;
+function SHA256Transform2(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := RotateRightBits(A, 17) xor RotateRightBits(A, 19) xor (A shr 10);
 end;
 
-function SHA256Transform3(const A: Word32): Word32;
+function SHA256Transform3(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := RotateRightBits(A, 2) xor RotateRightBits(A, 13) xor RotateRightBits(A, 22);
 end;
 
-function SHA256Transform4(const A: Word32): Word32;
+function SHA256Transform4(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := RotateRightBits(A, 6) xor RotateRightBits(A, 11) xor RotateRightBits(A, 25);
 end;
@@ -2585,7 +2638,6 @@ const
     $748f82ee, $78a5636f, $84c87814, $8cc70208, $90befffa, $a4506ceb, $bef9a3f7, $c67178f2
   );
 
-{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 procedure TransformSHA256Buffer(var Digest: T256BitDigest; const Buf);
 var
   I : Integer;
@@ -2629,6 +2681,7 @@ begin
     Inc(Digest.Word32s[I], H[I]);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
 var P : PByte;
@@ -2782,6 +2835,8 @@ end;
 {                                                                              }
 { SHA512 Hashing                                                               }
 {                                                                              }
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 procedure SHA512InitDigest(var Digest: T512BitDigest);
 begin
   Digest.Word64s[0].Word32s[0] := $f3bcc908;
@@ -2803,7 +2858,7 @@ begin
 end;
 
 // BSIG0(x) = ROTR^28(x) XOR ROTR^34(x) XOR ROTR^39(x)
-function SHA512Transform1(const A: Word64): Word64;
+function SHA512Transform1(const A: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2, T3 : Word64;
 begin
   T1 := A;
@@ -2818,7 +2873,7 @@ begin
 end;
 
 // BSIG1(x) = ROTR^14(x) XOR ROTR^18(x) XOR ROTR^41(x)
-function SHA512Transform2(const A: Word64): Word64;
+function SHA512Transform2(const A: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2, T3 : Word64;
 begin
   T1 := A;
@@ -2833,7 +2888,7 @@ begin
 end;
 
 // SSIG0(x) = ROTR^1(x) XOR ROTR^8(x) XOR SHR^7(x)
-function SHA512Transform3(const A: Word64): Word64;
+function SHA512Transform3(const A: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2, T3 : Word64;
 begin
   T1 := A;
@@ -2848,7 +2903,7 @@ begin
 end;
 
 // SSIG1(x) = ROTR^19(x) XOR ROTR^61(x) XOR SHR^6(x)
-function SHA512Transform4(const A: Word64): Word64;
+function SHA512Transform4(const A: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2, T3 : Word64;
 begin
   T1 := A;
@@ -2863,7 +2918,7 @@ begin
 end;
 
 // CH( x, y, z) = (x AND y) XOR ( (NOT x) AND z)
-function SHA512Transform5(const X, Y, Z: Word64): Word64;
+function SHA512Transform5(const X, Y, Z: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2 : Word64;
 begin
   T1 := X;
@@ -2876,7 +2931,7 @@ begin
 end;
 
 // MAJ( x, y, z) = (x AND y) XOR (x AND z) XOR (y AND z)
-function SHA512Transform6(const X, Y, Z: Word64): Word64;
+function SHA512Transform6(const X, Y, Z: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
 var T1, T2, T3 : Word64;
 begin
   T1 := X;
@@ -2916,7 +2971,6 @@ const
     $4cc5d4be, $cb3e42b6, $597f299c, $fc657e2a, $5fcb6fab, $3ad6faec, $6c44198c, $4a475817
     );
 
-{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 procedure TransformSHA512Buffer(var Digest: T512BitDigest; const Buf);
 var
   I : Integer;
@@ -2936,7 +2990,7 @@ begin
     begin
       T1 := SHA512Transform4(W[I - 2]);
       T2 := W[I - 7];
-      T3 := SHA512Transform3(W[I - 15]);  // bug in RFC (specifies I-5 instead of W[I-5])
+      T3 := SHA512Transform3(W[I - 15]);  // bug in RFC (specifies I-15 instead of W[I-15])
       T4 := W[I - 16];
       Word64AddWord64(T1, T2);
       Word64AddWord64(T1, T3);
@@ -2977,6 +3031,7 @@ begin
     Word64AddWord64(Digest.Word64s[I], H[I]);
 end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
 var P : PByte;
@@ -3055,47 +3110,50 @@ end;
 {   160 bit RIPEMD.                                                            }
 {                                                                              }
 
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+{$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
+
 // f(j, x, y, z) = x XOR y XOR z                (0 <= j <= 15)
-function RipeMD_F1(const X, Y, Z: Word32): Word32;
+function RipeMD_F1(const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := X xor Y xor Z;
 end;
 
 // f(j, x, y, z) = (x AND y) OR (NOT(x) AND z)  (16 <= j <= 31)
-function RipeMD_F2(const X, Y, Z: Word32): Word32;
+function RipeMD_F2(const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := (X and Y) or ((not X) and Z);
 end;
 
 // f(j, x, y, z) = (x OR NOT(y)) XOR z          (32 <= j <= 47)
-function RipeMD_F3(const X, Y, Z: Word32): Word32;
+function RipeMD_F3(const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := (X or (not Y)) xor Z;
 end;
 
 // f(j, x, y, z) = (x AND z) OR (y AND NOT(z))  (48 <= j <= 63)
-function RipeMD_F4(const X, Y, Z: Word32): Word32;
+function RipeMD_F4(const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := (X and Z) or (Y and (not Z));
 end;
 
 // f(j, x, y, z) = x XOR (y OR NOT(z))          (64 <= j <= 79)
-function RipeMD_F5(const X, Y, Z: Word32): Word32;
+function RipeMD_F5(const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := X xor (Y or (not Z));
 end;
 
 // f(j, x, y, z)
-function RipeMD_F(const J: Byte; const X, Y, Z: Word32): Word32;
+function RipeMD_F(const J: Byte; const X, Y, Z: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  case J of
-    0..15  : Result := RipeMD_F1(X, Y, Z);
-    16..31 : Result := RipeMD_F2(X, Y, Z);
-    32..47 : Result := RipeMD_F3(X, Y, Z);
-    48..63 : Result := RipeMD_F4(X, Y, Z);
-    64..79 : Result := RipeMD_F5(X, Y, Z);
+  Assert(J < 80);
+  case J shr 4 of
+    0 : Result := RipeMD_F1(X, Y, Z);
+    1 : Result := RipeMD_F2(X, Y, Z);
+    2 : Result := RipeMD_F3(X, Y, Z);
+    3 : Result := RipeMD_F4(X, Y, Z);
   else
-    raise EHashError.Create(hashInternalError, 'Internal error');
+    {4 :} Result := RipeMD_F5(X, Y, Z);
   end;
 end;
 
@@ -3172,22 +3230,10 @@ const
       15,  5,  8, 11, 14, 14,  6, 14,  6,  9, 12,  9, 12,  5, 15,  8,
        8,  5, 12,  9, 12,  5, 14,  6,  8, 13,  6,  5, 15, 13, 11, 11 );
 
-// Pascal version of:
-// function Word32Add(const A, B: Word32): Word32; assembler;
-// asm
-//       ADD     EAX, EDX
-// end;
-//
-// Temporary turn Q off as an optimisation since Word32Add is frequently used
-// and it can never overflow in any case
-{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 function Word32Add(const A, B: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
-var R : Int64;
 begin
-  R := Int64(A) + Int64(B);
-  Result := Word32(R and $FFFFFFFF);
+  Result := Word32(A + B);
 end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
 
 type
   TRipeMD160Block = array[0..15] of Word32;
@@ -3239,7 +3285,7 @@ begin
 
   for J := 0 to 79 do
     begin
-      J16 := J div 16;
+      J16 := J shr 4;
       // T := rol_s(j)(A [+] f(j, B, C, D) [+] X[i][r(j)] [+] K(j)) [+] E;
       T := Word32Add(A, RipeMD_F(J, B, C, D));
       T := Word32Add(T, Block[RipeMD_R[J]]);
@@ -3290,6 +3336,8 @@ begin
   Digest.Word32s[3] := H3;
   Digest.Word32s[4] := H4;
 end;
+{$IFDEF QOn}{$Q+}{$ENDIF}
+{$IFDEF ROn}{$R+}{$ENDIF}
 
 // initial value (hexadecimal)
 // h0 = 0x67452301; h1 = 0xEFCDAB89; h2 = 0x98BADCFE; h3 = 0x10325476; h4 = 0xC3D2E1F0;
@@ -3727,131 +3775,6 @@ begin
 end;
 
 
-(*
-
-
-{                                                                              }
-{ Fuch512                                                                      }
-{   Fundamentals adaptive complexity hash                                      }
-{                                                                              }
-const
-  FUCH512_MaxComplexity = $FF;
-
-type
-  TFuch512State = record
-    Complexity : Byte;
-    State      : array[0..15] of T512BitDigest;
-    Digest     : T512BitDigest;
-  end;
-
-procedure Fuch512Digest_ExpandKey(
-          var Digest: T512BitDigest;
-          const Key: Pointer; const KeySize: Integer;
-          const Complexity: Byte;
-          const IterationIdx: Integer);
-var P, Q : PByte;
-    I : Integer;
-    N : Byte;
-begin
-  Assert(Assigned(Key));
-  Assert(KeySize >= 0);
-  Assert(IterationIdx <= 15);
-  // xor digest with key size, complexity value, iteration idx and key data
-  Digest.Longs[0] := Word32(KeySize);
-  Digest.Bytes[5] := Complexity;
-  Digest.Bytes[6] := Byte(IterationIdx and $FF);
-  Q := Key;
-  for I := 0 to KeySize - 1 do
-    begin
-      N := (I  + 6) mod 64;
-      P := @Digest.Bytes[N];
-      P^ := P^ xor Q^;
-      Inc(Q);
-    end;
-end;
-
-procedure Fuch512_ExpandKey(
-          var State: TFuch512State;
-          const Key: Pointer; const KeySize: Integer;
-          const Complexity: Byte);
-var I : Integer;
-begin
-  // expand key
-  for I := 0 to 15 do
-    Fuch512Digest_ExpandKey(State.State[I], Key, KeySize, Complexity, I);
-  // obfuscate
-  for I := 0 to 15 do
-    Digest512XOR32(State.State[I], SHA512K[I]);
-  // obfuscate more
-  Digest512XOR32(State.State[0],  CalcCRC32(Key^, KeySize));            // CRC32 of key
-  Digest512XOR32(State.State[1],  CRC32Table[Byte(KeySize mod 256)]);   // CRC32 of key size
-  Digest512XOR32(State.State[2],  CRC32Table[Byte(KeySize mod 3)]);     // CRC32 of key size
-  Digest512XOR32(State.State[3],  CRC32Table[Byte(KeySize mod 23)]);    // CRC32 of key size
-  Digest512XOR32(State.State[4],  CRC32Table[Byte(KeySize mod 251)]);   // CRC32 of key size
-  Digest512XOR32(State.State[5],  CRC32Table[Complexity]);              // CRC32 of complexity value
-  Digest512XOR32(State.State[6],  SHA512K[16 + (KeySize mod 3)]);       // modified key size
-  Digest512XOR32(State.State[7],  SHA512K[19 + (KeySize mod 5)]);       // modified key size
-  Digest512XOR32(State.State[8],  SHA512K[24 + (KeySize mod 7)]);       // modified key size
-  Digest512XOR32(State.State[9],  SHA512K[31 + (KeySize mod 33)]);      // modified key size
-  Digest512XOR32(State.State[10], SHA512K[64 + (Complexity mod 32)]);   // modified complexity value
-  Digest512XOR32(State.State[11], MD5Table_1[KeySize mod 3]);           // modified key size
-  Digest512XOR32(State.State[12], MD5Table_1[KeySize mod 5]);           // modified key size
-  Digest512XOR32(State.State[13], MD5Table_1[KeySize mod 16]);          // modified key size
-  Digest512XOR32(State.State[14], MD5Table_2[Complexity mod 16]);       // modified complexity
-  Digest512XOR32(State.State[15], MD5Table_2[Complexity mod 11]);       // modified complexity
-end;
-
-procedure Fuch512_Init(
-          var State: TFuch512State;
-          const Key: Pointer; const KeySize: Integer;
-          const Complexity: Byte);
-begin
-  FillChar(State, SizeOf(State), 0);
-  State.Complexity := Complexity;
-  SHA512InitDigest(State.Digest);
-  Fuch512_ExpandKey(State, Key, KeySize, Complexity);
-  // Post condition:
-  //   State.Digest = fixed seed
-  //   State.State  = obfuscated key
-end;
-
-procedure Fuch512_Block(
-          var State: TFuch512State;
-          const Buf: T512BitBuf);
-var Dig : T512BitDigest;
-    I : Integer;
-begin
-  // hash state
-  Dig := CalcSHA512(State.State, SizeOf(State.State));
-  for I := 0 to 14 do
-    State.State[I] := State.State[I + 1];
-  State.State[15] := Dig;
-  // hash buffer
-  Dig := CalcSHA512(Buf, SizeOf(Buf));
-  for I := 0 to 14 do
-    State.State[I] := State.State[I + 1];
-  State.State[15] := Dig;
-
-  // hash state
-  State.Digest := CalcSHA512(State.State, SizeOf(State.State));
-end;
-
-procedure Fuch512_Buf(
-          var State: TFuch512State;
-          const Buf; const BufSize: Integer);
-begin
-end;
-
-procedure Fuch512_FinalBuf(
-          var State: TFuch512State;
-          const Buf; const BufSize: Integer);
-begin
-end;
-
-*)
-
-
-
 
 {                                                                              }
 { CalculateHash                                                                }
@@ -3957,7 +3880,7 @@ end;
 
 procedure AHash.HashFile(const FileName: String; const Offset: Int64; const MaxCount: Int64);
 const ChunkSize = 8192;
-var Handle : Integer;
+var Handle : THandle;
     Buf    : Pointer;
     I, C   : Integer;
     Left   : Int64;
@@ -3966,7 +3889,7 @@ begin
   if FileName = '' then
     raise EHashError.Create(hashInvalidFileName);
   Handle := FileOpen(FileName, fmOpenReadWrite or fmShareDenyNone);
-  if Handle = -1 then
+  if Handle = THandle(-1) then
     raise EHashError.Create(hashFileOpenError, GetLastOSErrorMessage);
   if Offset > 0 then
     I := FileSeek(Handle, Offset, 0) else
