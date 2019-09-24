@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipher.pas                                            }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
@@ -46,6 +46,7 @@
 {   2015/03/21  4.08  Revision                                                 }
 {   2016/01/09  5.09  Revised for Fundamentals 5.                              }
 {   2018/06/17  5.10  Type changes.                                            }
+{   2019/06/09  5.11  Tests for Triple-DES-EDE-3.                              }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -426,10 +427,16 @@ begin
       PTripleDES3Context(ContextBuffer)^);
 end;
 
-procedure CipherTripleDES3Buffer(const Context, Data: Pointer; const DataSize: Integer);
+procedure CipherTripleDES3BufferEncrypt(const Context, Data: Pointer; const DataSize: Integer);
 begin
   Assert(DataSize = DESBlockSize);
-  TripleDES3Buffer(PTripleDES3Context(Context)^, PDESBlock(Data)^);
+  TripleDES3BufferEncrypt(PTripleDES3Context(Context)^, PDESBlock(Data)^);
+end;
+
+procedure CipherTripleDES3BufferDecrypt(const Context, Data: Pointer; const DataSize: Integer);
+begin
+  Assert(DataSize = DESBlockSize);
+  TripleDES3BufferDecrypt(PTripleDES3Context(Context)^, PDESBlock(Data)^);
 end;
 
 
@@ -920,8 +927,8 @@ const
      KeyBitsMax:   192;
      ContextSize:  TripleDES3ContextSize;
      InitFunc:     CipherTripleDES3EDEInit;
-     EncryptFunc:  CipherTripleDES3Buffer;
-     DecryptFunc:  CipherTripleDES3Buffer;
+     EncryptFunc:  CipherTripleDES3BufferEncrypt;
+     DecryptFunc:  CipherTripleDES3BufferDecrypt;
      FinaliseFunc: nil;
     ),
 
@@ -935,8 +942,8 @@ const
      KeyBitsMax:   192;
      ContextSize:  TripleDES3ContextSize;
      InitFunc:     CipherTripleDES3EEEInit;
-     EncryptFunc:  CipherTripleDES3Buffer;
-     DecryptFunc:  CipherTripleDES3Buffer;
+     EncryptFunc:  CipherTripleDES3BufferEncrypt;
+     DecryptFunc:  CipherTripleDES3BufferDecrypt;
      FinaliseFunc: nil;
     ),
 
@@ -1352,7 +1359,7 @@ type
   end;
 
 const
-  CipherTestCaseCount = 33;
+  CipherTestCaseCount = 36;
 
 var
   CipherTestCases : array[0..CipherTestCaseCount - 1] of TCipherTestCase = (
@@ -1616,7 +1623,29 @@ var
      Key:        RawByteString(#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00#$00);
      InitVector: '12345678';
      PlainText:  '1234567890123456';
-     CipherText: RawByteString(#$8C#$A6#$4D#$E9#$C1#$B1#$23#$A7#$97#$8D#$A5#$4E#$AE#$E5#$7B#$46))
+     CipherText: RawByteString(#$8C#$A6#$4D#$E9#$C1#$B1#$23#$A7#$97#$8D#$A5#$4E#$AE#$E5#$7B#$46)),
+    // Triple-DES-3 from https://www.cosic.esat.kuleuven.be/nessie/testvectors/bc/des/Triple-Des-3-Key-192-64.unverified.test-vectors
+    (Cipher:     ctTripleDES3EDE;
+     Mode:       cmECB;
+     KeyBits:    192;
+     Key:        RawByteString(#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1);
+     InitVector: '';
+     PlainText:  RawByteString(#$F1#$F1#$F1#$F1#$F1#$F1#$F1#$F1);
+     CipherText: RawByteString(#$5D#$1B#$8F#$AF#$78#$39#$49#$4B)),
+    (Cipher:     ctTripleDES3EDE;
+     Mode:       cmECB;
+     KeyBits:    192;
+     Key:        RawByteString(#$00#$01#$02#$03#$04#$05#$06#$07#$08#$09#$0A#$0B#$0C#$0D#$0E#$0F#$10#$11#$12#$13#$14#$15#$16#$17);
+     InitVector: '';
+     PlainText:  RawByteString(#$00#$11#$22#$33#$44#$55#$66#$77);
+     CipherText: RawByteString(#$97#$A2#$5B#$A8#$2B#$56#$4F#$4C)),
+    (Cipher:     ctTripleDES3EDE;
+     Mode:       cmECB;
+     KeyBits:    192;
+     Key:        RawByteString(#$2B#$D6#$45#$9F#$82#$C5#$B3#$00#$95#$2C#$49#$10#$48#$81#$FF#$48#$2B#$D6#$45#$9F#$82#$C5#$B3#$00);
+     InitVector: '';
+     PlainText:  RawByteString(#$EA#$02#$47#$14#$AD#$5C#$4D#$84);
+     CipherText: RawByteString(#$C6#$16#$AC#$E8#$43#$95#$82#$47))
     // CAST-256 test vectors from RFC 2612
 {
     (Cipher:     ctCAST256;

@@ -5,7 +5,7 @@
 {   File version:     5.10                                                     }
 {   Description:      RSA cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -126,9 +126,16 @@ procedure RSAPrivateKeyAssignBufStr(var Key: TRSAPrivateKey;
           const KeySize: Integer;
           const ModBuf, ExpBuf: RawByteString);
 
+type
+  TRSAGenerateCallback =
+      procedure (const CallbackData: NativeUInt; var Abort: Boolean);
+  ERSAGenerateAborted = class(ERSA);
+
 procedure RSAGenerateKeys(const KeySize: Integer;
           var PrivateKey: TRSAPrivateKey;
-          var PublicKey: TRSAPublicKey);
+          var PublicKey: TRSAPublicKey;
+          const Callback: TRSAGenerateCallback = nil;
+          const CallbackData: NativeUInt = 0);
 
 function  RSACipherMessageBufSize(const KeySize: Integer): Integer;
 
@@ -418,8 +425,13 @@ end;
 
 { RSA Key Random Prime1                                                        }
 {   Returns the first of two random primes for use in RSA key generation.      }
-procedure RSAKeyRandomPrime1(const Bits: Integer; var P: HugeWord);
+procedure RSAKeyRandomPrime1(const Bits: Integer; var P: HugeWord;
+          const Callback: TRSAGenerateCallback;
+          const CallbackData: NativeUInt);
+var
+  Abort : Boolean;
 begin
+  Abort := False;
   repeat
     RSAKeyRandomNumber(Bits, P);
     // set the 2 most significant bits to:
@@ -428,16 +440,26 @@ begin
     // ii) the product is large enough
     HugeWordSetBit(P, Bits - 1);
     HugeWordSetBit(P, Bits - 2);
+    if Assigned(Callback) then
+      begin
+        Callback(CallbackData, Abort);
+        if Abort then
+          raise ERSAGenerateAborted.Create('Abort');
+      end;
   until HugeWordIsPrime(P) <> pNotPrime;
 end;
 
 { RSA Key Random Prime2                                                        }
 {   Returns the second of two random primes for use in RSA key generation.     }
-procedure RSAKeyRandomPrime2(const Bits: Integer; const P: HugeWord; var Q: HugeWord);
-var L : HugeWord;
+procedure RSAKeyRandomPrime2(const Bits: Integer; const P: HugeWord; var Q: HugeWord;
+          const Callback: TRSAGenerateCallback;
+          const CallbackData: NativeUInt);
+var Abort : Boolean;
+    L : HugeWord;
     C : Integer;
     N : Word32;
 begin
+  Abort := False;
   C := Bits div HugeWordElementBits;
   HugeWordInit(L);
   try
@@ -463,6 +485,12 @@ begin
         N := Byte(HugeWordGetElement(P, C - 1) shr (HugeWordElementBits - 8)) *
              Byte(HugeWordGetElement(Q, C - 1) shr (HugeWordElementBits - 8));
       until N >= $0100;
+      if Assigned(Callback) then
+        begin
+          Callback(CallbackData, Abort);
+          if Abort then
+            raise ERSAGenerateAborted.Create('Abort');
+        end;
       // ensure prime
     until HugeWordIsPrime(Q) <> pNotPrime;
   finally
@@ -472,10 +500,12 @@ end;
 
 { RSA Key Random Prime Pair                                                    }
 {   Returns a pair of random primes for use in RSA key generation.             }
-procedure RSAKeyRandomPrimePair(const Bits: Integer; var P, Q: HugeWord);
+procedure RSAKeyRandomPrimePair(const Bits: Integer; var P, Q: HugeWord;
+          const Callback: TRSAGenerateCallback;
+          const CallbackData: NativeUInt);
 begin
-  RSAKeyRandomPrime1(Bits, P);
-  RSAKeyRandomPrime2(Bits, P, Q);
+  RSAKeyRandomPrime1(Bits, P, Callback, CallbackData);
+  RSAKeyRandomPrime2(Bits, P, Q, Callback, CallbackData);
 end;
 
 { RSA Generate Keys                                                            }
@@ -486,8 +516,11 @@ const
 
 procedure RSAGenerateKeys(const KeySize: Integer;
           var PrivateKey: TRSAPrivateKey;
-          var PublicKey: TRSAPublicKey);
-var Bits : Integer;
+          var PublicKey: TRSAPublicKey;
+          const Callback: TRSAGenerateCallback;
+          const CallbackData: NativeUInt);
+var Abort : Boolean;
+    Bits : Integer;
     P, Q, N, E, D, G : HugeWord;
     F, T : Word32;
     R : Boolean;
@@ -495,6 +528,7 @@ begin
   if (KeySize <= 0) or
      (KeySize mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
+  Abort := False;
   HugeWordInit(P);
   HugeWordInit(Q);
   HugeWordInit(N);
@@ -507,7 +541,7 @@ begin
       R := False;
       repeat
         // generate random prime values for p and q
-        RSAKeyRandomPrimePair(Bits, P, Q);
+        RSAKeyRandomPrimePair(Bits, P, Q, Callback, CallbackData);
         // calculate n = p * q
         HugeWordMultiply(N, P, Q);
         Assert(HugeWordGetBitCount(N) = KeySize);
@@ -522,6 +556,12 @@ begin
         // try 3 values for e before giving up
         T := 0;
         repeat
+          if Assigned(Callback) then
+            begin
+              Callback(CallbackData, Abort);
+              if Abort then
+                raise ERSAGenerateAborted.Create('Abort');
+            end;
           Inc(T);
           F := RSAExp[RandomUniform(RSAExpCount)];
           HugeWordAssignWord32(E, F);
@@ -1520,10 +1560,10 @@ end;
 {$IFDEF OS_WIN}
 {$IFDEF CIPHER_PROFILE}
 procedure Profile;
-const KeySize = 2048 + 64;
+const KeySize = 1024 + 512;
 var T : Word32;
-    Pri : TRSAPrivateKey;
-    Pub : TRSAPublicKey;
+    Pri, Pr2 : TRSAPrivateKey;
+    Pub, Pu2 : TRSAPublicKey;
     Pln, Enc, Dec : RawByteString;
 begin
   SetRandomSeed($12345679);
@@ -1531,9 +1571,19 @@ begin
   RSAPrivateKeyInit(Pri);
   RSAPublicKeyInit(Pub);
 
+  RSAPrivateKeyInit(Pr2);
+  RSAPublicKeyInit(Pu2);
+
   T := GetTickCount;
+  //RSAGenerateKeys(KeySize, Pr2, Pu2);
   RSAGenerateKeys(KeySize, Pri, Pub);
   T := GetTickCount - T;
+{  Pri.KeySize := Pu2.KeySize;
+  Pri.Modulus := Pu2.Modulus;
+  Pri.Exponent := Pu2.Exponent;
+  Pub.KeySize := Pr2.KeySize;
+  Pub.Modulus := Pr2.Modulus;
+  Pub.Exponent := Pr2.Exponent; }
   Writeln('GenerateKeys: ', T / 1000.0:0:2, 's');
   Writeln('Pri.Mod:');
   Writeln(HugeWordToHexB(Pri.Modulus));

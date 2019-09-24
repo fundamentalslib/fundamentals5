@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherAES.pas                                         }
-{   File version:     5.01                                                     }
+{   File version:     5.02                                                     }
 {   Description:      AES cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -42,6 +42,7 @@
 { Revision history:                                                            }
 {                                                                              }
 {   2010/12/15  4.01  Initial version.                                         }
+{   2019/09/23  5.02  Optimisation.                                            }
 {                                                                              }
 {******************************************************************************}
 
@@ -77,6 +78,9 @@ type
   end;
   PAESContext = ^TAESContext;
 
+const
+  AESContextSize = SizeOf(TAESContext);
+
 procedure AESContextInit(var Context: TAESContext; const KeySize: Integer);
 procedure AESContextFinalise(var Context: TAESContext);
 
@@ -109,9 +113,9 @@ procedure AESDecrypt(
 {                                                                              }
 { Test cases                                                                   }
 {                                                                              }
-{$IFDEF DEBUG}{$IFDEF SELFTEST}
-procedure SelfTest;
-{$ENDIF}{$ENDIF}
+{$IFDEF CIPHER_TEST}
+procedure Test;
+{$ENDIF}
 
 
 
@@ -203,56 +207,124 @@ end;
 
 { AES transformations }
 
-procedure SubBytes(var Context: TAESContext);
-var R, C : Byte;
+{$R-,Q-}
+
+procedure SubBytes(var State: TAESState);
+var R : Byte;
     P : PByte;
 begin
+  // assumes AES_Nb = 4
   for R := 0 to 3 do
-    for C := 0 to AES_Nb - 1 do
-      begin
-        P := @Context.State[R, C];
-        P^ := AES_S[P^];
-      end;
+    begin
+      P := @State[R, 0];
+      P^ := AES_S[P^];
+      Inc(P);
+      P^ := AES_S[P^];
+      Inc(P);
+      P^ := AES_S[P^];
+      Inc(P);
+      P^ := AES_S[P^];
+    end;
 end;
 
-procedure InvSubBytes(var Context: TAESContext);
-var R, C : Byte;
+procedure InvSubBytes(var State: TAESState);
+var R : Byte;
     P : PByte;
 begin
+  // assumes AES_Nb = 4
   for R := 0 to 3 do
-    for C := 0 to AES_Nb - 1 do
-      begin
-        P := @Context.State[R, C];
-        P^ := AES_InvS[P^];
-      end;
+    begin
+      P := @State[R, 0];
+      P^ := AES_InvS[P^];
+      Inc(P);
+      P^ := AES_InvS[P^];
+      Inc(P);
+      P^ := AES_InvS[P^];
+      Inc(P);
+      P^ := AES_InvS[P^];
+    end;
 end;
 
-procedure ShiftRows(var Context: TAESContext);
-var T : array[0..AES_Nb - 1] of Byte;
-    R, C : Byte;
+procedure ShiftRows(var State: TAESState);
+// assumes AES_Nb = 4
+var
+  // T : Word32;
+  T0, T1, T2, T3 : Byte;
 begin
-  for R := 1 to 3 do
-    begin
-      for C := 0 to AES_Nb - 1 do
-        T[C] := Context.State[R, (C + R) mod AES_Nb];
-      for C := 0 to AES_Nb - 1 do
-        Context.State[R, C] := T[C];
-    end;
-  SecureClear(T, SizeOf(T));
+{
+  T := PWord32(@State[1])^;
+  T := (T shr 8) or Word32(T shl 24);
+  PWord32(@State[1])^ := T;
+}
+  T0 := State[1, 1];
+  T1 := State[1, 2];
+  T2 := State[1, 3];
+  T3 := State[1, 0];
+  State[1, 0] := T0;
+  State[1, 1] := T1;
+  State[1, 2] := T2;
+  State[1, 3] := T3;
+
+{
+  T := PWord32(@State[2])^;
+  T := (T shr 16) or Word32(T shl 16);
+  PWord32(@State[2])^ := T;
+}
+  T0 := State[2, 2];
+  T1 := State[2, 3];
+  T2 := State[2, 0];
+  T3 := State[2, 1];
+  State[2, 0] := T0;
+  State[2, 1] := T1;
+  State[2, 2] := T2;
+  State[2, 3] := T3;
+
+{
+  T := PWord32(@State[3])^;
+  T := (T shr 24) or Word32(T shl 8);
+  PWord32(@State[3])^ := T;
+}
+  T0 := State[3, 3];
+  T1 := State[3, 0];
+  T2 := State[3, 1];
+  T3 := State[3, 2];
+  State[3, 0] := T0;
+  State[3, 1] := T1;
+  State[3, 2] := T2;
+  State[3, 3] := T3;
 end;
 
-procedure InvShiftRows(var Context: TAESContext);
-var T : array[0..AES_Nb - 1] of Byte;
-    R, C : Byte;
+procedure InvShiftRows(var State: TAESState);
+// assumes AES_Nb = 4
+var
+  T0, T1, T2, T3 : Byte;
 begin
-  for R := 1 to 3 do
-    begin
-      for C := 0 to AES_Nb - 1 do
-        T[(C + R) mod AES_Nb] := Context.State[R, C];
-      for C := 0 to AES_Nb - 1 do
-        Context.State[R, C] := T[C];
-    end;
-  SecureClear(T, SizeOf(T));
+  T1 := State[1, 0];
+  T2 := State[1, 1];
+  T3 := State[1, 2];
+  T0 := State[1, 3];
+  State[1, 0] := T0;
+  State[1, 1] := T1;
+  State[1, 2] := T2;
+  State[1, 3] := T3;
+
+  T2 := State[2, 0];
+  T3 := State[2, 1];
+  T0 := State[2, 2];
+  T1 := State[2, 3];
+  State[2, 0] := T0;
+  State[2, 1] := T1;
+  State[2, 2] := T2;
+  State[2, 3] := T3;
+
+  T3 := State[3, 0];
+  T0 := State[3, 1];
+  T1 := State[3, 2];
+  T2 := State[3, 3];
+  State[3, 0] := T0;
+  State[3, 1] := T1;
+  State[3, 2] := T2;
+  State[3, 3] := T3;
 end;
 
 const
@@ -292,8 +364,9 @@ const
     $12, $36, $5a, $ee, $29, $7b, $8d, $8c, $8f, $8a, $85, $94, $a7, $f2, $0d, $17,
     $39, $4b, $dd, $7c, $84, $97, $a2, $fd, $1c, $24, $6c, $b4, $c7, $52, $f6, $01);
 
-function FFmul(const A, B: Byte): Byte;
-var T : Word;
+function FFmul(const A, B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
 begin
   if (A <> 0) and (B <> 0) then
     begin
@@ -306,60 +379,156 @@ begin
     Result := 0;
 end;
 
-procedure MixColumns(var Context: TAESContext);
-var T : array[0..3] of Byte;
-    R, C : Byte;
+function FFmul2(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $19 + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+function FFmul3(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $01 + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+function FFmulE(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $df + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+function FFmulB(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $68 + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+function FFmulD(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $ee + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+function FFmul9(const B: Byte): Byte; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  T : Word;
+begin
+  if B <> 0 then
+    begin
+      T := $c7 + FFLog[B];
+      if T >= 255 then
+        Dec(T, 255);
+      Result := FFPow[T];
+    end
+  else
+    Result := 0;
+end;
+
+procedure MixColumns(var State: TAESState);
+var
+  T0, T1, T2, T3 : Byte;
+  C : Byte;
 begin
   for C := 0 to AES_Nb - 1 do
     begin
-      for R := 0 to 3 do
-        T[R] := Context.State[R, C];
-      for R := 0 to 3 do
-        Context.State[R, C] :=
-            FFmul(2, T[R]) xor
-            FFmul(3, T[(R + 1) mod 4]) xor
-            T[(R + 2) mod 4] xor
-            T[(R + 3) mod 4];
+      T0 := State[0, C];
+      T1 := State[1, C];
+      T2 := State[2, C];
+      T3 := State[3, C];
+      State[0, C] := FFmul2(T0) xor FFmul3(T1) xor T2 xor T3;
+      State[1, C] := FFmul2(T1) xor FFmul3(T2) xor T3 xor T0;
+      State[2, C] := FFmul2(T2) xor FFmul3(T3) xor T0 xor T1;
+      State[3, C] := FFmul2(T3) xor FFmul3(T0) xor T1 xor T2;
     end;
-  SecureClear(T, SizeOf(T));
 end;
 
-procedure InvMixColumns(var Context: TAESContext);
-var T : array[0..3] of Byte;
-    R, C : Byte;
+procedure InvMixColumns(var State: TAESState);
+var
+  T0, T1, T2, T3 : Byte;
+  C : Byte;
 begin
   for C := 0 to AES_Nb - 1 do
     begin
-      for R := 0 to 3 do
-        T[R] := Context.State[R, C];
-      for R := 0 to 3 do
-        Context.State[R, C] :=
-          FFmul($0e, T[R]) xor
-          FFmul($0b, T[(R + 1) mod 4]) xor
-          FFmul($0d, T[(R + 2) mod 4]) xor
-          FFmul($09, T[(R + 3) mod 4]);
+      T0 := State[0, C];
+      T1 := State[1, C];
+      T2 := State[2, C];
+      T3 := State[3, C];
+      State[0, C] := FFmulE(T0) xor FFmulB(T1) xor FFmulD(T2) xor FFmul9(T3);
+      State[1, C] := FFmulE(T1) xor FFmulB(T2) xor FFmulD(T3) xor FFmul9(T0);
+      State[2, C] := FFmulE(T2) xor FFmulB(T3) xor FFmulD(T0) xor FFmul9(T1);
+      State[3, C] := FFmulE(T3) xor FFmulB(T0) xor FFmulD(T1) xor FFmul9(T2);
     end;
-  SecureClear(T, SizeOf(T));
 end;
 
-function xbyte(const R: Byte; const K: Word32): Byte;
+function xbyte(const R: Byte; const K: Word32): Byte; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result := Byte((K shr (R * 8)) and $FF);
 end;
 
-procedure XorRoundKey(var Context: TAESContext; const Rk: TAESKeySchedule; const RkIdx: Integer);
-var R, C : Byte;
+procedure XorRoundKey(var State: TAESState; const Rk: TAESKeySchedule; const RkIdx: Integer);
+var C : Byte;
     P : PByte;
+    RkP : PWord32;
     RkC : Word32;
 begin
+  RkP := @Rk[RkIdx];
   for C := 0 to AES_Nb - 1 do
     begin
-      RkC := Rk[RkIdx + C];
-      for R := 0 to 3 do
-        begin
-          P := @Context.State[R, C];
-          P^ := P^ xor xbyte(R, RkC);
-        end;
+      RkC := RkP^;
+      P := @State[0, C];
+      P^ := P^ xor xbyte(0, RkC);
+      P := @State[1, C];
+      P^ := P^ xor xbyte(1, RkC);
+      P := @State[2, C];
+      P^ := P^ xor xbyte(2, RkC);
+      P := @State[3, C];
+      P^ := P^ xor xbyte(3, RkC);
+      Inc(RkP);
     end;
 end;
 
@@ -367,7 +536,7 @@ end;
 
 { AES key expansion }
 
-function SubWord(const A: Word32): Word32;
+function SubWord(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result :=
        AES_S[Byte (A and $000000FF)] or
@@ -376,7 +545,7 @@ begin
       (AES_S[Byte((A and $FF000000) shr 24)] shl 24);
 end;
 
-function RotWord(const A: Word32): Word32;
+function RotWord(const A: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   Result :=
       ((A and $FFFFFF00) shr 8) or
@@ -472,17 +641,17 @@ procedure AESCipher(var Context: TAESContext;
 var R : Integer;
 begin
   InBufToState(Context, InBuf, InBufSize);
-  XorRoundKey(Context, Context.W, 0);
+  XorRoundKey(Context.State, Context.W, 0);
   for R := 1 to Context.Nr - 1 do
     begin
-      SubBytes(Context);
-      ShiftRows(Context);
-      MixColumns(Context);
-      XorRoundKey(Context, Context.W, R * AES_Nb);
+      SubBytes(Context.State);
+      ShiftRows(Context.State);
+      MixColumns(Context.State);
+      XorRoundKey(Context.State, Context.W, R * AES_Nb);
     end;
-  SubBytes(Context);
-  ShiftRows(Context);
-  XorRoundKey(Context, Context.W, Context.Nr * AES_Nb);
+  SubBytes(Context.State);
+  ShiftRows(Context.State);
+  XorRoundKey(Context.State, Context.W, Context.Nr * AES_Nb);
   StateToOutBuf(Context, OutBuf, OutBufSize);
 end;
 
@@ -492,17 +661,17 @@ procedure AESInvCipher(var Context: TAESContext;
 var R : Integer;
 begin
   InBufToState(Context, InBuf, InBufSize);
-  XorRoundKey(Context, Context.W, Context.Nr * AES_Nb);
+  XorRoundKey(Context.State, Context.W, Context.Nr * AES_Nb);
   for R := Context.Nr - 1 downto 1 do
     begin
-      InvShiftRows(Context);
-      InvSubBytes(Context);
-      XorRoundKey(Context, Context.W, R * AES_Nb);
-      InvMixColumns(Context);
+      InvShiftRows(Context.State);
+      InvSubBytes(Context.State);
+      XorRoundKey(Context.State, Context.W, R * AES_Nb);
+      InvMixColumns(Context.State);
     end;
-  InvShiftRows(Context);
-  InvSubBytes(Context);
-  XorRoundKey(Context, Context.W, 0);
+  InvShiftRows(Context.State);
+  InvSubBytes(Context.State);
+  XorRoundKey(Context.State, Context.W, 0);
   StateToOutBuf(Context, OutBuf, OutBufSize);
 end;
 
@@ -570,9 +739,9 @@ end;
 {                                                                              }
 { Test cases                                                                   }
 {                                                                              }
-{$IFDEF DEBUG}{$IFDEF SELFTEST}
+{$IFDEF CIPHER_TEST}
 {$ASSERTIONS ON}
-procedure SelfTest;
+procedure Test;
 var K, T, B : RawByteString;
 begin
   K := RawByteString(#$0f#$15#$71#$c9#$47#$d9#$e8#$59#$0c#$b7#$ad#$d6#$af#$7f#$67#$98);
@@ -584,7 +753,7 @@ begin
   AESDecrypt(128, K[1], Length(K), B[1], Length(B), T[1], Length(T));
   Assert(T = '12345678901234560');
 end;
-{$ENDIF}{$ENDIF}
+{$ENDIF}
 
 
 

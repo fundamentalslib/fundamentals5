@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherRandom.pas                                      }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      Cipher random                                            }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -36,11 +36,12 @@
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2010/12/17  4.01  Initial version                                          }
-{   2013/09/25  4.02  UnicodeString version                                    }
+{   2010/12/17  4.01  Initial version.                                         }
+{   2013/09/25  4.02  UnicodeString version.                                   }
 {   2015/05/05  4.03  Multiple PRNGs and PRSS and SHA512 hash in random block  }
 {                     generator.                                               }
 {   2016/01/09  5.04  Revised for Fundamentals 5.                              }
+{   2019/06/06  5.05  SecureRandomBytes function.                              }
 {                                                                              }
 {******************************************************************************}
 
@@ -51,12 +52,17 @@ unit flcCipherRandom;
 interface
 
 uses
+  { System }
+  System.SysUtils,
+
   { Fundamentals }
   flcStdTypes;
 
 
 
 procedure SecureRandomBuf(var Buf; const Size: Integer);
+
+function  SecureRandomBytes(const Size: Integer): TBytes;
 
 function  SecureRandomStrA(const Size: Integer): RawByteString;
 
@@ -143,6 +149,14 @@ begin
       Move(B, P^, L);
       SecureClear(B, SecureRandomBlockSize);
     end;
+end;
+
+function SecureRandomBytes(const Size: Integer): TBytes;
+begin
+  SetLength(Result, Size);
+  if Size <= 0 then
+    exit;
+  SecureRandomBuf(Pointer(Result)^, Size);
 end;
 
 function SecureRandomStrA(const Size: Integer): RawByteString;

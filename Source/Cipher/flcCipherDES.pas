@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherDES.pas                                         }
-{   File version:     5.02                                                     }
+{   File version:     5.04                                                     }
 {   Description:      DES cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2019, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -42,9 +42,9 @@
 {                                                                              }
 {   2007/01/06  4.01  DES and Triple-DES                                       }
 {   2010/12/16  4.02  DES-40                                                   }
+{   2019/06/09  5.03  Triple-DES3 buffer functions for Encrypt and Decrypt.    }
+{   2019/09/22  5.04  Optimisations.                                           }
 {                                                                              }
-{ Todo: Test TripeDES-3                                                        }
-{       Test DES-40                                                            }
 {******************************************************************************}
 
 {$INCLUDE flcCipher.inc}
@@ -83,6 +83,7 @@ type
 
 const
   DESBlockSize = 8;
+  DESContextSize = SizeOf(TDESContext);
 
 procedure DESInit(const Encrypt: Boolean; const Key: TDESKey; var Context: TDESContext);
 procedure DESBuffer(const Context: TDESContext; var Block: TDESBlock);
@@ -106,6 +107,9 @@ type
   TTripleDESContext = array[0..1] of TDESContext;
   PTripleDESContext = ^TTripleDESContext;
 
+const
+  TripleDESContextSize = SizeOf(TTripleDESContext);
+
 procedure TripleDESInit(const Encrypt: Boolean; const Key: TTripleDESKey;
           var Context: TTripleDESContext);
 procedure TripleDESBuffer(const Context: TTripleDESContext; var Block: TDESBlock);
@@ -122,9 +126,13 @@ type
   TTripleDES3Context = array[0..2] of TDESContext;
   PTripleDES3Context = ^TTripleDES3Context;
 
+const
+  TripleDES3ContextSize = SizeOf(TTripleDES3Context);
+
 procedure TripleDES3Init(const Encrypt: Boolean; const Key: TTripleDES3Key;
           const EEEMode: Boolean; var Context: TTripleDES3Context);
-procedure TripleDES3Buffer(const Context: TTripleDES3Context; var Block: TDESBlock);
+procedure TripleDES3BufferEncrypt(const Context: TTripleDES3Context; var Block: TDESBlock);
+procedure TripleDES3BufferDecrypt(const Context: TTripleDES3Context; var Block: TDESBlock);
 
 
 
@@ -335,68 +343,116 @@ begin
         J := I
       else
         J := 17 - I;
-      Context[J] := DESPC2Permutation(E)
+      Context[J] := DESPC2Permutation(E);
     end;
   SecureClear(C, Sizeof(C));
   SecureClear(D, Sizeof(D));
   SecureClear(E, Sizeof(E));
 end;
 
+{$R-,Q-}
+
+// DES E bit-selection table (modified for bit operation optimisation)
+const
+  DESETable_Mod : array[0..47] of Word32 = (
+      1 shl (32 - 32),   Word32(1) shl (32 - 1),   1 shl (32 - 2),   1 shl (32 - 3),   1 shl (32 - 4),   1 shl (32 - 5),
+       1 shl (32 - 4),   1 shl (32 - 5),   1 shl (32 - 6),   1 shl (32 - 7),   1 shl (32 - 8),   1 shl (32 - 9),
+       1 shl (32 - 8),   1 shl (32 - 9),  1 shl (32 - 10),  1 shl (32 - 11),  1 shl (32 - 12),  1 shl (32 - 13),
+      1 shl (32 - 12),  1 shl (32 - 13),  1 shl (32 - 14),  1 shl (32 - 15),  1 shl (32 - 16),  1 shl (32 - 17),
+      1 shl (32 - 16),  1 shl (32 - 17),  1 shl (32 - 18),  1 shl (32 - 19),  1 shl (32 - 20),  1 shl (32 - 21),
+      1 shl (32 - 20),  1 shl (32 - 21),  1 shl (32 - 22),  1 shl (32 - 23),  1 shl (32 - 24),  1 shl (32 - 25),
+      1 shl (32 - 24),  1 shl (32 - 25),  1 shl (32 - 26),  1 shl (32 - 27),  1 shl (32 - 28),  1 shl (32 - 29),
+      1 shl (32 - 28),  1 shl (32 - 29),  1 shl (32 - 30),  1 shl (32 - 31),  1 shl (32 - 32),   Word32(1) shl (32 - 1));
+
+  // DES P (permutation) table (modified for bit operation optimisation)
+  DESPTable_Mod : array[0..31] of Word32 = (
+      1 shl (32 - 16),   1 shl (32 - 7),  1 shl (32 - 20),  1 shl (32 - 21),  1 shl (32 - 29),  1 shl (32 - 12),  1 shl (32 - 28),  1 shl (32 - 17),
+       Word32(1) shl (32 - 1),  1 shl (32 - 15),  1 shl (32 - 23),  1 shl (32 - 26),   1 shl (32 - 5),  1 shl (32 - 18),  1 shl (32 - 31),  1 shl (32 - 10),
+       1 shl (32 - 2),   1 shl (32 - 8),  1 shl (32 - 24),  1 shl (32 - 14),  1 shl (32 - 32),  1 shl (32 - 27),   1 shl (32 - 3),   1 shl (32 - 9),
+      1 shl (32 - 19),  1 shl (32 - 13),  1 shl (32 - 30),   1 shl (32 - 6),  1 shl (32 - 22),  1 shl (32 - 11),   1 shl (32 - 4),  1 shl (32 - 25));
+
 // DES E-function
 function DESEFunc(const R: Word32; const K: TDESWord32Pair): Word32;
-var E      : TDESWord32Pair;
+var E0, E1 : Word32;
+    B      : Word32;
     I      : Integer;
     BI, SI : Byte;
     X, Y   : Byte;
     S      : Word32;
 begin
   // Expand R (32 bits) to E (48 bits) using E bit-selection table
-  E[0] := 0;
-  E[1] := 0;
-  for I := 0 to 47 do
-    if R and (1 shl (31 - (DESETable[I] - 1))) <> 0 then
-      E[I div 32] := E[I div 32] or (1 shl (31 - (I mod 32)));
+  E0 := 0;
+  E1 := 0;
+  B := Word32(1) shl 31;
+  for I := 0 to 31 do
+    begin
+      if R and DESETable_Mod[I] <> 0 then
+        E0 := E0 or B;
+      B := B shr 1;
+    end;
+  B := Word32(1) shl 31;
+  for I := 32 to 47 do
+    begin
+      if R and DESETable_Mod[I] <> 0 then
+        E1 := E1 or B;
+      B := B shr 1;
+    end;
   // Apply key (48 bits) to E
-  E[0] := E[0] xor K[0];
-  E[1] := E[1] xor K[1];
+  E0 := E0 xor K[0];
+  E1 := E1 xor K[1];
   // Apply S boxes on 8 groups of 6 bits
   S := 0;
   for I := 0 to 7 do
     begin
       case I of
-        0..4 : BI :=  (E[0] shr (26 - (I * 6))) and $3F;
-        5    : BI := ((E[0] and $00000003) shl 4) or
-                     ((E[1] and $F0000000) shr 28);
-          else BI :=  (E[1] shr (22 + 36 - (I * 6))) and $3F;
+        0..4 : BI :=  (E0 shr (26 - (I * 6))) and $3F;
+        5    : BI := ((E0 and $00000003) shl 4) or
+                     ((E1 and $F0000000) shr 28);
+          else BI :=  (E1 shr (22 + 36 - (I * 6))) and $3F;
       end;                                     // BI = Bi (6 bits) from E
       Y := (BI and 1) or ((BI and $20) shr 4); // Y  = Row (first and last bits of Bi)
       X := (BI and $1E) shr 1;                 // X  = Column (middle 4 bits of Bi)
       SI := DESSTable[I, Y * 16 + X];          // SI = Si (4 bits)
       S := S or (SI shl (28 - (I * 4)));       // S  = S0..S7 (32 bits)
     end;
-  SecureClear(E, Sizeof(E));
+
   // Apply permutation table to S
   Result := 0;
+  B := Word32(1) shl 31;
   for I := 0 to 31 do
-    if S and (1 shl (31 - (DESPTable[I] - 1))) <> 0 then
-      Result := Result or (1 shl (31 - I));
+    begin
+      if S and DESPTable_Mod[I] <> 0 then
+        Result := Result or B;
+      B := B shr 1;
+    end;
 end;
 
 // DES block function
 procedure DESBuffer(const Context: TDESContext; var Block: TDESBlock);
 var IP   : TDESBlock;
+    IPP  : PByte;
     I    : Integer;
+    IH   : Byte;
+    IL   : Byte;
     N    : Byte;
     L, R : array[0..16] of Word32;
     P    : array[0..1] of Word32;
 begin
   // Apply initial permuation on M (64 bits) to get IP (64 bits)
   FillChar(IP, Sizeof(TDESBlock), 0);
+  IH := 0;
+  IPP := @IP[IH];
   for I := 0 to 63 do
     begin
+      IL := I and 7;
+      if IL = 0 then
+        begin
+          IH := I shr 3;
+          IPP := @IP[IH];
+        end;
       N := DESIPTable[I] - 1;
-      if Block[N div 8] and (1 shl (7 - (N mod 8))) <> 0 then
-        IP[I div 8] := IP[I div 8] or (1 shl (7 - (I mod 8)));
+      if Block[N shr 3] and (1 shl (7 - (N and 7))) <> 0 then
+        IPP^ := IPP^ or (1 shl (7 - IL));
     end;
   // Split IP into L0 and R0 (32 bits each)
   L[0] := IP[3] or (IP[2] shl 8) or (IP[1] shl 16) or (IP[0] shl 24);
@@ -415,11 +471,19 @@ begin
   SecureClear(R, Sizeof(R));
   // Apply IP-1 permutation to R16L16 to get result (64 bits)
   FillChar(Block, Sizeof(TDESBlock), 0);
+  IH := 0;
+  IPP := @Block[IH];
   for I := 0 to 63 do
     begin
+      IL := I and 7;
+      if IL = 0 then
+        begin
+          IH := I shr 3;
+          IPP := @Block[IH];
+        end;
       N := DESIP1Table[I] - 1;
-      if P[N div 32] and (1 shl (31 - (N mod 32))) <> 0 then
-        Block[I div 8] := Block[I div 8] or (1 shl (7 - (I mod 8)));
+      if P[N shr 5] and (1 shl (31 - (N and $1F))) <> 0 then
+        IPP^ := IPP^ or (1 shl (7 - IL));
     end;
   SecureClear(P, Sizeof(P));
 end;
@@ -506,7 +570,14 @@ begin
   DESInit(Encrypt, Key[2], Context[2]);
 end;
 
-procedure TripleDES3Buffer(const Context: TTripleDES3Context; var Block: TDESBlock);
+procedure TripleDES3BufferEncrypt(const Context: TTripleDES3Context; var Block: TDESBlock);
+begin
+  DESBuffer(Context[0], Block);
+  DESBuffer(Context[1], Block);
+  DESBuffer(Context[2], Block);
+end;
+
+procedure TripleDES3BufferDecrypt(const Context: TTripleDES3Context; var Block: TDESBlock);
 begin
   DESBuffer(Context[2], Block);
   DESBuffer(Context[1], Block);
