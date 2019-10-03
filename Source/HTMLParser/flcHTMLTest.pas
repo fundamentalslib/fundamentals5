@@ -9,17 +9,17 @@ implementation
 uses
   flcHTMLCharEntity,
   flcHTMLProperties,
+  flcHTMLElements,
   flcHTMLLexer,
-  flcHTMLParser,
-  flcHTMLElements;
+  flcHTMLParser;
 
 procedure Test;
 begin
   flcHTMLCharEntity.Test;
   flcHTMLProperties.Test;
+  flcHTMLElements.Test;
   flcHTMLLexer.Test;
   flcHTMLParser.Test;
-  flcHTMLElements.Test;
 end;
 
 

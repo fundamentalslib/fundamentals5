@@ -898,7 +898,7 @@ uses
   {$IFDEF DELPHI6_UP}
   Windows,
   {$ENDIF}
-  Graphics;
+  System.UITypes;
 
 
 

@@ -53,7 +53,7 @@ interface
 
 uses
   { System }
-  Graphics,
+  UITypes,
 
   { Fundamentals }
   flcStdTypes,

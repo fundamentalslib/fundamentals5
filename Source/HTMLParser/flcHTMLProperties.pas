@@ -57,7 +57,7 @@ interface
 
 uses
   System.Types,
-  Graphics;
+  System.UITypes;
 
 
 
@@ -1417,7 +1417,7 @@ function htmlResolveNamedColor(const Name: String; var Color: ThtmlRGBColor): Bo
 begin
   Result := htmlGetKnownColor(Name, Color.RGB);
   if not Result then
-    Color.Color := clNone;
+    Color.Color := TColorRec.SysNone;
 end;
 
 function htmlDecodeColor(const S: String): ThtmlColor;
@@ -1428,7 +1428,7 @@ begin
   if S = '' then // no value
     begin
       Result.ColorType := colorDefault;
-      Result.RGBColor.Color := clNone;
+      Result.RGBColor.Color := TColorRec.SysNone;
       Result.NamedColor := '';
     end else
   if S[1] = '#' then // hex #rrggbb value
@@ -1454,7 +1454,7 @@ begin
     end else // named value
     begin
       Result.ColorType := colorNamed;
-      Result.RGBColor.Color := clNone;
+      Result.RGBColor.Color := TColorRec.SysNone;
       Result.NamedColor := S;
     end;
 end;
@@ -1470,7 +1470,7 @@ begin
   if S = '' then // no value
     begin
       Result.ColorType := colorDefault;
-      Result.RGBColor.Color := clNone;
+      Result.RGBColor.Color := TColorRec.SysNone;
       Result.NamedColor := '';
       exit;
     end else
@@ -1523,7 +1523,7 @@ begin
     end;
   // named color
   Result.ColorType := colorNamed;
-  Result.RGBColor.Color := clNone;
+  Result.RGBColor.Color := TColorRec.SysNone;
   Result.NamedColor := S;
 end;
 
@@ -1534,9 +1534,9 @@ begin
       Result.RGB := Color.RGBColor.RGB;
     colorNamed:
       if not htmlResolveNamedColor(Color.NamedColor, Result) then
-        Result.Color := clNone;
+        Result.Color := TColorRec.SysNone;
   else
-    Result.Color := clNone;
+    Result.Color := TColorRec.SysNone;
   end;
 end;
 
@@ -1557,12 +1557,12 @@ end;
 
 function htmlDelphiColor(const Color: TColor): ThtmlRGBColor;
 begin
-  Result.Color := TColor(ColorToRGB(Color));
+  Result.Color := TColor(TColorRec.ColorToRGB(Color));
 end;
 
 function htmlEncodeRGBColor(const Color: ThtmlRGBColor): String;
 begin
-  if (Color.Color = clNone) or (Color.RGB > $FFFFFF) then
+  if (Color.Color = TColorRec.SysNone) or (Color.RGB > $FFFFFF) then
     Result := ''
   else
     Result := '#' + Word32toHexU(Color.RGB, 6);

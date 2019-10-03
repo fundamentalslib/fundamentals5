@@ -57,7 +57,7 @@ uses
   Windows,
   {$ENDIF}
   SysUtils,
-  Graphics,
+  System.UITypes,
 
   { Fundamentals }
   flcStdTypes,
@@ -525,10 +525,10 @@ begin
   // Styles
   Styles := [];
   if htmlIsFontWeightBold(StyleInfo.FontWeight) then
-    Include(Styles, fsBold);
+    Include(Styles, TFontStyle.fsBold);
   case StyleInfo.TextDecoration of
-    tdecoUnderline   : Include(Styles, fsUnderline);
-    tdecoLineThrough : Include(Styles, fsStrikeOut);
+    tdecoUnderline   : Include(Styles, TFontStyle.fsUnderline);
+    tdecoLineThrough : Include(Styles, TFontStyle.fsStrikeOut);
   end;
   Size := StyleResolveSystemFontSize(StyleInfo);
 end;

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00 - HTML Parser                          }
 {   File name:        flcHTMLElements.pas                                      }
-{   File version:     5.07                                                     }
+{   File version:     5.08                                                     }
 {   Description:      HTML elements                                            }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
@@ -43,6 +43,7 @@
 {   2015/04/11  1.05  UnicodeString changes.                                   }
 {   2019/02/21  5.06  Revised for Fundamentals 5.                              }
 {   2019/02/22  5.07  Part of flcHTMLElements.                                 }
+{   2019/10/03  5.08  Fix AnsiChar lookups.                                    }
 {                                                                              }
 {******************************************************************************}
 
@@ -405,9 +406,7 @@ function  htmlAutoOpenTag(const OpenTagID, TagID: ThtmlTagID): ThtmlTagID;
 {                                                                              }
 { Tests                                                                        }
 {                                                                              }
-{$IFDEF HTML_TEST}
 procedure Test;
-{$ENDIF}
 
 
 
@@ -619,7 +618,7 @@ begin
               P := @htmlElementTable[Result];
               for I := 1 to ElementHashCount[C] do
                 if (Length(P^.Name) = NameLen) and
-                   (CompareMemNoAsciiCase(Name^, Pointer(P^.Name)^, NameLen) = 0) then
+                   StrPMatchNoAsciiCaseBW(Pointer(P^.Name), Pointer(Name), NameLen) then
                   // Found
                   exit
                 else
@@ -788,7 +787,7 @@ begin
           if Result <> HTML_ATTR_None then
             for I := 1 to AttributeHashCount[C] do
               if (Length(htmlAttributeTable[Result]) = NameLen) and
-                 (CompareMemNoAsciiCase(Name^, Pointer(htmlAttributeTable[Result])^, NameLen) = 0) then
+                 StrPMatchNoAsciiCaseBW(PWideChar(htmlAttributeTable[Result]), Pointer(Name), NameLen) then
                 // Found
                 exit
               else

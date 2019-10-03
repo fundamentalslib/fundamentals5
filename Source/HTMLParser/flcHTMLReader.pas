@@ -85,7 +85,9 @@ uses
 function htmlGetUnicodeCodec(const Encoding: RawByteString): TUnicodeCodecClass;
 begin
   if Encoding <> '' then
-    Result := GetCodecClassByAliasA(Encoding)
+    begin
+      Result := GetCodecClassByAliasA(Encoding);
+    end
   else
     Result := nil;
 end;
@@ -187,3 +189,4 @@ end;
 
 
 end.
+
