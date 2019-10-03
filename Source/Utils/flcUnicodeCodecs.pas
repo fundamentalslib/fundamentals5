@@ -1,12 +1,12 @@
-{******************************************************************************}
+ï»¿{******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeCodecs.pas                                     }
-{   File version:     5.25                                                     }
+{   File version:     5.26                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2019                                  }
-{                     David J Butler and Dieter Köhler                         }
+{                     David J Butler and Dieter KÃ¶hler                         }
 {                     All rights reserved.                                     }
 {                     See license below.                                       }
 {                                                                              }
@@ -30,10 +30,10 @@
 { The Original Code is "cUnicodeCodecs.pas".                                   }
 {                                                                              }
 { The Initial Developers of the Original Code are David J Butler (Pretoria,    }
-{ South Africa, "http://fundementals.sourceforge.net/") and Dieter Köhler      }
+{ South Africa, "http://fundementals.sourceforge.net/") and Dieter KÃ¶hler      }
 { (Heidelberg, Germany, "http://www.philo.de/"). Portions created by the       }
 { Initial Developers are Copyright (C) 2002-2004 David J Butler and            }
-{ Dieter Köhler. All Rights Reserved.                                          }
+{ Dieter KÃ¶hler. All Rights Reserved.                                          }
 {                                                                              }
 { Alternatively, the contents of this file may be used under the terms of the  }
 { GNU General Public License Version 2 or later (the "GPL"), in which case the }
@@ -90,6 +90,8 @@
 {   2016/04/16  5.23  Use virtual GetAlias instead of GetAliasList.            }
 {   2018/08/12  5.24  String type changes.                                     }
 {   2019/04/28  5.25  Reduce dependencies.                                     }
+{   2019/10/03  5.26  RegisterDefaultCodecs not called in unit initialization  }
+{                     but in GetCodecByAlias.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -347,11 +349,11 @@ type
 
 
 {                                                                              }
-{ TUTF16BECodec                                                                }
-{   Unicode Codec implementation for UTF-16BE.                                 }
+{ TUTF16LECodec                                                                }
+{   Unicode Codec implementation for UTF-16LE.                                 }
 {                                                                              }
 type
-  TUTF16BECodec = class(TCustomUnicodeCodec)
+  TUTF16LECodec = class(TCustomUnicodeCodec)
   protected
     procedure InternalReadUCS4Char(out C: UCS4Char;
               out ByteCount: Integer); override;
@@ -373,11 +375,11 @@ type
 
 
 {                                                                              }
-{ TUTF16LECodec                                                                }
-{   Unicode Codec implementation for UTF-16LE.                                 }
+{ TUTF16BECodec                                                                }
+{   Unicode Codec implementation for UTF-16BE.                                 }
 {                                                                              }
 type
-  TUTF16LECodec = class(TCustomUnicodeCodec)
+  TUTF16BECodec = class(TCustomUnicodeCodec)
   protected
     procedure InternalReadUCS4Char(out C: UCS4Char;
               out ByteCount: Integer); override;
@@ -1332,6 +1334,7 @@ uses
   {$IFDEF MSWIN}
   Windows,
   {$ENDIF}
+
   { Fundamentals }
   flcUTF;
 
@@ -1480,11 +1483,17 @@ begin
     CodecList[L + I] := Codecs[I];
 end;
 
+var
+  DefaultCodecsRegistered : Boolean = False;
+
 procedure RegisterDefaultCodecs;
 begin
+  if DefaultCodecsRegistered then
+    exit;
+  DefaultCodecsRegistered := True;
   RegisterCodecs([
       TUSASCIICodec,
-      TUTF8Codec, TUTF16BECodec, TUTF16LECodec,
+      TUTF8Codec, TUTF16LECodec, TUTF16BECodec,
       TISO8859_1Codec, TISO8859_2Codec, TISO8859_3Codec, TISO8859_4Codec,
       TISO8859_5Codec, TISO8859_6Codec, TISO8859_7Codec, TISO8859_8Codec,
       TISO8859_9Codec, TISO8859_10Codec, TISO8859_13Codec, TISO8859_14Codec,
@@ -1503,6 +1512,7 @@ function GetCodecClassByAlias(const CodecAlias: String): TUnicodeCodecClass;
 var I : Integer;
     C : TUnicodeCodecClass;
 begin
+  RegisterDefaultCodecs;
   for I := 0 to Length(CodecList) - 1 do
     begin
       C := CodecList[I];
@@ -1595,9 +1605,9 @@ begin
     begin
       BOMSize := UTF16BOMSize;
       if R then
-        Result := TUTF16LECodec
-      else
         Result := TUTF16BECodec
+      else
+        Result := TUTF16LECodec
     end
   else
     if DetectUTF8BOM(Buf, BufSize) then
@@ -2300,12 +2310,12 @@ const
   UTF16BEAlias : array[0..UTF16BEAliases - 1] of String = (
       'UTF-16BE', 'UTF16be');
 
-class function TUTF16BECodec.GetAliasCount: Integer;
+class function TUTF16LECodec.GetAliasCount: Integer;
 begin
   Result := UTF16BEAliases;
 end;
 
-class function TUTF16BECodec.GetAlias(const Idx: Integer): String;
+class function TUTF16LECodec.GetAlias(const Idx: Integer): String;
 begin
   if Idx < 0 then
     raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
@@ -2314,7 +2324,7 @@ begin
   Result := UTF16BEAlias[Idx];
 end;
 
-procedure TUTF16BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
+procedure TUTF16LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
     const DestBuf: Pointer; const DestSize: Integer;
     out ProcessedBytes, DestLength: Integer);
 var
@@ -2339,7 +2349,7 @@ begin
   ProcessedBytes := L;
 end;
 
-function TUTF16BECodec.Encode(const S: PWideChar; const Length: Integer;
+function TUTF16LECodec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var L : Integer;
 begin
@@ -2355,7 +2365,7 @@ begin
   ProcessedChars := Length;
 end;
 
-procedure TUTF16BECodec.InternalReadUCS4Char(out C: UCS4Char;
+procedure TUTF16LECodec.InternalReadUCS4Char(out C: UCS4Char;
     out ByteCount: Integer);
 var LowSurrogate: array[0..1] of Byte;  // We do not use Word, because the byte order of a Word is CPU dependant
 begin
@@ -2391,7 +2401,7 @@ begin
   end;
 end;
 
-procedure TUTF16BECodec.InternalWriteUCS4Char(const C: UCS4Char;
+procedure TUTF16LECodec.InternalWriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 var Buffer : array[0..3] of Byte;
 begin
@@ -2399,7 +2409,7 @@ begin
   WriteBuffer(Buffer[0], ByteCount);
 end;
 
-procedure TUTF16BECodec.WriteUCS4Char(const C: UCS4Char;
+procedure TUTF16LECodec.WriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 const
   UTF16BE_LF   : array[0..1] of Byte = ($00, $0A);
@@ -2438,12 +2448,12 @@ const
   UTF16LEAlias : array[0..UTF16LEAliases - 1] of String = (
       'UTF-16LE', 'utf16le');
 
-class function TUTF16LECodec.GetAliasCount: Integer;
+class function TUTF16BECodec.GetAliasCount: Integer;
 begin
   Result := UTF16LEAliases;
 end;
 
-class function TUTF16LECodec.GetAlias(const Idx: Integer): String;
+class function TUTF16BECodec.GetAlias(const Idx: Integer): String;
 begin
   if Idx < 0 then
     raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
@@ -2452,7 +2462,7 @@ begin
   Result := UTF16LEAlias[Idx];
 end;
 
-procedure TUTF16LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
+procedure TUTF16BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
   const DestBuf: Pointer; const DestSize: Integer; out ProcessedBytes, DestLength: Integer);
 var I, L, M : Integer;
     P, Q    : PWideChar;
@@ -2480,7 +2490,7 @@ begin
   ProcessedBytes := L;
 end;
 
-function TUTF16LECodec.Encode(const S: PWideChar; const Length: Integer;
+function TUTF16BECodec.Encode(const S: PWideChar; const Length: Integer;
     out ProcessedChars: Integer): RawByteString;
 var I, L : Integer;
     P, Q : PWideChar;
@@ -2504,7 +2514,7 @@ begin
   ProcessedChars := Length;
 end;
 
-procedure TUTF16LECodec.InternalReadUCS4Char(out C: UCS4Char;
+procedure TUTF16BECodec.InternalReadUCS4Char(out C: UCS4Char;
     out ByteCount: Integer);
 var LowSurrogate : array[0..1] of Byte;  // We do not use Word, because the byte order of a Word is CPU dependant
 begin
@@ -2539,7 +2549,7 @@ begin
   end;
 end;
 
-procedure TUTF16LECodec.InternalWriteUCS4Char(const C: UCS4Char;
+procedure TUTF16BECodec.InternalWriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 var Buffer : array[0..3] of Byte;
 begin
@@ -2547,7 +2557,7 @@ begin
   WriteBuffer(Buffer[0], ByteCount);
 end;
 
-procedure TUTF16LECodec.WriteUCS4Char(const C: UCS4Char;
+procedure TUTF16BECodec.WriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 const
   UTF16LE_LF   : array[0..1] of Byte = ($0A, $00);
@@ -8896,6 +8906,7 @@ end;
 procedure Test;
 begin
   // Codecs
+  RegisterDefaultCodecs;
   Assert(not Assigned(GetCodecClassByAlias('')), 'GetCodecClassByAlias');
   Assert(GetCodecClassByAlias('ascii') = TUSASCIICodec, 'GetCodecClassByAlias');
   Assert(GetCodecClassByAlias('us-ascii') = TUSASCIICodec, 'GetCodecClassByAlias');
@@ -8905,8 +8916,5 @@ end;
 
 
 
-initialization
-  RegisterDefaultCodecs;
-finalization
 end.
 

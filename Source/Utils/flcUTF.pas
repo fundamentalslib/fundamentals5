@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUTF.pas                                               }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      UTF encoding and decoing functions.                      }
 {                                                                              }
 {   Copyright:        Copyright (c) 2015-2019, David J Butler                  }
@@ -37,6 +37,7 @@
 {   2015/05/06  4.01  Add UTF functions from unit cUnicodeCodecs.              }
 {   2017/10/07  5.02  Move to flcUTF unit.                                     }
 {   2018/08/12  5.03  String type changes.                                     }
+{   2019/10/03  5.04  UTF16LEToUCS4Char.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -104,6 +105,9 @@ procedure UCS4CharToUTF16BE(const Ch: UCS4Char; const Dest: Pointer;
           const DestSize: Integer; out SeqSize: Integer);
 procedure UCS4CharToUTF16LE(const Ch: UCS4Char; const Dest: Pointer;
           const DestSize: Integer; out SeqSize: Integer);
+
+function  UTF16LEToUCS4Char(const P: Pointer; const Size: Integer;
+          out Ch: UCS4Char; out SeqSize: Integer): Boolean;
 
 
 
@@ -466,6 +470,72 @@ begin
     end;
   else // out of UTF-16 range
     raise EConvertError.CreateFmt(SCannotConvertUCS4, [Ch, 'UTF-16LE']);
+  end;
+end;
+
+// Returns True if valid encoding
+// If invalid, Returns False with Ch the invalid character and SeqSize the
+// size of a valid encoding
+function UTF16LEToUCS4Char(const P: Pointer; const Size: Integer;
+  out Ch: UCS4Char; out SeqSize: Integer): Boolean;
+var
+  ChP : PWideChar;
+  C : Word16;
+  LowSurrogate : Word16;
+begin
+  if Size < 2 then
+    begin
+      // Too few bytes in Source
+      Ch := 0;
+      SeqSize := 2;
+      Result := False;
+      exit;
+    end;
+  ChP := P;
+  C := Ord(ChP^); // UCS4Chars are stored in Little Endian mode
+  case C of
+    $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
+      begin
+        if Size < 4 then
+          begin
+            // Too few bytes in Source
+            Ch := C;
+            SeqSize := 4;
+            Result := False;
+            exit;
+          end;
+        Inc(ChP);
+        LowSurrogate := Ord(ChP^);
+        case LowSurrogate shr 8 of
+          $DC..$DF :
+            begin
+              Ch := ((C - $D7C0) shl 10) + (((LowSurrogate shr 8) xor $DC) shl 8) + (LowSurrogate and $FF);
+              SeqSize := 4;
+              Result := True;
+            end;
+          else
+            begin
+              // Invalid encoding
+              Ch := C;
+              SeqSize := 4;
+              Result := False;
+            end;
+        end;
+      end;
+    $DC00..$DFFF: // Low surrogate of Unicode character [$10000..$10FFFF]
+      begin
+        // Invalid encoding
+        Ch := C;
+        SeqSize := 2;
+        Result := False;
+      end
+    else
+      begin
+        // 2 byte character
+        Ch := C;
+        SeqSize := 2;
+        Result := True;
+      end;
   end;
 end;
 
@@ -916,9 +986,57 @@ begin
   Assert(UTF8StringLength(S3) = 3, 'UTF8StringLength');
 end;
 
+procedure Test_UTF16;
+const
+  W1 : array[0..1] of WideChar = (#$D83D, #$DE00);
+  W2 : array[0..1] of WideChar = (#$D83D, #$0000);
+var
+  Ch : UCS4Char;
+  Size : Integer;
+  D1 : array[0..1] of WideChar;
+begin
+  UCS4CharToUTF16LE($00, @D1[0], 4, Size);
+  Assert(Size = 2);
+  Assert(D1[0] = #$0000);
+
+  UCS4CharToUTF16LE($41, @D1[0], 4, Size);
+  Assert(Size = 2);
+  Assert(D1[0] = #$0041);
+
+  UCS4CharToUTF16LE($1234, @D1[0], 4, Size);
+  Assert(Size = 2);
+  Assert(D1[0] = #$1234);
+
+  UCS4CharToUTF16LE($1F600, @D1[0], 4, Size);
+  Assert(Size = 4);
+  Assert(D1[0] = #$D83D);
+  Assert(D1[1] = #$DE00);
+
+  Assert(UTF16LEToUCS4Char(@W1[0], 4, Ch, Size));
+  Assert(Size = 4);
+  Assert(Ch = $1F600);
+
+  Assert(not UTF16LEToUCS4Char(@W1[0], 2, Ch, Size));
+  Assert(Size = 4);
+  Assert(Ch = $D83D);
+
+  Assert(not UTF16LEToUCS4Char(@W1[1], 2, Ch, Size));
+  Assert(Size = 2);
+  Assert(Ch = $DE00);
+
+  Assert(not UTF16LEToUCS4Char(@W2[0], 4, Ch, Size));
+  Assert(Size = 4);
+  Assert(Ch = $D83D);
+
+  Assert(UTF16LEToUCS4Char(@W2[1], 2, Ch, Size));
+  Assert(Size = 2);
+  Assert(Ch = $0000);
+end;
+
 procedure Test;
 begin
   Test_UTF8;
+  Test_UTF16;
 end;
 {$ENDIF}
 
