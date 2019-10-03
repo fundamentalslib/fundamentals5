@@ -334,23 +334,17 @@ begin
   // Detect Unicode markings
   Result := DetectUTFEncoding(R, L, HeaderSize);
   if Assigned(Result) then
+    exit;
+  HeaderSize := 0;
+  Result := TUTF8Codec;
+  // Check if first character is a likely XML UTF-16 character
+  if L >= 2 then
     begin
-      Inc(R, HeaderSize);
-      Dec(L, HeaderSize);
-    end
-  else
-    begin
-      HeaderSize := 0;
-      Result := TUTF8Codec;
-      // Check if first character is a likely XML UTF-16 character
-      if L >= 2 then
-        begin
-          P := Pointer(R);
-          case Ord(P^) of
-            $0009, $000A, $000D, $0020, $003C : Result := TUTF16BECodec;
-            $0900, $0A00, $0D00, $2000, $3C00 : Result := TUTF16LECodec;
-          end;
-        end;
+      P := Pointer(R);
+      case Ord(P^) of
+        $0009, $000A, $000D, $0020, $003C : Result := TUTF16LECodec;
+        $0900, $0A00, $0D00, $2000, $3C00 : Result := TUTF16BECodec;
+      end;
     end;
   if L < 16 then
     exit;
@@ -379,7 +373,9 @@ begin
                 StrTrimInPlaceU(S, UnicodeIsWhiteSpace);
                 if S <> '' then
                   // Get codec type from encoding name
-                  Result := GetCodecClassByAlias(S);
+                  begin
+                    Result := GetCodecClassByAlias(S);
+                  end;
                 // Found encoding attribute
                 exit;
               end;
@@ -507,7 +503,7 @@ begin
   S := '  <?xml  attr  encoding=ISO-8859-10 >  ';
   Assert(xmlGetEntityEncoding(Pointer(S), Length(S), I) = TISO8859_10Codec, 'xmlGetEntityEncoding');
   T := '<?xml version="1.0">';
-  Assert(xmlGetEntityEncoding(Pointer(T), Length(T) * SizeOf(WideChar), I) = TUTF16BECodec, 'xmlGetEntityEncoding');
+  Assert(xmlGetEntityEncoding(Pointer(T), Length(T) * SizeOf(WideChar), I) = TUTF16LECodec, 'xmlGetEntityEncoding');
 end;
 {$ENDIF}
 

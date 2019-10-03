@@ -216,6 +216,7 @@ type
 {                                                                              }
 function  ParseXMLBuffer(const Buffer: Pointer; const Size: Integer): TxmlDocument;
 function  ParseXMLStringB(const S: RawByteString): TxmlDocument;
+function  ParseXMLStringU(const S: UnicodeString): TxmlDocument;
 function  ParseXMLFile(const FileName: String): TxmlDocument;
 
 
@@ -304,6 +305,8 @@ begin
         begin
           L := Reader.Peek(B[0], Sizeof(B));
           T := xmlGetEntityEncoding(@B[0], L, N);
+          if Assigned(T) then
+            Reader.Skip(N);
         end;
       SetUnicodeReader(TUnicodeReader.Create(Reader, False, T.Create, True), True);
     end
@@ -1590,6 +1593,18 @@ end;
 function ParseXMLStringB(const S: RawByteString): TxmlDocument;
 begin
   Result := ParseXMLBuffer(Pointer(S), Length(S));
+end;
+
+function ParseXMLStringU(const S: UnicodeString): TxmlDocument;
+var P : TxmlParser;
+begin
+  P := TxmlParser.Create;
+  try
+    P.SetUnicodeReader(TUnicodeMemoryReader.Create(Pointer(S), Length(S) * SizeOf(WideChar), nil, True));
+    Result := P.ExtractDocument;
+  finally
+    FreeAndNil(P);
+  end;
 end;
 
 function ParseXMLFile(const FileName: String): TxmlDocument;
