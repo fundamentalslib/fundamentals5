@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2019/07/29                                               }
+{   File updated:     2020/03/10                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Github:           https://github.com/fundamentalslib                       }
@@ -552,11 +552,14 @@
 {$IFDEF VER370}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
-
-{$IFDEF CONDITIONALEXPRESSIONS}
-  {$IF CompilerVersion > 33.0}
-    {$DEFINE DELPHI_Future}
-  {$ENDIF}
+{$IFDEF VER380}
+  {$DEFINE DELPHI_Future}
+{$ENDIF}
+{$IFDEF VER390}
+  {$DEFINE DELPHI_Future}
+{$ENDIF}
+{$IFDEF VER400}
+  {$DEFINE DELPHI_Future}
 {$ENDIF}
 
 {$IFDEF DELPHI_Future}
@@ -1351,6 +1354,9 @@
   {$IFNDEF ManagedCode}
     {$IFDEF CPU_X86_64}
       {$DEFINE ASMX86_64}
+      {$IFDEF DELPHI}
+        {$DEFINE ASMX86_64_DELPHI}
+      {$ENDIF}
     {$ENDIF}
     {$IFDEF CPU_INTEL386}
       {$DEFINE ASM386}
