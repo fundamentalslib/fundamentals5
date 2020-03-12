@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUTF.pas                                               }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      UTF encoding and decoing functions.                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2015-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2015-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -38,6 +38,8 @@
 {   2017/10/07  5.02  Move to flcUTF unit.                                     }
 {   2018/08/12  5.03  String type changes.                                     }
 {   2019/10/03  5.04  UTF16LEToUCS4Char.                                       }
+{   2020/03/12  5.05  NativeInt changes.                                       }
+{                     Remove dependencies on flcUtils and flcAscii.            }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -84,30 +86,55 @@ type
       UTF8ErrorInvalidEncoding,
       UTF8ErrorIncompleteEncoding,
       UTF8ErrorInvalidBuffer,
-      UTF8ErrorOutOfRange );
+      UTF8ErrorOutOfRange
+    );
 
-function  UTF8ToUCS4Char(const P: Pointer; const Size: Integer;
-          out SeqSize: Integer; out Ch: UCS4Char): TUTF8Error;
-function  UTF8ToWideChar(const P: Pointer; const Size: Integer;
-          out SeqSize: Integer; out Ch: WideChar): TUTF8Error;
+function  UTF8ToUCS4Char(
+          const Buf: Pointer;
+          const Size: NativeInt;
+          out SeqSize: Integer;
+          out Ch: UCS4Char): TUTF8Error;
 
-procedure UCS4CharToUTF8(const Ch: UCS4Char; const Dest: Pointer;
-          const DestSize: Integer; out SeqSize: Integer);
-procedure WideCharToUTF8(const Ch: WideChar; const Dest: Pointer;
-          const DestSize: Integer; out SeqSize: Integer);
+function  UTF8ToWideChar(
+          const Buf: Pointer;
+          const Size: NativeInt;
+          out SeqSize: Integer;
+          out Ch: WideChar): TUTF8Error;
+
+procedure UCS4CharToUTF8(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
+
+procedure WideCharToUTF8(
+          const Ch: WideChar;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
 
 
 
 {                                                                              }
 { UTF-16 character conversion functions                                        }
 {                                                                              }
-procedure UCS4CharToUTF16BE(const Ch: UCS4Char; const Dest: Pointer;
-          const DestSize: Integer; out SeqSize: Integer);
-procedure UCS4CharToUTF16LE(const Ch: UCS4Char; const Dest: Pointer;
-          const DestSize: Integer; out SeqSize: Integer);
+procedure UCS4CharToUTF16BE(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
 
-function  UTF16LEToUCS4Char(const P: Pointer; const Size: Integer;
-          out Ch: UCS4Char; out SeqSize: Integer): Boolean;
+procedure UCS4CharToUTF16LE(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
+
+function  UTF16LEToUCS4Char(
+          const Buf: Pointer;
+          const Size: NativeInt;
+          out Ch: UCS4Char;
+          out SeqSize: Integer): Boolean;
 
 
 
@@ -117,23 +144,23 @@ function  UTF16LEToUCS4Char(const P: Pointer; const Size: Integer;
 const
   UTF8BOMSize = 3;
 
-function  DetectUTF8BOM(const P: Pointer; const Size: Integer): Boolean;
+function  DetectUTF8BOM(const Buf: Pointer; const Size: NativeInt): Boolean;
 
-function  UTF8CharSize(const P: Pointer; const Size: Integer): Integer;
-function  UTF8BufLength(const P: Pointer; const Size: Integer): Integer;
-function  UTF8StringLength(const S: RawByteString): Integer;
+function  UTF8CharSize(const Buf: Pointer; const Size: NativeInt): Integer;
+function  UTF8BufLength(const Buf: Pointer; const Size: NativeInt): NativeInt;
+function  UTF8StringLength(const S: RawByteString): NativeInt;
 function  UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
-function  UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
+function  UTF8StringToUnicodeStringP(const S: Pointer; const Size: NativeInt): UnicodeString;
 function  UTF8StringToLongString(const S: RawByteString): RawByteString;
 function  UTF8StringToString(const S: RawByteString): String;
 
 function  UCS4CharToUTF8CharSize(const Ch: UCS4Char): Integer;
-function  WideBufToUTF8Size(const Buf: PWideChar; const Len: Integer): Integer;
-function  UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
-function  WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
+function  WideBufToUTF8Size(const Buf: PWideChar; const Len: NativeInt): NativeInt;
+function  UnicodeStringToUTF8Size(const S: UnicodeString): NativeInt;
+function  WideBufToUTF8String(const Buf: PWideChar; const Len: NativeInt): RawByteString;
 function  UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
-function  RawByteBufToUTF8Size(const Buf: Pointer; const Len: Integer): Integer;
-function  RawByteStringToUTF8Size(const S: RawByteString): Integer;
+function  RawByteBufToUTF8Size(const Buf: Pointer; const Len: NativeInt): NativeInt;
+function  RawByteStringToUTF8Size(const S: RawByteString): NativeInt;
 function  RawByteStringToUTF8String(const S: RawByteString): RawByteString;
 function  UCS4CharToUTF8String(const Ch: UCS4Char): RawByteString;
 function  ISO8859_1StringToUTF8String(const S: RawByteString): RawByteString;
@@ -147,9 +174,11 @@ function  StringToUTF8String(const S: String): RawByteString;
 const
   UTF16BOMSize = 2;
 
-function  DetectUTF16BEBOM(const P: Pointer; const Size: Integer): Boolean;
-function  DetectUTF16LEBOM(const P: Pointer; const Size: Integer): Boolean;
-function  DetectUTF16BOM(const P: Pointer; const Size: Integer;
+function  DetectUTF16BEBOM(const P: Pointer; const Size: NativeInt): Boolean;
+function  DetectUTF16LEBOM(const P: Pointer; const Size: NativeInt): Boolean;
+function  DetectUTF16BOM(
+          const P: Pointer;
+          const Size: NativeInt;
           out SwapEndian: Boolean): Boolean;
 function  SwapUTF16Endian(const P: WideChar): WideChar;
 
@@ -168,10 +197,7 @@ implementation
 
 uses
   { System }
-  SysUtils,
-  { Fundamentals }
-  flcUtils,
-  flcASCII;
+  SysUtils;
 
 
 
@@ -191,21 +217,26 @@ resourcestring
 { invalid UTF-8 sequence is encountered, the function returns                  }
 { UTF8ErrorInvalidEncoding and SeqSize (<= Size) is the size of the            }
 { invalid sequence, and Ch may be the intended character.                      }
-function UTF8ToUCS4Char(const P: Pointer; const Size: Integer;
-    out SeqSize: Integer; out Ch: UCS4Char): TUTF8Error;
-var C, D : Byte;
-    V    : Word32;
-    I    : Integer;
-    Q    : PByte;
+function UTF8ToUCS4Char(
+         const Buf: Pointer;
+         const Size: NativeInt;
+         out SeqSize: Integer;
+         out Ch: UCS4Char): TUTF8Error;
+var
+  C : Byte;
+  D : Byte;
+  V : Word32;
+  I : Integer;
+  Q : PByte;
 begin
-  if not Assigned(P) or (Size <= 0) then
+  if not Assigned(Buf) or (Size <= 0) then
     begin
       SeqSize := 0;
       Ch := 0;
       Result := UTF8ErrorInvalidBuffer;
       exit;
     end;
-  C := PByte(P)^;
+  C := PByte(Buf)^;
   if C < $80 then
     begin
       SeqSize := 1;
@@ -226,17 +257,20 @@ begin
     begin
       SeqSize := 2;
       V := C and $1F;
-    end else
+    end
+  else
   if C and $10 = 0 then // 3-byte sequence
     begin
       SeqSize := 3;
       V := C and $0F;
-    end else
+    end
+  else
   if C and $08 = 0 then // 4-byte sequence (max needed for Unicode $0-$1FFFFF)
     begin
       SeqSize := 4;
       V := C and $07;
-    end else
+    end
+  else
     begin
       SeqSize := 1;
       Ch := C;
@@ -249,7 +283,7 @@ begin
       Result := UTF8ErrorIncompleteEncoding;
       exit;
     end;
-  Q := P;
+  Q := Buf;
   for I := 1 to SeqSize - 1 do
     begin
       Inc(Q);
@@ -267,27 +301,34 @@ begin
   Result := UTF8ErrorNone;
 end;
 
-function UTF8ToWideChar(const P: Pointer; const Size: Integer;
-    out SeqSize: Integer; out Ch: WideChar): TUTF8Error;
+function UTF8ToWideChar(
+         const Buf: Pointer;
+         const Size: NativeInt;
+         out SeqSize: Integer;
+         out Ch: WideChar): TUTF8Error;
 var Ch4 : UCS4Char;
 begin
-  Result := UTF8ToUCS4Char(P, Size, SeqSize, Ch4);
+  Result := UTF8ToUCS4Char(Buf, Size, SeqSize, Ch4);
   if Ch4 > $FFFF then
     begin
       Result := UTF8ErrorOutOfRange;
       Ch := #$0000;
-    end else
+    end
+  else
     Ch := WideChar(Ch4);
 end;
 
 { UCS4CharToUTF8 transforms the UCS4 char Ch to UTF-8 encoding. SeqSize        }
 { returns the number of bytes needed to transform Ch. Up to DestSize           }
 { bytes of the UTF-8 encoding will be placed in Dest.                          }
-procedure UCS4CharToUTF8(const Ch: UCS4Char; const Dest: Pointer;
-    const DestSize: Integer; out SeqSize: Integer);
+procedure UCS4CharToUTF8(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
 var P : PByte;
 begin
-  P := Dest;
+  P := DestBuf;
   if Ch < $80 then // US-ASCII (1-byte sequence)
     begin
       SeqSize := 1;
@@ -344,10 +385,13 @@ begin
     raise EConvertError.CreateFmt(SInvalidCodePoint, [Ord(Ch), 'Unicode']);
 end;
 
-procedure WideCharToUTF8(const Ch: WideChar; const Dest: Pointer;
-    const DestSize: Integer; out SeqSize: Integer);
+procedure WideCharToUTF8(
+          const Ch: WideChar;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
 begin
-  UCS4CharToUTF8(Ord(Ch), Dest, DestSize, SeqSize);
+  UCS4CharToUTF8(Ord(Ch), DestBuf, DestSize, SeqSize);
 end;
 
 
@@ -362,55 +406,60 @@ resourcestring
 { UCS4CharToUTF16BE transforms the UCS4 char Ch to UTF-16BE encoding. SeqSize  }
 { returns the number of bytes needed to transform Ch. Up to DestSize           }
 { bytes of the UTF-16BE encoding will be placed in Dest.                       }
-procedure UCS4CharToUTF16BE(const Ch: UCS4Char; const Dest: Pointer;
-  const DestSize: Integer; out SeqSize: Integer);
-var P : PByte;
-    HighSurrogate, LowSurrogate : Word;
+procedure UCS4CharToUTF16BE(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
+var
+  P : PByte;
+  HighSurrogate : Word16;
+  LowSurrogate : Word16;
 begin
-  P := Dest;
+  P := DestBuf;
   case Ch of
-  $00000000..$0000D7FF, $0000E000..$0000FFFF :
-    begin
-      SeqSize := 2;
-      if not Assigned(P) or (DestSize <= 0) then
-        exit;
-      {$IFDEF FREEPASCAL}
-      P^ := Byte((Ch and $FF00) shr 8);
-      {$ELSE}
-      P^ := Hi(Ch);
-      {$ENDIF}
-      if DestSize <= 1 then
-        exit;
-      Inc(P);
-      {$IFDEF FREEPASCAL}
-      P^ := Byte(Ch and $FF);
-      {$ELSE}
-      P^ := Lo(Ch);
-      {$ENDIF}
-    end;
-  $0000D800..$0000DFFF :
-    raise EConvertError.CreateFmt(SInvalidCodePoint, [Ch, 'UCS-4']);
-  $00010000..$0010FFFF :
-    begin
-      SeqSize := 4;
-      if not Assigned(P) or (DestSize <= 0) then
-        exit;
-      HighSurrogate := $D7C0 + (Ch shr 10);
-      P^ := Hi(HighSurrogate);
-      if DestSize <= 1 then
-        exit;
-      Inc(P);
-      P^ := Lo(HighSurrogate);
-      if DestSize <= 2 then
-        exit;
-      LowSurrogate := $DC00 xor (Ch and $3FF);
-      Inc(P);
-      P^ := Hi(LowSurrogate);
-      if DestSize <= 3 then
-        exit;
-      Inc(P);
-      P^ := Lo(LowSurrogate);
-    end;
+    $00000000..$0000D7FF, $0000E000..$0000FFFF :
+      begin
+        SeqSize := 2;
+        if not Assigned(P) or (DestSize <= 0) then
+          exit;
+        {$IFDEF FREEPASCAL}
+        P^ := Byte((Ch and $FF00) shr 8);
+        {$ELSE}
+        P^ := Hi(Ch);
+        {$ENDIF}
+        if DestSize <= 1 then
+          exit;
+        Inc(P);
+        {$IFDEF FREEPASCAL}
+        P^ := Byte(Ch and $FF);
+        {$ELSE}
+        P^ := Lo(Ch);
+        {$ENDIF}
+      end;
+    $0000D800..$0000DFFF :
+      raise EConvertError.CreateFmt(SInvalidCodePoint, [Ch, 'UCS-4']);
+    $00010000..$0010FFFF :
+      begin
+        SeqSize := 4;
+        if not Assigned(P) or (DestSize <= 0) then
+          exit;
+        HighSurrogate := $D7C0 + (Ch shr 10);
+        P^ := Hi(HighSurrogate);
+        if DestSize <= 1 then
+          exit;
+        Inc(P);
+        P^ := Lo(HighSurrogate);
+        if DestSize <= 2 then
+          exit;
+        LowSurrogate := $DC00 xor (Ch and $3FF);
+        Inc(P);
+        P^ := Hi(LowSurrogate);
+        if DestSize <= 3 then
+          exit;
+        Inc(P);
+        P^ := Lo(LowSurrogate);
+      end;
   else // out of UTF-16 range
     raise EConvertError.CreateFmt(SCannotConvertUCS4, [Ch, 'UTF-16BE']);
   end;
@@ -419,55 +468,60 @@ end;
 { UCS4CharToUTF16LE transforms the UCS4 char Ch to UTF-16LE encoding. SeqSize  }
 { returns the number of bytes needed to transform Ch. Up to DestSize           }
 { bytes of the UTF-16LE encoding will be placed in Dest.                       }
-procedure UCS4CharToUTF16LE(const Ch: UCS4Char; const Dest: Pointer;
-  const DestSize: Integer; out SeqSize: Integer);
-var P : PByte;
-    HighSurrogate, LowSurrogate : Word;
+procedure UCS4CharToUTF16LE(
+          const Ch: UCS4Char;
+          const DestBuf: Pointer;
+          const DestSize: NativeInt;
+          out SeqSize: Integer);
+var
+  P : PByte;
+  HighSurrogate : Word16;
+  LowSurrogate : Word16;
 begin
-  P := Dest;
+  P := DestBuf;
   case Ch of
-  $00000000..$0000D7FF, $0000E000..$0000FFFF :
-    begin
-      SeqSize := 2;
-      if not Assigned(P) or (DestSize <= 0) then
-        exit;
-      {$IFDEF FREEPASCAL}
-      P^ := Byte(Ch and $FF);
-      {$ELSE}
-      P^ := Lo(Ch);
-      {$ENDIF}
-      if DestSize <= 1 then
-        exit;
-      Inc(P);
-      {$IFDEF FREEPASCAL}
-      P^ := Byte((Ch and $FF00) shr 8);
-      {$ELSE}
-      P^ := Hi(Ch);
-      {$ENDIF}
-    end;
-  $0000D800..$0000DFFF :
-    raise EConvertError.CreateFmt(SInvalidCodePoint, [Ch, 'UCS-4']);
-  $00010000..$0010FFFF:
-    begin
-      SeqSize := 4;
-      if not Assigned(P) or (DestSize <= 0) then
-        exit;
-      HighSurrogate := $D7C0 + (Ch shr 10);
-      P^ := Lo(HighSurrogate);
-      if DestSize <= 1 then
-        exit;
-      Inc(P);
-      P^ := Hi(HighSurrogate);
-      if DestSize <= 2 then
-        exit;
-      LowSurrogate := $DC00 xor (Ch and $3FF);
-      Inc(P);
-      P^ := Lo(LowSurrogate);
-      if DestSize <= 3 then
-        exit;
-      Inc(P);
-      P^ := Hi(LowSurrogate);
-    end;
+    $00000000..$0000D7FF, $0000E000..$0000FFFF :
+      begin
+        SeqSize := 2;
+        if not Assigned(P) or (DestSize <= 0) then
+          exit;
+        {$IFDEF FREEPASCAL}
+        P^ := Byte(Ch and $FF);
+        {$ELSE}
+        P^ := Lo(Ch);
+        {$ENDIF}
+        if DestSize <= 1 then
+          exit;
+        Inc(P);
+        {$IFDEF FREEPASCAL}
+        P^ := Byte((Ch and $FF00) shr 8);
+        {$ELSE}
+        P^ := Hi(Ch);
+        {$ENDIF}
+      end;
+    $0000D800..$0000DFFF :
+      raise EConvertError.CreateFmt(SInvalidCodePoint, [Ch, 'UCS-4']);
+    $00010000..$0010FFFF:
+      begin
+        SeqSize := 4;
+        if not Assigned(P) or (DestSize <= 0) then
+          exit;
+        HighSurrogate := $D7C0 + (Ch shr 10);
+        P^ := Lo(HighSurrogate);
+        if DestSize <= 1 then
+          exit;
+        Inc(P);
+        P^ := Hi(HighSurrogate);
+        if DestSize <= 2 then
+          exit;
+        LowSurrogate := $DC00 xor (Ch and $3FF);
+        Inc(P);
+        P^ := Lo(LowSurrogate);
+        if DestSize <= 3 then
+          exit;
+        Inc(P);
+        P^ := Hi(LowSurrogate);
+      end;
   else // out of UTF-16 range
     raise EConvertError.CreateFmt(SCannotConvertUCS4, [Ch, 'UTF-16LE']);
   end;
@@ -476,8 +530,11 @@ end;
 // Returns True if valid encoding
 // If invalid, Returns False with Ch the invalid character and SeqSize the
 // size of a valid encoding
-function UTF16LEToUCS4Char(const P: Pointer; const Size: Integer;
-  out Ch: UCS4Char; out SeqSize: Integer): Boolean;
+function UTF16LEToUCS4Char(
+         const Buf: Pointer;
+         const Size: NativeInt;
+         out Ch: UCS4Char;
+         out SeqSize: Integer): Boolean;
 var
   ChP : PWideChar;
   C : Word16;
@@ -491,7 +548,7 @@ begin
       Result := False;
       exit;
     end;
-  ChP := P;
+  ChP := Buf;
   C := Ord(ChP^); // UCS4Chars are stored in Little Endian mode
   case C of
     $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
@@ -544,13 +601,14 @@ end;
 {                                                                              }
 { UTF-8 string functions                                                       }
 {                                                                              }
-function DetectUTF8BOM(const P: Pointer; const Size: Integer): Boolean;
-var Q : PByte;
+function DetectUTF8BOM(const Buf: Pointer; const Size: NativeInt): Boolean;
+var
+  Q : PByte;
 begin
   Result := False;
-  if Assigned(P) and (Size >= 3) and (PByte(P)^ = $EF) then
+  if Assigned(Buf) and (Size >= 3) and (PByte(Buf)^ = $EF) then
     begin
-      Q := P;
+      Q := Buf;
       Inc(Q);
       if Q^ = $BB then
         begin
@@ -561,52 +619,61 @@ begin
     end;
 end;
 
-function UTF8CharSize(const P: Pointer; const Size: Integer): Integer;
-var C : Byte;
-    I : Integer;
-    Q : PByte;
+function UTF8CharSize(const Buf: Pointer; const Size: NativeInt): Integer;
+var
+  C : Byte;
+  I : Integer;
+  Q : PByte;
 begin
-  if not Assigned(P) or (Size <= 0) then
+  if not Assigned(Buf) or (Size <= 0) then
     begin
       Result := 0;
       exit;
     end;
-  C := PByte(P)^;
+  C := PByte(Buf)^;
   if C < $80 then // 1-byte (US-ASCII value)
-    Result := 1 else
+    Result := 1
+  else
   if C and $C0 = $80 then // invalid encoding
-    Result := 1 else
+    Result := 1
+  else
     begin
       // multi-byte character
       if C and $20 = 0 then
-        Result := 2 else
+        Result := 2
+      else
       if C and $10 = 0 then
-        Result := 3 else
+        Result := 3
+      else
       if C and $08 = 0 then
-        Result := 4 else
+        Result := 4
+      else
         begin
           Result := 1; // invalid encoding
           exit;
         end;
       if Size < Result then // incomplete encoding
         exit;
-      Q := P;
+      Q := Buf;
       Inc(Q);
       for I := 1 to Result - 1 do
         if Ord(Q^) and $C0 <> $80 then
           begin
             Result := 1; // invalid encoding
             exit;
-          end else
+          end
+        else
           Inc(Q);
     end;
 end;
 
-function UTF8BufLength(const P: Pointer; const Size: Integer): Integer;
-var Q    : PByte;
-    L, C : Integer;
+function UTF8BufLength(const Buf: Pointer; const Size: NativeInt): NativeInt;
+var
+  Q : PByte;
+  L : NativeInt;
+  C : Integer;
 begin
-  Q := P;
+  Q := Buf;
   L := Size;
   Result := 0;
   while L > 0 do
@@ -618,7 +685,7 @@ begin
     end;
 end;
 
-function UTF8StringLength(const S: RawByteString): Integer;
+function UTF8StringLength(const S: RawByteString): NativeInt;
 begin
   Result := UTF8BufLength(Pointer(S), Length(S));
 end;
@@ -637,10 +704,11 @@ begin
     raise EConvertError.CreateFmt(SInvalidCodePoint, [Ord(Ch), 'Unicode']);
 end;
 
-function WideBufToUTF8Size(const Buf: PWideChar; const Len: Integer): Integer;
-var P : PWideChar;
-    I : Integer;
-    C : UCS4Char;
+function WideBufToUTF8Size(const Buf: PWideChar; const Len: NativeInt): NativeInt;
+var
+  P : PWideChar;
+  I : NativeInt;
+  C : UCS4Char;
 begin
   P := Buf;
   Result := 0;
@@ -656,9 +724,10 @@ begin
     end;
 end;
 
-function RawByteBufToUTF8Size(const Buf: Pointer; const Len: Integer): Integer;
-var P : PByte;
-    I : Integer;
+function RawByteBufToUTF8Size(const Buf: Pointer; const Len: NativeInt): NativeInt;
+var
+  P : PByte;
+  I : NativeInt;
 begin
   P := Buf;
   Result := 0;
@@ -671,21 +740,100 @@ begin
     end;
 end;
 
-function UnicodeStringToUTF8Size(const S: UnicodeString): Integer;
+function UnicodeStringToUTF8Size(const S: UnicodeString): NativeInt;
 begin
   Result := WideBufToUTF8Size(Pointer(S), Length(S));
 end;
 
-function RawByteStringToUTF8Size(const S: RawByteString): Integer;
+function RawByteStringToUTF8Size(const S: RawByteString): NativeInt;
 begin
   Result := RawByteBufToUTF8Size(Pointer(S), Length(S));
 end;
 
-function UTF8StringToUnicodeStringP(const S: Pointer; const Size: Integer): UnicodeString;
-var P       : PByte;
-    Q       : PWideChar;
-    L, M, I : Integer;
-    C       : WideChar;
+procedure RawByteBufToWideBuf(
+          const Buf: Pointer;
+          const BufSize: NativeInt;
+          const DestBuf: Pointer);
+var
+  I : NativeInt;
+  P : PWord32;
+  Q : PWord32;
+  V : Word32;
+  N : Integer;
+  E : PByte;
+  F : PWord16;
+begin
+  if BufSize <= 0 then
+    exit;
+  P := Buf;
+  Q := DestBuf;
+  for I := 1 to BufSize div 4 do
+    begin
+      // convert 4 characters per iteration
+      V := P^;
+      Inc(P);
+      Q^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(Q);
+      V := V shr 16;
+      Q^ := (V and $FF) or ((V and $FF00) shl 8);
+      Inc(Q);
+    end;
+  // convert remaining (<4)
+  N := BufSize mod 4;
+  if N > 0 then
+    begin
+      E := Pointer(P);
+      F := Pointer(Q);
+      for I := 1 to N do
+        begin
+          F^ := E^;
+          Inc(E);
+          Inc(F);
+        end;
+    end;
+end;
+
+function RawByteStrPtrToUnicodeString(const S: Pointer; const Len: NativeInt): UnicodeString; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if Len <= 0 then
+    Result := ''
+  else
+    begin
+      SetLength(Result, Len);
+      RawByteBufToWideBuf(S, Len, PWideChar(Result));
+    end;
+end;
+
+function IsAsciiBufB(const Buf: Pointer; const Len: NativeInt): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  P : PByte;
+  I : NativeInt;
+begin
+  P := Buf;
+  for I := 1 to Len do
+    if P^ >= $80 then
+      begin
+        Result := False;
+        exit;
+      end
+    else
+      Inc(P);
+  Result := True;
+end;
+
+function IsAsciiStringB(const S: RawByteString): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Result := IsAsciiBufB(Pointer(S), Length(S));
+end;
+
+function UTF8StringToUnicodeStringP(const S: Pointer; const Size: NativeInt): UnicodeString;
+var
+  P : PByte;
+  Q : PWideChar;
+  L : NativeInt;
+  M : NativeInt;
+  I : Integer;
+  C : WideChar;
 begin
   if Size = 0 then
     begin
@@ -712,7 +860,8 @@ begin
     Inc(P, I);
     Dec(L, I);
   until L <= 0;
-  SetLength(Result, M); // actual size
+  if M < Size then
+    SetLength(Result, M); // actual size
 end;
 
 function UTF8StringToUnicodeString(const S: RawByteString): UnicodeString;
@@ -721,13 +870,17 @@ begin
 end;
 
 function UTF8StringToLongString(const S: RawByteString): RawByteString;
-var P       : PByte;
-    Q       : PByte;
-    L, M, I : Integer;
-    C       : WideChar;
+var
+  N : NativeInt;
+  L : NativeInt;
+  P : PByte;
+  Q : PByte;
+  M : NativeInt;
+  I : Integer;
+  C : WideChar;
 begin
-  L := Length(S);
-  if L = 0 then
+  N := Length(S);
+  if N = 0 then
     begin
       Result := '';
       exit;
@@ -738,6 +891,7 @@ begin
       exit;
     end;
   // Decode UTF-8
+  L := N;
   P := Pointer(S);
   SetLength(Result, L); // maximum size
   Q := Pointer(Result);
@@ -753,7 +907,8 @@ begin
     Inc(P, I);
     Dec(L, I);
   until L <= 0;
-  SetLength(Result, M); // actual size
+  if M < N then
+    SetLength(Result, M); // actual size
 end;
 
 function UTF8StringToString(const S: RawByteString): String;
@@ -765,11 +920,40 @@ begin
   {$ENDIF}
 end;
 
-function WideBufToUTF8String(const Buf: PWideChar; const Len: Integer): RawByteString;
-var P     : PWideChar;
-    Q     : PByte;
-    I, M,
-    N, J  : Integer;
+function WideBufToRawByteString(const P: PWideChar; const Len: NativeInt): RawByteString; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  S : PWideChar;
+  Q : PByte;
+  I : NativeInt;
+  V : WideChar;
+begin
+  if Len <= 0 then
+    begin
+      Result := '';
+      exit;
+    end;
+  SetLength(Result, Len);
+  S := P;
+  Q := Pointer(Result);
+  for I := 1 to Len do
+    begin
+      V := S^;
+      if Ord(V) > $FF then
+        raise EConvertError.Create(SUTFStringConvertError);
+      Q^ := Byte(V);
+      Inc(S);
+      Inc(Q);
+    end;
+end;
+
+function WideBufToUTF8String(const Buf: PWideChar; const Len: NativeInt): RawByteString;
+var
+  N : NativeInt;
+  P : PWideChar;
+  Q : PByte;
+  M : NativeInt;
+  I : NativeInt;
+  J : Integer;
 begin
   if Len = 0 then
     begin
@@ -794,14 +978,19 @@ begin
       Dec(N, J);
       Inc(M, J);
     end;
-  SetLength(Result, M); // actual size
+  if M < N then
+    SetLength(Result, M); // actual size
 end;
 
 function RawByteStringToUTF8String(const S: RawByteString): RawByteString;
-var P       : PByte;
-    Q       : PByte;
-    I, M, N : Integer;
-    J, L    : Integer;
+var
+  P       : PByte;
+  L       : NativeInt;
+  N       : NativeInt;
+  Q       : PByte;
+  M       : NativeInt;
+  I       : NativeInt;
+  J       : Integer;
 begin
   P := Pointer(S);
   L := Length(S);
@@ -827,7 +1016,8 @@ begin
       Dec(N, J);
       Inc(M, J);
     end;
-  SetLength(Result, M); // actual size
+  if M < N then
+    SetLength(Result, M); // actual size
 end;
 
 function UnicodeStringToUTF8String(const S: UnicodeString): RawByteString;
@@ -839,9 +1029,11 @@ const
   MaxUTF8SequenceSize = 4;
 
 function UCS4CharToUTF8String(const Ch: UCS4Char): RawByteString;
-var Buf     : array[0..MaxUTF8SequenceSize - 1] of Byte;
-    Size, I : Integer;
-    P, Q    : PByte;
+var
+  Buf  : array[0..MaxUTF8SequenceSize - 1] of Byte;
+  Size : Integer;
+  I    : Integer;
+  P, Q : PByte;
 begin
   Size := 0;
   UCS4CharToUTF8(Ch, @Buf, Sizeof(Buf), Size);
@@ -860,9 +1052,11 @@ begin
 end;
 
 function ISO8859_1StringToUTF8String(const S: RawByteString): RawByteString;
-var P, Q  : PByte;
-    L, I,
-    M, J  : Integer;
+var
+  P, Q : PByte;
+  L, I : NativeInt;
+  M    : NativeInt;
+  J    : Integer;
 begin
   L := Length(S);
   if L = 0 then
@@ -913,23 +1107,25 @@ end;
 {                                                                              }
 { UTF-16 functions                                                             }
 {                                                                              }
-function DetectUTF16BEBOM(const P: Pointer; const Size: Integer): Boolean;
-begin
-  Result := Assigned(P) and (Size >= Sizeof(WideChar)) and
-            (PWideChar(P)^ = WideChar($FEFF));
-end;
-
-function DetectUTF16LEBOM(const P: Pointer; const Size: Integer): Boolean;
+function DetectUTF16BEBOM(const P: Pointer; const Size: NativeInt): Boolean;
 begin
   Result := Assigned(P) and (Size >= Sizeof(WideChar)) and
             (PWideChar(P)^ = WideChar($FFFE));
 end;
 
+function DetectUTF16LEBOM(const P: Pointer; const Size: NativeInt): Boolean;
+begin
+  Result := Assigned(P) and (Size >= Sizeof(WideChar)) and
+            (PWideChar(P)^ = WideChar($FEFF));
+end;
+
 { DetectUTF16Encoding returns True if the encoding was confirmed to be UTF-16. }
 { SwapEndian is True if it was detected that the UTF-16 data is in reverse     }
 { endian from that used by the cpu.                                            }
-function DetectUTF16BOM(const P: Pointer; const Size: Integer;
-    out SwapEndian: Boolean): Boolean;
+function DetectUTF16BOM(
+         const P: Pointer;
+         const Size: NativeInt;
+         out SwapEndian: Boolean): Boolean;
 begin
   if not Assigned(P) or (Size < Sizeof(WideChar)) then
     begin
