@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.66                                                     }
+{   File version:     5.67                                                     }
 {   Description:      Utility functions.                                       }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -114,6 +114,7 @@
 {   2018/08/12  5.64  Removed WideString functions and CLR code.               }
 {   2018/08/14  5.65  ByteChar changes.                                        }
 {   2019/04/02  5.66  Swap changes.                                            }
+{   2020/03/13  5.67  NativeInt changes.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -165,6 +166,7 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
   flcStdTypes;
 
@@ -175,6 +177,17 @@ uses
 {                                                                              }
 const
   FundamentalsVersion = '5.0.6';
+
+
+
+{                                                                              }
+{ Exception                                                                    }
+{                                                                              }
+type
+  ERangeCheckError = class(Exception)
+  public
+    constructor Create;
+  end;
 
 
 
@@ -221,15 +234,15 @@ function  Int64BoundedWord32(const Value: Int64): Word32;                       
 { String construction from buffer                                              }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function  StrPToStrA(const P: PAnsiChar; const L: Integer): AnsiString;
+function  StrPToStrA(const P: PAnsiChar; const L: NativeInt): AnsiString;
 {$ENDIF}
-function  StrPToStrB(const P: Pointer; const L: Integer): RawByteString;
-function  StrPToStrU(const P: PWideChar; const L: Integer): UnicodeString;
-function  StrPToStr(const P: PChar; const L: Integer): String;
+function  StrPToStrB(const P: Pointer; const L: NativeInt): RawByteString;
+function  StrPToStrU(const P: PWideChar; const L: NativeInt): UnicodeString;
+function  StrPToStr(const P: PChar; const L: NativeInt): String;
 
-function  StrZLenA(const S: Pointer): Integer;
-function  StrZLenW(const S: PWideChar): Integer;
-function  StrZLen(const S: PChar): Integer;
+function  StrZLenA(const S: Pointer): NativeInt;
+function  StrZLenW(const S: PWideChar): NativeInt;
+function  StrZLen(const S: PChar): NativeInt;
 
 {$IFDEF SupportAnsiString}
 function  StrZPasA(const A: PAnsiChar): AnsiString;
@@ -243,12 +256,12 @@ function  StrZPas(const A: PChar): String;
 {                                                                              }
 { RawByteString conversion functions                                           }
 {                                                                              }
-procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: Integer; const DestBuf: Pointer);
-function  RawByteStrPtrToUnicodeString(const S: Pointer; const Len: Integer): UnicodeString;
+procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: NativeInt; const DestBuf: Pointer);
+function  RawByteStrPtrToUnicodeString(const S: Pointer; const Len: NativeInt): UnicodeString;
 function  RawByteStringToUnicodeString(const S: RawByteString): UnicodeString;
 
-procedure WideBufToRawByteBuf(const Buf: Pointer; const Len: Integer; const DestBuf: Pointer);
-function  WideBufToRawByteString(const P: PWideChar; const Len: Integer): RawByteString;
+procedure WideBufToRawByteBuf(const Buf: Pointer; const Len: NativeInt; const DestBuf: Pointer);
+function  WideBufToRawByteString(const P: PWideChar; const Len: NativeInt): RawByteString;
 
 function  UnicodeStringToRawByteString(const S: UnicodeString): RawByteString;
 
@@ -309,9 +322,9 @@ function  CharCompareB(const A, B: ByteChar): Integer; {$IFDEF UseInline}inline;
 function  CharCompareW(const A, B: WideChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  CharCompare(const A, B: Char): Integer;      {$IFDEF UseInline}inline;{$ENDIF}
 
-function  StrPCompareB(const A, B: Pointer; const Len: Integer): Integer;
-function  StrPCompareW(const A, B: PWideChar; const Len: Integer): Integer;
-function  StrPCompare(const A, B: PChar; const Len: Integer): Integer;
+function  StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;
+function  StrPCompareW(const A, B: PWideChar; const Len: NativeInt): Integer;
+function  StrPCompare(const A, B: PChar; const Len: NativeInt): Integer;
 
 {$IFDEF SupportAnsiString}
 function  StrCompareA(const A, B: AnsiString): Integer;
@@ -597,7 +610,7 @@ function  BinToWord32U(const S: UnicodeString): Word32;
 function  BinToWord32(const S: String): Word32;
 
 {$IFDEF SupportAnsiString}
-function  BytesToHexA(const P: Pointer; const Count: Integer;
+function  BytesToHexA(const P: Pointer; const Count: NativeInt;
           const UpperCase: Boolean = True): AnsiString;
 {$ENDIF}
 
@@ -658,28 +671,29 @@ function  ObjectToStr(const O: TObject): String;
 {   otherwise the value is in the range from 0 to Slots-1. Note that the       }
 {   'mod' operation, which is used when Slots <> 0, is comparitively slow.     }
 {                                                                              }
-function  HashBuf(const Hash: Word32; const Buf; const BufSize: Integer): Word32;
+function  HashBuf(const Hash: Word32; const Buf; const BufSize: NativeInt): Word32;
 
 {$IFDEF SupportAnsiString}
 function  HashStrA(const S: AnsiString;
-          const Index: Integer = 1; const Count: Integer = -1;
+          const Index: NativeInt = 1; const Count: NativeInt = -1;
           const AsciiCaseSensitive: Boolean = True;
           const Slots: Word32 = 0): Word32;
 {$ENDIF}
 function  HashStrB(const S: RawByteString;
-          const Index: Integer = 1; const Count: Integer = -1;
+          const Index: NativeInt = 1; const Count: NativeInt = -1;
           const AsciiCaseSensitive: Boolean = True;
           const Slots: Word32 = 0): Word32;
 function  HashStrU(const S: UnicodeString;
-          const Index: Integer = 1; const Count: Integer = -1;
+          const Index: NativeInt = 1; const Count: NativeInt = -1;
           const AsciiCaseSensitive: Boolean = True;
           const Slots: Word32 = 0): Word32;
 function  HashStr(const S: String;
-          const Index: Integer = 1; const Count: Integer = -1;
+          const Index: NativeInt = 1; const Count: NativeInt = -1;
           const AsciiCaseSensitive: Boolean = True;
           const Slots: Word32 = 0): Word32;
 
 function  HashInteger(const I: Integer; const Slots: Word32 = 0): Word32;
+function  HashNativeUInt(const I: NativeUInt; const Slots: Word32): Word32;
 function  HashWord32(const I: Word32; const Slots: Word32 = 0): Word32;
 
 
@@ -695,24 +709,17 @@ const
   Bytes64MB = 64 * Bytes1MB;
   Bytes2GB  = 2 * Word32(Bytes1GB);
 
-{$IFDEF ASM386_DELPHI}{$IFNDEF DELPHI2006_UP}
-  {$DEFINE UseAsmMemFunction}
-{$ENDIF}{$ENDIF}
-{$IFDEF UseInline}{$IFNDEF UseAsmMemFunction}
-  {$DEFINE InlineMemFunction}
-{$ENDIF}{$ENDIF}
-
-procedure FillMem(var Buf; const Count: Integer; const Value: Byte); {$IFDEF InlineMemFunction}inline;{$ENDIF}
-procedure ZeroMem(var Buf; const Count: Integer);                    {$IFDEF InlineMemFunction}inline;{$ENDIF}
-procedure GetZeroMem(var P: Pointer; const Size: Integer);           {$IFDEF InlineMemFunction}inline;{$ENDIF}
-procedure MoveMem(const Source; var Dest; const Count: Integer);     {$IFDEF InlineMemFunction}inline;{$ENDIF}
-function  EqualMem(const Buf1; const Buf2; const Count: Integer): Boolean;
-function  EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: Integer): Boolean;
-function  CompareMem(const Buf1; const Buf2; const Count: Integer): Integer;
-function  CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: Integer): Integer;
-function  LocateMem(const Buf1; const Size1: Integer; const Buf2; const Size2: Integer): Integer;
-function  LocateMemNoAsciiCase(const Buf1; const Size1: Integer; const Buf2; const Size2: Integer): Integer;
-procedure ReverseMem(var Buf; const Size: Integer);
+procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure ZeroMem(var Buf; const Count: NativeInt);                    {$IFDEF UseInline}inline;{$ENDIF}
+procedure GetZeroMem(var P: Pointer; const Size: NativeInt);           {$IFDEF UseInline}inline;{$ENDIF}
+procedure MoveMem(const Source; var Dest; const Count: NativeInt);     {$IFDEF UseInline}inline;{$ENDIF}
+function  EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+function  EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+function  CompareMem(const Buf1; const Buf2; const Count: NativeInt): Integer;
+function  CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Integer;
+function  LocateMem(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
+function  LocateMemNoAsciiCase(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
+procedure ReverseMem(var Buf; const Size: NativeInt);
 
 
 
@@ -743,15 +750,15 @@ procedure FreeAndNilObjectArray(var V: ObjectArray);
 {                                                                              }
 { TBytes functions                                                             }
 {                                                                              }
-procedure BytesSetLengthAndZero(var V: TBytes; const NewLength: Integer);
+procedure BytesSetLengthAndZero(var V: TBytes; const NewLength: NativeInt);
 
 procedure BytesInit(var V: TBytes; const R: Byte); overload;
 procedure BytesInit(var V: TBytes; const S: String); overload;
 
-function  BytesAppend(var V: TBytes; const R: Byte): Integer; overload;
-function  BytesAppend(var V: TBytes; const R: TBytes): Integer; overload;
-function  BytesAppend(var V: TBytes; const R: array of Byte): Integer; overload;
-function  BytesAppend(var V: TBytes; const R: String): Integer; overload;
+function  BytesAppend(var V: TBytes; const R: Byte): NativeInt; overload;
+function  BytesAppend(var V: TBytes; const R: TBytes): NativeInt; overload;
+function  BytesAppend(var V: TBytes; const R: array of Byte): NativeInt; overload;
+function  BytesAppend(var V: TBytes; const R: String): NativeInt; overload;
 
 function  BytesCompare(const A, B: TBytes): Integer;
 
@@ -836,13 +843,9 @@ end;
 {                                                                              }
 { Range check error                                                            }
 {                                                                              }
-
-resourcestring
-  SRangeCheckError = 'Range check error';
-
-procedure RaiseRangeCheckError; {$IFDEF UseInline}inline;{$ENDIF}
+constructor ERangeCheckError.Create;
 begin
-  raise ERangeError.Create(SRangeCheckError);
+  inherited Create('Range check error');
 end;
 
 
@@ -958,7 +961,7 @@ end;
 { String construction from buffer                                              }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function StrPToStrA(const P: PAnsiChar; const L: Integer): AnsiString;
+function StrPToStrA(const P: PAnsiChar; const L: NativeInt): AnsiString;
 begin
   if L <= 0 then
     SetLength(Result, 0)
@@ -970,7 +973,7 @@ begin
 end;
 {$ENDIF}
 
-function StrPToStrB(const P: Pointer; const L: Integer): RawByteString;
+function StrPToStrB(const P: Pointer; const L: NativeInt): RawByteString;
 begin
   if L <= 0 then
     SetLength(Result, 0)
@@ -981,7 +984,7 @@ begin
     end;
 end;
 
-function StrPToStrU(const P: PWideChar; const L: Integer): UnicodeString;
+function StrPToStrU(const P: PWideChar; const L: NativeInt): UnicodeString;
 begin
   if L <= 0 then
     SetLength(Result, 0)
@@ -992,7 +995,7 @@ begin
     end;
 end;
 
-function StrPToStr(const P: PChar; const L: Integer): String;
+function StrPToStr(const P: PChar; const L: NativeInt): String;
 begin
   if L <= 0 then
     SetLength(Result, 0)
@@ -1008,8 +1011,9 @@ end;
 {                                                                              }
 { String construction from zero terminated buffer                              }
 {                                                                              }
-function StrZLenA(const S: Pointer): Integer;
-var P : PByteChar;
+function StrZLenA(const S: Pointer): NativeInt;
+var
+  P : PByteChar;
 begin
   if not Assigned(S) then
     Result := 0
@@ -1025,8 +1029,9 @@ begin
     end;
 end;
 
-function StrZLenW(const S: PWideChar): Integer;
-var P : PWideChar;
+function StrZLenW(const S: PWideChar): NativeInt;
+var
+  P : PWideChar;
 begin
   if not Assigned(S) then
     Result := 0
@@ -1042,8 +1047,9 @@ begin
     end;
 end;
 
-function StrZLen(const S: PChar): Integer;
-var P : PChar;
+function StrZLen(const S: PChar): NativeInt;
+var
+  P : PChar;
 begin
   if not Assigned(S) then
     Result := 0
@@ -1061,8 +1067,9 @@ end;
 
 {$IFDEF SupportAnsiString}
 function StrZPasA(const A: PAnsiChar): AnsiString;
-var I, L : Integer;
-    P : PAnsiChar;
+var
+  I, L : NativeInt;
+  P : PAnsiChar;
 begin
   L := StrZLenA(A);
   SetLength(Result, L);
@@ -1080,8 +1087,9 @@ end;
 {$ENDIF}
 
 function StrZPasB(const A: PByteChar): RawByteString;
-var I, L : Integer;
-    P : PByteChar;
+var
+  I, L : NativeInt;
+  P : PByteChar;
 begin
   L := StrZLenA(A);
   SetLength(Result, L);
@@ -1098,7 +1106,8 @@ begin
 end;
 
 function StrZPasU(const A: PWideChar): UnicodeString;
-var I, L : Integer;
+var
+  I, L : NativeInt;
 begin
   L := StrZLenW(A);
   SetLength(Result, L);
@@ -1113,7 +1122,8 @@ begin
 end;
 
 function StrZPas(const A: PChar): String;
-var I, L : Integer;
+var
+  I, L : NativeInt;
 begin
   L := StrZLen(A);
   SetLength(Result, L);
@@ -1133,15 +1143,17 @@ end;
 { RawByteString conversion functions                                           }
 {                                                                              }
 
-resourcestring
+const
   SRawByteStringConvertError = 'RawByteString conversion error';
 
-procedure RawByteBufToWideBuf(const Buf: Pointer; const BufSize: Integer;
-    const DestBuf: Pointer);
-var I : Integer;
-    P : Pointer;
-    Q : Pointer;
-    V : Word32;
+procedure RawByteBufToWideBuf(
+          const Buf: Pointer; const BufSize: NativeInt;
+          const DestBuf: Pointer);
+var
+  I : NativeInt;
+  P : Pointer;
+  Q : Pointer;
+  V : Word32;
 begin
   if BufSize <= 0 then
     exit;
@@ -1167,7 +1179,7 @@ begin
     end;
 end;
 
-function RawByteStrPtrToUnicodeString(const S: Pointer; const Len: Integer): UnicodeString;
+function RawByteStrPtrToUnicodeString(const S: Pointer; const Len: NativeInt): UnicodeString;
 begin
   if Len <= 0 then
     Result := ''
@@ -1187,13 +1199,15 @@ begin
     RawByteBufToWideBuf(Pointer(S), L, PWideChar(Result));
 end;
 
-procedure WideBufToRawByteBuf(const Buf: Pointer; const Len: Integer;
-    const DestBuf: Pointer);
-var I : Integer;
-    S : PWideChar;
-    Q : PByte;
-    V : Word32;
-    W : Word;
+procedure WideBufToRawByteBuf(
+          const Buf: Pointer; const Len: NativeInt;
+          const DestBuf: Pointer);
+var
+  I : NativeInt;
+  S : PWideChar;
+  Q : PByte;
+  V : Word32;
+  W : Word;
 begin
   if Len <= 0 then
     exit;
@@ -1221,11 +1235,12 @@ begin
     end;
 end;
 
-function WideBufToRawByteString(const P: PWideChar; const Len: Integer): RawByteString;
-var I : Integer;
-    S : PWideChar;
-    Q : PByte;
-    V : WideChar;
+function WideBufToRawByteString(const P: PWideChar; const Len: NativeInt): RawByteString;
+var
+  I : NativeInt;
+  S : PWideChar;
+  Q : PByte;
+  V : WideChar;
 begin
   if Len <= 0 then
     begin
@@ -1402,9 +1417,10 @@ begin
   {$ENDIF}
 end;
 
-function StrPCompareB(const A, B: Pointer; const Len: Integer): Integer;
-var P, Q : PByte;
-    I    : Integer;
+function StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;
+var
+  P, Q : PByte;
+  I    : NativeInt;
 begin
   P := A;
   Q := B;
@@ -1426,9 +1442,10 @@ begin
   Result := 0;
 end;
 
-function StrPCompareW(const A, B: PWideChar; const Len: Integer): Integer;
-var P, Q : PWideChar;
-    I    : Integer;
+function StrPCompareW(const A, B: PWideChar; const Len: NativeInt): Integer;
+var
+  P, Q : PWideChar;
+  I    : NativeInt;
 begin
   P := A;
   Q := B;
@@ -1450,9 +1467,10 @@ begin
   Result := 0;
 end;
 
-function StrPCompare(const A, B: PChar; const Len: Integer): Integer;
-var P, Q : PChar;
-    I    : Integer;
+function StrPCompare(const A, B: PChar; const Len: NativeInt): Integer;
+var
+  P, Q : PChar;
+  I    : NativeInt;
 begin
   P := A;
   Q := B;
@@ -1477,7 +1495,8 @@ end;
 
 {$IFDEF SupportAnsiString}
 function StrCompareA(const A, B: AnsiString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I : NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -1498,7 +1517,8 @@ end;
 {$ENDIF}
 
 function StrCompareB(const A, B: RawByteString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I : NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -1518,7 +1538,8 @@ begin
 end;
 
 function StrCompareU(const A, B: UnicodeString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I : NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -1538,7 +1559,8 @@ begin
 end;
 
 function StrCompare(const A, B: String): Integer;
-var L, M, I: Integer;
+var
+  L, M, I : NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -3056,26 +3078,26 @@ end;
 function StringToInt64A(const S: AnsiString): Int64;
 begin
   if not TryStringToInt64A(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
 function StringToInt64B(const S: RawByteString): Int64;
 begin
   if not TryStringToInt64B(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToInt64U(const S: UnicodeString): Int64;
 begin
   if not TryStringToInt64U(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToInt64(const S: String): Int64;
 begin
   if not TryStringToInt64(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3186,26 +3208,26 @@ end;
 function StringToIntA(const S: AnsiString): Integer;
 begin
   if not TryStringToIntA(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
 function StringToIntB(const S: RawByteString): Integer;
 begin
   if not TryStringToIntB(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToIntU(const S: UnicodeString): Integer;
 begin
   if not TryStringToIntU(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToInt(const S: String): Integer;
 begin
   if not TryStringToInt(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3290,26 +3312,26 @@ end;
 function StringToWord32A(const S: AnsiString): Word32;
 begin
   if not TryStringToWord32A(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
 function StringToWord32B(const S: RawByteString): Word32;
 begin
   if not TryStringToWord32B(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToWord32U(const S: UnicodeString): Word32;
 begin
   if not TryStringToWord32U(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function StringToWord32(const S: String): Word32;
 begin
   if not TryStringToWord32(S, Result) then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3506,7 +3528,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
@@ -3515,7 +3537,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function HexToUIntU(const S: UnicodeString): NativeUInt;
@@ -3523,7 +3545,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function HexToUInt(const S: String): NativeUInt;
@@ -3531,7 +3553,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3562,7 +3584,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
@@ -3571,7 +3593,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function HexToWord32U(const S: UnicodeString): Word32;
@@ -3579,7 +3601,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function HexToWord32(const S: String): Word32;
@@ -3587,7 +3609,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 4, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3618,7 +3640,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 3, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
@@ -3627,7 +3649,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 3, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function OctToWord32U(const S: UnicodeString): Word32;
@@ -3635,7 +3657,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 3, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function OctToWord32(const S: String): Word32;
@@ -3643,7 +3665,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 3, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 {$IFDEF SupportAnsiString}
@@ -3674,7 +3696,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntA(S, 1, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
@@ -3683,7 +3705,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntB(S, 1, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function BinToWord32U(const S: UnicodeString): Word32;
@@ -3691,7 +3713,7 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUIntU(S, 1, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 function BinToWord32(const S: String): Word32;
@@ -3699,17 +3721,17 @@ var R : Boolean;
 begin
   Result := BaseStrToNativeUInt(S, 1, R);
   if not R then
-    RaiseRangeCheckError;
+    raise ERangeCheckError.Create;
 end;
 
 
 
 {$IFDEF SupportAnsiString}
-function BytesToHexA(const P: Pointer; const Count: Integer;
+function BytesToHexA(const P: Pointer; const Count: NativeInt;
          const UpperCase: Boolean): AnsiString;
 var Q : PByte;
     D : PAnsiChar;
-    L : Integer;
+    L : NativeInt;
     V : Byte;
 begin
   Q := P;
@@ -3998,9 +4020,10 @@ begin
   {$ENDIF}
 end;
 
-function HashBuf(const Hash: Word32; const Buf; const BufSize: Integer): Word32;
-var P : PByte;
-    I : Integer;
+function HashBuf(const Hash: Word32; const Buf; const BufSize: NativeInt): Word32;
+var
+  P : PByte;
+  I : NativeInt;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4014,11 +4037,13 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function HashStrA(const S: AnsiString;
-         const Index: Integer; const Count: Integer;
+function HashStrA(
+         const S: AnsiString;
+         const Index: NativeInt; const Count: NativeInt;
          const AsciiCaseSensitive: Boolean;
          const Slots: Word32): Word32;
-var I, L, A, B : Integer;
+var
+  I, L, A, B : NativeInt;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4047,11 +4072,13 @@ begin
 end;
 {$ENDIF}
 
-function HashStrB(const S: RawByteString;
-         const Index: Integer; const Count: Integer;
+function HashStrB(
+         const S: RawByteString;
+         const Index: NativeInt; const Count: NativeInt;
          const AsciiCaseSensitive: Boolean;
          const Slots: Word32): Word32;
-var I, L, A, B : Integer;
+var
+  I, L, A, B : NativeInt;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4079,11 +4106,13 @@ begin
     Result := Result mod Slots;
 end;
 
-function HashStrU(const S: UnicodeString;
-         const Index: Integer; const Count: Integer;
+function HashStrU(
+         const S: UnicodeString;
+         const Index: NativeInt; const Count: NativeInt;
          const AsciiCaseSensitive: Boolean;
          const Slots: Word32): Word32;
-var I, L, A, B : Integer;
+var
+  I, L, A, B : NativeInt;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4111,11 +4140,13 @@ begin
     Result := Result mod Slots;
 end;
 
-function HashStr(const S: String;
-         const Index: Integer; const Count: Integer;
+function HashStr(
+         const S: String;
+         const Index: NativeInt; const Count: NativeInt;
          const AsciiCaseSensitive: Boolean;
          const Slots: Word32): Word32;
-var I, L, A, B : Integer;
+var
+  I, L, A, B : NativeInt;
 begin
   if not HashTableInit then
     InitHashTable;
@@ -4146,19 +4177,37 @@ end;
 { HashInteger based on the CRC32 algorithm. It is a very good all purpose hash }
 { with a highly uniform distribution of results.                               }
 function HashInteger(const I: Integer; const Slots: Word32): Word32;
-var P : PByte;
+var
+  P : PByte;
+  J : Integer;
 begin
   if not HashTableInit then
     InitHashTable;
   Result := $FFFFFFFF;
   P := @I;
-  Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
-  Inc(P);
-  Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
-  Inc(P);
-  Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
-  Inc(P);
-  Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
+  for J := 0 to SizeOf(Integer) - 1 do
+    begin
+      Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
+      Inc(P);
+    end;
+  if Slots <> 0 then
+    Result := Result mod Slots;
+end;
+
+function HashNativeUInt(const I: NativeUInt; const Slots: Word32): Word32;
+var
+  P : PByte;
+  J : Integer;
+begin
+  if not HashTableInit then
+    InitHashTable;
+  Result := $FFFFFFFF;
+  P := @I;
+  for J := 0 to SizeOf(NativeUInt) - 1 do
+    begin
+      Result := HashTable[Byte(Result) xor P^] xor (Result shr 8);
+      Inc(P);
+    end;
   if Slots <> 0 then
     Result := Result mod Slots;
 end;
@@ -4186,447 +4235,31 @@ end;
 {                                                                              }
 { Memory                                                                       }
 {                                                                              }
-{$IFDEF UseAsmMemFunction}
-procedure FillMem(var Buf; const Count: Integer; const Value: Byte);
-asm
-      // EAX = Buf, EDX = Count, CL = Value
-      OR      EDX, EDX
-      JLE     @Fin
-      // Set 4 bytes of ECX to Value byte
-      MOV     CH, CL
-      SHL     ECX, 8
-      MOV     CL, CH
-      SHL     ECX, 8
-      MOV     CL, CH
-      CMP     EDX, 16
-      JBE     @SmallFillMem
-      // General purpose FillMem
-    @GeneralFillMem:
-      PUSH    EDI
-      MOV     EDI, EAX
-      MOV     EAX, ECX
-      MOV     ECX, EDX
-      SHR     ECX, 2
-      REP     STOSD
-      AND     EDX, 3
-      MOV     ECX, EDX
-      REP     STOSB
-      POP     EDI
-      RET
-      // FillMem for small blocks
-    @SmallFillMem:
-      JMP     DWORD PTR @JumpTable[EDX * 4]
-    @JumpTable:
-      DD      @Fill0,  @Fill1,  @Fill2,  @Fill3
-      DD      @Fill4,  @Fill5,  @Fill6,  @Fill7
-      DD      @Fill8,  @Fill9,  @Fill10, @Fill11
-      DD      @Fill12, @Fill13, @Fill14, @Fill15
-      DD      @Fill16
-    @Fill16:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     DWORD PTR [EAX + 4], ECX
-      MOV     DWORD PTR [EAX + 8], ECX
-      MOV     DWORD PTR [EAX + 12], ECX
-      RET
-    @Fill15:
-      MOV     BYTE PTR [EAX + 14], CL
-    @Fill14:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     DWORD PTR [EAX + 4], ECX
-      MOV     DWORD PTR [EAX + 8], ECX
-      MOV     WORD PTR [EAX + 12], CX
-      RET
-    @Fill13:
-      MOV     BYTE PTR [EAX + 12], CL
-    @Fill12:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     DWORD PTR [EAX + 4], ECX
-      MOV     DWORD PTR [EAX + 8], ECX
-      RET
-    @Fill11:
-      MOV     BYTE PTR [EAX + 10], CL
-    @Fill10:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     DWORD PTR [EAX + 4], ECX
-      MOV     WORD PTR [EAX + 8], CX
-      RET
-    @Fill9:
-      MOV     BYTE PTR [EAX + 8], CL
-    @Fill8:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     DWORD PTR [EAX + 4], ECX
-      RET
-    @Fill7:
-      MOV     BYTE PTR [EAX + 6], CL
-    @Fill6:
-      MOV     DWORD PTR [EAX], ECX
-      MOV     WORD PTR [EAX + 4], CX
-      RET
-    @Fill5:
-      MOV     BYTE PTR [EAX + 4], CL
-    @Fill4:
-      MOV     DWORD PTR [EAX], ECX
-      RET
-    @Fill3:
-      MOV     BYTE PTR [EAX + 2], CL
-    @Fill2:
-      MOV     WORD PTR [EAX], CX
-      RET
-    @Fill1:
-      MOV     BYTE PTR [EAX], CL
-    @Fill0:
-    @Fin:
-end;
-{$ELSE}
-procedure FillMem(var Buf; const Count: Integer; const Value: Byte);
+procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte);
 begin
   FillChar(Buf, Count, Value);
 end;
-{$ENDIF}
 
-{$IFDEF UseAsmMemFunction}
-procedure ZeroMem(var Buf; const Count: Integer);
-asm
-    // EAX = Buf, EDX = Count
-    OR     EDX, EDX
-    JLE    @Zero0
-    CMP    EDX, 16
-    JA     @GeneralZeroMem
-    XOR    ECX, ECX
-    JMP    DWORD PTR @SmallZeroJumpTable[EDX * 4]
-  @SmallZeroJumpTable:
-    DD     @Zero0,  @Zero1,  @Zero2,  @Zero3
-    DD     @Zero4,  @Zero5,  @Zero6,  @Zero7
-    DD     @Zero8,  @Zero9,  @Zero10, @Zero11
-    DD     @Zero12, @Zero13, @Zero14, @Zero15
-    DD     @Zero16
-  @Zero16:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    DWORD PTR [EAX + 4], ECX
-    MOV    DWORD PTR [EAX + 8], ECX
-    MOV    DWORD PTR [EAX + 12], ECX
-    RET
-  @Zero15:
-    MOV    BYTE PTR [EAX + 14], CL
-  @Zero14:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    DWORD PTR [EAX + 4], ECX
-    MOV    DWORD PTR [EAX + 8], ECX
-    MOV    WORD PTR [EAX + 12], CX
-    RET
-  @Zero13:
-    MOV    BYTE PTR [EAX + 12], CL
-  @Zero12:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    DWORD PTR [EAX + 4], ECX
-    MOV    DWORD PTR [EAX + 8], ECX
-    RET
-  @Zero11:
-    MOV    BYTE PTR [EAX + 10], CL
-  @Zero10:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    DWORD PTR [EAX + 4], ECX
-    MOV    WORD PTR [EAX + 8], CX
-    RET
-  @Zero9:
-    MOV    BYTE PTR [EAX + 8], CL
-  @Zero8:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    DWORD PTR [EAX + 4], ECX
-    RET
-  @Zero7:
-    MOV    BYTE PTR [EAX + 6], CL
-  @Zero6:
-    MOV    DWORD PTR [EAX], ECX
-    MOV    WORD PTR [EAX + 4], CX
-    RET
-  @Zero5:
-    MOV    BYTE PTR [EAX + 4], CL
-  @Zero4:
-    MOV    DWORD PTR [EAX], ECX
-    RET
-  @Zero3:
-    MOV    BYTE PTR [EAX + 2], CL
-  @Zero2:
-    MOV    WORD PTR [EAX], CX
-    RET
-  @Zero1:
-    MOV    BYTE PTR [EAX], CL
-  @Zero0:
-    RET
-  @GeneralZeroMem:
-    PUSH   EDI
-    MOV    EDI, EAX
-    XOR    EAX, EAX
-    MOV    ECX, EDX
-    SHR    ECX, 2
-    REP    STOSD
-    MOV    ECX, EDX
-    AND    ECX, 3
-    REP    STOSB
-    POP    EDI
-end;
-{$ELSE}
-procedure ZeroMem(var Buf; const Count: Integer);
+procedure ZeroMem(var Buf; const Count: NativeInt);
 begin
   FillChar(Buf, Count, #0);
 end;
-{$ENDIF}
 
-procedure GetZeroMem(var P: Pointer; const Size: Integer);
+procedure GetZeroMem(var P: Pointer; const Size: NativeInt);
 begin
   GetMem(P, Size);
   ZeroMem(P^, Size);
 end;
 
-{$IFDEF UseAsmMemFunction}
-{ Note: MoveMem implements a "safe move", that is, the Source and Dest memory  }
-{ blocks are allowed to overlap.                                               }
-procedure MoveMem(const Source; var Dest; const Count: Integer);
-asm
-    // EAX = Source, EDX = Dest, ECX = Count
-    OR     ECX, ECX
-    JLE    @Move0
-    CMP    EAX, EDX
-    JE     @Move0
-    JB     @CheckSafe
-  @GeneralMove:
-    CMP    ECX, 16
-    JA     @LargeMove
-    JMP    DWORD PTR @SmallMoveJumpTable[ECX * 4]
-  @CheckSafe:
-    ADD    EAX, ECX
-    CMP    EAX, EDX
-    JBE    @IsSafe
-  @NotSafe:
-    SUB    EAX, ECX
-    CMP    ECX, 10
-    JA     @LargeMoveReverse
-    JMP    DWORD PTR @SmallMoveJumpTable[ECX * 4]
-  @IsSafe:
-    SUB    EAX, ECX
-    CMP    ECX, 16
-    JA     @LargeMove
-    JMP    DWORD PTR @SmallMoveJumpTable[ECX * 4]
-  @SmallMoveJumpTable:
-    DD     @Move0,  @Move1,  @Move2,  @Move3
-    DD     @Move4,  @Move5,  @Move6,  @Move7
-    DD     @Move8,  @Move9,  @Move10, @Move11
-    DD     @Move12, @Move13, @Move14, @Move15
-    DD     @Move16
-  @Move16:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    [EDX],      ECX
-    MOV    [EDX + 4],  EBX
-    MOV    ECX, [EAX + 8]
-    MOV    EBX, [EAX + 12]
-    MOV    [EDX + 8],  ECX
-    MOV    [EDX + 12], EBX
-    POP    EBX
-    RET
-  @Move15:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    [EDX],      ECX
-    MOV    [EDX + 4],  EBX
-    MOV    ECX, [EAX + 8]
-    MOV    BX,  [EAX + 12]
-    MOV    AL,  [EAX + 14]
-    MOV    [EDX + 8],  ECX
-    MOV    [EDX + 12], BX
-    MOV    [EDX + 14], AL
-    POP    EBX
-    RET
-  @Move14:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    [EDX],      ECX
-    MOV    [EDX + 4],  EBX
-    MOV    ECX, [EAX + 8]
-    MOV    BX,  [EAX + 12]
-    MOV    [EDX + 8],  ECX
-    MOV    [EDX + 12], BX
-    POP    EBX
-    RET
-  @Move13:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    [EDX],      ECX
-    MOV    [EDX + 4],  EBX
-    MOV    ECX, [EAX + 8]
-    MOV    BL,  [EAX + 12]
-    MOV    [EDX + 8],  ECX
-    MOV    [EDX + 12], BL
-    POP    EBX
-    RET
-  @Move12:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    EAX, [EAX + 8]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], EBX
-    MOV    [EDX + 8], EAX
-    POP    EBX
-    RET
-  @Move11:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    [EDX],      ECX
-    MOV    [EDX + 4],  EBX
-    MOV    CX,  [EAX + 8]
-    MOV    BL,  [EAX + 10]
-    MOV    [EDX + 8],  CX
-    MOV    [EDX + 10], BL
-    POP    EBX
-    RET
-  @Move10:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    AX,  [EAX + 8]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], EBX
-    MOV    [EDX + 8], AX
-    POP    EBX
-    RET
-  @Move9:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    EBX, [EAX + 4]
-    MOV    AL,  [EAX + 8]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], EBX
-    MOV    [EDX + 8], AL
-    POP    EBX
-    RET
-  @Move8:
-    MOV    ECX, [EAX]
-    MOV    EAX, [EAX + 4]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], EAX
-    RET
-  @Move7:
-    PUSH   EBX
-    MOV    ECX, [EAX]
-    MOV    BX,  [EAX + 4]
-    MOV    AL,  [EAX + 6]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], BX
-    MOV    [EDX + 6], AL
-    POP    EBX
-    RET
-  @Move6:
-    MOV    ECX, [EAX]
-    MOV    AX,  [EAX + 4]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], AX
-    RET
-  @Move5:
-    MOV    ECX, [EAX]
-    MOV    AL,  [EAX + 4]
-    MOV    [EDX],     ECX
-    MOV    [EDX + 4], AL
-    RET
-  @Move4:
-    MOV    ECX, [EAX]
-    MOV    [EDX], ECX
-    RET
-  @Move3:
-    MOV    CX, [EAX]
-    MOV    AL, [EAX + 2]
-    MOV    [EDX],     CX
-    MOV    [EDX + 2], AL
-    RET
-  @Move2:
-    MOV    CX, [EAX]
-    MOV    [EDX], CX
-    RET
-  @Move1:
-    MOV    CL, [EAX]
-    MOV    [EDX], CL
-  @Move0:
-    RET
-  @LargeMove:
-    PUSH   ESI
-    PUSH   EDI
-    MOV    ESI, EAX
-    MOV    EDI, EDX
-    MOV    EDX, ECX
-    SHR    ECX, 2
-    REP    MOVSD
-    MOV    ECX, EDX
-    AND    ECX, 3
-    REP    MOVSB
-    POP    EDI
-    POP    ESI
-    RET
-  @LargeMoveReverse:
-    PUSH   ESI
-    PUSH   EDI
-    MOV    ESI, EAX
-    MOV    EDI, EDX
-    LEA    ESI, [ESI + ECX - 4]
-    LEA    EDI, [EDI + ECX - 4]
-    MOV    EDX, ECX
-    SHR    ECX, 2
-    STD
-    REP    MOVSD
-    ADD    ESI, 3
-    ADD    EDI, 3
-    MOV    ECX, EDX
-    AND    ECX, 3
-    REP    MOVSB
-    CLD
-    POP    EDI
-    POP    ESI
-end;
-{$ELSE}
-procedure MoveMem(const Source; var Dest; const Count: Integer);
+procedure MoveMem(const Source; var Dest; const Count: NativeInt);
 begin
   Move(Source, Dest, Count);
 end;
-{$ENDIF}
 
-{$IFDEF ASM386_DELPHI}
-function EqualMem(const Buf1; const Buf2; const Count: Integer): Boolean;
-asm
-      // EAX = Buf1, EDX = Buf2, ECX = Count
-      OR      ECX, ECX
-      JLE     @Fin1
-      CMP     EAX, EDX
-      JE      @Fin1
-      PUSH    ESI
-      PUSH    EDI
-      MOV     ESI, EAX
-      MOV     EDI, EDX
-      MOV     EDX, ECX
-      SHR     ECX, 2
-      XOR     EAX, EAX
-      REPE    CMPSD
-      JNE     @Fin0
-      MOV     ECX, EDX
-      AND     ECX, 3
-      REPE    CMPSB
-      JNE     @Fin0
-      INC     EAX
-@Fin0:
-      POP     EDI
-      POP     ESI
-      RET
-@Fin1:
-      MOV     AL, 1
-end;
-{$ELSE}
-function EqualMem(const Buf1; const Buf2; const Count: Integer): Boolean;
-var P, Q : Pointer;
-    D, I : Integer;
+function EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P, Q : Pointer;
+  D, I : NativeInt;
 begin
   P := @Buf1;
   Q := @Buf2;
@@ -4661,12 +4294,12 @@ begin
       end;
   Result := True;
 end;
-{$ENDIF}
 
-function EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: Integer): Boolean;
-var P, Q : Pointer;
-    I    : Integer;
-    C, D : Byte;
+function EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+  C, D : Byte;
 begin
   if Count <= 0 then
     begin
@@ -4697,10 +4330,11 @@ begin
   Result := True;
 end;
 
-function CompareMem(const Buf1; const Buf2; const Count: Integer): Integer;
-var P, Q : Pointer;
-    I    : Integer;
-    C, D : Byte;
+function CompareMem(const Buf1; const Buf2; const Count: NativeInt): Integer;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+  C, D : Byte;
 begin
   if Count <= 0 then
     begin
@@ -4730,7 +4364,7 @@ begin
   Result := 0;
 end;
 
-function CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: Integer): Integer;
+function CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Integer;
 var P, Q : Pointer;
     I    : Integer;
     C, D : Byte;
@@ -4767,9 +4401,10 @@ begin
   Result := 0;
 end;
 
-function LocateMem(const Buf1; const Size1: Integer; const Buf2; const Size2: Integer): Integer;
-var P, Q : PByte;
-    I    : Integer;
+function LocateMem(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
+var
+  P, Q : PByte;
+  I    : NativeInt;
 begin
   if (Size1 <= 0) or (Size2 <= 0) or (Size2 > Size1) then
     begin
@@ -4795,9 +4430,10 @@ begin
   Result := -1;
 end;
 
-function LocateMemNoAsciiCase(const Buf1; const Size1: Integer; const Buf2; const Size2: Integer): Integer;
-var P, Q : PByte;
-    I    : Integer;
+function LocateMemNoAsciiCase(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
+var
+  P, Q : PByte;
+  I    : NativeInt;
 begin
   if (Size1 <= 0) or (Size2 <= 0) or (Size2 > Size1) then
     begin
@@ -4823,11 +4459,12 @@ begin
   Result := -1;
 end;
 
-procedure ReverseMem(var Buf; const Size: Integer);
-var I : Integer;
-    P : PByte;
-    Q : PByte;
-    T : Byte;
+procedure ReverseMem(var Buf; const Size: NativeInt);
+var
+  I : NativeInt;
+  P : PByte;
+  Q : PByte;
+  T : Byte;
 begin
   P := @Buf;
   Q := P;
@@ -4887,8 +4524,9 @@ end;
 {                                                                              }
 { TBytes functions                                                             }
 {                                                                              }
-procedure BytesSetLengthAndZero(var V: TBytes; const NewLength: Integer);
-var OldLen, NewLen : Integer;
+procedure BytesSetLengthAndZero(var V: TBytes; const NewLength: NativeInt);
+var
+  OldLen, NewLen : NativeInt;
 begin
   NewLen := NewLength;
   if NewLen < 0 then
@@ -4917,15 +4555,16 @@ begin
     V[I] := Ord(S[I + 1]);
 end;
 
-function BytesAppend(var V: TBytes; const R: Byte): Integer;
+function BytesAppend(var V: TBytes; const R: Byte): NativeInt;
 begin
   Result := Length(V);
   SetLength(V, Result + 1);
   V[Result] := R;
 end;
 
-function BytesAppend(var V: TBytes; const R: TBytes): Integer;
-var L : Integer;
+function BytesAppend(var V: TBytes; const R: TBytes): NativeInt;
+var
+  L : NativeInt;
 begin
   Result := Length(V);
   L := Length(R);
@@ -4936,8 +4575,9 @@ begin
     end;
 end;
 
-function BytesAppend(var V: TBytes; const R: array of Byte): Integer;
-var L : Integer;
+function BytesAppend(var V: TBytes; const R: array of Byte): NativeInt;
+var
+  L : NativeInt;
 begin
   Result := Length(V);
   L := Length(R);
@@ -4948,8 +4588,9 @@ begin
     end;
 end;
 
-function BytesAppend(var V: TBytes; const R: String): Integer;
-var L, I : Integer;
+function BytesAppend(var V: TBytes; const R: String): NativeInt;
+var
+  L, I : NativeInt;
 begin
   Result := Length(V);
   L := Length(R);
@@ -4962,7 +4603,8 @@ begin
 end;
 
 function BytesCompare(const A, B: TBytes): Integer;
-var L, N : Integer;
+var
+  L, N : NativeInt;
 begin
   L := Length(A);
   N := Length(B);
@@ -4976,7 +4618,8 @@ begin
 end;
 
 function BytesEqual(const A, B: TBytes): Boolean;
-var L, N : Integer;
+var
+  L, N : NativeInt;
 begin
   L := Length(A);
   N := Length(B);
