@@ -1031,7 +1031,7 @@ function  htons(const HostShort: Word): Word;
 function  htonl(const HostLong: Word32): Word32;
 function  inet_ntoa(const InAddr: TInAddr): PAnsiChar;
 function  inet_addr(const P: PAnsiChar): Word32;
-function  IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Integer;
+function  IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Int32;
 function  Listen(const S: TSocket; const Backlog: Integer): Integer;
 function  ntohs(const NetShort: Word): Word;
 function  ntohl(const NetLong: Word32): Word32;
@@ -2129,7 +2129,7 @@ begin
   Result := inet_addrProc(P);
 end;
 
-function IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Integer;
+function IoctlSocket(const S: TSocket; const Cmd: Word32; var Arg: Word32): Int32;
 begin
   if not Assigned(IoctlSocketProc) then
     GetSocketProc('ioctlsocket', @IoctlSocketProc);

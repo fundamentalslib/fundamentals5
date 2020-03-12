@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      Delphi Posix socket library                              }
 {                                                                              }
-{   Copyright:        Copyright © 2018, David J Butler                         }
+{   Copyright:        Copyright © 2018-2020, David J Butler                    }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -143,6 +143,7 @@ const
   SO_LINGER = Posix.SysSocket.SO_LINGER;
   SO_RCVBUF = Posix.SysSocket.SO_RCVBUF;
   SO_SNDBUF = Posix.SysSocket.SO_SNDBUF;
+  TCP_NODELAY = 1; //Posix.SysSocket.TCP_NODELAY;
 
 type
   TFD_MASK = fd_mask;
