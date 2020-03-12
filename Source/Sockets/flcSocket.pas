@@ -225,6 +225,8 @@ type
     procedure SetSendBufferSize(const BufferSize: Integer);
     function  GetBroadcastEnabled: Boolean;
     procedure SetBroadcastEnabled(const BroadcastEnabled: Boolean);
+    function  GetTcpNoDelayEnabled: Boolean;
+    procedure SetTcpNoDelayEnabled(const TcpNoDelayEnabled: Boolean);
 
     // Resolve
     procedure Resolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr);
@@ -273,6 +275,7 @@ type
     property  BroadcastEnabled: Boolean read GetBroadcastEnabled write SetBroadcastEnabled;
     procedure GetLingerOption(var LingerOption: Boolean; var LingerTimeSec: Integer);
     procedure SetLingerOption(const LingerOption: Boolean; const LingerTimeSec: Integer = 0);
+    property  TcpNoDelayEnabled: Boolean read GetTcpNoDelayEnabled write SetTcpNoDelayEnabled;
 
     function  Select(const WaitMicroseconds: Integer;
               var ReadSelect, WriteSelect, ErrorSelect: Boolean): Boolean; overload;
@@ -617,19 +620,19 @@ begin
   SckHnd := FSocketHandle;
   if SckHnd <> INVALID_SOCKETHANDLE then
     begin
+      FSocketHandle := INVALID_SOCKETHANDLE;
       if SocketClose(SckHnd) < 0 then
         raise ESocketLib.Create('Close failed', SocketGetLastError);
-      FSocketHandle := INVALID_SOCKETHANDLE;
     end;
   {$IFDEF SOCKET_WIN}
   // destroy window handle
   WinHnd := FWindowHandle;
   if WinHnd <> INVALID_HANDLE_VALUE then
    begin
+     FWindowHandle := INVALID_HANDLE_VALUE;
      SetWindowLong(WinHnd, 0, 0);
      if not DestroyWindow(WinHnd) then
        raise ESysSocket.Create('Close failed: ' + SysErrorMessage(Windows.GetLastError));
-     FWindowHandle := INVALID_HANDLE_VALUE;
    end;
   {$ENDIF}
 end;
@@ -852,6 +855,23 @@ begin
   {$ELSE}
   raise ESysSocket.Create('SetLingerOption not supported');
   {$ENDIF}
+end;
+
+function TSysSocket.GetTcpNoDelayEnabled: Boolean;
+begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketTcpNoDelay(FSocketHandle);
+end;
+
+procedure TSysSocket.SetTcpNoDelayEnabled(const TcpNoDelayEnabled: Boolean);
+begin
+  {$IFDEF SOCKET_DEBUG}
+  Log(sltDebug, 'SetTcpNoDelayEnabled:Enabled=%d', [Ord(TcpNoDelayEnabled)]);
+  {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketTcpNoDelay(FSocketHandle, TcpNoDelayEnabled);
 end;
 
 procedure TSysSocket.Resolve(const Host, Port: RawByteString; var SockAddr: TSocketAddr);

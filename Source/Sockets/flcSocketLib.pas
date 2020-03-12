@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
-{   File version:     5.21                                                     }
+{   File version:     5.22                                                     }
 {   Description:      Platform independent socket library.                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
@@ -57,6 +57,7 @@
 {   2018/07/17  5.19  Type changes.                                            }
 {   2018/09/09  5.20  Poll function.                                           }
 {   2018/09/24  5.21  OSX changes.                                             }
+{   2019/12/26  5.22  Socket TcpNoDelay option.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -133,6 +134,12 @@ type
       iaNone,
       iaIP4,
       iaIP6);
+
+const
+  IPAddressFamilyStr: array[TIPAddressFamily] of String = (
+      '',
+      'IP4',
+      'IP6');
 
 function IPAddressFamilyToAF(const AddressFamily: TIPAddressFamily): Int32; {$IFDEF UseInline}inline;{$ENDIF}
 function AFToIPAddressFamily(const AF: Int32): TIPAddressFamily; {$IFDEF UseInline}inline;{$ENDIF}
@@ -698,6 +705,8 @@ procedure SetSocketBroadcast(const SocketHandle: TSocketHandle;
 function  GetSocketMulticastTTL(const SocketHandle: TSocketHandle): Integer;
 procedure SetSocketMulticastTTL(const SocketHandle: TSocketHandle; const TTL: Integer);
 {$ENDIF}
+function  GetSocketTcpNoDelay(const SocketHandle: TSocketHandle): Boolean;
+procedure SetSocketTcpNoDelay(const SocketHandle: TSocketHandle; const TcpNoDelay: Boolean);
 
 
 
@@ -3016,7 +3025,7 @@ var Opt : LongBool;
     OptLen : Int32;
 begin
   OptLen := Sizeof(Opt);
-  if SocketSetSockOpt(SocketHandle, SOL_SOCKET, SO_BROADCAST, @Opt, OptLen) < 0 then
+  if SocketGetSockOpt(SocketHandle, SOL_SOCKET, SO_BROADCAST, @Opt, OptLen) < 0 then
     raise ESocketLib.Create('Socket broadcast option not available', SocketGetLastError);
   Result := Opt;
 end;
@@ -3050,6 +3059,24 @@ begin
     raise ESocketLib.Create('Socket multicast TTL option not set', SocketGetLastError);
 end;
 {$ENDIF}
+
+function GetSocketTcpNoDelay(const SocketHandle: TSocketHandle): Boolean;
+var Opt : LongBool;
+    OptLen : Int32;
+begin
+  OptLen := Sizeof(Opt);
+  if SocketGetSockOpt(SocketHandle, IPPROTO_TCP, TCP_NODELAY, @Opt, OptLen) < 0 then
+    raise ESocketLib.Create('Socket TCP-NoDelay option not available', SocketGetLastError);
+  Result := Opt;
+end;
+
+procedure SetSocketTcpNoDelay(const SocketHandle: TSocketHandle; const TcpNoDelay: Boolean);
+var Opt : LongBool;
+begin
+  Opt := TcpNoDelay;
+  if SocketSetSockOpt(SocketHandle, IPPROTO_TCP, TCP_NODELAY, @Opt, Sizeof(Opt)) < 0 then
+    raise ESocketLib.Create('Socket TCP-NoDelay option not set', SocketGetLastError);
+end;
 
 
 
