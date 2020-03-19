@@ -1,10 +1,10 @@
 {*******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.17                                                     }
+{   File version:     5.20                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -50,11 +50,20 @@
 {   2016/01/10  5.15  Bug fix in 32-bit assembly routine.                      }
 {   2018/07/17  5.16  Word32/Int32 changes.                                    }
 {   2018/08/12  5.17  String type changes.                                     }
+{   2019/02/24  5.18  Compilable with Delphi 7.                                }
+{   2020/03/10  5.19  Rename Word64 to Word64Rec.                              }
+{   2020/03/20  5.20  UInt64 implementations for Word64 if SupportUInt64.      }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    5.15  2016/01/10                       }
-{   Delphi XE7 Win64                    5.15  2016/01/10                       }
+{   Delphi 7 Win32                      5.18  2019/02/24                       }
+{   Delphi XE2 Win32                    5.18  2019/03/02                       }
+{   Delphi XE2 Win64                    5.18  2019/03/02                       }
+{   Delphi XE3 Win32                    5.18  2019/03/02                       }
+{   Delphi XE3 Win64                    5.18  2019/03/02                       }
+{   Delphi XE7 Win32                    5.18  2019/03/02                       }
+{   Delphi XE7 Win64                    5.18  2019/03/02                       }
+{   FreePascal 3.0.4 Win32              5.18  2019/02/24                       }
 {                                                                              }
 {*******************************************************************************}
 
@@ -86,34 +95,34 @@ type
     case Integer of
     0 : (A, B    : Word32);
     1 : (Bytes   : array[0..7] of Byte);
-    2 : (Words   : array[0..3] of Word);
+    2 : (Word16s : array[0..3] of Word16);
     3 : (Word32s : array[0..1] of Word32);
   end;
   PWord32Pair = ^Word32Pair;
 
-  Word64 = packed record
+  Word64Rec = packed record
     case Integer of
     0 : (Bytes   : array[0..7] of Byte);
-    1 : (Words   : array[0..3] of Word);
+    1 : (Word16s : array[0..3] of Word16);
     2 : (Word32s : array[0..1] of Word32);
   end;
-  PWord64 = ^Word64;
+  PWord64Rec = ^Word64Rec;
 
   Word128 = packed record
     case Integer of
     0 : (Bytes   : array[0..15] of Byte);
-    1 : (Words   : array[0..7] of Word);
+    1 : (Word16s : array[0..7] of Word16);
     2 : (Word32s : array[0..3] of Word32);
-    3 : (Word64s : array[0..1] of Word64);
+    3 : (Word64s : array[0..1] of Word64Rec);
   end;
   PWord128 = ^Word128;
 
   Word256 = packed record
     case Integer of
     0 : (Bytes    : array[0..31] of Byte);
-    1 : (Words    : array[0..15] of Word);
+    1 : (Word16s  : array[0..15] of Word16);
     2 : (Word32s  : array[0..7] of Word32);
-    3 : (Word64s  : array[0..3] of Word64);
+    3 : (Word64s  : array[0..3] of Word64Rec);
     4 : (Word128s : array[0..1] of Word128);
   end;
   PWord256 = ^Word256;
@@ -121,9 +130,9 @@ type
   Word512 = packed record
     case Integer of
     0 : (Bytes    : array[0..63] of Byte);
-    1 : (Words    : array[0..31] of Word);
+    1 : (Word16s  : array[0..31] of Word16);
     2 : (Word32s  : array[0..15] of Word32);
-    3 : (Word64s  : array[0..7] of Word64);
+    3 : (Word64s  : array[0..7] of Word64Rec);
     4 : (Word128s : array[0..3] of Word128);
     5 : (Word256s : array[0..1] of Word256);
   end;
@@ -132,9 +141,9 @@ type
   Word1024 = packed record
     case Integer of
     0 : (Bytes    : array[0..127] of Byte);
-    1 : (Words    : array[0..63] of Word);
+    1 : (Word16s  : array[0..63] of Word16);
     2 : (Word32s  : array[0..31] of Word32);
-    3 : (Word64s  : array[0..15] of Word64);
+    3 : (Word64s  : array[0..15] of Word64Rec);
     4 : (Word128s : array[0..7] of Word128);
     5 : (Word256s : array[0..3] of Word256);
     6 : (Word512s : array[0..1] of Word512);
@@ -144,9 +153,9 @@ type
   Word2048 = packed record
     case Integer of
     0 : (Bytes     : array[0..255] of Byte);
-    1 : (Words     : array[0..127] of Word);
+    1 : (Word16s   : array[0..127] of Word16);
     2 : (Word32s   : array[0..63] of Word32);
-    3 : (Word64s   : array[0..31] of Word64);
+    3 : (Word64s   : array[0..31] of Word64Rec);
     4 : (Word128s  : array[0..15] of Word128);
     5 : (Word256s  : array[0..7] of Word256);
     6 : (Word512s  : array[0..3] of Word512);
@@ -157,9 +166,9 @@ type
   Word4096 = packed record
     case Integer of
     0 : (Bytes     : array[0..511] of Byte);
-    1 : (Words     : array[0..255] of Word);
+    1 : (Word16s   : array[0..255] of Word16);
     2 : (Word32s   : array[0..127] of Word32);
-    3 : (Word64s   : array[0..63] of Word64);
+    3 : (Word64s   : array[0..63] of Word64Rec);
     4 : (Word128s  : array[0..31] of Word128);
     5 : (Word256s  : array[0..15] of Word256);
     6 : (Word512s  : array[0..7] of Word512);
@@ -171,9 +180,9 @@ type
   Word8192 = packed record
     case Integer of
     0 : (Bytes     : array[0..1023] of Byte);
-    1 : (Words     : array[0..511] of Word);
+    1 : (Word16s   : array[0..511] of Word16);
     2 : (Word32s   : array[0..255] of Word32);
-    3 : (Word64s   : array[0..127] of Word64);
+    3 : (Word64s   : array[0..127] of Word64Rec);
     4 : (Word128s  : array[0..63] of Word128);
     5 : (Word256s  : array[0..31] of Word256);
     6 : (Word512s  : array[0..15] of Word512);
@@ -187,7 +196,7 @@ const
   Word8Size    = SizeOf(Word8);
   Word16Size   = SizeOf(Word16);
   Word32Size   = SizeOf(Word32);
-  Word64Size   = SizeOf(Word64);
+  Word64Size   = SizeOf(Word64Rec);
   Word128Size  = SizeOf(Word128);
   Word256Size  = SizeOf(Word256);
   Word512Size  = SizeOf(Word512);
@@ -214,30 +223,30 @@ type
     case Integer of
     0 : (A, B      : Int32);
     1 : (Bytes     : array[0..7] of Byte);
-    2 : (Words     : array[0..3] of Word);
+    2 : (Word16s   : array[0..3] of Word16);
     3 : (Word32s   : array[0..1] of Word32);
-    4 : (ShortInts : array[0..7] of ShortInt);
-    5 : (SmallInts : array[0..3] of SmallInt);
-    6 : (Int32s  : array[0..1] of Int32);
+    4 : (Int8s     : array[0..7] of Int8);
+    5 : (Int16s    : array[0..3] of Int16);
+    6 : (Int32s    : array[0..1] of Int32);
   end;
   PInt32Pair = ^Int32Pair;
 
   Int64Rec = packed record
     case Integer of
     0 : (Bytes   : array[0..7] of Byte);
-    1 : (Words   : array[0..3] of Word);
+    1 : (Word16s : array[0..3] of Word16);
     2 : (Word32s : array[0..1] of Word32);
-    3 : (Int32s : array[0..1] of Int32);
+    3 : (Int32s  : array[0..1] of Int32);
   end;
   PInt64Rec = ^Int64Rec;
 
   Int128 = packed record
     case Integer of
     0 : (Bytes     : array[0..15] of Byte);
-    1 : (Words     : array[0..7] of Word);
-    2 : (Word32s : array[0..3] of Word32);
-    3 : (Word64s   : array[0..1] of Word64);
-    4 : (Int32s  : array[0..3] of Int32);
+    1 : (Word16s   : array[0..7] of Word16);
+    2 : (Word32s   : array[0..3] of Word32);
+    3 : (Word64s   : array[0..1] of Word64Rec);
+    4 : (Int32s    : array[0..3] of Int32);
     5 : (Int64s    : array[0..1] of Int64);
   end;
   PInt128 = ^Int128;
@@ -245,10 +254,10 @@ type
   Int256 = packed record
     case Integer of
     0 : (Bytes   : array[0..31] of Byte);
-    1 : (Words   : array[0..15] of Word);
+    1 : (Word16s : array[0..15] of Word16);
     2 : (Word32s : array[0..7] of Word32);
-    3 : (Word64s : array[0..3] of Word64);
-    4 : (Int32s : array[0..7] of Int32);
+    3 : (Word64s : array[0..3] of Word64Rec);
+    4 : (Int32s  : array[0..7] of Int32);
     5 : (Int64s  : array[0..3] of Int64);
   end;
   PInt256 = ^Int256;
@@ -278,16 +287,17 @@ type
   PInt4096 = ^Int4096;
 
 const
-  Int8Size    = SizeOf(Int8);
-  Int16Size   = SizeOf(Int16);
-  Int32Size   = SizeOf(Int32);
-  Int64Size   = SizeOf(Int64);
-  Int128Size  = SizeOf(Int128);
-  Int256Size  = SizeOf(Int256);
-  Int512Size  = SizeOf(Int512);
-  Int1024Size = SizeOf(Int1024);
-  Int2048Size = SizeOf(Int2048);
-  Int4096Size = SizeOf(Int4096);
+  Int8Size       = SizeOf(Int8);
+  Int16Size      = SizeOf(Int16);
+  Int32Size      = SizeOf(Int32);
+  Int64Size      = SizeOf(Int64);
+  Int64RecSize   = SizeOf(Int64Rec);
+  Int128RecSize  = SizeOf(Int128);
+  Int256RecSize  = SizeOf(Int256);
+  Int512RecSize  = SizeOf(Int512);
+  Int1024RecSize = SizeOf(Int1024);
+  Int2048RecSize = SizeOf(Int2048);
+  Int4096RecSize = SizeOf(Int4096);
 
 const
   MinInt8   = Low(Int8);
@@ -435,8 +445,8 @@ function  Word32BitCount(const A: Word32): Integer;
 
 function  Word32SwapEndian(const A: Word32): Word32;
 
-procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);
-procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64; var R: Word32);
+procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64Rec);
+procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64Rec; var R: Word32);
 
 function  Word32GCD(const A, B: Word32): Word32;
 function  Word32ExtendedEuclid(const A, B: Word32; var X, Y: Int64): Word32;
@@ -464,137 +474,138 @@ procedure Word32PairToWord32(const C: Word32Pair; var A, B: Word32);
 { Word64                                                                       }
 {                                                                              }
 const
-  Word64ConstZero    : Word64 = (Word32s: ($00000000, $00000000));
-  Word64ConstOne     : Word64 = (Word32s: ($00000001, $00000000));
-  Word64ConstMinimum : Word64 = (Word32s: ($00000000, $00000000));
-  Word64ConstMaximum : Word64 = (Word32s: ($FFFFFFFF, $FFFFFFFF));
+  Word64ConstZero    : Word64Rec = (Word32s: ($00000000, $00000000));
+  Word64ConstOne     : Word64Rec = (Word32s: ($00000001, $00000000));
+  Word64ConstMinimum : Word64Rec = (Word32s: ($00000000, $00000000));
+  Word64ConstMaximum : Word64Rec = (Word32s: ($FFFFFFFF, $FFFFFFFF));
 
-procedure Word64InitZero(var A: Word64);    {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64InitOne(var A: Word64);     {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64InitMinimum(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64InitMaximum(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitZero(var A: Word64Rec);    {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitOne(var A: Word64Rec);     {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitMinimum(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitMaximum(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsZero(const A: Word64): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsOne(const A: Word64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsMinimum(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsMaximum(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsOdd(const A: Word64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsZero(const A: Word64Rec): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsOne(const A: Word64Rec): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsMinimum(const A: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsMaximum(const A: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsOdd(const A: Word64Rec): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsWord8Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsWord16Range(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsWord32Range(const A: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsInt8Range(const A: Word64): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsInt16Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsInt32Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64IsInt64Range(const A: Word64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsWord8Range(const A: Word64Rec): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsWord16Range(const A: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsWord32Range(const A: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt8Range(const A: Word64Rec): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt16Range(const A: Word64Rec): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt32Range(const A: Word64Rec): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64IsInt64Range(const A: Word64Rec): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
 
-procedure Word64InitWord32(var A: Word64; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64InitInt32(var A: Word64; const B: Int32);
-procedure Word64InitInt64(var A: Word64; const B: Int64);
-procedure Word64InitFloat(var A: Word64; const B: Extended);
+procedure Word64InitWord32(var A: Word64Rec; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64InitInt32(var A: Word64Rec; const B: Int32);
+procedure Word64InitInt64(var A: Word64Rec; const B: Int64);
+procedure Word64InitFloat(var A: Word64Rec; const B: Extended);
 
-function  Word64ToWord32(const A: Word64): Word32;
-function  Word64ToInt32(const A: Word64): Int32;
-function  Word64ToInt64(const A: Word64): Int64;
-function  Word64ToFloat(const A: Word64): Extended;
+function  Word64ToWord32(const A: Word64Rec): Word32;
+function  Word64ToInt32(const A: Word64Rec): Int32;
+function  Word64ToInt64(const A: Word64Rec): Int64;
+function  Word64ToFloat(const A: Word64Rec): Extended;
 
-function  Word64Lo(const A: Word64): Word32; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word64Hi(const A: Word64): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64Lo(const A: Word64Rec): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word64Hi(const A: Word64Rec): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64EqualsWord32(const A: Word64; const B: Word32): Boolean;
-function  Word64EqualsWord64(const A, B: Word64): Boolean;
-function  Word64EqualsInt32(const A: Word64; const B: Int32): Boolean;
-function  Word64EqualsInt64(const A: Word64; const B: Int64): Boolean;
-function  Word64EqualsFloat(const A: Word64; const B: Extended): Boolean;
+function  Word64EqualsWord32(const A: Word64Rec; const B: Word32): Boolean;
+function  Word64EqualsWord64(const A, B: Word64Rec): Boolean;
+function  Word64EqualsInt32(const A: Word64Rec; const B: Int32): Boolean;
+function  Word64EqualsInt64(const A: Word64Rec; const B: Int64): Boolean;
+function  Word64EqualsFloat(const A: Word64Rec; const B: Extended): Boolean;
 
-function  Word64CompareWord32(const A: Word64; const B: Word32): Integer;
-function  Word64CompareWord64(const A, B: Word64): Integer;
-function  Word64CompareInt32(const A: Word64; const B: Int32): Integer;
-function  Word64CompareInt64(const A: Word64; const B: Int64): Integer;
-function  Word64CompareFloat(const A: Word64; const B: Extended): Integer;
+function  Word64CompareWord32(const A: Word64Rec; const B: Word32): Integer;
+function  Word64CompareWord64(const A, B: Word64Rec): Integer;
+function  Word64CompareInt32(const A: Word64Rec; const B: Int32): Integer;
+function  Word64CompareInt64(const A: Word64Rec; const B: Int64): Integer;
+function  Word64CompareFloat(const A: Word64Rec; const B: Extended): Integer;
 
-function  Word64Min(const A, B: Word64): Word64;
-function  Word64Max(const A, B: Word64): Word64;
+function  Word64Min(const A, B: Word64Rec): Word64Rec;
+function  Word64Max(const A, B: Word64Rec): Word64Rec;
 
-procedure Word64Not(var A: Word64);                        {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64OrWord64(var A: Word64; const B: Word64);  {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64Not(var A: Word64Rec);                           {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64OrWord64(var A: Word64Rec; const B: Word64Rec);  {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64AndWord64(var A: Word64Rec; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word64XorWord64(var A: Word64Rec; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
 
-function  Word64IsBitSet(const A: Word64; const B: Integer): Boolean;
-procedure Word64SetBit(var A: Word64; const B: Integer);
-procedure Word64ClearBit(var A: Word64; const B: Integer);
-procedure Word64ToggleBit(var A: Word64; const B: Integer);
+function  Word64IsBitSet(const A: Word64Rec; const B: Integer): Boolean;
+procedure Word64SetBit(var A: Word64Rec; const B: Integer);
+procedure Word64ClearBit(var A: Word64Rec; const B: Integer);
+procedure Word64ToggleBit(var A: Word64Rec; const B: Integer);
 
-function  Word64SetBitScanForward(const A: Word64): Integer;
-function  Word64SetBitScanReverse(const A: Word64): Integer;
-function  Word64ClearBitScanForward(const A: Word64): Integer;
-function  Word64ClearBitScanReverse(const A: Word64): Integer;
+function  Word64SetBitScanForward(const A: Word64Rec): Integer;
+function  Word64SetBitScanReverse(const A: Word64Rec): Integer;
+function  Word64ClearBitScanForward(const A: Word64Rec): Integer;
+function  Word64ClearBitScanReverse(const A: Word64Rec): Integer;
 
-procedure Word64Shl(var A: Word64; const B: Byte);
-procedure Word64Shr(var A: Word64; const B: Byte);
-procedure Word64Rol(var A: Word64; const B: Byte);
-procedure Word64Ror(var A: Word64; const B: Byte);
+procedure Word64Shl(var A: Word64Rec; const B: Byte);
+procedure Word64Shr(var A: Word64Rec; const B: Byte);
+procedure Word64Rol(var A: Word64Rec; const B: Byte);
+procedure Word64Ror(var A: Word64Rec; const B: Byte);
 
-procedure Word64Shl1(var A: Word64);
-procedure Word64Shr1(var A: Word64);
-procedure Word64Rol1(var A: Word64);
-procedure Word64Ror1(var A: Word64);
+procedure Word64Shl1(var A: Word64Rec);
+procedure Word64Shr1(var A: Word64Rec);
+procedure Word64Rol1(var A: Word64Rec);
+procedure Word64Ror1(var A: Word64Rec);
 
-procedure Word64Swap(var A, B: Word64);
-procedure Word64ReverseBits(var A: Word64);
-procedure Word64ReverseBytes(var A: Word64);
+procedure Word64Swap(var A, B: Word64Rec);
+procedure Word64ReverseBits(var A: Word64Rec);
+procedure Word64ReverseBytes(var A: Word64Rec);
 
-function  Word64BitCount(const A: Word64): Integer;
-function  Word64IsPowerOfTwo(const A: Word64): Boolean;
+function  Word64BitCount(const A: Word64Rec): Integer;
+function  Word64IsPowerOfTwo(const A: Word64Rec): Boolean;
 
-procedure Word64SwapEndian(var A: Word64);
+procedure Word64SwapEndian(var A: Word64Rec);
 
-procedure Word64Inc(var A: Word64);
+procedure Word64Inc(var A: Word64Rec);
 
-procedure Word64AddWord8(var A: Word64; const B: Byte);
-procedure Word64AddWord16(var A: Word64; const B: Word);
-procedure Word64AddWord32(var A: Word64; const B: Word32);
-procedure Word64AddWord64(var A: Word64; const B: Word64);
+procedure Word64AddWord8(var A: Word64Rec; const B: Byte);
+procedure Word64AddWord16(var A: Word64Rec; const B: Word);
+procedure Word64AddWord32(var A: Word64Rec; const B: Word32);
+procedure Word64AddWord64(var A: Word64Rec; const B: Word64Rec);
 
-procedure Word64SubtractWord32(var A: Word64; const B: Word32);
-procedure Word64SubtractWord64(var A: Word64; const B: Word64);
+procedure Word64SubtractWord32(var A: Word64Rec; const B: Word32);
+procedure Word64SubtractWord64(var A: Word64Rec; const B: Word64Rec);
 
-procedure Word64MultiplyWord8(var A: Word64; const B: Byte);
-procedure Word64MultiplyWord16(var A: Word64; const B: Word);
-procedure Word64MultiplyWord32(var A: Word64; const B: Word32);
-procedure Word64MultiplyWord64InPlace(var A: Word64; const B: Word64);
-procedure Word64MultiplyWord64(const A, B: Word64; var R: Word128);
+procedure Word64MultiplyWord8(var A: Word64Rec; const B: Byte);
+procedure Word64MultiplyWord16(var A: Word64Rec; const B: Word);
+procedure Word64MultiplyWord32(var A: Word64Rec; const B: Word32);
+procedure Word64MultiplyWord64InPlace(var A: Word64Rec; const B: Word64Rec);
+procedure Word64MultiplyWord64(const A, B: Word64Rec; var R: Word128);
 
-procedure Word64Sqr(var A: Word64);
+procedure Word64Sqr(var A: Word64Rec);
 
-procedure Word64DivideWord8(const A: Word64; const B: Byte; out Q: Word64; out R: Byte);
-procedure Word64DivideWord16(const A: Word64; const B: Word; out Q: Word64; out R: Word);
-procedure Word64DivideWord32(const A: Word64; const B: Word32; out Q: Word64; out R: Word32);
-procedure Word64DivideWord64(const A, B: Word64; var Q, R: Word64);
+procedure Word64DivideWord8(const A: Word64Rec; const B: Byte; out Q: Word64Rec; out R: Byte);
+procedure Word64DivideWord16(const A: Word64Rec; const B: Word; out Q: Word64Rec; out R: Word);
+procedure Word64DivideWord32(const A: Word64Rec; const B: Word32; out Q: Word64Rec; out R: Word32);
+procedure Word64DivideWord64(const A, B: Word64Rec; var Q, R: Word64Rec);
 
-procedure Word64ModWord64(const A, B: Word64; var R: Word64);
+procedure Word64ModWord64(const A, B: Word64Rec; var R: Word64Rec);
 
-function  Word64ToStr(const A: Word64): String;
-function  Word64ToStrB(const A: Word64): RawByteString;
-function  Word64ToStrU(const A: Word64): UnicodeString;
-function  StrToWord64(const A: String): Word64;
-function  StrToWord64A(const A: RawByteString): Word64;
-function  StrToWord64U(const A: UnicodeString): Word64;
+function  Word64ToStr(const A: Word64Rec): String;
+function  Word64ToStrB(const A: Word64Rec): RawByteString;
+function  Word64ToStrU(const A: Word64Rec): UnicodeString;
 
-function  Word64GCD(const A, B: Word64): Word64;
-function  Word64ExtendedEuclid(const A, B: Word64; var X, Y: Int128): Word64;
+function  StrToWord64(const A: String): Word64Rec;
+function  StrToWord64A(const A: RawByteString): Word64Rec;
+function  StrToWord64U(const A: UnicodeString): Word64Rec;
 
-procedure Word64ISqrt(var A: Word64);
-function  Word64Sqrt(const A: Word64): Extended;
+function  Word64GCD(const A, B: Word64Rec): Word64Rec;
+function  Word64ExtendedEuclid(const A, B: Word64Rec; var X, Y: Int128): Word64Rec;
 
-procedure Word64Power(var A: Word64; const B: Word32);
-function  Word64PowerAndMod(const A, E, M: Word64): Word64;
+procedure Word64ISqrt(var A: Word64Rec);
+function  Word64Sqrt(const A: Word64Rec): Extended;
 
-function  Word64IsPrime(const A: Word64): Boolean;
-procedure Word64NextPrime(var A: Word64);
+procedure Word64Power(var A: Word64Rec; const B: Word32);
+function  Word64PowerAndMod(const A, E, M: Word64Rec): Word64Rec;
 
-function  Word64Hash(const A: Word64): Word32;
+function  Word64IsPrime(const A: Word64Rec): Boolean;
+procedure Word64NextPrime(var A: Word64Rec);
+
+function  Word64Hash(const A: Word64Rec): Word32;
 
 
 
@@ -629,28 +640,28 @@ function  Word128IsInt64Range(const A: Word128): Boolean;
 function  Word128IsInt128Range(const A: Word128): Boolean;
 
 procedure Word128InitWord32(var A: Word128; const B: Word32);
-procedure Word128InitWord64(var A: Word128; const B: Word64);
+procedure Word128InitWord64(var A: Word128; const B: Word64Rec);
 procedure Word128InitInt32(var A: Word128; const B: Int32);
 procedure Word128InitInt64(var A: Word128; const B: Int64);
 procedure Word128InitFloat(var A: Word128; const B: Extended);
 
 function  Word128ToWord32(const A: Word128): Word32;
-function  Word128ToWord64(const A: Word128): Word64;
+function  Word128ToWord64(const A: Word128): Word64Rec;
 function  Word128ToInt32(const A: Word128): Int32;
 function  Word128ToInt64(const A: Word128): Int64;
 function  Word128ToFloat(const A: Word128): Extended;
 
-function  Word128Lo(const A: Word128): Word64; {$IFDEF UseInline}inline;{$ENDIF}
-function  Word128Hi(const A: Word128): Word64; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word128Lo(const A: Word128): Word64Rec; {$IFDEF UseInline}inline;{$ENDIF}
+function  Word128Hi(const A: Word128): Word64Rec; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  Word128EqualsWord32(const A: Word128; const B: Word32): Boolean;
-function  Word128EqualsWord64(const A: Word128; const B: Word64): Boolean;
+function  Word128EqualsWord64(const A: Word128; const B: Word64Rec): Boolean;
 function  Word128EqualsWord128(const A, B: Word128): Boolean;
 function  Word128EqualsInt32(const A: Word128; const B: Int32): Boolean;
 function  Word128EqualsInt64(const A: Word128; const B: Int64): Boolean;
 
 function  Word128CompareWord32(const A: Word128; const B: Word32): Integer;
-function  Word128CompareWord64(const A: Word128; const B: Word64): Integer;
+function  Word128CompareWord64(const A: Word128; const B: Word64Rec): Integer;
 function  Word128CompareWord128(const A, B: Word128): Integer;
 function  Word128CompareInt32(const A: Word128; const B: Int32): Integer;
 function  Word128CompareInt64(const A: Word128; const B: Int64): Integer;
@@ -695,17 +706,17 @@ procedure Word128Inc(var A: Word128);
 procedure Word128AddWord8(var A: Word128; const B: Byte);
 procedure Word128AddWord16(var A: Word128; const B: Word);
 procedure Word128AddWord32(var A: Word128; const B: Word32);
-procedure Word128AddWord64(var A: Word128; const B: Word64);
+procedure Word128AddWord64(var A: Word128; const B: Word64Rec);
 procedure Word128AddWord128(var A: Word128; const B: Word128);
 
 procedure Word128SubtractWord32(var A: Word128; const B: Word32);
-procedure Word128SubtractWord64(var A: Word128; const B: Word64);
+procedure Word128SubtractWord64(var A: Word128; const B: Word64Rec);
 procedure Word128SubtractWord128(var A: Word128; const B: Word128);
 
 procedure Word128MultiplyWord8(var A: Word128; const B: Byte);
 procedure Word128MultiplyWord16(var A: Word128; const B: Word);
 procedure Word128MultiplyWord32(var A: Word128; const B: Word32);
-procedure Word128MultiplyWord64(var A: Word128; const B: Word64);
+procedure Word128MultiplyWord64(var A: Word128; const B: Word64Rec);
 procedure Word128MultiplyWord128Low(var A: Word128; const B: Word128);
 procedure Word128MultiplyWord128(const A, B: Word128; var R: Word256);
 
@@ -714,7 +725,7 @@ procedure Word128Sqr(var A: Word128);
 procedure Word128DivideWord8(const A: Word128; const B: Byte; var Q: Word128; var R: Byte);
 procedure Word128DivideWord16(const A: Word128; const B: Word; var Q: Word128; var R: Word);
 procedure Word128DivideWord32(const A: Word128; const B: Word32; var Q: Word128; var R: Word32);
-procedure Word128DivideWord64(const A: Word128; const B: Word64; var Q: Word128; var R: Word64);
+procedure Word128DivideWord64(const A: Word128; const B: Word64Rec; var Q: Word128; var R: Word64Rec);
 procedure Word128DivideWord128(const A, B: Word128; var Q, R: Word128);
 
 procedure Word128ModWord128(const A, B: Word128; var R: Word128);
@@ -777,14 +788,14 @@ function  Word256IsInt64Range(const A: Word256): Boolean;
 function  Word256IsInt128Range(const A: Word256): Boolean;
 
 procedure Word256InitWord32(var A: Word256; const B: Word32);
-procedure Word256InitWord64(var A: Word256; const B: Word64);
+procedure Word256InitWord64(var A: Word256; const B: Word64Rec);
 procedure Word256InitWord128(var A: Word256; const B: Word128);
 procedure Word256InitInt32(var A: Word256; const B: Int32);
 procedure Word256InitInt64(var A: Word256; const B: Int64);
 procedure Word256InitInt128(var A: Word256; const B: Int128);
 
 function  Word256ToWord32(const A: Word256): Word32;
-function  Word256ToWord64(const A: Word256): Word64;
+function  Word256ToWord64(const A: Word256): Word64Rec;
 function  Word256ToWord128(const A: Word256): Word128;
 function  Word256ToInt32(const A: Word256): Int32;
 function  Word256ToInt64(const A: Word256): Int64;
@@ -795,7 +806,7 @@ function  Word256Lo(const A: Word256): Word128;
 function  Word256Hi(const A: Word256): Word128;
 
 function  Word256EqualsWord32(const A: Word256; const B: Word32): Boolean;
-function  Word256EqualsWord64(const A: Word256; const B: Word64): Boolean;
+function  Word256EqualsWord64(const A: Word256; const B: Word64Rec): Boolean;
 function  Word256EqualsWord128(const A: Word256; const B: Word128): Boolean;
 function  Word256EqualsWord256(const A, B: Word256): Boolean;
 function  Word256EqualsInt32(const A: Word256; const B: Int32): Boolean;
@@ -803,7 +814,7 @@ function  Word256EqualsInt64(const A: Word256; const B: Int64): Boolean;
 function  Word256EqualsInt128(const A: Word256; const B: Int128): Boolean;
 
 function  Word256CompareWord32(const A: Word256; const B: Word32): Integer;
-function  Word256CompareWord64(const A: Word256; const B: Word64): Integer;
+function  Word256CompareWord64(const A: Word256; const B: Word64Rec): Integer;
 function  Word256CompareWord128(const A: Word256; const B: Word128): Integer;
 function  Word256CompareWord256(const A, B: Word256): Integer;
 function  Word256CompareInt32(const A: Word256; const B: Int32): Integer;
@@ -831,19 +842,19 @@ procedure Word256Ror1(var A: Word256);
 procedure Word256Swap(var A, B: Word256);
 
 procedure Word256AddWord32(var A: Word256; const B: Word32);
-procedure Word256AddWord64(var A: Word256; const B: Word64);
+procedure Word256AddWord64(var A: Word256; const B: Word64Rec);
 procedure Word256AddWord128(var A: Word256; const B: Word128);
 procedure Word256AddWord256(var A: Word256; const B: Word256);
 
 procedure Word256SubtractWord32(var A: Word256; const B: Word32);
-procedure Word256SubtractWord64(var A: Word256; const B: Word64);
+procedure Word256SubtractWord64(var A: Word256; const B: Word64Rec);
 procedure Word256SubtractWord128(var A: Word256; const B: Word128);
 procedure Word256SubtractWord256(var A: Word256; const B: Word256);
 
 procedure Word256MultiplyWord8(var A: Word256; const B: Byte);
 procedure Word256MultiplyWord16(var A: Word256; const B: Word);
 procedure Word256MultiplyWord32(var A: Word256; const B: Word32);
-procedure Word256MultiplyWord64(var A: Word256; const B: Word64);
+procedure Word256MultiplyWord64(var A: Word256; const B: Word64Rec);
 procedure Word256MultiplyWord128(var A: Word256; const B: Word128);
 procedure Word256MultiplyWord256(const A, B: Word256; var R: Word512);
 
@@ -877,14 +888,14 @@ function  Word%1%IsInt64Range(const A: Word%1%): Boolean;
 function  Word%1%IsInt128Range(const A: Word%1%): Boolean;
 
 procedure Word%1%InitWord32(var A: Word%1%; const B: Word32);
-procedure Word%1%InitWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%InitWord64(var A: Word%1%; const B: Word64Rec);
 procedure Word%1%InitWord128(var A: Word%1%; const B: Word128);
 procedure Word%1%InitInt32(var A: Word%1%; const B: Int32);
 procedure Word%1%InitInt64(var A: Word%1%; const B: Int64);
 procedure Word%1%InitInt128(var A: Word%1%; const B: Int128);
 
 function  Word%1%ToWord32(const A: Word%1%): Word32;
-function  Word%1%ToWord64(const A: Word%1%): Word64;
+function  Word%1%ToWord64(const A: Word%1%): Word64Rec;
 function  Word%1%ToWord128(const A: Word%1%): Word128;
 function  Word%1%ToInt32(const A: Word%1%): Int32;
 function  Word%1%ToInt64(const A: Word%1%): Int64;
@@ -895,7 +906,7 @@ function  Word%1%Lo(const A: Word%1%): Word256;
 function  Word%1%Hi(const A: Word%1%): Word256;
 
 function  Word%1%EqualsWord32(const A: Word%1%; const B: Word32): Boolean;
-function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64): Boolean;
+function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64Rec): Boolean;
 function  Word%1%EqualsWord128(const A: Word%1%; const B: Word128): Boolean;
 function  Word%1%EqualsWord%1%(const A, B: Word%1%): Boolean;
 function  Word%1%EqualsInt32(const A: Word%1%; const B: Int32): Boolean;
@@ -903,7 +914,7 @@ function  Word%1%EqualsInt64(const A: Word%1%; const B: Int64): Boolean;
 function  Word%1%EqualsInt128(const A: Word%1%; const B: Int128): Boolean;
 
 function  Word%1%CompareWord32(const A: Word%1%; const B: Word32): Integer;
-function  Word%1%CompareWord64(const A: Word%1%; const B: Word64): Integer;
+function  Word%1%CompareWord64(const A: Word%1%; const B: Word64Rec): Integer;
 function  Word%1%CompareWord128(const A: Word%1%; const B: Word128): Integer;
 function  Word%1%CompareWord%1%(const A, B: Word%1%): Integer;
 function  Word%1%CompareInt32(const A: Word%1%; const B: Int32): Integer;
@@ -931,7 +942,7 @@ procedure Word%1%Ror1(var A: Word%1%);
 procedure Word%1%Swap(var A, B: Word%1%);
 
 procedure Word%1%AddWord32(var A: Word%1%; const B: Word32);
-procedure Word%1%AddWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%AddWord64(var A: Word%1%; const B: Word64Rec);
 procedure Word%1%AddWord128(var A: Word%1%; const B: Word128);
 procedure Word%1%AddWord256(var A: Word%1%; const B: Word256);
 procedure Word%1%AddWord%1%(var A: Word%1%; const B: Word%1%);
@@ -994,7 +1005,7 @@ function  Int32Hash(const A: Int32): Word32;
 { Int64                                                                        }
 {                                                                              }
 function  Int64Sign(const A: Int64): Integer;
-function  Int64Abs(const A: Int64; var B: Word64): Boolean;
+function  Int64Abs(const A: Int64; var B: Word64Rec): Boolean;
 
 function  Int64IsInt8Range(const A: Int64): Boolean;
 function  Int64IsInt16Range(const A: Int64): Boolean;
@@ -1051,28 +1062,28 @@ function  Int128IsInt32Range(const A: Int128): Boolean;
 function  Int128IsInt64Range(const A: Int128): Boolean;
 
 procedure Int128InitWord32(var A: Int128; const B: Word32);
-procedure Int128InitWord64(var A: Int128; const B: Word64);
+procedure Int128InitWord64(var A: Int128; const B: Word64Rec);
 procedure Int128InitWord128(var A: Int128; const B: Word128);
 procedure Int128InitInt32(var A: Int128; const B: Int32);
 procedure Int128InitInt64(var A: Int128; const B: Int64);
 procedure Int128InitFloat(var A: Int128; const B: Extended);
 
 function  Int128ToWord32(const A: Int128): Word32;
-function  Int128ToWord64(const A: Int128): Word64;
+function  Int128ToWord64(const A: Int128): Word64Rec;
 function  Int128ToWord128(const A: Int128): Word128;
 function  Int128ToInt32(const A: Int128): Int32;
 function  Int128ToInt64(const A: Int128): Int64;
 function  Int128ToFloat(const A: Int128): Extended;
 
 function  Int128EqualsWord32(const A: Int128; const B: Word32): Boolean;
-function  Int128EqualsWord64(const A: Int128; const B: Word64): Boolean;
+function  Int128EqualsWord64(const A: Int128; const B: Word64Rec): Boolean;
 function  Int128EqualsWord128(const A: Int128; const B: Word128): Boolean;
 function  Int128EqualsInt32(const A: Int128; const B: Int32): Boolean;
 function  Int128EqualsInt64(const A: Int128; const B: Int64): Boolean;
 function  Int128EqualsInt128(const A, B: Int128): Boolean;
 
 function  Int128CompareWord32(const A: Int128; const B: Word32): Integer;
-function  Int128CompareWord64(const A: Int128; const B: Word64): Integer;
+function  Int128CompareWord64(const A: Int128; const B: Word64Rec): Integer;
 function  Int128CompareWord128(const A: Int128; const B: Word128): Integer;
 function  Int128CompareInt32(const A: Int128; const B: Int32): Integer;
 function  Int128CompareInt64(const A: Int128; const B: Int64): Integer;
@@ -1114,14 +1125,14 @@ function  Int128BitCount(const A: Int128): Integer;
 function  Int128IsPowerOfTwo(const A: Int128): Boolean;
 
 procedure Int128AddWord32(var A: Int128; const B: Word32);
-procedure Int128AddWord64(var A: Int128; const B: Word64);
+procedure Int128AddWord64(var A: Int128; const B: Word64Rec);
 procedure Int128AddWord128(var A: Int128; const B: Word128);
 procedure Int128AddInt32(var A: Int128; const B: Int32);
 procedure Int128AddInt64(var A: Int128; const B: Int64);
 procedure Int128AddInt128(var A: Int128; const B: Int128);
 
 procedure Int128SubtractWord32(var A: Int128; const B: Word32);
-procedure Int128SubtractWord64(var A: Int128; const B: Word64);
+procedure Int128SubtractWord64(var A: Int128; const B: Word64Rec);
 procedure Int128SubtractWord128(var A: Int128; const B: Word128);
 procedure Int128SubtractInt32(var A: Int128; const B: Int32);
 procedure Int128SubtractInt64(var A: Int128; const B: Int64);
@@ -1130,7 +1141,7 @@ procedure Int128SubtractInt128(var A: Int128; const B: Int128);
 procedure Int128MultiplyWord8(var A: Int128; const B: Byte);
 procedure Int128MultiplyWord16(var A: Int128; const B: Word);
 procedure Int128MultiplyWord32(var A: Int128; const B: Word32);
-procedure Int128MultiplyWord64(var A: Int128; const B: Word64);
+procedure Int128MultiplyWord64(var A: Int128; const B: Word64Rec);
 procedure Int128MultiplyWord128(var A: Int128; const B: Word128);
 procedure Int128MultiplyInt8(var A: Int128; const B: ShortInt);
 procedure Int128MultiplyInt16(var A: Int128; const B: SmallInt);
@@ -1143,7 +1154,7 @@ procedure Int128Sqr(var A: Int128);
 procedure Int128DivideWord8(const A: Int128; const B: Byte; var Q: Int128; var R: Byte);
 procedure Int128DivideWord16(const A: Int128; const B: Word; var Q: Int128; var R: Word);
 procedure Int128DivideWord32(const A: Int128; const B: Word32; var Q: Int128; var R: Word32);
-procedure Int128DivideWord64(const A: Int128; const B: Word64; var Q: Int128; var R: Word64);
+procedure Int128DivideWord64(const A: Int128; const B: Word64Rec; var Q: Int128; var R: Word64Rec);
 procedure Int128DivideWord128(const A: Int128; const B: Word128; var Q: Int128; var R: Word128);
 
 procedure Int128DivideInt8(const A: Int128; const B: ShortInt; var Q: Int128; var R: ShortInt);
@@ -1217,7 +1228,7 @@ function  Int256IsInt64Range(const A: Int256): Boolean;
 function  Int256IsInt128Range(const A: Int256): Boolean;
 
 procedure Int256InitWord32(var A: Int256; const B: Word32);
-procedure Int256InitWord64(var A: Int256; const B: Word64);
+procedure Int256InitWord64(var A: Int256; const B: Word64Rec);
 procedure Int256InitWord128(var A: Int256; const B: Word128);
 procedure Int256InitInt32(var A: Int256; const B: Int32);
 procedure Int256InitInt64(var A: Int256; const B: Int64);
@@ -1258,7 +1269,7 @@ function  Int%1%IsInt32Range(const A: Int%1%): Boolean;
 function  Int%1%IsInt64Range(const A: Int%1%): Boolean;
 
 procedure Int%1%InitWord32(var A: Int%1%; const B: Word32);
-procedure Int%1%InitWord64(var A: Int%1%; const B: Word64);
+procedure Int%1%InitWord64(var A: Int%1%; const B: Word64Rec);
 procedure Int%1%InitWord128(var A: Int%1%; const B: Word128);
 procedure Int%1%InitInt32(var A: Int%1%; const B: Int32);
 procedure Int%1%InitInt64(var A: Int%1%; const B: Int64);
@@ -1475,6 +1486,12 @@ begin
 end;
 {$ENDIF}
 {$IFNDEF OPT_C_ON}{$C-}{$ENDIF}
+
+
+
+{$IFDEF DELPHI7_DOWN}
+  {$Q-}
+{$ENDIF}
 
 
 
@@ -2477,7 +2494,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);
+procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64Rec);
 asm
     // EAX = A, EDX = B, [ECX] = R
     mul edx
@@ -2486,7 +2503,7 @@ asm
 end;
 {$ELSE}
 {$IFDEF SupportUInt64}
-procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);
+procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64Rec);
 var F : UInt64;
 begin
   F := A;
@@ -2495,7 +2512,7 @@ begin
   R.Word32s[1] := Word32(F shr 32);
 end;
 {$ELSE}
-procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64);
+procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64Rec);
 var F, G : Word;
     I, J : Word;
     C    : Int64;
@@ -2507,25 +2524,25 @@ begin
   J := Word(B shr 16);
 
   C := F * I;
-  R.Words[0] := Word(C);
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
   Inc(C, F * J);
   Inc(C, G * I);
-  R.Words[1] := Word(C);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
   Inc(C, G * J);
-  R.Words[2] := Word(C);
+  R.Word16s[2] := Word(C);
 
   C := C shr 16;
-  R.Words[3] := Word(C);
+  R.Word16s[3] := Word(C);
 end;
 {$ENDIF}{$ENDIF}
 
 // Calculatess A * B / C and returns the quotient and remainder in Q and R
-procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64; var R: Word32);
-var D : Word64;
+procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64Rec; var R: Word32);
+var D : Word64Rec;
 begin
   Word32MultiplyWord32(A, B, D);
   Word64DivideWord32(D, C, Q, R);
@@ -2579,7 +2596,7 @@ end;
 // Calculates A^E mod M
 function Word32PowerAndMod(const A, E, M: Word32): Word32;
 var P, Y, F : Word32;
-    Q, T : Word64;
+    Q, T : Word64Rec;
 begin
   P := 1;
   Y := A;
@@ -2770,76 +2787,104 @@ end;
 {                                                                              }
 { Word64                                                                       }
 {                                                                              }
-procedure Word64InitZero(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64InitZero(var A: Word64Rec);
 begin
-  A.Word32s[0] := 0;
-  A.Word32s[1] := 0;
+  UInt64(A) := 0;
+end;
+{$ELSE}
+procedure Word64InitZero(var A: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := 0;
+  Word64Rec(A).Word32s[1] := 0;
+end;
+{$ENDIF}
+
+{$IFDEF SupportUInt64}
+procedure Word64InitOne(var A: Word64Rec);
+begin
+  UInt64(A) := 1;
+end;
+{$ELSE}
+procedure Word64InitOne(var A: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := 1;
+  Word64Rec(A).Word32s[1] := 0;
+end;
+{$ENDIF}
+
+procedure Word64InitMinimum(var A: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := 0;
+  Word64Rec(A).Word32s[1] := 0;
 end;
 
-procedure Word64InitOne(var A: Word64);
+procedure Word64InitMaximum(var A: Word64Rec);
 begin
-  A.Word32s[0] := 1;
-  A.Word32s[1] := 0;
+  Word64Rec(A).Word32s[0] := $FFFFFFFF;
+  Word64Rec(A).Word32s[1] := $FFFFFFFF;
 end;
 
-procedure Word64InitMinimum(var A: Word64);
+{$IFDEF SupportUInt64}
+function Word64IsZero(const A: Word64Rec): Boolean;
 begin
-  A.Word32s[0] := 0;
-  A.Word32s[1] := 0;
+  Result := UInt64(A) = 0;
+end;
+{$ELSE}
+function Word64IsZero(const A: Word64Rec): Boolean;
+begin
+  Result := (Word64Rec(A).Word32s[0] = 0) and
+            (Word64Rec(A).Word32s[1] = 0);
+end;
+{$ENDIF}
+
+{$IFDEF SupportUInt64}
+function Word64IsOne(const A: Word64Rec): Boolean;
+begin
+  Result := UInt64(A) = 1;
+end;
+{$ELSE}
+function Word64IsOne(const A: Word64Rec): Boolean;
+begin
+  Result := (Word64Rec(A).Word32s[0] = 1) and
+            (Word64Rec(A).Word32s[1] = 0);
+end;
+{$ENDIF}
+
+function Word64IsMinimum(const A: Word64Rec): Boolean;
+begin
+  Result := (Word64Rec(A).Word32s[0] = 0) and
+            (Word64Rec(A).Word32s[1] = 0);
 end;
 
-procedure Word64InitMaximum(var A: Word64);
+function Word64IsMaximum(const A: Word64Rec): Boolean;
 begin
-  A.Word32s[0] := $FFFFFFFF;
-  A.Word32s[1] := $FFFFFFFF;
+  Result := (Word64Rec(A).Word32s[0] = $FFFFFFFF) and (Word64Rec(A).Word32s[1] = $FFFFFFFF);
 end;
 
-function Word64IsZero(const A: Word64): Boolean;
+function Word64IsOdd(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[0] = 0) and
-            (A.Word32s[1] = 0);
+  Result := (Word64Rec(A).Word32s[0] and 1 <> 0);
 end;
 
-function Word64IsOne(const A: Word64): Boolean;
+function Word64IsWord8Range(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[0] = 1) and
-            (A.Word32s[1] = 0);
+  Result := (Word64Rec(A).Word32s[0] <= MaxWord8) and
+            (Word64Rec(A).Word32s[1] = 0);
 end;
 
-function Word64IsMinimum(const A: Word64): Boolean;
+function Word64IsWord16Range(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[0] = 0) and
-            (A.Word32s[1] = 0);
+  Result := (Word64Rec(A).Word32s[0] <= MaxWord16) and
+            (Word64Rec(A).Word32s[1] = 0);
 end;
 
-function Word64IsMaximum(const A: Word64): Boolean;
+function Word64IsWord32Range(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[0] = $FFFFFFFF) and (A.Word32s[1] = $FFFFFFFF);
+  Result := (Word64Rec(A).Word32s[1] = 0);
 end;
 
-function Word64IsOdd(const A: Word64): Boolean;
-begin
-  Result := (A.Word32s[0] and 1 <> 0);
-end;
-
-function Word64IsWord8Range(const A: Word64): Boolean;
-begin
-  Result := (A.Word32s[0] <= MaxWord8) and
-            (A.Word32s[1] = 0);
-end;
-
-function Word64IsWord16Range(const A: Word64): Boolean;
-begin
-  Result := (A.Word32s[0] <= MaxWord16) and
-            (A.Word32s[1] = 0);
-end;
-
-function Word64IsWord32Range(const A: Word64): Boolean;
-begin
-  Result := (A.Word32s[1] = 0);
-end;
-
-function Word64IsInt8Range(const A: Word64): Boolean;
+function Word64IsInt8Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64IsInt32Range(A);
   if not Result then
@@ -2847,7 +2892,7 @@ begin
   Result := Int32IsInt8Range(Word64ToInt32(A));
 end;
 
-function Word64IsInt16Range(const A: Word64): Boolean;
+function Word64IsInt16Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64IsInt32Range(A);
   if not Result then
@@ -2855,41 +2900,48 @@ begin
   Result := Int32IsInt16Range(Word64ToInt32(A));
 end;
 
-function Word64IsInt32Range(const A: Word64): Boolean;
+function Word64IsInt32Range(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[0] < $80000000) and
-            (A.Word32s[1] = 0);
+  Result := (Word64Rec(A).Word32s[0] < $80000000) and
+            (Word64Rec(A).Word32s[1] = 0);
 end;
 
-function Word64IsInt64Range(const A: Word64): Boolean;
+function Word64IsInt64Range(const A: Word64Rec): Boolean;
 begin
-  Result := (A.Word32s[1] < $80000000);
+  Result := (Word64Rec(A).Word32s[1] < $80000000);
 end;
 
-procedure Word64InitWord32(var A: Word64; const B: Word32);
+{$IFDEF SupportUInt64}
+procedure Word64InitWord32(var A: Word64Rec; const B: Word32);
 begin
-  A.Word32s[0] := B;
-  A.Word32s[1] := 0;
+  UInt64(A) := B;
 end;
+{$ELSE}
+procedure Word64InitWord32(var A: Word64Rec; const B: Word32);
+begin
+  Word64Rec(A).Word32s[0] := B;
+  Word64Rec(A).Word32s[1] := 0;
+end;
+{$ENDIF}
 
-procedure Word64InitInt32(var A: Word64; const B: Int32);
+procedure Word64InitInt32(var A: Word64Rec; const B: Int32);
 begin
   {$IFOPT R+}
   if B < 0 then
     RaiseRangeError;
   {$ENDIF}
-  A.Word32s[0] := Word32(B);
-  A.Word32s[1] := 0;
+  Word64Rec(A).Word32s[0] := Word32(B);
+  Word64Rec(A).Word32s[1] := 0;
 end;
 
-procedure Word64InitInt64(var A: Word64; const B: Int64);
+procedure Word64InitInt64(var A: Word64Rec; const B: Int64);
 begin
   {$IFOPT R+}
   if B < 0 then
     RaiseRangeError;
   {$ENDIF}
-  A.Word32s[0] := Int64Rec(B).Word32s[0];
-  A.Word32s[1] := Int64Rec(B).Word32s[1];
+  Word64Rec(A).Word32s[0] := Int64Rec(B).Word32s[0];
+  Word64Rec(A).Word32s[1] := Int64Rec(B).Word32s[1];
 end;
 
 const
@@ -2897,7 +2949,7 @@ const
       4294967296.0 * 4294967295.0 +
       4294967295.0;
 
-procedure Word64InitFloat(var A: Word64; const B: Extended);
+procedure Word64InitFloat(var A: Word64Rec; const B: Extended);
 var C : Extended;
     D : Int64;
 begin
@@ -2907,93 +2959,107 @@ begin
     RaiseRangeError;
   {$ENDIF}
   D := Trunc(C / 4294967296.0);
-  A.Word32s[1] := Int64Rec(D).Word32s[0];
+  Word64Rec(A).Word32s[1] := Int64Rec(D).Word32s[0];
   D := Trunc(C - D * 4294967296.0);
-  A.Word32s[0] := Int64Rec(D).Word32s[0];
+  Word64Rec(A).Word32s[0] := Int64Rec(D).Word32s[0];
 end;
 
-function Word64ToWord32(const A: Word64): Word32;
+function Word64ToWord32(const A: Word64Rec): Word32;
 begin
   {$IFOPT R+}
-  if A.Word32s[1] <> 0 then
+  if Word64Rec(A).Word32s[1] <> 0 then
     RaiseRangeError;
   {$ENDIF}
-  Result := A.Word32s[0];
+  Result := Word64Rec(A).Word32s[0];
 end;
 
-function Word64ToInt32(const A: Word64): Int32;
+function Word64ToInt32(const A: Word64Rec): Int32;
 begin
   {$IFOPT R+}
-  if (A.Word32s[1] <> 0) or (A.Word32s[0] >= $80000000) then
+  if (Word64Rec(A).Word32s[1] <> 0) or (Word64Rec(A).Word32s[0] >= $80000000) then
     RaiseRangeError;
   {$ENDIF}
-  Result := Int32(A.Word32s[0]);
+  Result := Int32(Word64Rec(A).Word32s[0]);
 end;
 
-function Word64ToInt64(const A: Word64): Int64;
+function Word64ToInt64(const A: Word64Rec): Int64;
 begin
   {$IFOPT R+}
-  if A.Word32s[1] >= $80000000 then
+  if Word64Rec(A).Word32s[1] >= $80000000 then
     RaiseRangeError;
   {$ENDIF}
-  Int64Rec(Result).Word32s[0] := A.Word32s[0];
-  Int64Rec(Result).Word32s[1] := A.Word32s[1];
+  Int64Rec(Result).Word32s[0] := Word64Rec(A).Word32s[0];
+  Int64Rec(Result).Word32s[1] := Word64Rec(A).Word32s[1];
 end;
 
-function Word64ToFloat(const A: Word64): Extended;
+function Word64ToFloat(const A: Word64Rec): Extended;
 var T : Extended;
 begin
-  Result := A.Word32s[0];
-  T := A.Word32s[1];
+  Result := Word64Rec(A).Word32s[0];
+  T := Word64Rec(A).Word32s[1];
   Result := Result + T * 4294967296.0;
 end;
 
-function Word64Lo(const A: Word64): Word32;
+function Word64Lo(const A: Word64Rec): Word32;
 begin
-  Result := A.Word32s[0];
+  Result := Word64Rec(A).Word32s[0];
 end;
 
-function Word64Hi(const A: Word64): Word32;
+function Word64Hi(const A: Word64Rec): Word32;
 begin
-  Result := A.Word32s[1];
+  Result := Word64Rec(A).Word32s[1];
 end;
 
-function Word64EqualsWord32(const A: Word64; const B: Word32): Boolean;
+{$IFDEF SupportUInt64}
+function Word64EqualsWord32(const A: Word64Rec; const B: Word32): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Result := (A.Word32s[0] = B) and
-            (A.Word32s[1] = 0);
+  Result := UInt64(A) = B;
 end;
-
-function Word64EqualsWord64(const A, B: Word64): Boolean;
+{$ELSE}
+function Word64EqualsWord32(const A: Word64Rec; const B: Word32): Boolean;
 begin
-  Result := (A.Word32s[0] = B.Word32s[0]) and
-            (A.Word32s[1] = B.Word32s[1]);
+  Result := (Word64Rec(A).Word32s[0] = B) and
+            (Word64Rec(A).Word32s[1] = 0);
 end;
+{$ENDIF}
 
-function Word64EqualsInt32(const A: Word64; const B: Int32): Boolean;
+{$IFDEF SupportUInt64}
+function Word64EqualsWord64(const A, B: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Result := UInt64(A) = UInt64(B);
+end;
+{$ELSE}
+function Word64EqualsWord64(const A, B: Word64Rec): Boolean;
+begin
+  Result := (Word64Rec(A).Word32s[0] = B.Word32s[0]) and
+            (Word64Rec(A).Word32s[1] = B.Word32s[1]);
+end;
+{$ENDIF}
+
+function Word64EqualsInt32(const A: Word64Rec; const B: Int32): Boolean;
 begin
   if B < 0 then
     Result := False else
-  if A.Word32s[1] <> 0 then
+  if Word64Rec(A).Word32s[1] <> 0 then
     Result := False
   else
-    Result := (Int32(A.Word32s[0]) = B);
+    Result := (Int32(Word64Rec(A).Word32s[0]) = B);
 end;
 
-function Word64EqualsInt64(const A: Word64; const B: Int64): Boolean;
+function Word64EqualsInt64(const A: Word64Rec; const B: Int64): Boolean;
 begin
   if B < 0 then
     Result := False else
-  if A.Word32s[1] >= $80000000 then
+  if Word64Rec(A).Word32s[1] >= $80000000 then
     Result := False
   else
     begin
-      Result := (A.Word32s[0] = Int64Rec(B).Word32s[0]) and
-                (A.Word32s[1] = Int64Rec(B).Word32s[1]);
+      Result := (Word64Rec(A).Word32s[0] = Int64Rec(B).Word32s[0]) and
+                (Word64Rec(A).Word32s[1] = Int64Rec(B).Word32s[1]);
     end;
 end;
 
-function Word64EqualsFloat(const A: Word64; const B: Extended): Boolean;
+function Word64EqualsFloat(const A: Word64Rec; const B: Extended): Boolean;
 begin
   if Frac(B) <> 0.0 then
     Result := False
@@ -3001,14 +3067,14 @@ begin
     Result := Abs(Word64ToFloat(A) - B) < 0.1;
 end;
 
-function Word64CompareWord32(const A: Word64; const B: Word32): Integer;
+function Word64CompareWord32(const A: Word64Rec; const B: Word32): Integer;
 var C : Word32;
 begin
-  if A.Word32s[1] > 0 then
+  if Word64Rec(A).Word32s[1] > 0 then
     Result := 1
   else
     begin
-      C := A.Word32s[0];
+      C := Word64Rec(A).Word32s[0];
       if C > B then
         Result := 1 else
       if C < B then
@@ -3018,14 +3084,14 @@ begin
     end;
 end;
 
-function Word64CompareWord64(const A, B: Word64): Integer;
+function Word64CompareWord64(const A, B: Word64Rec): Integer;
 var C, D : Word32;
 begin
-  C := A.Word32s[1];
-  D := B.Word32s[1];
+  C := Word64Rec(A).Word32s[1];
+  D := Word64Rec(B).Word32s[1];
   if C = D then
     begin
-      C := A.Word32s[0];
+      C := Word64Rec(A).Word32s[0];
       D := B.Word32s[0];
     end;
   if C > D then
@@ -3036,16 +3102,16 @@ begin
     Result := 0;
 end;
 
-function Word64CompareInt32(const A: Word64; const B: Int32): Integer;
+function Word64CompareInt32(const A: Word64Rec; const B: Int32): Integer;
 var C : Word32;
 begin
   if B < 0 then
     Result := 1 else
-  if A.Word32s[1] > 0 then
+  if Word64Rec(A).Word32s[1] > 0 then
     Result := 1
   else
     begin
-      C := A.Word32s[0];
+      C := Word64Rec(A).Word32s[0];
       if C > Word32(B) then
         Result := 1 else
       if C < Word32(B) then
@@ -3055,18 +3121,18 @@ begin
     end;
 end;
 
-function Word64CompareInt64(const A: Word64; const B: Int64): Integer;
+function Word64CompareInt64(const A: Word64Rec; const B: Int64): Integer;
 var C, D : Word32;
 begin
   if B < 0 then
     Result := 1
   else
     begin
-      C := A.Word32s[1];
+      C := Word64Rec(A).Word32s[1];
       D := Int64Rec(B).Word32s[1];
       if C = D then
         begin
-          C := A.Word32s[0];
+          C := Word64Rec(A).Word32s[0];
           D := Int64Rec(B).Word32s[0];
         end;
       if C > D then
@@ -3078,7 +3144,7 @@ begin
     end;
 end;
 
-function Word64CompareFloat(const A: Word64; const B: Extended): Integer;
+function Word64CompareFloat(const A: Word64Rec; const B: Extended): Integer;
 var C : Extended;
 begin
   C := Word64ToFloat(A);
@@ -3090,15 +3156,15 @@ begin
     Result := 0;
 end;
 
-function Word64Min(const A, B: Word64): Word64;
+function Word64Min(const A, B: Word64Rec): Word64Rec;
 var C, D : Word32;
 begin
-  C := A.Word32s[1];
-  D := B.Word32s[1];
+  C := Word64Rec(A).Word32s[1];
+  D := Word64Rec(B).Word32s[1];
   if C = D then
     begin
-      C := A.Word32s[0];
-      D := B.Word32s[0];
+      C := Word64Rec(A).Word32s[0];
+      D := Word64Rec(B).Word32s[0];
     end;
   if C <= D then
     Result := A      // A <= B
@@ -3106,14 +3172,14 @@ begin
     Result := B      // B < A
 end;
 
-function Word64Max(const A, B: Word64): Word64;
+function Word64Max(const A, B: Word64Rec): Word64Rec;
 var C, D : Word32;
 begin
-  C := A.Word32s[1];
+  C := Word64Rec(A).Word32s[1];
   D := B.Word32s[1];
   if C = D then
     begin
-      C := A.Word32s[0];
+      C := Word64Rec(A).Word32s[0];
       D := B.Word32s[0];
     end;
   if C >= D then
@@ -3122,65 +3188,93 @@ begin
     Result := B      // B > A
 end;
 
-procedure Word64Not(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Not(var A: Word64Rec);
 begin
-  A.Word32s[0] := not A.Word32s[0];
-  A.Word32s[1] := not A.Word32s[1];
+  UInt64(A) := not UInt64(A);
 end;
-
-procedure Word64OrWord64(var A: Word64; const B: Word64);
+{$ELSE}
+procedure Word64Not(var A: Word64Rec);
 begin
-  A.Word32s[0] := A.Word32s[0] or B.Word32s[0];
-  A.Word32s[1] := A.Word32s[1] or B.Word32s[1];
+  Word64Rec(A).Word32s[0] := not Word64Rec(A).Word32s[0];
+  Word64Rec(A).Word32s[1] := not Word64Rec(A).Word32s[1];
 end;
+{$ENDIF}
 
-procedure Word64AndWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64OrWord64(var A: Word64Rec; const B: Word64Rec);
 begin
-  A.Word32s[0] := A.Word32s[0] and B.Word32s[0];
-  A.Word32s[1] := A.Word32s[1] and B.Word32s[1];
+  UInt64(A) := UInt64(A) or UInt64(B);
 end;
-
-procedure Word64XorWord64(var A: Word64; const B: Word64);
+{$ELSE}
+procedure Word64OrWord64(var A: Word64Rec; const B: Word64Rec);
 begin
-  A.Word32s[0] := A.Word32s[0] xor B.Word32s[0];
-  A.Word32s[1] := A.Word32s[1] xor B.Word32s[1];
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] or B.Word32s[0];
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] or B.Word32s[1];
 end;
+{$ENDIF}
 
-function Word64IsBitSet(const A: Word64; const B: Integer): Boolean;
+{$IFDEF SupportUInt64}
+procedure Word64AndWord64(var A: Word64Rec; const B: Word64Rec);
+begin
+  UInt64(A) := UInt64(A) and UInt64(B);
+end;
+{$ELSE}
+procedure Word64AndWord64(var A: Word64Rec; const B: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] and B.Word32s[0];
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] and B.Word32s[1];
+end;
+{$ENDIF}
+
+{$IFDEF SupportUInt64}
+procedure Word64XorWord64(var A: Word64Rec; const B: Word64Rec);
+begin
+  UInt64(A) := UInt64(A) xor UInt64(B);
+end;
+{$ELSE}
+procedure Word64XorWord64(var A: Word64Rec; const B: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] xor B.Word32s[0];
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] xor B.Word32s[1];
+end;
+{$ENDIF}
+
+function Word64IsBitSet(const A: Word64Rec; const B: Integer): Boolean;
 begin
   if (B < 0) or (B > 63) then
     Result := False
   else
-    Result := (A.Word32s[B shr 5] and (1 shl (B and $1F)) <> 0);
+    Result := (Word64Rec(A).Word32s[B shr 5] and (1 shl (B and $1F)) <> 0);
 end;
 
-procedure Word64SetBit(var A: Word64; const B: Integer);
+procedure Word64SetBit(var A: Word64Rec; const B: Integer);
 begin
   if (B < 0) or (B > 63) then
     exit;
-  A.Word32s[B shr 5] := A.Word32s[B shr 5] or Word32(1 shl (B and $1F));
+  Word64Rec(A).Word32s[B shr 5] := Word64Rec(A).Word32s[B shr 5] or Word32(1 shl (B and $1F));
 end;
 
-procedure Word64ClearBit(var A: Word64; const B: Integer);
+procedure Word64ClearBit(var A: Word64Rec; const B: Integer);
 begin
   if (B < 0) or (B > 63) then
     exit;
-  A.Word32s[B shr 5] := A.Word32s[B shr 5] and not Word32(1 shl (B and $1F));
+  Word64Rec(A).Word32s[B shr 5] := Word64Rec(A).Word32s[B shr 5] and not Word32(1 shl (B and $1F));
 end;
 
-procedure Word64ToggleBit(var A: Word64; const B: Integer);
+procedure Word64ToggleBit(var A: Word64Rec; const B: Integer);
 begin
   if (B < 0) or (B > 63) then
     exit;
-  A.Word32s[B shr 5] := A.Word32s[B shr 5] xor Word32(1 shl (B and $1F));
+  Word64Rec(A).Word32s[B shr 5] := Word64Rec(A).Word32s[B shr 5] xor Word32(1 shl (B and $1F));
 end;
 
 // Returns index (0-63) of lowest set bit in A, or -1 if none set
-function Word64SetBitScanForward(const A: Word64): Integer;
+function Word64SetBitScanForward(const A: Word64Rec): Integer;
 var B : Integer;
 begin
   for B := 0 to 63 do
-    if A.Word32s[B shr 5] and Word32(1 shl (B and $1F)) <> 0 then
+    if Word64Rec(A).Word32s[B shr 5] and Word32(1 shl (B and $1F)) <> 0 then
       begin
         Result := B;
         exit;
@@ -3189,11 +3283,11 @@ begin
 end;
 
 // Returns index (0-63) of highest set bit in A, or -1 if none set
-function Word64SetBitScanReverse(const A: Word64): Integer;
+function Word64SetBitScanReverse(const A: Word64Rec): Integer;
 var B : Integer;
 begin
   for B := 63 downto 0 do
-    if A.Word32s[B shr 5] and Word32(1 shl (B and $1F)) <> 0 then
+    if Word64Rec(A).Word32s[B shr 5] and Word32(1 shl (B and $1F)) <> 0 then
       begin
         Result := B;
         exit;
@@ -3202,11 +3296,11 @@ begin
 end;
 
 // Returns index (0-63) of lowest clear bit in A, or -1 if none clear
-function Word64ClearBitScanForward(const A: Word64): Integer;
+function Word64ClearBitScanForward(const A: Word64Rec): Integer;
 var B : Integer;
 begin
   for B := 0 to 63 do
-    if A.Word32s[B shr 5] and Word32(1 shl (B and $1F)) = 0 then
+    if Word64Rec(A).Word32s[B shr 5] and Word32(1 shl (B and $1F)) = 0 then
       begin
         Result := B;
         exit;
@@ -3215,11 +3309,11 @@ begin
 end;
 
 // Returns index (0-63) of highest clear bit in A, or -1 if none clear
-function Word64ClearBitScanReverse(const A: Word64): Integer;
+function Word64ClearBitScanReverse(const A: Word64Rec): Integer;
 var B : Integer;
 begin
   for B := 63 downto 0 do
-    if A.Word32s[B shr 5] and Word32(1 shl (B and $1F)) = 0 then
+    if Word64Rec(A).Word32s[B shr 5] and Word32(1 shl (B and $1F)) = 0 then
       begin
         Result := B;
         exit;
@@ -3227,7 +3321,13 @@ begin
   Result := -1;
 end;
 
-procedure Word64Shl(var A: Word64; const B: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64Shl(var A: Word64Rec; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) shl B;
+end;
+{$ELSE}
+procedure Word64Shl(var A: Word64Rec; const B: Byte);
 var C : Byte;
 begin
   if B = 0 then
@@ -3237,24 +3337,38 @@ begin
   if B < 32 then
     begin
       C := 32 - B;
-      A.Word32s[1] := (A.Word32s[1] shl B) or (A.Word32s[0] shr C);
-      A.Word32s[0] := A.Word32s[0] shl B;
+      Word64Rec(A).Word32s[1] := (Word64Rec(A).Word32s[1] shl B) or (Word64Rec(A).Word32s[0] shr C);
+      Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] shl B;
     end
   else
     begin
       C := B - 32;
-      A.Word32s[1] := A.Word32s[0] shl C;
-      A.Word32s[0] := 0;
+      Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[0] shl C;
+      Word64Rec(A).Word32s[0] := 0;
     end;
 end;
+{$ENDIF}
 
-procedure Word64Shl1(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Shl1(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  A.Word32s[1] := (A.Word32s[1] shl 1) or (A.Word32s[0] shr 31);
-  A.Word32s[0] := A.Word32s[0] shl 1;
+  UInt64(A) := UInt64(A) shl 1;
 end;
+{$ELSE}
+procedure Word64Shl1(var A: Word64Rec);
+begin
+  Word64Rec(A).Word32s[1] := (Word64Rec(A).Word32s[1] shl 1) or (Word64Rec(A).Word32s[0] shr 31);
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] shl 1;
+end;
+{$ENDIF}
 
-procedure Word64Shr(var A: Word64; const B: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64Shr(var A: Word64Rec; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) shr B;
+end;
+{$ELSE}
+procedure Word64Shr(var A: Word64Rec; const B: Byte);
 var C : Byte;
 begin
   if B = 0 then
@@ -3264,24 +3378,32 @@ begin
   if B < 32 then
     begin
       C := 32 - B;
-      A.Word32s[0] := (A.Word32s[0] shr B) or (A.Word32s[1] shl C);
-      A.Word32s[1] := A.Word32s[1] shr B;
+      Word64Rec(A).Word32s[0] := (Word64Rec(A).Word32s[0] shr B) or (Word64Rec(A).Word32s[1] shl C);
+      Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] shr B;
     end
   else
     begin
       C := B - 32;
-      A.Word32s[0] := A.Word32s[1] shr C;
-      A.Word32s[1] := 0;
+      Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[1] shr C;
+      Word64Rec(A).Word32s[1] := 0;
     end;
 end;
+{$ENDIF}
 
-procedure Word64Shr1(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Shr1(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  A.Word32s[0] := (A.Word32s[0] shr 1) or (A.Word32s[1] shl 31);
-  A.Word32s[1] := A.Word32s[1] shr 1;
+  UInt64(A) := UInt64(A) shr 1;
 end;
+{$ELSE}
+procedure Word64Shr1(var A: Word64Rec);
+begin
+  Word64Rec(A).Word32s[0] := (Word64Rec(A).Word32s[0] shr 1) or (Word64Rec(A).Word32s[1] shl 31);
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] shr 1;
+end;
+{$ENDIF}
 
-procedure Word64Rol(var A: Word64; const B: Byte);
+procedure Word64Rol(var A: Word64Rec; const B: Byte);
 var C, D : Byte;
     E, F : Word32;
 begin
@@ -3291,30 +3413,50 @@ begin
   if C < 32 then
     begin
       D := 32 - C;
-      E := (A.Word32s[1] shl C) or (A.Word32s[0] shr D);
-      F := (A.Word32s[0] shl C) or (A.Word32s[1] shr D);
+      E := (Word64Rec(A).Word32s[1] shl C) or (Word64Rec(A).Word32s[0] shr D);
+      F := (Word64Rec(A).Word32s[0] shl C) or (Word64Rec(A).Word32s[1] shr D);
     end
   else
     begin
       Dec(C, 32);
       D := 32 - C;
-      E := (A.Word32s[0] shl C) or (A.Word32s[1] shr D);
-      F := (A.Word32s[1] shl C) or (A.Word32s[0] shr D);
+      E := (Word64Rec(A).Word32s[0] shl C) or (Word64Rec(A).Word32s[1] shr D);
+      F := (Word64Rec(A).Word32s[1] shl C) or (Word64Rec(A).Word32s[0] shr D);
     end;
-  A.Word32s[1] := E;
-  A.Word32s[0] := F;
+  Word64Rec(A).Word32s[1] := E;
+  Word64Rec(A).Word32s[0] := F;
 end;
 
-procedure Word64Rol1(var A: Word64);
+procedure Word64Rol1(var A: Word64Rec);
 var B, C : Word32;
 begin
-  B := (A.Word32s[1] shl 1) or (A.Word32s[0] shr 31);
-  C := (A.Word32s[0] shl 1) or (A.Word32s[1] shr 31);
-  A.Word32s[1] := B;
-  A.Word32s[0] := C;
+  B := (Word64Rec(A).Word32s[1] shl 1) or (Word64Rec(A).Word32s[0] shr 31);
+  C := (Word64Rec(A).Word32s[0] shl 1) or (Word64Rec(A).Word32s[1] shr 31);
+  Word64Rec(A).Word32s[1] := B;
+  Word64Rec(A).Word32s[0] := C;
 end;
 
-procedure Word64Ror(var A: Word64; const B: Byte);
+procedure Word64Rol2(var A: Word64Rec);
+var B, C : Word32;
+begin
+  B := (Word64Rec(A).Word32s[1] shl 1) or (Word64Rec(A).Word32s[0] shr 31);
+  C := (Word64Rec(A).Word32s[0] shl 1) or (Word64Rec(A).Word32s[1] shr 31);
+  Word64Rec(A).Word32s[1] := B;
+  Word64Rec(A).Word32s[0] := C;
+end;
+
+{$IFDEF SupportUInt64}
+procedure Word64Ror(var A: Word64Rec; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : UInt64;
+  D : Byte;
+begin
+  C := UInt64(A);
+  D := 64 - B;
+  UInt64(A) := (C shr B) or (C shl D);
+end;
+{$ELSE}
+procedure Word64Ror(var A: Word64Rec; const B: Byte);
 var C, D : Byte;
     E, F : Word32;
 begin
@@ -3324,42 +3466,53 @@ begin
   if C < 32 then
     begin
       D := 32 - C;
-      E := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
-      F := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
+      E := (Word64Rec(A).Word32s[1] shr C) or (Word64Rec(A).Word32s[0] shl D);
+      F := (Word64Rec(A).Word32s[0] shr C) or (Word64Rec(A).Word32s[1] shl D);
     end
   else
     begin
       Dec(C, 32);
       D := 32 - C;
-      E := (A.Word32s[0] shr C) or (A.Word32s[1] shl D);
-      F := (A.Word32s[1] shr C) or (A.Word32s[0] shl D);
+      E := (Word64Rec(A).Word32s[0] shr C) or (Word64Rec(A).Word32s[1] shl D);
+      F := (Word64Rec(A).Word32s[1] shr C) or (Word64Rec(A).Word32s[0] shl D);
     end;
-  A.Word32s[1] := E;
-  A.Word32s[0] := F;
+  Word64Rec(A).Word32s[1] := E;
+  Word64Rec(A).Word32s[0] := F;
 end;
+{$ENDIF}
 
-procedure Word64Ror1(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Ror1(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : UInt64;
+begin
+  C := UInt64(A);
+  UInt64(A) := (C shr 1) or (C shl 63);
+end;
+{$ELSE}
+procedure Word64Ror1(var A: Word64Rec);
 var B, C : Word32;
 begin
-  B := (A.Word32s[1] shr 1) or (A.Word32s[0] shl 31);
-  C := (A.Word32s[0] shr 1) or (A.Word32s[1] shl 31);
-  A.Word32s[1] := B;
-  A.Word32s[0] := C;
+  B := (Word64Rec(A).Word32s[1] shr 1) or (Word64Rec(A).Word32s[0] shl 31);
+  C := (Word64Rec(A).Word32s[0] shr 1) or (Word64Rec(A).Word32s[1] shl 31);
+  Word64Rec(A).Word32s[1] := B;
+  Word64Rec(A).Word32s[0] := C;
 end;
+{$ENDIF}
 
-procedure Word64Swap(var A, B: Word64);
+procedure Word64Swap(var A, B: Word64Rec);
 var C : Word32;
 begin
-  C := A.Word32s[0];
-  A.Word32s[0] := B.Word32s[0];
+  C := Word64Rec(A).Word32s[0];
+  Word64Rec(A).Word32s[0] := B.Word32s[0];
   B.Word32s[0] := C;
-  C := A.Word32s[1];
-  A.Word32s[1] := B.Word32s[1];
+  C := Word64Rec(A).Word32s[1];
+  Word64Rec(A).Word32s[1] := B.Word32s[1];
   B.Word32s[1] := C;
 end;
 
-procedure Word64ReverseBits(var A: Word64);
-var B : Word64;
+procedure Word64ReverseBits(var A: Word64Rec);
+var B : Word64Rec;
     I : Integer;
 begin
   Word64InitZero(B);
@@ -3369,7 +3522,7 @@ begin
   A := B;
 end;
 
-procedure Word64ReverseBytes(var A: Word64);
+procedure Word64ReverseBytes(var A: Word64Rec);
 var I : Integer;
     B : Byte;
 begin
@@ -3381,7 +3534,7 @@ begin
     end;
 end;
 
-function Word64BitCount(const A: Word64): Integer;
+function Word64BitCount(const A: Word64Rec): Integer;
 var I : Integer;
 begin
   Result := 0;
@@ -3389,41 +3542,47 @@ begin
     Inc(Result, Word8BitCountTable[A.Bytes[I]]);
 end;
 
-function Word64IsPowerOfTwo(const A: Word64): Boolean;
+function Word64IsPowerOfTwo(const A: Word64Rec): Boolean;
 begin
   Result := (Word64BitCount(A) = 1);
 end;
 
-procedure Word64SwapEndian(var A: Word64);
-var B : Word64;
+procedure Word64SwapEndian(var A: Word64Rec);
+var B : Word64Rec;
     I : Integer;
 begin
   B := A;
   for I := 0 to 7 do
-    A.Bytes[I] := B.Bytes[7 - I];
+    Word64Rec(A).Bytes[I] := Word64Rec(B).Bytes[7 - I];
 end;
 
-procedure Word64Inc(var A: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64Inc(var A: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Inc(UInt64(A));
+end;
+{$ELSE}
+procedure Word64Inc(var A: Word64Rec);
 var C : Word32;
 begin
-  C := A.Words[0];
+  C := Word64Rec(A).Word16s[0];
   Inc(C);
-  A.Words[0] := Word(C);
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[1]);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[2]);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[3]);
-  A.Words[3] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[3]);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3431,28 +3590,35 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64AddWord8(var A: Word64; const B: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64AddWord8(var A: Word64Rec; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Inc(UInt64(A), B);
+end;
+{$ELSE}
+procedure Word64AddWord8(var A: Word64Rec; const B: Byte);
 var C : Word32;
 begin
-  C := A.Words[0];
+  C := Word64Rec(A).Word16s[0];
   Inc(C, B);
-  A.Words[0] := Word(C);
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[1]);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[2]);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[3]);
-  A.Words[3] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[3]);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3460,28 +3626,35 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64AddWord16(var A: Word64; const B: Word);
+{$IFDEF SupportUInt64}
+procedure Word64AddWord16(var A: Word64Rec; const B: Word); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Inc(UInt64(A), B);
+end;
+{$ELSE}
+procedure Word64AddWord16(var A: Word64Rec; const B: Word);
 var C : Word32;
 begin
-  C := A.Words[0];
+  C := Word64Rec(A).Word16s[0];
   Inc(C, B);
-  A.Words[0] := Word(C);
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[1]);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[2]);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[3]);
-  A.Words[3] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[3]);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3489,31 +3662,38 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64AddWord32(var A: Word64; const B: Word32);
+{$IFDEF SupportUInt64}
+procedure Word64AddWord32(var A: Word64Rec; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Inc(UInt64(A), B);
+end;
+{$ELSE}
+procedure Word64AddWord32(var A: Word64Rec; const B: Word32);
 var C : Word32;
 begin
   if B = 0 then
     exit;
 
-  C := A.Words[0];
+  C := Word64Rec(A).Word16s[0];
   Inc(C, B and $FFFF);
-  A.Words[0] := Word(C);
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, A.Words[1]);
+  Inc(C, Word64Rec(A).Word16s[1]);
   Inc(C, B shr 16);
-  A.Words[1] := Word(C);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[2]);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[3]);
-  A.Words[3] := Word(C);
+  Inc(C, Word64Rec(A).Word16s[3]);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3521,67 +3701,95 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64AddWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64AddWord64(var A: Word64Rec; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Inc(UInt64(A), UInt64(B));
+end;
+{$ELSE}
+procedure Word64AddWord64(var A: Word64Rec; const B: Word64Rec);
 var C, D : Int64;
 begin
-  C := Int64(A.Word32s[0]) + B.Word32s[0];
-  D := Int64(A.Word32s[1]) + B.Word32s[1];
+  C := Int64(Word64Rec(A).Word32s[0]) + Word64Rec(B).Word32s[0];
+  D := Int64(Word64Rec(A).Word32s[1]) + Word64Rec(B).Word32s[1];
   if Int64Rec(C).Word32s[1] > 0 then
     Inc(D);
   {$IFOPT Q+}
   if Int64Rec(D).Word32s[1] > 0 then
     RaiseOverflowError;
   {$ENDIF}
-  A.Word32s[0] := Int64Rec(C).Word32s[0];
-  A.Word32s[1] := Int64Rec(D).Word32s[0];
+  Word64Rec(A).Word32s[0] := Int64Rec(C).Word32s[0];
+  Word64Rec(A).Word32s[1] := Int64Rec(D).Word32s[0];
 end;
+{$ENDIF}
 
-procedure Word64SubtractWord32(var A: Word64; const B: Word32);
+{$IFDEF SupportUInt64}
+procedure Word64SubtractWord32(var A: Word64Rec; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Dec(UInt64(A), B);
+end;
+{$ELSE}
+procedure Word64SubtractWord32(var A: Word64Rec; const B: Word32);
 var C : Int64;
 begin
   {$IFOPT Q+}
-  if (A.Word32s[1] = 0) and (B > A.Word32s[0]) then
+  if (Word64Rec(A).Word32s[1] = 0) and (B > Word64Rec(A).Word32s[0]) then
     RaiseOverflowError;
   {$ENDIF}
-  C := Int64(A.Word32s[0]) - B;
-  A.Word32s[0] := Int64Rec(C).Word32s[0];
+  C := Int64(Word64Rec(A).Word32s[0]) - B;
+  Word64Rec(A).Word32s[0] := Int64Rec(C).Word32s[0];
   if C < 0 then
-    Dec(A.Word32s[1]);
+    Dec(Word64Rec(A).Word32s[1]);
 end;
+{$ENDIF}
 
-procedure Word64SubtractWord64(var A: Word64; const B: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64SubtractWord64(var A: Word64Rec; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  Dec(UInt64(A), UInt64(B));
+end;
+{$ELSE}
+procedure Word64SubtractWord64(var A: Word64Rec; const B: Word64Rec);
 var C : Int64;
 begin
   {$IFOPT Q+}
-  if (A.Word32s[1] < B.Word32s[1]) or
-     ((A.Word32s[1] = B.Word32s[1]) and (A.Word32s[0] < B.Word32s[0])) then
+  if (Word64Rec(A).Word32s[1] < B.Word32s[1]) or
+     ((Word64Rec(A).Word32s[1] = B.Word32s[1]) and (Word64Rec(A).Word32s[0] < B.Word32s[0])) then
     RaiseOverflowError;
   {$ENDIF}
-  C := Int64(A.Word32s[0]) - B.Word32s[0];
-  A.Word32s[0] := Int64Rec(C).Word32s[0];
+  C := Int64(Word64Rec(A).Word32s[0]) - B.Word32s[0];
+  Word64Rec(A).Word32s[0] := Int64Rec(C).Word32s[0];
   if C < 0 then
-    Dec(A.Word32s[1]);
-  Dec(A.Word32s[1], B.Word32s[1]);
+    Dec(Word64Rec(A).Word32s[1]);
+  Dec(Word64Rec(A).Word32s[1], B.Word32s[1]);
 end;
+{$ENDIF}
 
-procedure Word64MultiplyWord8(var A: Word64; const B: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64MultiplyWord8(var A: Word64Rec; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) * B;
+end;
+{$ELSE}
+procedure Word64MultiplyWord8(var A: Word64Rec; const B: Byte);
 var C : Word32;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(Word64Rec(A).Word16s[0]) * B;
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B);
-  A.Words[1] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B);
-  A.Words[2] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B);
-  A.Words[3] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3589,24 +3797,31 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64MultiplyWord16(var A: Word64; const B: Word);
+{$IFDEF SupportUInt64}
+procedure Word64MultiplyWord16(var A: Word64Rec; const B: Word); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) * B;
+end;
+{$ELSE}
+procedure Word64MultiplyWord16(var A: Word64Rec; const B: Word);
 var C : Word32;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(Word64Rec(A).Word16s[0]) * B;
+  Word64Rec(A).Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B);
-  A.Words[1] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B);
+  Word64Rec(A).Word16s[1] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B);
-  A.Words[2] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B);
+  Word64Rec(A).Word16s[2] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B);
-  A.Words[3] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B);
+  Word64Rec(A).Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
@@ -3614,196 +3829,234 @@ begin
     RaiseOverflowError;
   {$ENDIF}
 end;
+{$ENDIF}
 
-procedure Word64MultiplyWord32(var A: Word64; const B: Word32);
-var R    : Word64;
+{$IFDEF SupportUInt64}
+procedure Word64MultiplyWord32(var A: Word64Rec; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) * B;
+end;
+{$ELSE}
+procedure Word64MultiplyWord32(var A: Word64Rec; const B: Word32);
+var R    : Word64Rec;
     I, J : Word;
     C    : Int64;
 begin
-  I := Word(B and $FFFF);
-  J := Word(B shr 16);
+  I := Word16(B and $FFFF);
+  J := Word16(B shr 16);
 
-  C := Word32(A.Words[0]) * I;
-  R.Words[0] := Word(C);
-
-  C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * J);
-  Inc(C, Word32(A.Words[1]) * I);
-  R.Words[1] := Word(C);
+  C := Word32(Word64Rec(A).Word16s[0]) * I;
+  R.Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * J);
-  Inc(C, Word32(A.Words[2]) * I);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * J);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * I);
+  R.Word16s[1] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * J);
-  Inc(C, Word32(A.Words[3]) * I);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * J);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * I);
+  R.Word16s[2] := Word16(C);
+
+  C := C shr 16;
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * J);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * I);
+  R.Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * J);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * J);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
 
   A := R;
 end;
+{$ENDIF}
 
-procedure Word64MultiplyWord64InPlace(var A: Word64; const B: Word64);
-var R : Word64;
+{$IFDEF SupportUInt64}
+procedure Word64MultiplyWord64InPlace(var A: Word64Rec; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := UInt64(A) * UInt64(B);
+end;
+{$ELSE}
+procedure Word64MultiplyWord64InPlace(var A: Word64Rec; const B: Word64Rec);
+var R : Word64Rec;
     C : Int64;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(Word64Rec(A).Word16s[0]) * Word64Rec(B).Word16s[0];
+  R.Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * Word64Rec(B).Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * Word64Rec(B).Word16s[0]);
+  R.Word16s[1] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * Word64Rec(B).Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * Word64Rec(B).Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * Word64Rec(B).Word16s[0]);
+  R.Word16s[2] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * Word64Rec(B).Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * Word64Rec(B).Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * Word64Rec(B).Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * Word64Rec(B).Word16s[0]);
+  R.Word16s[3] := Word16(C);
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * Word64Rec(B).Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * Word64Rec(B).Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * Word64Rec(B).Word16s[1]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * Word64Rec(B).Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * Word64Rec(B).Word16s[2]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * Word64Rec(B).Word16s[3]);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
 
   A := R;
 end;
+{$ENDIF}
 
-procedure Word64MultiplyWord64(const A, B: Word64; var R: Word128);
+procedure Word64MultiplyWord64(const A, B: Word64Rec; var R: Word128);
 var C : Int64;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(Word64Rec(A).Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[0]) * B.Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B.Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B.Word16s[1]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B.Word16s[0]);
+  R.Word16s[3] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
-  R.Words[4] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[1]) * B.Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B.Word16s[2]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B.Word16s[1]);
+  R.Word16s[4] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
-  R.Words[5] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[2]) * B.Word16s[3]);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B.Word16s[2]);
+  R.Word16s[5] := Word16(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
-  R.Words[6] := Word(C);
+  Inc(C, Word32(Word64Rec(A).Word16s[3]) * B.Word16s[3]);
+  R.Word16s[6] := Word16(C);
 
   C := C shr 16;
-  R.Words[7] := Word(C);
+  R.Word16s[7] := Word16(C);
 end;
 
-procedure Word64Sqr(var A: Word64);
+procedure Word64Sqr(var A: Word64Rec);
 begin
   Word64MultiplyWord64InPlace(A, A);
 end;
 
-procedure Word64DivideWord8(const A: Word64; const B: Byte; out Q: Word64; out R: Byte);
+{$IFDEF SupportUInt64}
+procedure Word64DivideWord8(const A: Word64Rec; const B: Byte; out Q: Word64Rec; out R: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(Q) := UInt64(A) div B;
+  R := UInt64(A) mod B;
+end;
+{$ELSE}
+procedure Word64DivideWord8(const A: Word64Rec; const B: Byte; out Q: Word64Rec; out R: Byte);
 var C, D, E : Word32;
 begin
   if B = 0 then
     RaiseDivByZeroError;
 
-  C := A.Words[3];
+  C := Word64Rec(A).Word16s[3];
   D := C div B;
   E := C mod B;
-  Q.Words[3] := Word(D);
+  Q.Word16s[3] := Word16(D);
 
-  C := (E shl 16) or A.Words[2];
+  C := (E shl 16) or Word64Rec(A).Word16s[2];
   D := C div B;
   E := C mod B;
-  Q.Words[2] := Word(D);
+  Q.Word16s[2] := Word16(D);
 
-  C := (E shl 16) or A.Words[1];
+  C := (E shl 16) or Word64Rec(A).Word16s[1];
   D := C div B;
   E := C mod B;
-  Q.Words[1] := Word(D);
+  Q.Word16s[1] := Word16(D);
 
-  C := (E shl 16) or A.Words[0];
+  C := (E shl 16) or Word64Rec(A).Word16s[0];
   D := C div B;
   R := C mod B;
-  Q.Words[0] := Word(D);
+  Q.Word16s[0] := Word16(D);
 end;
+{$ENDIF}
 
-procedure Word64DivideWord16(const A: Word64; const B: Word; out Q: Word64; out R: Word);
+{$IFDEF SupportUInt64}
+procedure Word64DivideWord16(const A: Word64Rec; const B: Word; out Q: Word64Rec; out R: Word); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(Q) := UInt64(A) div B;
+  R := UInt64(A) mod B;
+end;
+{$ELSE}
+procedure Word64DivideWord16(const A: Word64Rec; const B: Word; out Q: Word64Rec; out R: Word);
 var C, D, E : Word32;
 begin
   if B = 0 then
     RaiseDivByZeroError;
 
-  C := A.Words[3];
+  C := Word64Rec(A).Word16s[3];
   D := C div B;
   E := C mod B;
-  Q.Words[3] := Word(D);
+  Q.Word16s[3] := Word16(D);
 
-  C := (E shl 16) or A.Words[2];
+  C := (E shl 16) or Word64Rec(A).Word16s[2];
   D := C div B;
   E := C mod B;
-  Q.Words[2] := Word(D);
+  Q.Word16s[2] := Word16(D);
 
-  C := (E shl 16) or A.Words[1];
+  C := (E shl 16) or Word64Rec(A).Word16s[1];
   D := C div B;
   E := C mod B;
-  Q.Words[1] := Word(D);
+  Q.Word16s[1] := Word16(D);
 
-  C := (E shl 16) or A.Words[0];
+  C := (E shl 16) or Word64Rec(A).Word16s[0];
   D := C div B;
   R := C mod B;
-  Q.Words[0] := Word(D);
+  Q.Word16s[0] := Word16(D);
 end;
+{$ENDIF}
 
-procedure Word64DivideWord32(const A: Word64; const B: Word32; out Q: Word64; out R: Word32);
+{$IFDEF SupportUInt64}
+procedure Word64DivideWord32(const A: Word64Rec; const B: Word32; out Q: Word64Rec; out R: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(Q) := UInt64(A) div B;
+  R := UInt64(A) mod B;
+end;
+{$ELSE}
+procedure Word64DivideWord32(const A: Word64Rec; const B: Word32; out Q: Word64Rec; out R: Word32);
 var C    : Integer;
-    D, E : Word64;
+    D, E : Word64Rec;
 begin
   // Handle special cases
   if B = 0 then // B = 0
@@ -3857,10 +4110,18 @@ begin
   Assert(E.Word32s[1] = 0); // remainder (32 bits)
   R := E.Word32s[0];
 end;
+{$ENDIF}
 
-procedure Word64DivideWord64(const A, B: Word64; var Q, R: Word64);
+{$IFDEF SupportUInt64}
+procedure Word64DivideWord64(const A, B: Word64Rec; var Q, R: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(Q) := UInt64(A) div UInt64(B);
+  UInt64(R) := UInt64(A) mod UInt64(B);
+end;
+{$ELSE}
+procedure Word64DivideWord64(const A, B: Word64Rec; var Q, R: Word64Rec);
 var C    : Integer;
-    D, E : Word64;
+    D, E : Word64Rec;
 begin
   // Handle special cases
   if Word64IsZero(B) then // B = 0
@@ -3913,15 +4174,23 @@ begin
         end;
     end;
 end;
+{$ENDIF}
 
-procedure Word64ModWord64(const A, B: Word64; var R: Word64);
-var Q : Word64;
+{$IFDEF SupportUInt64}
+procedure Word64ModWord64(const A, B: Word64Rec; var R: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(R) := UInt64(A) mod UInt64(B);
+end;
+{$ELSE}
+procedure Word64ModWord64(const A, B: Word64Rec; var R: Word64Rec);
+var Q : Word64Rec;
 begin
   Word64DivideWord64(A, B, Q, R);
 end;
+{$ENDIF}
 
-procedure Word64ToShortStrR(const A: Word64; var S: RawByteString);
-var C : Word64;
+procedure Word64ToShortStrR(const A: Word64Rec; var S: RawByteString);
+var C : Word64Rec;
     D : Byte;
     I : Integer;
 begin
@@ -3941,7 +4210,7 @@ begin
   SetLength(S, I);
 end;
 
-function Word64ToStr(const A: Word64): String;
+function Word64ToStr(const A: Word64Rec): String;
 var S : RawByteString;
     I, L : Integer;
 begin
@@ -3952,7 +4221,7 @@ begin
     Result[I] := Char(S[L - I + 1]);
 end;
 
-function Word64ToStrB(const A: Word64): RawByteString;
+function Word64ToStrB(const A: Word64Rec): RawByteString;
 var S : RawByteString;
     I, L : Integer;
 begin
@@ -3963,7 +4232,7 @@ begin
     Result[I] := S[L - I + 1];
 end;
 
-function Word64ToStrU(const A: Word64): UnicodeString;
+function Word64ToStrU(const A: Word64Rec): UnicodeString;
 var S : RawByteString;
     I, L : Integer;
 begin
@@ -3974,7 +4243,7 @@ begin
     Result[I] := WideChar(S[L - I + 1]);
 end;
 
-function StrToWord64(const A: String): Word64;
+function StrToWord64(const A: String): Word64Rec;
 var I : Integer;
     B : Char;
     C : Word32;
@@ -3995,7 +4264,7 @@ begin
     end;
 end;
 
-function StrToWord64A(const A: RawByteString): Word64;
+function StrToWord64A(const A: RawByteString): Word64Rec;
 var I : Integer;
     B : AnsiChar;
     C : Word32;
@@ -4014,7 +4283,7 @@ begin
     end;
 end;
 
-function StrToWord64U(const A: UnicodeString): Word64;
+function StrToWord64U(const A: UnicodeString): Word64Rec;
 var I : Integer;
     B : WideChar;
     C : Word32;
@@ -4036,8 +4305,8 @@ begin
 end;
 
 // Uses the Euclidean algorithm
-function Word64GCD(const A, B: Word64): Word64;
-var C, D, T : Word64;
+function Word64GCD(const A, B: Word64Rec): Word64Rec;
+var C, D, T : Word64Rec;
 begin
   C := A;
   D := B;
@@ -4051,8 +4320,8 @@ begin
 end;
 
 // Finds GCD(A, B) and X and Y where AX + BY = GCD(A, B)
-function Word64ExtendedEuclid(const A, B: Word64; var X, Y: Int128): Word64;
-var C, D, T, Q : Word64;
+function Word64ExtendedEuclid(const A, B: Word64Rec; var X, Y: Int128): Word64Rec;
+var C, D, T, Q : Word64Rec;
     I, J, U    : Int128;
 begin
   C := A;
@@ -4084,7 +4353,7 @@ end;
 
 // Helper function for Word64Sqrt: Calculates initial estimate for Word64Sqrt
 // Initial estimate is 1 shl (HighestSetBit div 2)
-procedure Word64SqrtInitialEstimate(var A: Word64);
+procedure Word64SqrtInitialEstimate(var A: Word64Rec);
 var I : Integer;
 begin
   I := Word64SetBitScanReverse(A);
@@ -4094,8 +4363,8 @@ begin
 end;
 
 // Calculates the integer square root of A
-procedure Word64ISqrt(var A: Word64);
-var B, C, D : Word64;
+procedure Word64ISqrt(var A: Word64Rec);
+var B, C, D : Word64Rec;
     I       : Byte;
 begin
   // Handle special cases
@@ -4119,9 +4388,9 @@ begin
   A := C;
 end;
 
-function Word64Sqrt(const A: Word64): Extended;
+function Word64Sqrt(const A: Word64Rec): Extended;
 var B, C, D : Extended;
-    E       : Word64;
+    E       : Word64Rec;
     I       : Byte;
 begin
   // Handle special cases
@@ -4147,9 +4416,9 @@ begin
   Result := C;
 end;
 
-procedure Word64Power(var A: Word64; const B: Word32);
-var R : Word64;
-    C : Word64;
+procedure Word64Power(var A: Word64Rec; const B: Word32);
+var R : Word64Rec;
+    C : Word64Rec;
     D : Word32;
 begin
   if Word64IsOne(A) then
@@ -4173,8 +4442,8 @@ end;
 
 // Word64PowerAndMod
 // Calculates A^E mod M
-function Word64PowerAndMod(const A, E, M: Word64): Word64;
-var P, Y, F : Word64;
+function Word64PowerAndMod(const A, E, M: Word64Rec): Word64Rec;
+var P, Y, F : Word64Rec;
     Q, T : Word128;
 begin
   Word64InitOne(P);
@@ -4194,10 +4463,10 @@ begin
   Result := P;
 end;
 
-function Word64IsPrime(const A: Word64): Boolean;
-var B, C : Word64;
+function Word64IsPrime(const A: Word64Rec): Boolean;
+var B, C : Word64Rec;
     I, L : Integer;
-    Q    : Word64;
+    Q    : Word64Rec;
     R    : Byte;
 const MRTestValues64: array[1..11] of Byte = (
       2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31);
@@ -4229,7 +4498,7 @@ begin
   // if A < 56,897,193,526,942,024,370,326,972,321, it is enough to test 2, 3, 5, 7, 11, 13, 17, 19, 23, 29 and 31 (TR Nicely)
   B := A;
   Word64SubtractWord32(B, 1); // B := A - 1;
-  if A.Words[3] = 0 then
+  if Word64Rec(A).Word16s[3] = 0 then
     L := 7
   else
     L := 11;
@@ -4245,7 +4514,7 @@ begin
   Result := True;
 end;
 
-procedure Word64NextPrime(var A: Word64);
+procedure Word64NextPrime(var A: Word64Rec);
 begin
   if Word64IsMaximum(A) then
     begin
@@ -4265,10 +4534,10 @@ begin
   Word64InitZero(A);
 end;
 
-function Word64Hash(const A: Word64): Word32;
+function Word64Hash(const A: Word64Rec): Word32;
 begin
-  Result := Word32Hash(A.Word32s[0]) xor
-            Word32Hash(A.Word32s[1]);
+  Result := Word32Hash(Word64Rec(A).Word32s[0]) xor
+            Word32Hash(Word64Rec(A).Word32s[1]);
 end;
 
 
@@ -4477,7 +4746,7 @@ begin
 end;
 {$ENDIF}
 
-procedure Word128InitWord64(var A: Word128; const B: Word64);
+procedure Word128InitWord64(var A: Word128; const B: Word64Rec);
 begin
   A.Word64s[0] := B;
   A.Word32s[2] := 0;
@@ -4570,7 +4839,7 @@ begin
 end;
 {$ENDIF}
 
-function Word128ToWord64(const A: Word128): Word64;
+function Word128ToWord64(const A: Word128): Word64Rec;
 begin
   {$IFOPT R+}
   if (A.Word32s[2] > 0) or
@@ -4616,12 +4885,12 @@ begin
   Result := Result + T * 4294967296.0 * 4294967296.0 * 4294967296.0;
 end;
 
-function Word128Lo(const A: Word128): Word64;
+function Word128Lo(const A: Word128): Word64Rec;
 begin
   Result := A.Word64s[0];
 end;
 
-function Word128Hi(const A: Word128): Word64;
+function Word128Hi(const A: Word128): Word64Rec;
 begin
   Result := A.Word64s[1];
 end;
@@ -4652,7 +4921,7 @@ begin
 end;
 {$ENDIF}
 
-function Word128EqualsWord64(const A: Word128; const B: Word64): Boolean;
+function Word128EqualsWord64(const A: Word128; const B: Word64Rec): Boolean;
 begin
   Result := (A.Word32s[0] = B.Word32s[0]) and
             (A.Word32s[1] = B.Word32s[1]) and
@@ -4709,7 +4978,7 @@ begin
     end;
 end;
 
-function Word128CompareWord64(const A: Word128; const B: Word64): Integer;
+function Word128CompareWord64(const A: Word128; const B: Word64Rec): Integer;
 var C, D : Word32;
 begin
   if (A.Word32s[2] <> 0) or
@@ -5206,21 +5475,21 @@ procedure Word128Inc(var A: Word128);
 var C : Word32;
     D : Integer;
 begin
-  C := A.Words[0];
+  C := A.Word16s[0];
   Inc(C);
-  A.Words[0] := Word(C and $FFFF);
+  A.Word16s[0] := Word(C and $FFFF);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C and $FFFF);
+  Inc(C, A.Word16s[1]);
+  A.Word16s[1] := Word(C and $FFFF);
 
   for D := 2 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5250,21 +5519,21 @@ procedure Word128AddWord8(var A: Word128; const B: Byte);
 var C : Word32;
     D : Integer;
 begin
-  C := A.Words[0];
+  C := A.Word16s[0];
   Inc(C, B);
-  A.Words[0] := Word(C and $FFFF);
+  A.Word16s[0] := Word(C and $FFFF);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C and $FFFF);
+  Inc(C, A.Word16s[1]);
+  A.Word16s[1] := Word(C and $FFFF);
 
   for D := 2 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5295,21 +5564,21 @@ procedure Word128AddWord16(var A: Word128; const B: Word);
 var C : Word32;
     D : Integer;
 begin
-  C := A.Words[0];
+  C := A.Word16s[0];
   Inc(C, B);
-  A.Words[0] := Word(C and $FFFF);
+  A.Word16s[0] := Word(C and $FFFF);
 
   C := C shr 16;
   if C = 0 then exit;
-  Inc(C, A.Words[1]);
-  A.Words[1] := Word(C and $FFFF);
+  Inc(C, A.Word16s[1]);
+  A.Word16s[1] := Word(C and $FFFF);
 
   for D := 2 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5342,21 +5611,21 @@ begin
   if B = 0 then
     exit;
 
-  C := A.Words[0];
+  C := A.Word16s[0];
   Inc(C, B and $FFFF);
-  A.Words[0] := Word(C and $FFFF);
+  A.Word16s[0] := Word(C and $FFFF);
 
   C := C shr 16;
-  Inc(C, A.Words[1]);
+  Inc(C, A.Word16s[1]);
   Inc(C, B shr 16);
-  A.Words[1] := Word(C and $FFFF);
+  A.Word16s[1] := Word(C and $FFFF);
 
   for D := 2 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5368,7 +5637,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Word128AddWord64(var A: Word128; const B: Word64);
+procedure Word128AddWord64(var A: Word128; const B: Word64Rec);
 asm
     mov ecx, [eax]
     add ecx, [edx]
@@ -5389,27 +5658,27 @@ asm
   @Fin:
 end;
 {$ELSE}
-procedure Word128AddWord64(var A: Word128; const B: Word64);
+procedure Word128AddWord64(var A: Word128; const B: Word64Rec);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
 
   for D := 1 to 3 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   for D := 4 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5450,15 +5719,15 @@ procedure Word128AddWord128(var A: Word128; const B: Word128);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
 
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -5472,24 +5741,24 @@ end;
 procedure Word128SubtractWord32(var A: Word128; const B: Word32);
 var C, D : Integer;
 begin
-  C := A.Words[0];
+  C := A.Word16s[0];
   Dec(C, B and $FFFF);
-  A.Words[0] := Word(C);
+  A.Word16s[0] := Word(C);
 
   if C < 0 then C := -1 else C := 0;
-  Inc(C, A.Words[1]);
+  Inc(C, A.Word16s[1]);
   Dec(C, B shr 16);
-  A.Words[1] := Word(C);
+  A.Word16s[1] := Word(C);
 
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, A.Word16s[2]);
+  A.Word16s[2] := Word(C);
 
   for D := 3 to 7 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -5498,30 +5767,30 @@ begin
   {$ENDIF}
 end;
 
-procedure Word128SubtractWord64(var A: Word128; const B: Word64);
+procedure Word128SubtractWord64(var A: Word128; const B: Word64Rec);
 var C, D : Integer;
 begin
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 3 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[4]);
-  A.Words[4] := Word(C);
+  Inc(C, A.Word16s[4]);
+  A.Word16s[4] := Word(C);
 
   for D := 5 to 7 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -5533,16 +5802,16 @@ end;
 procedure Word128SubtractWord128(var A: Word128; const B: Word128);
 var C, D : Integer;
 begin
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 7 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -5561,14 +5830,14 @@ procedure Word128MultiplyWord8(var A: Word128; const B: Byte);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B;
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D]) * B);
-      A.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D]) * B);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -5589,14 +5858,14 @@ procedure Word128MultiplyWord16(var A: Word128; const B: Word);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B;
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D]) * B);
-      A.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D]) * B);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -5660,20 +5929,20 @@ begin
   I := Word(B and $FFFF);
   J := Word(B shr 16);
 
-  C := Word32(A.Words[0]) * I;
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * I;
+  R.Word16s[0] := Word(C);
 
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D - 1]) * J);
-      Inc(C, Word32(A.Words[D]) * I);
-      R.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D - 1]) * J);
+      Inc(C, Word32(A.Word16s[D]) * I);
+      R.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[7]) * J);
+  Inc(C, Word32(A.Word16s[7]) * J);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -5682,75 +5951,75 @@ begin
 end;
 {$ENDIF}
 
-procedure Word128MultiplyWord64(var A: Word128; const B: Word64);
+procedure Word128MultiplyWord64(var A: Word128; const B: Word64Rec);
 var R : Word128;
     C : Int64;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[0]);
+  R.Word16s[3] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
-  Inc(C, Word32(A.Words[4]) * B.Words[0]);
-  R.Words[4] := Word(C);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[0]);
+  R.Word16s[4] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
-  Inc(C, Word32(A.Words[4]) * B.Words[1]);
-  Inc(C, Word32(A.Words[5]) * B.Words[0]);
-  R.Words[5] := Word(C);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[0]);
+  R.Word16s[5] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
-  Inc(C, Word32(A.Words[4]) * B.Words[2]);
-  Inc(C, Word32(A.Words[5]) * B.Words[1]);
-  Inc(C, Word32(A.Words[6]) * B.Words[0]);
-  R.Words[6] := Word(C);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[0]);
+  R.Word16s[6] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[4]) * B.Words[3]);
-  Inc(C, Word32(A.Words[5]) * B.Words[2]);
-  Inc(C, Word32(A.Words[6]) * B.Words[1]);
-  Inc(C, Word32(A.Words[7]) * B.Words[0]);
-  R.Words[7] := Word(C);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[0]);
+  R.Word16s[7] := Word(C);
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[5]) * B.Words[3]);
-  Inc(C, Word32(A.Words[6]) * B.Words[2]);
-  Inc(C, Word32(A.Words[7]) * B.Words[1]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[1]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[6]) * B.Words[3]);
-  Inc(C, Word32(A.Words[7]) * B.Words[2]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[2]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[7]) * B.Words[3]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[3]);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -5762,119 +6031,119 @@ procedure Word128MultiplyWord128Low(var A: Word128; const B: Word128);
 var R : Word128;
     C : Int64;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[0]);
+  R.Word16s[3] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[4]);
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
-  Inc(C, Word32(A.Words[4]) * B.Words[0]);
-  R.Words[4] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[0]);
+  R.Word16s[4] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[5]);
-  Inc(C, Word32(A.Words[1]) * B.Words[4]);
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
-  Inc(C, Word32(A.Words[4]) * B.Words[1]);
-  Inc(C, Word32(A.Words[5]) * B.Words[0]);
-  R.Words[5] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[0]);
+  R.Word16s[5] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[6]);
-  Inc(C, Word32(A.Words[1]) * B.Words[5]);
-  Inc(C, Word32(A.Words[2]) * B.Words[4]);
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
-  Inc(C, Word32(A.Words[4]) * B.Words[2]);
-  Inc(C, Word32(A.Words[5]) * B.Words[1]);
-  Inc(C, Word32(A.Words[6]) * B.Words[0]);
-  R.Words[6] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[0]);
+  R.Word16s[6] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[7]);
-  Inc(C, Word32(A.Words[1]) * B.Words[6]);
-  Inc(C, Word32(A.Words[2]) * B.Words[5]);
-  Inc(C, Word32(A.Words[3]) * B.Words[4]);
-  Inc(C, Word32(A.Words[4]) * B.Words[3]);
-  Inc(C, Word32(A.Words[5]) * B.Words[2]);
-  Inc(C, Word32(A.Words[6]) * B.Words[1]);
-  Inc(C, Word32(A.Words[7]) * B.Words[0]);
-  R.Words[7] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[0]);
+  R.Word16s[7] := Word(C);
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B.Words[7]);
-  Inc(C, Word32(A.Words[2]) * B.Words[6]);
-  Inc(C, Word32(A.Words[3]) * B.Words[5]);
-  Inc(C, Word32(A.Words[4]) * B.Words[4]);
-  Inc(C, Word32(A.Words[5]) * B.Words[3]);
-  Inc(C, Word32(A.Words[6]) * B.Words[2]);
-  Inc(C, Word32(A.Words[7]) * B.Words[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[1]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B.Words[7]);
-  Inc(C, Word32(A.Words[3]) * B.Words[6]);
-  Inc(C, Word32(A.Words[4]) * B.Words[5]);
-  Inc(C, Word32(A.Words[5]) * B.Words[4]);
-  Inc(C, Word32(A.Words[6]) * B.Words[3]);
-  Inc(C, Word32(A.Words[7]) * B.Words[2]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[2]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B.Words[7]);
-  Inc(C, Word32(A.Words[4]) * B.Words[6]);
-  Inc(C, Word32(A.Words[5]) * B.Words[5]);
-  Inc(C, Word32(A.Words[6]) * B.Words[4]);
-  Inc(C, Word32(A.Words[7]) * B.Words[3]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[3]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[4]) * B.Words[7]);
-  Inc(C, Word32(A.Words[5]) * B.Words[6]);
-  Inc(C, Word32(A.Words[6]) * B.Words[5]);
-  Inc(C, Word32(A.Words[7]) * B.Words[4]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[4]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[5]) * B.Words[7]);
-  Inc(C, Word32(A.Words[6]) * B.Words[6]);
-  Inc(C, Word32(A.Words[7]) * B.Words[5]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[5]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[6]) * B.Words[7]);
-  Inc(C, Word32(A.Words[7]) * B.Words[6]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[6]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[7]) * B.Words[7]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[7]);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -5885,116 +6154,116 @@ end;
 procedure Word128MultiplyWord128(const A, B: Word128; var R: Word256);
 var C : Int64;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[0]);
+  R.Word16s[3] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[4]);
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
-  Inc(C, Word32(A.Words[4]) * B.Words[0]);
-  R.Words[4] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[0]);
+  R.Word16s[4] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[5]);
-  Inc(C, Word32(A.Words[1]) * B.Words[4]);
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
-  Inc(C, Word32(A.Words[4]) * B.Words[1]);
-  Inc(C, Word32(A.Words[5]) * B.Words[0]);
-  R.Words[5] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[0]);
+  R.Word16s[5] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[6]);
-  Inc(C, Word32(A.Words[1]) * B.Words[5]);
-  Inc(C, Word32(A.Words[2]) * B.Words[4]);
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
-  Inc(C, Word32(A.Words[4]) * B.Words[2]);
-  Inc(C, Word32(A.Words[5]) * B.Words[1]);
-  Inc(C, Word32(A.Words[6]) * B.Words[0]);
-  R.Words[6] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[0]);
+  R.Word16s[6] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[7]);
-  Inc(C, Word32(A.Words[1]) * B.Words[6]);
-  Inc(C, Word32(A.Words[2]) * B.Words[5]);
-  Inc(C, Word32(A.Words[3]) * B.Words[4]);
-  Inc(C, Word32(A.Words[4]) * B.Words[3]);
-  Inc(C, Word32(A.Words[5]) * B.Words[2]);
-  Inc(C, Word32(A.Words[6]) * B.Words[1]);
-  Inc(C, Word32(A.Words[7]) * B.Words[0]);
-  R.Words[7] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[0]);
+  R.Word16s[7] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[1]) * B.Words[7]);
-  Inc(C, Word32(A.Words[2]) * B.Words[6]);
-  Inc(C, Word32(A.Words[3]) * B.Words[5]);
-  Inc(C, Word32(A.Words[4]) * B.Words[4]);
-  Inc(C, Word32(A.Words[5]) * B.Words[3]);
-  Inc(C, Word32(A.Words[6]) * B.Words[2]);
-  Inc(C, Word32(A.Words[7]) * B.Words[1]);
-  R.Words[8] := Word(C);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[1]);
+  R.Word16s[8] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[2]) * B.Words[7]);
-  Inc(C, Word32(A.Words[3]) * B.Words[6]);
-  Inc(C, Word32(A.Words[4]) * B.Words[5]);
-  Inc(C, Word32(A.Words[5]) * B.Words[4]);
-  Inc(C, Word32(A.Words[6]) * B.Words[3]);
-  Inc(C, Word32(A.Words[7]) * B.Words[2]);
-  R.Words[9] := Word(C);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[2]);
+  R.Word16s[9] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[3]) * B.Words[7]);
-  Inc(C, Word32(A.Words[4]) * B.Words[6]);
-  Inc(C, Word32(A.Words[5]) * B.Words[5]);
-  Inc(C, Word32(A.Words[6]) * B.Words[4]);
-  Inc(C, Word32(A.Words[7]) * B.Words[3]);
-  R.Words[10] := Word(C);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[3]);
+  R.Word16s[10] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[4]) * B.Words[7]);
-  Inc(C, Word32(A.Words[5]) * B.Words[6]);
-  Inc(C, Word32(A.Words[6]) * B.Words[5]);
-  Inc(C, Word32(A.Words[7]) * B.Words[4]);
-  R.Words[11] := Word(C);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[4]);
+  R.Word16s[11] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[5]) * B.Words[7]);
-  Inc(C, Word32(A.Words[6]) * B.Words[6]);
-  Inc(C, Word32(A.Words[7]) * B.Words[5]);
-  R.Words[12] := Word(C);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[5]);
+  R.Word16s[12] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[6]) * B.Words[7]);
-  Inc(C, Word32(A.Words[7]) * B.Words[6]);
-  R.Words[13] := Word(C);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[6]);
+  R.Word16s[13] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[7]) * B.Words[7]);
-  R.Words[14] := Word(C);
+  Inc(C, Word32(A.Word16s[7]) * B.Word16s[7]);
+  R.Word16s[14] := Word(C);
 
   C := C shr 16;
-  R.Words[15] := Word(C);
+  R.Word16s[15] := Word(C);
 end;
 
 procedure Word128Sqr(var A: Word128);
@@ -6009,17 +6278,17 @@ begin
   if B = 0 then
     RaiseDivByZeroError;
 
-  C := A.Words[7];
+  C := A.Word16s[7];
   D := C div B;
   E := C mod B;
-  Q.Words[7] := Word(D);
+  Q.Word16s[7] := Word(D);
 
   for F := 6 downto 0 do
     begin
-      C := (E shl 16) or A.Words[F];
+      C := (E shl 16) or A.Word16s[F];
       D := C div B;
       E := C mod B;
-      Q.Words[F] := Word(D);
+      Q.Word16s[F] := Word(D);
     end;
 
   R := Byte(E);
@@ -6032,17 +6301,17 @@ begin
   if B = 0 then
     RaiseDivByZeroError;
 
-  C := A.Words[7];
+  C := A.Word16s[7];
   D := C div B;
   E := C mod B;
-  Q.Words[7] := Word(D);
+  Q.Word16s[7] := Word(D);
 
   for F := 6 downto 0 do
     begin
-      C := (E shl 16) or A.Words[F];
+      C := (E shl 16) or A.Word16s[F];
       D := C div B;
       E := C mod B;
-      Q.Words[F] := Word(D);
+      Q.Word16s[F] := Word(D);
     end;
 
   R := Word(E);
@@ -6051,7 +6320,7 @@ end;
 procedure Word128DivideWord32(const A: Word128; const B: Word32; var Q: Word128; var R: Word32);
 var C : Integer;
     D : Word128;
-    E : Word64;
+    E : Word64Rec;
 begin
   // Handle special cases
   if B = 0 then // B = 0
@@ -6106,7 +6375,7 @@ begin
   R := E.Word32s[0];
 end;
 
-procedure Word128DivideWord64(const A: Word128; const B: Word64; var Q: Word128; var R: Word64);
+procedure Word128DivideWord64(const A: Word128; const B: Word64Rec; var Q: Word128; var R: Word64Rec);
 var C : Integer;
     D : Word128;
     E : Word128;
@@ -6730,7 +6999,7 @@ begin
   A.Word32s[7] := 0;
 end;
 
-procedure Word256InitWord64(var A: Word256; const B: Word64);
+procedure Word256InitWord64(var A: Word256; const B: Word64Rec);
 begin
   A.Word64s[0] := B;
   A.Word32s[2] := 0;
@@ -6807,7 +7076,7 @@ begin
   Result := A.Word32s[0];
 end;
 
-function Word256ToWord64(const A: Word256): Word64;
+function Word256ToWord64(const A: Word256): Word64Rec;
 begin
   {$IFOPT R+}
   if not Word256IsWord64Range(A) then
@@ -6903,7 +7172,7 @@ begin
             (A.Word32s[7] = 0);
 end;
 
-function Word256EqualsWord64(const A: Word256; const B: Word64): Boolean;
+function Word256EqualsWord64(const A: Word256; const B: Word64Rec): Boolean;
 begin
   Result := (A.Word32s[0] = B.Word32s[0]) and
             (A.Word32s[1] = B.Word32s[1]) and
@@ -7009,7 +7278,7 @@ begin
     end;
 end;
 
-function Word256CompareWord64(const A: Word256; const B: Word64): Integer;
+function Word256CompareWord64(const A: Word256; const B: Word64Rec): Integer;
 var C, D : Word32;
 begin
   if (A.Word32s[2] <> 0) or
@@ -7395,21 +7664,21 @@ begin
   if B = 0 then
     exit;
 
-  C := A.Words[0];
+  C := A.Word16s[0];
   Inc(C, B and $FFFF);
-  A.Words[0] := Word(C and $FFFF);
+  A.Word16s[0] := Word(C and $FFFF);
 
   C := C shr 16;
-  Inc(C, A.Words[1]);
+  Inc(C, A.Word16s[1]);
   Inc(C, B shr 16);
-  A.Words[1] := Word(C and $FFFF);
+  A.Word16s[1] := Word(C and $FFFF);
 
   for D := 2 to 15 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -7419,27 +7688,27 @@ begin
   {$ENDIF}
 end;
 
-procedure Word256AddWord64(var A: Word256; const B: Word64);
+procedure Word256AddWord64(var A: Word256; const B: Word64Rec);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
 
   for D := 1 to 3 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   for D := 4 to 15 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -7453,23 +7722,23 @@ procedure Word256AddWord128(var A: Word256; const B: Word128);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
 
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   for D := 8 to 15 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -7483,15 +7752,15 @@ procedure Word256AddWord256(var A: Word256; const B: Word256);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
 
   for D := 1 to 15 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
 
   {$IFOPT Q+}
@@ -7504,24 +7773,24 @@ end;
 procedure Word256SubtractWord32(var A: Word256; const B: Word32);
 var C, D : Integer;
 begin
-  C := A.Words[0];
+  C := A.Word16s[0];
   Dec(C, B and $FFFF);
-  A.Words[0] := Word(C);
+  A.Word16s[0] := Word(C);
 
   if C < 0 then C := -1 else C := 0;
-  Inc(C, A.Words[1]);
+  Inc(C, A.Word16s[1]);
   Dec(C, B shr 16);
-  A.Words[1] := Word(C);
+  A.Word16s[1] := Word(C);
 
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[2]);
-  A.Words[2] := Word(C);
+  Inc(C, A.Word16s[2]);
+  A.Word16s[2] := Word(C);
 
   for D := 3 to 15 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7530,30 +7799,30 @@ begin
   {$ENDIF}
 end;
 
-procedure Word256SubtractWord64(var A: Word256; const B: Word64);
+procedure Word256SubtractWord64(var A: Word256; const B: Word64Rec);
 var C, D : Integer;
 begin
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 3 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[4]);
-  A.Words[4] := Word(C);
+  Inc(C, A.Word16s[4]);
+  A.Word16s[4] := Word(C);
 
   for D := 5 to 15 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7565,27 +7834,27 @@ end;
 procedure Word256SubtractWord128(var A: Word256; const B: Word128);
 var C, D : Integer;
 begin
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 7 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[8]);
-  A.Words[8] := Word(C);
+  Inc(C, A.Word16s[8]);
+  A.Word16s[8] := Word(C);
 
   for D := 9 to 15 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7597,16 +7866,16 @@ end;
 procedure Word256SubtractWord256(var A: Word256; const B: Word256);
 var C, D : Integer;
 begin
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 15 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7619,14 +7888,14 @@ procedure Word256MultiplyWord8(var A: Word256; const B: Byte);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B;
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 15 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D]) * B);
-      A.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D]) * B);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7640,14 +7909,14 @@ procedure Word256MultiplyWord16(var A: Word256; const B: Word);
 var C : Word32;
     D : Integer;
 begin
-  C := Word32(A.Words[0]) * B;
-  A.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B;
+  A.Word16s[0] := Word(C);
 
   for D := 1 to 15 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D]) * B);
-      A.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D]) * B);
+      A.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
@@ -7666,20 +7935,20 @@ begin
   I := Word(B and $FFFF);
   J := Word(B shr 16);
 
-  C := Word32(A.Words[0]) * I;
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * I;
+  R.Word16s[0] := Word(C);
 
   for D := 1 to 15 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[D - 1]) * J);
-      Inc(C, Word32(A.Words[D]) * I);
-      R.Words[D] := Word(C);
+      Inc(C, Word32(A.Word16s[D - 1]) * J);
+      Inc(C, Word32(A.Word16s[D]) * I);
+      R.Word16s[D] := Word(C);
     end;
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[7]) * J);
+  Inc(C, Word32(A.Word16s[7]) * J);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -7687,51 +7956,51 @@ begin
   A := R;
 end;
 
-procedure Word256MultiplyWord64(var A: Word256; const B: Word64);
+procedure Word256MultiplyWord64(var A: Word256; const B: Word64Rec);
 var R : Word256;
     C : Int64;
     I : Integer;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word(C);
 
   for I := 0 to 12 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[I]    ) * B.Words[3]);
-      Inc(C, Word32(A.Words[I + 1]) * B.Words[2]);
-      Inc(C, Word32(A.Words[I + 2]) * B.Words[1]);
-      Inc(C, Word32(A.Words[I + 3]) * B.Words[0]);
-      R.Words[I + 3] := Word(C);
+      Inc(C, Word32(A.Word16s[I]    ) * B.Word16s[3]);
+      Inc(C, Word32(A.Word16s[I + 1]) * B.Word16s[2]);
+      Inc(C, Word32(A.Word16s[I + 2]) * B.Word16s[1]);
+      Inc(C, Word32(A.Word16s[I + 3]) * B.Word16s[0]);
+      R.Word16s[I + 3] := Word(C);
     end;
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[13]) * B.Words[3]);
-  Inc(C, Word32(A.Words[14]) * B.Words[2]);
-  Inc(C, Word32(A.Words[15]) * B.Words[1]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[1]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[14]) * B.Words[3]);
-  Inc(C, Word32(A.Words[15]) * B.Words[2]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[2]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[15]) * B.Words[3]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[3]);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -7744,122 +8013,122 @@ var R : Word256;
     C : Int64;
     I : Integer;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[1]);
-  Inc(C, Word32(A.Words[1]) * B.Words[0]);
-  R.Words[1] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[0]);
+  R.Word16s[1] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[2]);
-  Inc(C, Word32(A.Words[1]) * B.Words[1]);
-  Inc(C, Word32(A.Words[2]) * B.Words[0]);
-  R.Words[2] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[0]);
+  R.Word16s[2] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[3]);
-  Inc(C, Word32(A.Words[1]) * B.Words[2]);
-  Inc(C, Word32(A.Words[2]) * B.Words[1]);
-  Inc(C, Word32(A.Words[3]) * B.Words[0]);
-  R.Words[3] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[0]);
+  R.Word16s[3] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[4]);
-  Inc(C, Word32(A.Words[1]) * B.Words[3]);
-  Inc(C, Word32(A.Words[2]) * B.Words[2]);
-  Inc(C, Word32(A.Words[3]) * B.Words[1]);
-  Inc(C, Word32(A.Words[4]) * B.Words[0]);
-  R.Words[4] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[0]);
+  R.Word16s[4] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[5]);
-  Inc(C, Word32(A.Words[1]) * B.Words[4]);
-  Inc(C, Word32(A.Words[2]) * B.Words[3]);
-  Inc(C, Word32(A.Words[3]) * B.Words[2]);
-  Inc(C, Word32(A.Words[4]) * B.Words[1]);
-  Inc(C, Word32(A.Words[5]) * B.Words[0]);
-  R.Words[5] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[0]);
+  R.Word16s[5] := Word(C);
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[0]) * B.Words[6]);
-  Inc(C, Word32(A.Words[1]) * B.Words[5]);
-  Inc(C, Word32(A.Words[2]) * B.Words[4]);
-  Inc(C, Word32(A.Words[3]) * B.Words[3]);
-  Inc(C, Word32(A.Words[4]) * B.Words[2]);
-  Inc(C, Word32(A.Words[5]) * B.Words[1]);
-  Inc(C, Word32(A.Words[6]) * B.Words[0]);
-  R.Words[6] := Word(C);
+  Inc(C, Word32(A.Word16s[0]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[1]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[2]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[3]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[4]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[5]) * B.Word16s[1]);
+  Inc(C, Word32(A.Word16s[6]) * B.Word16s[0]);
+  R.Word16s[6] := Word(C);
 
   for I := 0 to 8 do
     begin
       C := C shr 16;
-      Inc(C, Word32(A.Words[I]    ) * B.Words[7]);
-      Inc(C, Word32(A.Words[I + 1]) * B.Words[6]);
-      Inc(C, Word32(A.Words[I + 2]) * B.Words[5]);
-      Inc(C, Word32(A.Words[I + 3]) * B.Words[4]);
-      Inc(C, Word32(A.Words[I + 4]) * B.Words[3]);
-      Inc(C, Word32(A.Words[I + 5]) * B.Words[2]);
-      Inc(C, Word32(A.Words[I + 6]) * B.Words[1]);
-      Inc(C, Word32(A.Words[I + 7]) * B.Words[0]);
-      R.Words[I + 7] := Word(C);
+      Inc(C, Word32(A.Word16s[I]    ) * B.Word16s[7]);
+      Inc(C, Word32(A.Word16s[I + 1]) * B.Word16s[6]);
+      Inc(C, Word32(A.Word16s[I + 2]) * B.Word16s[5]);
+      Inc(C, Word32(A.Word16s[I + 3]) * B.Word16s[4]);
+      Inc(C, Word32(A.Word16s[I + 4]) * B.Word16s[3]);
+      Inc(C, Word32(A.Word16s[I + 5]) * B.Word16s[2]);
+      Inc(C, Word32(A.Word16s[I + 6]) * B.Word16s[1]);
+      Inc(C, Word32(A.Word16s[I + 7]) * B.Word16s[0]);
+      R.Word16s[I + 7] := Word(C);
     end;
 
   {$IFOPT Q+}
   C := C shr 16;
-  Inc(C, Word32(A.Words[9])  * B.Words[7]);
-  Inc(C, Word32(A.Words[10]) * B.Words[6]);
-  Inc(C, Word32(A.Words[11]) * B.Words[5]);
-  Inc(C, Word32(A.Words[12]) * B.Words[4]);
-  Inc(C, Word32(A.Words[13]) * B.Words[3]);
-  Inc(C, Word32(A.Words[14]) * B.Words[2]);
-  Inc(C, Word32(A.Words[15]) * B.Words[1]);
+  Inc(C, Word32(A.Word16s[9])  * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[10]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[11]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[12]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[2]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[1]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[10]) * B.Words[7]);
-  Inc(C, Word32(A.Words[11]) * B.Words[6]);
-  Inc(C, Word32(A.Words[12]) * B.Words[5]);
-  Inc(C, Word32(A.Words[13]) * B.Words[4]);
-  Inc(C, Word32(A.Words[14]) * B.Words[3]);
-  Inc(C, Word32(A.Words[15]) * B.Words[2]);
+  Inc(C, Word32(A.Word16s[10]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[11]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[12]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[3]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[2]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[11]) * B.Words[7]);
-  Inc(C, Word32(A.Words[12]) * B.Words[6]);
-  Inc(C, Word32(A.Words[13]) * B.Words[5]);
-  Inc(C, Word32(A.Words[14]) * B.Words[4]);
-  Inc(C, Word32(A.Words[15]) * B.Words[3]);
+  Inc(C, Word32(A.Word16s[11]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[12]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[4]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[3]);
   if C > 0 then
     RaiseOverflowError;
     
   C := C shr 16;
-  Inc(C, Word32(A.Words[12]) * B.Words[7]);
-  Inc(C, Word32(A.Words[13]) * B.Words[6]);
-  Inc(C, Word32(A.Words[14]) * B.Words[5]);
-  Inc(C, Word32(A.Words[15]) * B.Words[4]);
+  Inc(C, Word32(A.Word16s[12]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[5]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[4]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[13]) * B.Words[7]);
-  Inc(C, Word32(A.Words[14]) * B.Words[6]);
-  Inc(C, Word32(A.Words[15]) * B.Words[5]);
+  Inc(C, Word32(A.Word16s[13]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[6]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[5]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[14]) * B.Words[7]);
-  Inc(C, Word32(A.Words[15]) * B.Words[6]);
+  Inc(C, Word32(A.Word16s[14]) * B.Word16s[7]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[6]);
   if C > 0 then
     RaiseOverflowError;
 
   C := C shr 16;
-  Inc(C, Word32(A.Words[15]) * B.Words[7]);
+  Inc(C, Word32(A.Word16s[15]) * B.Word16s[7]);
   if C > 0 then
     RaiseOverflowError;
   {$ENDIF}
@@ -7871,22 +8140,22 @@ procedure Word256MultiplyWord256(const A, B: Word256; var R: Word512);
 var C : Int64;
     I, L, N : Integer;
 begin
-  C := Word32(A.Words[0]) * B.Words[0];
-  R.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) * B.Word16s[0];
+  R.Word16s[0] := Word(C);
   for L := 1 to 15 do
     begin
       C := C shr 16;
       for I := 0 to L do
-        Inc(C, Word32(A.Words[I]) * B.Words[L - I]);
-      R.Words[L] := Word(C);
+        Inc(C, Word32(A.Word16s[I]) * B.Word16s[L - I]);
+      R.Word16s[L] := Word(C);
     end;
   for L := 16 to 31 do
     begin
       C := C shr 16;
       N := 32 - L;
       for I := 0 to N - 1 do
-        Inc(C, Word32(A.Words[16 - N + I]) * B.Words[15 - I]);
-      R.Words[L] := Word(C);
+        Inc(C, Word32(A.Word16s[16 - N + I]) * B.Word16s[15 - I]);
+      R.Word16s[L] := Word(C);
     end;
 end;
 
@@ -8252,8 +8521,8 @@ begin
   BufInitZero(P^, SizeA - SizeOf(Word32));
 end;
 
-procedure WordBufInitWord64(var BufA; const SizeA: Word32; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
-var P : PWord64;
+procedure WordBufInitWord64(var BufA; const SizeA: Word32; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+var P : PWord64Rec;
 begin
   Assert(SizeA > 0);
   Assert(SizeA mod 4 = 0);
@@ -8261,7 +8530,7 @@ begin
   P := @BufA;
   P^ := B;
   Inc(P);
-  BufInitZero(P^, SizeA - SizeOf(Word64));
+  BufInitZero(P^, SizeA - SizeOf(Word64Rec));
 end;
 
 procedure WordBufInitWord128(var BufA; const SizeA: Word32; const B: Word128); {$IFDEF UseInline}inline;{$ENDIF}
@@ -8327,8 +8596,8 @@ begin
   {$ENDIF}
 end;
 
-function WordBufToWord64(const Buf; const Size: Word32): Word64; {$IFDEF UseInline}inline;{$ENDIF}
-var P : PWord64;
+function WordBufToWord64(const Buf; const Size: Word32): Word64Rec; {$IFDEF UseInline}inline;{$ENDIF}
+var P : PWord64Rec;
 begin
   Assert(Size > 0);
   Assert(Size mod 4 = 0);
@@ -8337,7 +8606,7 @@ begin
   Result := P^;
   {$IFOPT R+}
   Inc(P);
-  if not BufIsZero(P^, Size - SizeOf(Word64)) then
+  if not BufIsZero(P^, Size - SizeOf(Word64Rec)) then
     RaiseRangeError;
   {$ENDIF}
 end;
@@ -8442,8 +8711,8 @@ begin
   Result := BufIsZero(P^, SizeA - SizeOf(Word32));
 end;
 
-function WordBufEqualsWord64(const BufA; const SizeA: Word32; const B: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-var P : PWord64;
+function WordBufEqualsWord64(const BufA; const SizeA: Word32; const B: Word64Rec): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var P : PWord64Rec;
 begin
   Assert(SizeA > 0);
   Assert(SizeA mod 4 = 0);
@@ -8455,7 +8724,7 @@ begin
       exit;
     end;
   Inc(P);
-  Result := BufIsZero(P^, SizeA - SizeOf(Word64));
+  Result := BufIsZero(P^, SizeA - SizeOf(Word64Rec));
 end;
 
 function WordBufEqualsWord128(const BufA; const SizeA: Word32; const B: Word128): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
@@ -8539,7 +8808,7 @@ begin
       exit;
     end;
   Inc(P);
-  Result := BufIsZero(P^, SizeA - SizeOf(Word64));
+  Result := BufIsZero(P^, SizeA - SizeOf(Word64Rec));
 end;
 
 function WordBufEqualsInt128(const BufA; const SizeA: Word32; const B: Int128): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
@@ -8587,8 +8856,8 @@ begin
     end;
 end;
 
-function WordBufCompareWord64(const BufA; const SizeA: Word32; const B: Word64): Integer; {$IFDEF UseInline}inline;{$ENDIF}
-var P : PWord64;
+function WordBufCompareWord64(const BufA; const SizeA: Word32; const B: Word64Rec): Integer; {$IFDEF UseInline}inline;{$ENDIF}
+var P : PWord64Rec;
     I : Integer;
 begin
   Assert(SizeA > 0);
@@ -8601,7 +8870,7 @@ begin
   if I < 0 then
     begin
       Inc(P);
-      if BufIsZero(P^, SizeA - SizeOf(Word64)) then
+      if BufIsZero(P^, SizeA - SizeOf(Word64Rec)) then
         Result := -1
       else
         Result := 1;
@@ -8609,7 +8878,7 @@ begin
   else
     begin
       Inc(P);
-      if BufIsZero(P^, SizeA - SizeOf(Word64)) then
+      if BufIsZero(P^, SizeA - SizeOf(Word64Rec)) then
         Result := 0
       else
         Result := 1;
@@ -8714,7 +8983,7 @@ begin
   if B < 0 then
     Result := 1
   else
-    Result := WordBufCompareWord64(BufA, SizeA, Word64(B));
+    Result := WordBufCompareWord64(BufA, SizeA, Word64Rec(B));
 end;
 
 function WordBufCompareInt128(const BufA; const SizeA: Word32; const B: Int128): Integer; {$IFDEF UseInline}inline;{$ENDIF}
@@ -9013,7 +9282,7 @@ begin
   Result := C;
 end;
 
-function WordBufAddWord64(var Buf; const Size: Word32; const B: Word64): Word32; {$IFDEF UseInline}inline;{$ENDIF}
+function WordBufAddWord64(var Buf; const Size: Word32; const B: Word64Rec): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var P    : PWord32;
     L, I : Integer;
     R    : Word128;
@@ -9193,12 +9462,12 @@ begin
   Result := 1;
 end;
 
-function WordBufSubtractWord64(var BufA; const SizeA: Word32; const B: Word64): Integer; {$IFDEF UseInline}inline;{$ENDIF}
+function WordBufSubtractWord64(var BufA; const SizeA: Word32; const B: Word64Rec): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 var P    : PWord32;
     C    : Integer;
     L, I : Integer;
     R    : Word128;
-    D, E : Word64;
+    D, E : Word64Rec;
 begin
   Assert(SizeA > 0);
   Assert(SizeA mod 4 = 0);
@@ -9473,7 +9742,7 @@ end;
 function WordBufMultiplyWord32(var BufA; const SizeA: Word32; const B: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 var P    : PWord32;
     I, L : Integer;
-    C, D : Word64;
+    C, D : Word64Rec;
 begin
   Assert(SizeA > 0);
   Assert(SizeA mod 4 = 0);
@@ -9510,7 +9779,7 @@ begin
   Result := C.Word32s[0];
 end;
 
-function WordBufMultiplyWord64(var BufA; const SizeA: Word32; const B: Word64): Word64; {$IFDEF UseInline}inline;{$ENDIF}
+function WordBufMultiplyWord64(var BufA; const SizeA: Word32; const B: Word64Rec): Word64Rec; {$IFDEF UseInline}inline;{$ENDIF}
 var P    : PWord32;
     I, L : Integer;
     C, D : Word128;
@@ -9765,7 +10034,7 @@ begin
   WordBufInitWord32(A, Word%1%Size, B);
 end;
 
-procedure Word%1%InitWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%InitWord64(var A: Word%1%; const B: Word64Rec);
 begin
   WordBufInitWord64(A, Word%1%Size, B);
 end;
@@ -9795,7 +10064,7 @@ begin
   Result := WordBufToWord32(A, Word%1%Size);
 end;
 
-function Word%1%ToWord64(const A: Word%1%): Word64;
+function Word%1%ToWord64(const A: Word%1%): Word64Rec;
 begin
   Result := WordBufToWord64(A, Word%1%Size);
 end;
@@ -9840,7 +10109,7 @@ begin
   Result := WordBufEqualsWord32(A, Word%1%Size, B);
 end;
 
-function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64): Boolean;
+function  Word%1%EqualsWord64(const A: Word%1%; const B: Word64Rec): Boolean;
 begin
   Result := WordBufEqualsWord64(A, Word%1%Size, B);
 end;
@@ -9875,7 +10144,7 @@ begin
   Result := WordBufCompareWord32(A, Word%1%Size, B);
 end;
 
-function Word%1%CompareWord64(const A: Word%1%; const B: Word64): Integer;
+function Word%1%CompareWord64(const A: Word%1%; const B: Word64Rec): Integer;
 begin
   Result := WordBufCompareWord64(A, Word%1%Size, B);
 end;
@@ -10000,7 +10269,7 @@ begin
   {$IFOPT Q+}> 0 then RaiseOverflowError{$ENDIF};
 end;
 
-procedure Word%1%AddWord64(var A: Word%1%; const B: Word64);
+procedure Word%1%AddWord64(var A: Word%1%; const B: Word64Rec);
 begin
   {$IFOPT Q+}if{$ENDIF}
   WordBufAddWord64(A, Word%1%Size, B)
@@ -10279,7 +10548,7 @@ begin
     Result := 1;
 end;
 
-function Int64Abs(const A: Int64; var B: Word64): Boolean;
+function Int64Abs(const A: Int64; var B: Word64Rec): Boolean;
 begin
   if A >= 0 then
     begin
@@ -10705,7 +10974,7 @@ begin
   A.Word32s[3] := 0;
 end;
 
-procedure Int128InitWord64(var A: Int128; const B: Word64);
+procedure Int128InitWord64(var A: Int128; const B: Word64Rec);
 begin
   A.Word32s[0] := B.Word32s[0];
   A.Word32s[1] := B.Word32s[1];
@@ -10805,7 +11074,7 @@ begin
   Result := A.Word32s[0];
 end;
 
-function Int128ToWord64(const A: Int128): Word64;
+function Int128ToWord64(const A: Int128): Word64Rec;
 begin
   {$IFOPT R+}
   if (A.Word32s[3] <> 0) or
@@ -10868,7 +11137,7 @@ begin
             (A.Word32s[3] = 0);
 end;
 
-function Int128EqualsWord64(const A: Int128; const B: Word64): Boolean;
+function Int128EqualsWord64(const A: Int128; const B: Word64Rec): Boolean;
 begin
   Result := (A.Word32s[0] = B.Word32s[0]) and
             (A.Word32s[1] = B.Word32s[1]) and
@@ -10939,7 +11208,7 @@ begin
     Result := 0;
 end;
 
-function Int128CompareWord64(const A: Int128; const B: Word64): Integer;
+function Int128CompareWord64(const A: Int128; const B: Word64Rec): Integer;
 begin
   if A.Word32s[3] and $80000000 <> 0 then
     Result := -1 else
@@ -11525,7 +11794,7 @@ end;
 {$ENDIF}
 
 {$IFDEF ASM386_DELPHI}
-procedure Int128AddWord64(var A: Int128; const B: Word64);
+procedure Int128AddWord64(var A: Int128; const B: Word64Rec);
 asm
     mov ecx, [eax]
     add ecx, [edx]
@@ -11543,7 +11812,7 @@ asm
   @Fin:
 end;
 {$ELSE}
-procedure Int128AddWord64(var A: Int128; const B: Word64);
+procedure Int128AddWord64(var A: Int128; const B: Word64Rec);
 var C : Word32;
     D : Integer;
     {$IFOPT Q+}
@@ -11554,21 +11823,21 @@ begin
   P := A.Word32s[3] and $80000000 = 0;
   {$ENDIF}
   // Do 16-bit addition in 32-bit value with carry in bit 17
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C);
   for D := 1 to 3 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
   for D := 4 to 7 do
     begin
       C := C shr 16;
       if C = 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
   {$IFOPT Q+}
   // Overflow if sign changed from positive to negative
@@ -11612,14 +11881,14 @@ begin
   P := A.Word32s[3] and $80000000 = 0;
   {$ENDIF}
   // Do 16-bit addition in 32-bit value with carry in bit 17
-  C := Word32(A.Words[0]) + B.Words[0];
-  A.Words[0] := Word(C and $FFFF);
+  C := Word32(A.Word16s[0]) + B.Word16s[0];
+  A.Word16s[0] := Word(C and $FFFF);
   for D := 1 to 7 do
     begin
       C := C shr 16;
-      Inc(C, A.Words[D]);
-      Inc(C, B.Words[D]);
-      A.Words[D] := Word(C and $FFFF);
+      Inc(C, A.Word16s[D]);
+      Inc(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C and $FFFF);
     end;
   {$IFOPT Q+}
   // Overflow if sign changed from positive to negative
@@ -11680,7 +11949,7 @@ begin
 end;
 {$ENDIF}
 
-procedure Int128SubtractWord64(var A: Int128; const B: Word64);
+procedure Int128SubtractWord64(var A: Int128; const B: Word64Rec);
 var C, D : Integer;
     {$IFOPT Q+}
     N    : Boolean;
@@ -11690,24 +11959,24 @@ begin
   N := A.Word32s[3] and $80000000 <> 0;
   {$ENDIF}
   // Do 16-bit subtraction in 32-bit value with borrow in bit 17
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
   for D := 1 to 3 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
   if C < 0 then C := -1 else exit;
-  Inc(C, A.Words[4]);
-  A.Words[4] := Word(C);
+  Inc(C, A.Word16s[4]);
+  A.Word16s[4] := Word(C);
   for D := 5 to 7 do
     begin
       if C >= 0 then exit;
-      Inc(C, A.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
   {$IFOPT Q+}
   // Overflow if sign changed from negative to positive
@@ -11725,15 +11994,15 @@ begin
   {$IFOPT Q+}
   N := A.Word32s[3] and $80000000 <> 0;
   {$ENDIF}
-  C := A.Words[0];
-  Dec(C, B.Words[0]);
-  A.Words[0] := Word(C);
+  C := A.Word16s[0];
+  Dec(C, B.Word16s[0]);
+  A.Word16s[0] := Word(C);
   for D := 1 to 7 do
     begin
       if C < 0 then C := -1 else C := 0;
-      Inc(C, A.Words[D]);
-      Dec(C, B.Words[D]);
-      A.Words[D] := Word(C);
+      Inc(C, A.Word16s[D]);
+      Dec(C, B.Word16s[D]);
+      A.Word16s[D] := Word(C);
     end;
   {$IFOPT Q+}
   // Overflow if sign changed from negative to positive
@@ -11819,7 +12088,7 @@ end;
 {$ENDIF}
 
 procedure Int128AddInt64(var A: Int128; const B: Int64);
-var C : Word64;
+var C : Word64Rec;
 begin
   if B > 0 then
     begin
@@ -11841,7 +12110,7 @@ begin
 end;
 
 procedure Int128SubtractInt64(var A: Int128; const B: Int64);
-var C : Word64;
+var C : Word64Rec;
 begin
   if B > 0 then
     begin
@@ -12009,7 +12278,7 @@ begin
     Int128InitNegWord128(A, C);
 end;
 
-procedure Int128MultiplyWord64(var A: Int128; const B: Word64);
+procedure Int128MultiplyWord64(var A: Int128; const B: Word64Rec);
 var C : Word128;
     N : Boolean;
 begin
@@ -12104,7 +12373,7 @@ end;
 
 procedure Int128MultiplyInt64(var A: Int128; const B: Int64);
 var C    : Word128;
-    D    : Word64;
+    D    : Word64Rec;
     P, Q : Boolean;
 begin
   P := Int128Abs(A, C);
@@ -12170,7 +12439,7 @@ begin
     Int128InitNegWord128(Q, T);
 end;
 
-procedure Int128DivideWord64(const A: Int128; const B: Word64; var Q: Int128; var R: Word64);
+procedure Int128DivideWord64(const A: Int128; const B: Word64Rec; var Q: Int128; var R: Word64Rec);
 var C, T : Word128;
     N    : Boolean;
 begin
@@ -12241,7 +12510,7 @@ end;
 
 procedure Int128DivideInt64(const A: Int128; const B: Int64; var Q: Int128; var R: Int64);
 var C, T : Word128;
-    D, E : Word64;
+    D, E : Word64Rec;
     F, G : Boolean;
 begin
   F := Int128Abs(A, C);
@@ -12760,7 +13029,7 @@ begin
   A.Word32s[7] := 0;
 end;
 
-procedure Int256InitWord64(var A: Int256; const B: Word64);
+procedure Int256InitWord64(var A: Int256; const B: Word64Rec);
 begin
   A.Word32s[0] := B.Word32s[0];
   A.Word32s[1] := B.Word32s[1];
@@ -13166,7 +13435,7 @@ end;
 function IntBufIsInt64Range(const Buf; const Size: Word32): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 var S : PShortInt;
     T : ShortInt;
-    P : PWord64;
+    P : PWord64Rec;
 begin
   Assert(Size > 4);
   Assert(Size mod 4 = 1);
@@ -13174,7 +13443,7 @@ begin
   S := @Buf;
   T := S^;
   Inc(S);
-  P := PWord64(S);
+  P := PWord64Rec(S);
   if ((T >= 0) and (Word64CompareInt64(P^, $7FFFFFFFFFFFFFFF) > 0)) or
      ((T < 0) and (Word64CompareInt64(P^, $8000000000000000) > 0)) then
     begin
@@ -13182,7 +13451,7 @@ begin
       exit;
     end;
   Inc(P);
-  Result := BufIsZero(P^, Size - SizeOf(ShortInt) - SizeOf(Word64));
+  Result := BufIsZero(P^, Size - SizeOf(ShortInt) - SizeOf(Word64Rec));
 end;
 
 function IntBufSign(const Buf; const Size: Word32): Integer; {$IFDEF UseInline}inline;{$ENDIF}
@@ -13270,7 +13539,7 @@ begin
   P^ := B;
 end;
 
-procedure IntBufInitWord64(var BufA; const SizeA: Word32; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+procedure IntBufInitWord64(var BufA; const SizeA: Word32; const B: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
 var S : PShortInt;
 begin
   Assert(SizeA > 4);
@@ -13279,7 +13548,7 @@ begin
   S := @BufA;
   S^ := 1;
   Inc(S);
-  if SizeA < SizeOf(ShortInt) + SizeOf(Word64) then
+  if SizeA < SizeOf(ShortInt) + SizeOf(Word64Rec) then
     begin
       {$IFOPT R+}
       if Word64Hi(B) > 0 then
@@ -13288,7 +13557,7 @@ begin
       PWord32(S)^ := Word64Lo(B);
     end
   else
-    PWord64(S)^ := B;
+    PWord64Rec(S)^ := B;
 end;
 
 procedure IntBufInitWord128(var BufA; const SizeA: Word32; const B: Word128); {$IFDEF UseInline}inline;{$ENDIF}
@@ -13780,142 +14049,142 @@ end;
 {                                                                              }
 procedure Int%1%InitZero(var A: Int%1%);
 begin
-  IntBufInitZero(A, Int%1%Size);
+  IntBufInitZero(A, Int%1%RecSize);
 end;
 
 procedure Int%1%InitOne(var A: Int%1%);
 begin
-  IntBufInitOne(A, Int%1%Size);
+  IntBufInitOne(A, Int%1%RecSize);
 end;
 
 procedure Int%1%InitMinusOne(var A: Int%1%);
 begin
-  IntBufInitMinusOne(A, Int%1%Size);
+  IntBufInitMinusOne(A, Int%1%RecSize);
 end;
 
 procedure Int%1%InitMinimum(var A: Int%1%);
 begin
-  IntBufInitMinimum(A, Int%1%Size);
+  IntBufInitMinimum(A, Int%1%RecSize);
 end;
 
 procedure Int%1%InitMaximum(var A: Int%1%);
 begin
-  IntBufInitMaximum(A, Int%1%Size);
+  IntBufInitMaximum(A, Int%1%RecSize);
 end;
 
 function Int%1%IsNegative(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsNegative(A, Int%1%Size);
+  Result := IntBufIsNegative(A, Int%1%RecSize);
 end;
 
 function Int%1%IsZero(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsZero(A, Int%1%Size);
+  Result := IntBufIsZero(A, Int%1%RecSize);
 end;
 
 function Int%1%IsOne(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsOne(A, Int%1%Size);
+  Result := IntBufIsOne(A, Int%1%RecSize);
 end;
 
 function Int%1%IsMinusOne(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsMinusOne(A, Int%1%Size);
+  Result := IntBufIsMinusOne(A, Int%1%RecSize);
 end;
 
 function Int%1%IsMinimum(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsMinimum(A, Int%1%Size);
+  Result := IntBufIsMinimum(A, Int%1%RecSize);
 end;
 
 function Int%1%IsMaximum(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsMaximum(A, Int%1%Size);
+  Result := IntBufIsMaximum(A, Int%1%RecSize);
 end;
 
 function Int%1%IsOdd(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsOdd(A, Int%1%Size);
+  Result := IntBufIsOdd(A, Int%1%RecSize);
 end;
 
 function Int%1%Sign(const A: Int%1%): Integer;
 begin
-  Result := IntBufSign(A, Int%1%Size);
+  Result := IntBufSign(A, Int%1%RecSize);
 end;
 
 function Int%1%IsWord32Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsWord32Range(A, Int%1%Size);
+  Result := IntBufIsWord32Range(A, Int%1%RecSize);
 end;
 
 function Int%1%IsWord64Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsWord64Range(A, Int%1%Size);
+  Result := IntBufIsWord64Range(A, Int%1%RecSize);
 end;
 
 function Int%1%IsWord128Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsWord128Range(A, Int%1%Size);
+  Result := IntBufIsWord128Range(A, Int%1%RecSize);
 end;
 
 function Int%1%IsWord256Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsWord256Range(A, Int%1%Size);
+  Result := IntBufIsWord256Range(A, Int%1%RecSize);
 end;
 
 function Int%1%IsInt32Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsInt32Range(A, Int%1%Size);
+  Result := IntBufIsInt32Range(A, Int%1%RecSize);
 end;
 
 function Int%1%IsInt64Range(const A: Int%1%): Boolean;
 begin
-  Result := IntBufIsInt64Range(A, Int%1%Size);
+  Result := IntBufIsInt64Range(A, Int%1%RecSize);
 end;
 
 procedure Int%1%InitWord32(var A: Int%1%; const B: Word32);
 begin
-  IntBufInitWord32(A, Int%1%Size, B);
+  IntBufInitWord32(A, Int%1%RecSize, B);
 end;
 
-procedure Int%1%InitWord64(var A: Int%1%; const B: Word64);
+procedure Int%1%InitWord64(var A: Int%1%; const B: Word64Rec);
 begin
-  IntBufInitWord64(A, Int%1%Size, B);
+  IntBufInitWord64(A, Int%1%RecSize, B);
 end;
 
 procedure Int%1%InitWord128(var A: Int%1%; const B: Word128);
 begin
-  IntBufInitWord128(A, Int%1%Size, B);
+  IntBufInitWord128(A, Int%1%RecSize, B);
 end;
 
 procedure Int%1%InitInt32(var A: Int%1%; const B: Int32);
 begin
-  IntBufInitInt32(A, Int%1%Size, B);
+  IntBufInitInt32(A, Int%1%RecSize, B);
 end;
 
 procedure Int%1%InitInt64(var A: Int%1%; const B: Int64);
 begin
-  IntBufInitInt64(A, Int%1%Size, B);
+  IntBufInitInt64(A, Int%1%RecSize, B);
 end;
 
 procedure Int%1%InitInt128(var A: Int%1%; const B: Int128);
 begin
-  IntBufInitInt128(A, Int%1%Size, B);
+  IntBufInitInt128(A, Int%1%RecSize, B);
 end;
 
 function Int%1%ToWord32(const A: Int%1%): Word32;
 begin
-  Result := IntBufToWord32(A, Int%1%Size);
+  Result := IntBufToWord32(A, Int%1%RecSize);
 end;
 
 function Int%1%ToInt32(const A: Int%1%): Int32;
 begin
-  Result := IntBufToInt32(A, Int%1%Size);
+  Result := IntBufToInt32(A, Int%1%RecSize);
 end;
 
 function Int%1%ToInt64(const A: Int%1%): Int64;
 begin
-  Result := IntBufToInt64(A, Int%1%Size);
+  Result := IntBufToInt64(A, Int%1%RecSize);
 end;
 
 
@@ -14582,7 +14851,7 @@ begin
 end;
 
 procedure Test_Word32;
-var C, D : Word64;
+var C, D : Word64Rec;
     A    : Word32;
 begin
   // Compare
@@ -14615,8 +14884,8 @@ end;
 
 procedure Test_Word64;
 const C1 = 4294967296.0 * 5.0 + 4294967295.0;
-var A, B : Word64;
-    C, D : Word64;
+var A, B : Word64Rec;
+    C, D : Word64Rec;
     F    : Extended;
     I    : Integer;
     X    : Byte;
@@ -14624,7 +14893,7 @@ var A, B : Word64;
     Z    : Word32;
 begin
   // Size
-  Assert(SizeOf(Word64) = 8);
+  Assert(SizeOf(Word64Rec) = 8);
 
   // 0
   {$IFDEF INTEGER_TEST_OUTPUT}
@@ -15066,7 +15335,7 @@ end;
 
 procedure Test_Word256;
 var A, B : Word256;
-    P    : Word64;
+    P    : Word64Rec;
     Q    : Word128;
     R    : Int128;
 begin
@@ -15111,7 +15380,7 @@ end;
 {%DEFINE TestWord}
 procedure Test_Word%1%;
 var A, B : Word%1%;
-    P    : Word64;
+    P    : Word64Rec;
     Q    : Word128;
     R    : Int128;
 begin
@@ -15215,10 +15484,10 @@ var A, B : Int128;
     C    : Int128;
     D    : Byte;
     E    : Word;
-    F    : Word64;
+    F    : Word64Rec;
     G    : Word128;
     H    : Word32;
-    K    : Word64;
+    K    : Word64Rec;
     L    : Word128;
     M    : ShortInt;
     N    : SmallInt;

@@ -1,10 +1,10 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcDecimal.pas                                           }
-{   File version:     5.11                                                     }
+{   File version:     5.12                                                     }
 {   Description:      Decimal number functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 2014-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2014-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -44,6 +44,7 @@
 {   2018/07/17  5.09  Word32/Int32 changes.                                    }
 {   2018/08/12  5.10  String type changes.                                     }
 {   2019/02/22  5.11  Compilable with Delphi 7.                                }
+{   2020/03/10  5.12  Modify for changes to flcInteger.                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -105,7 +106,7 @@ type
   // encoded as Word64 scaled 10^9
   // limited to 9999999999.999999999
   Decimal64 = packed record
-    Value64 : Word64;
+    Value64 : Word64Rec;
   end;
   PDecimal64 = ^Decimal64;
 
@@ -261,7 +262,7 @@ const
   {$IFNDEF DELPHI7_DOWN}
   Decimal64MaxValue     = 9999999999999999999; // 19 9's
   {$ENDIF}
-  Decimal64MaxValueW64  : Word64 = (Word32s:($89E7FFFF, $8AC72304)); // 9999999999999999999
+  Decimal64MaxValueW64  : Word64Rec = (Word32s:($89E7FFFF, $8AC72304)); // 9999999999999999999
   Decimal64RoundTerm    = Decimal64Scale div 2; // 500000000
   Decimal64MinFloat     = -1.0 / Decimal64Scale / 2.0; // -0.0000000005
   Decimal64MinFloatD    : Double = Decimal64MinFloat;
@@ -282,7 +283,7 @@ function  Decimal64IsOne(const A: Decimal64): Boolean;
 function  Decimal64IsMaximum(const A: Decimal64): Boolean;
 function  Decimal64IsOverflow(const A: Decimal64): Boolean;
 
-function  Word64IsDecimal64Range(const A: Word64): Boolean;
+function  Word64IsDecimal64Range(const A: Word64Rec): Boolean;
 function  Int32IsDecimal64Range(const A: Int32): Boolean;
 function  Int64IsDecimal64Range(const A: Int64): Boolean;
 function  FloatIsDecimal64Range(const A: Double): Boolean;
@@ -290,7 +291,7 @@ function  FloatIsDecimal64Range(const A: Double): Boolean;
 procedure Decimal64InitWord8(var A: Decimal64; const B: Byte);
 procedure Decimal64InitWord16(var A: Decimal64; const B: Word);
 procedure Decimal64InitWord32(var A: Decimal64; const B: Word32);
-procedure Decimal64InitWord64(var A: Decimal64; const B: Word64);
+procedure Decimal64InitWord64(var A: Decimal64; const B: Word64Rec);
 procedure Decimal64InitInt32(var A: Decimal64; const B: Int32);
 procedure Decimal64InitInt64(var A: Decimal64; const B: Int64);
 procedure Decimal64InitDecimal32(var A: Decimal64; const B: Decimal32);
@@ -300,7 +301,7 @@ procedure Decimal64InitFloat(var A: Decimal64; const B: Double);
 function  Decimal64ToWord8(const A: Decimal64): Byte;
 function  Decimal64ToWord16(const A: Decimal64): Word;
 function  Decimal64ToWord32(const A: Decimal64): Word32;
-function  Decimal64ToWord64(const A: Decimal64): Word64;
+function  Decimal64ToWord64(const A: Decimal64): Word64Rec;
 function  Decimal64ToInt32(const A: Decimal64): Int32;
 function  Decimal64ToInt64(const A: Decimal64): Int64;
 function  Decimal64ToDecimal32(const A: Decimal64): Decimal32;
@@ -366,12 +367,12 @@ function  StrToDecimal64B(const A: RawByteString): Decimal64;
 const
   Decimal128Digits       = 38;
   Decimal128Precision    = 19;
-  Decimal128Scale        : Word64  = (Word32s:($89E80000, $8AC72304)); // 10000000000000000000
+  Decimal128Scale        : Word64Rec  = (Word32s:($89E80000, $8AC72304)); // 10000000000000000000
   Decimal128ScaleW128    : Word128 = (Word32s:($89E80000, $8AC72304, 0, 0)); // 10000000000000000000
   Decimal128ScaleF       : Double = 10000000000000000000.0;
-  Decimal128MaxInt       : Word64  = (Word32s:($89E7FFFF, $8AC72304)); // 9999999999999999999 (19 9's)
+  Decimal128MaxInt       : Word64Rec  = (Word32s:($89E7FFFF, $8AC72304)); // 9999999999999999999 (19 9's)
   Decimal128MaxValue     : Word128 = (Word32s:($FFFFFFFF, $98A223F, $5A86C47A, $4B3B4CA8)); // 99999999999999999999999999999999999999 (38 9's)
-  Decimal128RoundTerm    : Word64  = (Word32s:($44F40000, $45639182)); // Decimal128Scale div 2 = 5000000000000000000
+  Decimal128RoundTerm    : Word64Rec  = (Word32s:($44F40000, $45639182)); // Decimal128Scale div 2 = 5000000000000000000
   Decimal128MinFloat     = -0.00000000000000000005;
   Decimal128MinFloatD    : Double = Decimal128MinFloat;
   Decimal128MaxFloatLim  = 9999999999999999999.9999999999999999999;
@@ -386,7 +387,7 @@ function  Decimal128IsOne(const A: Decimal128): Boolean;
 function  Decimal128IsMaximum(const A: Decimal128): Boolean;
 function  Decimal128IsOverflow(const A: Decimal128): Boolean;
 
-function  Word64IsDecimal128Range(const A: Word64): Boolean;
+function  Word64IsDecimal128Range(const A: Word64Rec): Boolean;
 function  Word128IsDecimal128Range(const A: Word128): Boolean;
 function  Int64IsDecimal128Range(const A: Int64): Boolean;
 function  Int128IsDecimal128Range(const A: Int128): Boolean;
@@ -395,7 +396,7 @@ function  FloatIsDecimal128Range(const A: Double): Boolean;
 procedure Decimal128InitWord8(var A: Decimal128; const B: Byte);
 procedure Decimal128InitWord16(var A: Decimal128; const B: Word);
 procedure Decimal128InitWord32(var A: Decimal128; const B: Word32);
-procedure Decimal128InitWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128InitWord64(var A: Decimal128; const B: Word64Rec);
 procedure Decimal128InitInt32(var A: Decimal128; const B: Int32);
 procedure Decimal128InitInt64(var A: Decimal128; const B: Int64);
 procedure Decimal128InitDecimal64(var A: Decimal128; const B: Decimal64);
@@ -405,19 +406,19 @@ procedure Decimal128InitFloat(var A: Decimal128; const B: Double);
 function  Decimal128ToWord8(const A: Decimal128): Byte;
 function  Decimal128ToWord16(const A: Decimal128): Word;
 function  Decimal128ToWord32(const A: Decimal128): Word32;
-function  Decimal128ToWord64(const A: Decimal128): Word64;
+function  Decimal128ToWord64(const A: Decimal128): Word64Rec;
 function  Decimal128ToInt32(const A: Decimal128): Int32;
 function  Decimal128ToInt64(const A: Decimal128): Int64;
 function  Decimal128ToFloat(const A: Decimal128): Double;
 
-function  Decimal128Trunc(const A: Decimal128): Word64;
-function  Decimal128Round(const A: Decimal128): Word64;
-function  Decimal128FracWord(const A: Decimal128): Word64;
+function  Decimal128Trunc(const A: Decimal128): Word64Rec;
+function  Decimal128Round(const A: Decimal128): Word64Rec;
+function  Decimal128FracWord(const A: Decimal128): Word64Rec;
 
 function  Decimal128EqualsWord8(const A: Decimal128; const B: Byte): Boolean;
 function  Decimal128EqualsWord16(const A: Decimal128; const B: Word): Boolean;
 function  Decimal128EqualsWord32(const A: Decimal128; const B: Word32): Boolean;
-function  Decimal128EqualsWord64(const A: Decimal128; const B: Word64): Boolean;
+function  Decimal128EqualsWord64(const A: Decimal128; const B: Word64Rec): Boolean;
 function  Decimal128EqualsInt32(const A: Decimal128; const B: Int32): Boolean;
 function  Decimal128EqualsInt64(const A: Decimal128; const B: Int64): Boolean;
 function  Decimal128EqualsDecimal128(const A: Decimal128; const B: Decimal128): Boolean;
@@ -426,26 +427,26 @@ function  Decimal128EqualsFloat(const A: Decimal128; const B: Double): Boolean;
 function  Decimal128CompareWord8(const A: Decimal128; const B: Byte): Integer;
 function  Decimal128CompareWord16(const A: Decimal128; const B: Word): Integer;
 function  Decimal128CompareWord32(const A: Decimal128; const B: Word32): Integer;
-function  Decimal128CompareWord64(const A: Decimal128; const B: Word64): Integer;
+function  Decimal128CompareWord64(const A: Decimal128; const B: Word64Rec): Integer;
 function  Decimal128CompareDecimal128(const A: Decimal128; const B: Decimal128): Integer;
 function  Decimal128CompareFloat(const A: Decimal128; const B: Double): Integer;
 
 procedure Decimal128AddWord8(var A: Decimal128; const B: Byte);
 procedure Decimal128AddWord16(var A: Decimal128; const B: Word);
 procedure Decimal128AddWord32(var A: Decimal128; const B: Word32);
-procedure Decimal128AddWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128AddWord64(var A: Decimal128; const B: Word64Rec);
 procedure Decimal128AddDecimal128(var A: Decimal128; const B: Decimal128);
 
 procedure Decimal128SubtractWord8(var A: Decimal128; const B: Byte);
 procedure Decimal128SubtractWord16(var A: Decimal128; const B: Word);
 procedure Decimal128SubtractWord32(var A: Decimal128; const B: Word32);
-procedure Decimal128SubtractWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128SubtractWord64(var A: Decimal128; const B: Word64Rec);
 procedure Decimal128SubtractDecimal128(var A: Decimal128; const B: Decimal128);
 
 procedure Decimal128MultiplyWord8(var A: Decimal128; const B: Byte);
 procedure Decimal128MultiplyWord16(var A: Decimal128; const B: Word);
 procedure Decimal128MultiplyWord32(var A: Decimal128; const B: Word32);
-procedure Decimal128MultiplyWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128MultiplyWord64(var A: Decimal128; const B: Word64Rec);
 procedure Decimal128MultiplyDecimal128(var A: Decimal128; const B: Decimal128);
 
 procedure Decimal128Sqr(var A: Decimal128);
@@ -477,7 +478,7 @@ procedure HugeDecimalInitZero(out A: HugeDecimal);
 procedure HugeDecimalInitOne(out A: HugeDecimal);
 procedure HugeDecimalInitWord8(out A: HugeDecimal; const B: Byte);
 procedure HugeDecimalInitWord32(out A: HugeDecimal; const B: Word32);
-procedure HugeDecimalInitWord64(out A: HugeDecimal; const B: Word64);
+procedure HugeDecimalInitWord64(out A: HugeDecimal; const B: Word64Rec);
 procedure HugeDecimalInitWord128(out A: HugeDecimal; const B: Word128);
 procedure HugeDecimalInitDecimal32(out A: HugeDecimal; const B: Decimal32);
 procedure HugeDecimalInitDecimal64(out A: HugeDecimal; const B: Decimal64);
@@ -488,7 +489,7 @@ procedure HugeDecimalAssignZero(var A: HugeDecimal);
 procedure HugeDecimalAssignOne(var A: HugeDecimal);
 procedure HugeDecimalAssignWord8(var A: HugeDecimal; const B: Byte);
 procedure HugeDecimalAssignWord32(var A: HugeDecimal; const B: Word32);
-procedure HugeDecimalAssignWord64(var A: HugeDecimal; const B: Word64);
+procedure HugeDecimalAssignWord64(var A: HugeDecimal; const B: Word64Rec);
 procedure HugeDecimalAssignWord128(var A: HugeDecimal; const B: Word128);
 procedure HugeDecimalAssignDecimal32(var A: HugeDecimal; const B: Decimal32);
 procedure HugeDecimalAssignDecimal64(var A: HugeDecimal; const B: Decimal64);
@@ -513,7 +514,7 @@ procedure HugeDecimalSetDigit(var A: HugeDecimal; const DigitIdx: Integer; const
 
 function  HugeDecimalToWord8(const A: HugeDecimal): Byte;
 function  HugeDecimalToWord32(const A: HugeDecimal): Word32;
-function  HugeDecimalToWord64(const A: HugeDecimal): Word64;
+function  HugeDecimalToWord64(const A: HugeDecimal): Word64Rec;
 function  HugeDecimalToWord128(const A: HugeDecimal): Word128;
 function  HugeDecimalToDecimal32(const A: HugeDecimal): Decimal32;
 function  HugeDecimalToDecimal64(const A: HugeDecimal): Decimal64;
@@ -672,7 +673,7 @@ function  SDecimal64IsMinimum(const A: SDecimal64): Boolean;
 function  SDecimal64IsMaximum(const A: SDecimal64): Boolean;
 function  SDecimal64IsOverflow(const A: SDecimal64): Boolean;
 
-function  Word64IsSDecimal64Range(const A: Word64): Boolean;
+function  Word64IsSDecimal64Range(const A: Word64Rec): Boolean;
 function  Int64IsSDecimal64Range(const A: Int64): Boolean;
 function  FloatIsSDecimal64Range(const A: Double): Boolean;
 
@@ -683,7 +684,7 @@ procedure SDecimal64AbsInPlace(var A: SDecimal64);
 procedure SDecimal64InitWord8(var A: SDecimal64; const B: Byte);
 procedure SDecimal64InitWord16(var A: SDecimal64; const B: Word);
 procedure SDecimal64InitWord32(var A: SDecimal64; const B: Word32);
-procedure SDecimal64InitWord64(var A: SDecimal64; const B: Word64);
+procedure SDecimal64InitWord64(var A: SDecimal64; const B: Word64Rec);
 procedure SDecimal64InitInt32(var A: SDecimal64; const B: Int32);
 procedure SDecimal64InitInt64(var A: SDecimal64; const B: Int64);
 procedure SDecimal64InitSDecimal64(var A: SDecimal64; const B: SDecimal64);
@@ -692,7 +693,7 @@ procedure SDecimal64InitFloat(var A: SDecimal64; const B: Double);
 function  SDecimal64ToWord8(const A: SDecimal64): Byte;
 function  SDecimal64ToWord16(const A: SDecimal64): Word;
 function  SDecimal64ToWord32(const A: SDecimal64): Word32;
-function  SDecimal64ToWord64(const A: SDecimal64): Word64;
+function  SDecimal64ToWord64(const A: SDecimal64): Word64Rec;
 function  SDecimal64ToInt32(const A: SDecimal64): Int32;
 function  SDecimal64ToInt64(const A: SDecimal64): Int64;
 function  SDecimal64ToSDecimal32(const A: SDecimal64): SDecimal32; // TODO
@@ -768,7 +769,7 @@ function  SDecimal128IsOne(const A: SDecimal128): Boolean;
 function  SDecimal128IsMaximum(const A: SDecimal128): Boolean;
 function  SDecimal128IsOverflow(const A: SDecimal128): Boolean;
 
-function  Word64IsSDecimal128Range(const A: Word64): Boolean;
+function  Word64IsSDecimal128Range(const A: Word64Rec): Boolean;
 function  Word128IsSDecimal128Range(const A: Word128): Boolean;
 function  Int128IsSDecimal128Range(const A: Int128): Boolean;
 function  FloatIsSDecimal128Range(const A: Double): Boolean;
@@ -780,7 +781,7 @@ procedure SDecimal128AbsInPlace(var A: SDecimal128);
 procedure SDecimal128InitWord8(var A: SDecimal128; const B: Byte);
 procedure SDecimal128InitWord16(var A: SDecimal128; const B: Word);
 procedure SDecimal128InitWord32(var A: SDecimal128; const B: Word32);
-procedure SDecimal128InitWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128InitWord64(var A: SDecimal128; const B: Word64Rec);
 procedure SDecimal128InitInt32(var A: SDecimal128; const B: Int32);
 procedure SDecimal128InitInt64(var A: SDecimal128; const B: Int64);
 procedure SDecimal128InitSDecimal128(var A: SDecimal128; const B: SDecimal128);
@@ -789,26 +790,26 @@ procedure SDecimal128InitFloat(var A: SDecimal128; const B: Double);
 function  SDecimal128ToWord8(const A: SDecimal128): Byte;
 function  SDecimal128ToWord16(const A: SDecimal128): Word;
 function  SDecimal128ToWord32(const A: SDecimal128): Word32;
-function  SDecimal128ToWord64(const A: SDecimal128): Word64;
+function  SDecimal128ToWord64(const A: SDecimal128): Word64Rec;
 function  SDecimal128ToInt32(const A: SDecimal128): Int32;
 function  SDecimal128ToInt64(const A: SDecimal128): Int64;
 function  SDecimal128ToFloat(const A: SDecimal128): Double;
 
 function  SDecimal128Trunc(const A: SDecimal128): Int128;
 function  SDecimal128Round(const A: SDecimal128): Int128;
-function  SDecimal128FracWord(const A: SDecimal128): Word64;
+function  SDecimal128FracWord(const A: SDecimal128): Word64Rec;
 
 function  SDecimal128EqualsWord8(const A: SDecimal128; const B: Byte): Boolean;
 function  SDecimal128EqualsWord16(const A: SDecimal128; const B: Word): Boolean;
 function  SDecimal128EqualsWord32(const A: SDecimal128; const B: Word32): Boolean;
-function  SDecimal128EqualsWord64(const A: SDecimal128; const B: Word64): Boolean;
+function  SDecimal128EqualsWord64(const A: SDecimal128; const B: Word64Rec): Boolean;
 function  SDecimal128EqualsSDecimal128(const A: SDecimal128; const B: SDecimal128): Boolean;
 function  SDecimal128EqualsFloat(const A: SDecimal128; const B: Double): Boolean;
 
 function  SDecimal128CompareWord8(const A: SDecimal128; const B: Byte): Integer;
 function  SDecimal128CompareWord16(const A: SDecimal128; const B: Word): Integer;
 function  SDecimal128CompareWord32(const A: SDecimal128; const B: Word32): Integer;
-function  SDecimal128CompareWord64(const A: SDecimal128; const B: Word64): Integer;
+function  SDecimal128CompareWord64(const A: SDecimal128; const B: Word64Rec): Integer;
 function  SDecimal128CompareInt32(const A: SDecimal128; const B: Int32): Integer;
 function  SDecimal128CompareInt64(const A: SDecimal128; const B: Int64): Integer;
 function  SDecimal128CompareSDecimal128(const A: SDecimal128; const B: SDecimal128): Integer;
@@ -817,25 +818,25 @@ function  SDecimal128CompareFloat(const A: SDecimal128; const B: Double): Intege
 procedure SDecimal128AddWord8(var A: SDecimal128; const B: Byte);
 procedure SDecimal128AddWord16(var A: SDecimal128; const B: Word);
 procedure SDecimal128AddWord32(var A: SDecimal128; const B: Word32);
-procedure SDecimal128AddWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128AddWord64(var A: SDecimal128; const B: Word64Rec);
 procedure SDecimal128AddSDecimal128(var A: SDecimal128; const B: SDecimal128);
 
 procedure SDecimal128SubtractWord8(var A: SDecimal128; const B: Byte);
 procedure SDecimal128SubtractWord16(var A: SDecimal128; const B: Word);
 procedure SDecimal128SubtractWord32(var A: SDecimal128; const B: Word32);
-procedure SDecimal128SubtractWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128SubtractWord64(var A: SDecimal128; const B: Word64Rec);
 procedure SDecimal128SubtractSDecimal128(var A: SDecimal128; const B: SDecimal128);
 
 procedure SDecimal128MultiplyWord8(var A: SDecimal128; const B: Byte);
 procedure SDecimal128MultiplyWord16(var A: SDecimal128; const B: Word);
 procedure SDecimal128MultiplyWord32(var A: SDecimal128; const B: Word32);
-procedure SDecimal128MultiplyWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128MultiplyWord64(var A: SDecimal128; const B: Word64Rec);
 procedure SDecimal128MultiplySDecimal128(var A: SDecimal128; const B: SDecimal128);
 
 procedure SDecimal128DivideWord8(var A: SDecimal128; const B: Byte);
 procedure SDecimal128DivideWord16(var A: SDecimal128; const B: Word);
 procedure SDecimal128DivideWord32(var A: SDecimal128; const B: Word32);
-procedure SDecimal128DivideWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128DivideWord64(var A: SDecimal128; const B: Word64Rec);
 procedure SDecimal128DivideSDecimal128(var A: SDecimal128; const B: SDecimal128);
 
 function  SDecimal128ToStr(const A: SDecimal128): String;
@@ -863,7 +864,7 @@ procedure SHugeDecimalAssignOne(var A: SHugeDecimal);
 procedure SHugeDecimalAssignMinusOne(var A: SHugeDecimal);
 procedure SHugeDecimalAssignWord8(var A: SHugeDecimal; const B: Byte);
 procedure SHugeDecimalAssignWord32(var A: SHugeDecimal; const B: Word32);
-procedure SHugeDecimalAssignWord64(var A: SHugeDecimal; const B: Word64);
+procedure SHugeDecimalAssignWord64(var A: SHugeDecimal; const B: Word64Rec);
 procedure SHugeDecimalAssignWord128(var A: SHugeDecimal; const B: Word128);
 procedure SHugeDecimalAssignInt8(var A: SHugeDecimal; const B: ShortInt);
 procedure SHugeDecimalAssignInt32(var A: SHugeDecimal; const B: Int32);
@@ -884,7 +885,7 @@ procedure SHugeDecimalAbsInPlace(var A: SHugeDecimal);
 
 function  SHugeDecimalToWord8(const A: SHugeDecimal): Byte;
 function  SHugeDecimalToWord32(const A: SHugeDecimal): Word32;
-function  SHugeDecimalToWord64(const A: SHugeDecimal): Word64;
+function  SHugeDecimalToWord64(const A: SHugeDecimal): Word64Rec;
 function  SHugeDecimalToWord128(const A: SHugeDecimal): Word128;
 function  SHugeDecimalToInt8(const A: SHugeDecimal): ShortInt;
 function  SHugeDecimalToInt32(const A: SHugeDecimal): Int32;
@@ -1362,7 +1363,7 @@ end;
 function Decimal32ToStr(const A: Decimal32): String;
 var
   S : String;
-  T : Word64;
+  T : Word64Rec;
   L : Integer;
 begin
   if A.Value32 = 0 then
@@ -1382,7 +1383,7 @@ end;
 function Decimal32ToStrB(const A: Decimal32): RawByteString;
 var
   S : RawByteString;
-  T : Word64;
+  T : Word64Rec;
   L : Integer;
 begin
   if A.Value32 = 0 then
@@ -1402,7 +1403,7 @@ end;
 function Decimal32ToStrU(const A: Decimal32): UnicodeString;
 var
   S : UnicodeString;
-  T : Word64;
+  T : Word64Rec;
   L : Integer;
 begin
   if A.Value32 = 0 then
@@ -1554,7 +1555,7 @@ end;
 
 function TryStrToDecimal32_2(const A: String; out B: Decimal32): TDecimalConvertErrorType;
 var
-  ResInt : Word64;
+  ResInt : Word64Rec;
   ResIntDigits : Integer;
   ResFrac : Word32;
   ResFracDigits : Integer;
@@ -1785,14 +1786,14 @@ end;
 
 function TryStrToDecimal32(const A: String; out B: Decimal32): TDecimalConvertErrorType;
 var
-  ResInt : Word64;
+  ResInt : Word64Rec;
   ResIntDigits : Integer;
   ResFrac : Word32;
   ResFracDigits : Integer;
   ResFracRoundDigit : Integer;
   ResExp : Integer;
   ResExpSign : Integer;
-  Res : Word64;
+  Res : Word64Rec;
   I, L : Integer;
   C : Char;
   Digit : Integer;
@@ -2012,18 +2013,18 @@ end;
 
 function TryStrToDecimal32_Tst_Frac64(const A: String; out B: Decimal32): TDecimalConvertErrorType;
 var
-  ResInt : Word64;
+  ResInt : Word64Rec;
   ResIntDigits : Integer;
-  ResFrac : Word64;
+  ResFrac : Word64Rec;
   ResFracDigits : Integer;
   ResFracRoundDigit : Integer;
   ResExp : Integer;
   ResExpSign : Integer;
-  Res : Word64;
+  Res : Word64Rec;
   I, L, N : Integer;
   C : Char;
   Digit : Integer;
-  DigitFactor, T : Word64;
+  DigitFactor, T : Word64Rec;
   R : Byte;
 begin
   L := Length(A);
@@ -2249,7 +2250,7 @@ end;
 
 function TryStrToDecimal32B(const A: RawByteString; out B: Decimal32): TDecimalConvertErrorType;
 var
-  ResInt : Word64;
+  ResInt : Word64Rec;
   ResIntDigits : Integer;
   ResFrac : Word32;
   ResFracDigits : Integer;
@@ -2536,7 +2537,7 @@ begin
   Result := Word64CompareWord64(A.Value64, Decimal64MaxValueW64) > 0;
 end;
 
-function Word64IsDecimal64Range(const A: Word64): Boolean;
+function Word64IsDecimal64Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64CompareInt64(A, Decimal64MaxInt) <= 0;
 end;
@@ -2573,8 +2574,8 @@ begin
   Word64InitInt64(A.Value64, Int64(B) * Decimal64Scale);
 end;
 
-procedure Decimal64InitWord64(var A: Decimal64; const B: Word64);
-var T, F : Word64;
+procedure Decimal64InitWord64(var A: Decimal64; const B: Word64Rec);
+var T, F : Word64Rec;
 begin
   if Word64CompareInt64(B, Decimal64MaxInt) > 0 then
     raise EDecimalError.Create(SOverflowError);
@@ -2585,7 +2586,7 @@ begin
 end;
 
 procedure Decimal64InitInt32(var A: Decimal64; const B: Int32);
-var T, F : Word64;
+var T, F : Word64Rec;
 begin
   if (B < 0) or (B > Decimal64MaxInt) then
     raise EDecimalError.Create(SOverflowError);
@@ -2596,7 +2597,7 @@ begin
 end;
 
 procedure Decimal64InitInt64(var A: Decimal64; const B: Int64);
-var T, F : Word64;
+var T, F : Word64Rec;
 begin
   if (B < 0) or (B > Decimal64MaxInt) then
     raise EDecimalError.Create(SOverflowError);
@@ -2607,7 +2608,7 @@ begin
 end;
 
 procedure Decimal64InitDecimal32(var A: Decimal64; const B: Decimal32);
-var T, Q : Word64;
+var T, Q : Word64Rec;
     R : Word;
 begin
   Word64InitWord32(T, B.Value32);
@@ -2633,7 +2634,7 @@ begin
 end;
 
 function Decimal64ToWord8(const A: Decimal64): Byte;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2645,7 +2646,7 @@ begin
 end;
 
 function Decimal64ToWord16(const A: Decimal64): Word;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2657,7 +2658,7 @@ begin
 end;
 
 function Decimal64ToWord32(const A: Decimal64): Word32;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2666,8 +2667,8 @@ begin
   Result := Word64ToWord32(Q);
 end;
 
-function Decimal64ToWord64(const A: Decimal64): Word64;
-var Q : Word64;
+function Decimal64ToWord64(const A: Decimal64): Word64Rec;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2677,7 +2678,7 @@ begin
 end;
 
 function Decimal64ToInt32(const A: Decimal64): Int32;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2689,7 +2690,7 @@ begin
 end;
 
 function Decimal64ToInt64(const A: Decimal64): Int64;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2716,7 +2717,7 @@ begin
 end;
 
 function Decimal64Trunc(const A: Decimal64): Int64;
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, Q, R);
@@ -2725,7 +2726,7 @@ end;
 
 function Decimal64Round(const A: Decimal64): Int64;
 var F : Word32;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, R, F);
   if (F > Decimal64RoundTerm) or
@@ -2735,7 +2736,7 @@ begin
 end;
 
 function Decimal64FracWord(const A: Decimal64): Word32;
-var R : Word64;
+var R : Word64Rec;
     F : Word32;
 begin
   Word64DivideWord32(A.Value64, Decimal64Scale, R, F);
@@ -2866,7 +2867,7 @@ begin
 end;
 
 procedure Decimal64AddWord8(var A: Decimal64; const B: Byte);
-var T, Q : Word64;
+var T, Q : Word64Rec;
 begin
   T := A.Value64;
   Word64InitWord32(Q, B);
@@ -2878,7 +2879,7 @@ begin
 end;
 
 procedure Decimal64AddWord16(var A: Decimal64; const B: Word);
-var T, Q : Word64;
+var T, Q : Word64Rec;
 begin
   T := A.Value64;
   Word64InitWord32(Q, B);
@@ -2912,7 +2913,7 @@ begin
 end;
 
 procedure Decimal64SubtractWord8(var A: Decimal64; const B: Byte);
-var T, Q : Word64;
+var T, Q : Word64Rec;
 begin
   T := A.Value64;
   Word64InitWord32(Q, B);
@@ -2924,7 +2925,7 @@ begin
 end;
 
 procedure Decimal64SubtractWord16(var A: Decimal64; const B: Word);
-var T, Q : Word64;
+var T, Q : Word64Rec;
 begin
   T := A.Value64;
   Word64InitWord32(Q, B);
@@ -2936,7 +2937,7 @@ begin
 end;
 
 procedure Decimal64SubtractWord32(var A: Decimal64; const B: Word32);
-var T, Q : Word64;
+var T, Q : Word64Rec;
 begin
   T := A.Value64;
   Word64InitWord32(Q, B);
@@ -3003,7 +3004,7 @@ begin
 end;
 
 procedure Decimal64DivideWord8(var A: Decimal64; const B: Byte);
-var Q : Word64;
+var Q : Word64Rec;
     R : Byte;
 begin
   Word64DivideWord8(A.Value64, B, Q, R);
@@ -3011,7 +3012,7 @@ begin
 end;
 
 procedure Decimal64DivideWord16(var A: Decimal64; const B: Word);
-var Q : Word64;
+var Q : Word64Rec;
     R : Word;
 begin
   Word64DivideWord16(A.Value64, B, Q, R);
@@ -3019,7 +3020,7 @@ begin
 end;
 
 procedure Decimal64DivideWord32(var A: Decimal64; const B: Word32);
-var Q : Word64;
+var Q : Word64Rec;
     R : Word32;
 begin
   Word64DivideWord32(A.Value64, B, Q, R);
@@ -3028,9 +3029,9 @@ end;
 
 procedure Decimal64DivideDecimal64(var A: Decimal64; const B: Decimal64);
 var T : Word128;
-    Q : Word64;
+    Q : Word64Rec;
     F : Word128;
-    G : Word64;
+    G : Word64Rec;
 begin
   Word128InitWord64(T, A.Value64);
   Word64InitInt64(Q, Decimal64Scale);
@@ -3094,18 +3095,18 @@ function TryStrToDecimal64(const A: String; out B: Decimal64): TDecimalConvertEr
 var
   ResInt : Word128;
   ResIntDigits : Integer;
-  ResFrac : Word64;
+  ResFrac : Word64Rec;
   ResFracDigits : Integer;
   ResFracRoundDigit : Integer;
   ResExp : Integer;
   ResExpSign : Integer;
-  Res : Word64;
+  Res : Word64Rec;
   R : Byte;
   I, L : Integer;
   C : Char;
   Digit : Integer;
-  DigitFactor : Word64;
-  T : Word64;
+  DigitFactor : Word64Rec;
+  T : Word64Rec;
 begin
   L := Length(A);
   if L = 0 then
@@ -3332,18 +3333,18 @@ function TryStrToDecimal64B(const A: RawByteString; out B: Decimal64): TDecimalC
 var
   ResInt : Word128;
   ResIntDigits : Integer;
-  ResFrac : Word64;
+  ResFrac : Word64Rec;
   ResFracDigits : Integer;
   ResFracRoundDigit : Integer;
   ResExp : Integer;
   ResExpSign : Integer;
-  Res : Word64;
+  Res : Word64Rec;
   R : Byte;
   I, L : Integer;
   C : AnsiChar;
   Digit : Integer;
-  DigitFactor : Word64;
-  T : Word64;
+  DigitFactor : Word64Rec;
+  T : Word64Rec;
 begin
   L := Length(A);
   if L = 0 then
@@ -3624,7 +3625,7 @@ begin
   Result := Word128CompareWord128(A.Value128, Decimal128MaxValue) > 0;
 end;
 
-function Word64IsDecimal128Range(const A: Word64): Boolean;
+function Word64IsDecimal128Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64CompareWord64(A, Decimal128MaxInt) <= 0;
 end;
@@ -3677,7 +3678,7 @@ begin
   A.Value128 := T;
 end;
 
-procedure Decimal128InitWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128InitWord64(var A: Decimal128; const B: Word64Rec);
 var T : Word128;
 begin
   if Word64CompareWord64(B, Decimal128MaxInt) > 0 then
@@ -3699,7 +3700,7 @@ end;
 
 procedure Decimal128InitInt64(var A: Decimal128; const B: Int64);
 var T : Word128;
-    Q : Word64;
+    Q : Word64Rec;
 begin
   if B < 0 then
     raise EDecimalError.Create(SOverflowError);
@@ -3742,7 +3743,7 @@ end;
 
 function Decimal128ToWord8(const A: Decimal128): Byte;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3754,7 +3755,7 @@ end;
 
 function Decimal128ToWord16(const A: Decimal128): Word;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3766,7 +3767,7 @@ end;
 
 function Decimal128ToWord32(const A: Decimal128): Word32;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3776,9 +3777,9 @@ begin
   Result := Word128ToWord32(Q);
 end;
 
-function Decimal128ToWord64(const A: Decimal128): Word64;
+function Decimal128ToWord64(const A: Decimal128): Word64Rec;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3790,7 +3791,7 @@ end;
 
 function Decimal128ToInt32(const A: Decimal128): Int32;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3802,7 +3803,7 @@ end;
 
 function Decimal128ToInt64(const A: Decimal128): Int64;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   if not Word64IsZero(R) then
@@ -3817,16 +3818,16 @@ begin
   Result := Word128ToFloat(A.Value128) / Decimal128ScaleF;
 end;
 
-function Decimal128Trunc(const A: Decimal128): Word64;
+function Decimal128Trunc(const A: Decimal128): Word64Rec;
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, Q, R);
   Result := Word128ToWord64(Q);
 end;
 
-function Decimal128Round(const A: Decimal128): Word64;
-var F : Word64;
+function Decimal128Round(const A: Decimal128): Word64Rec;
+var F : Word64Rec;
     R : Word128;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, R, F);
@@ -3836,9 +3837,9 @@ begin
   Result := Word128ToWord64(R);
 end;
 
-function Decimal128FracWord(const A: Decimal128): Word64;
+function Decimal128FracWord(const A: Decimal128): Word64Rec;
 var R : Word128;
-    F : Word64;
+    F : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, Decimal128Scale, R, F);
   Result := F;
@@ -3868,7 +3869,7 @@ begin
   Result := Word128EqualsWord128(A.Value128, T);
 end;
 
-function Decimal128EqualsWord64(const A: Decimal128; const B: Word64): Boolean;
+function Decimal128EqualsWord64(const A: Decimal128; const B: Word64Rec): Boolean;
 var T : Word128;
 begin
   Word128InitWord64(T, Decimal128Scale);
@@ -3885,7 +3886,7 @@ begin
 end;
 
 function Decimal128EqualsInt64(const A: Decimal128; const B: Int64): Boolean;
-var T : Word64;
+var T : Word64Rec;
 begin
   if B < 0 then
     Result := False
@@ -3937,7 +3938,7 @@ begin
   Result := Word128CompareWord128(A.Value128, T);
 end;
 
-function Decimal128CompareWord64(const A: Decimal128; const B: Word64): Integer;
+function Decimal128CompareWord64(const A: Decimal128; const B: Word64Rec): Integer;
 var T : Word128;
 begin
   Word128InitWord64(T, Decimal128Scale);
@@ -4002,7 +4003,7 @@ begin
   A.Value128 := T;
 end;
 
-procedure Decimal128AddWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128AddWord64(var A: Decimal128; const B: Word64Rec);
 var T, Q : Word128;
 begin
   T := A.Value128;
@@ -4060,7 +4061,7 @@ begin
   A.Value128 := T;
 end;
 
-procedure Decimal128SubtractWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128SubtractWord64(var A: Decimal128; const B: Word64Rec);
 var T, Q : Word128;
 begin
   T := A.Value128;
@@ -4109,7 +4110,7 @@ begin
   A.Value128 := Word256ToWord128(T);
 end;
 
-procedure Decimal128MultiplyWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128MultiplyWord64(var A: Decimal128; const B: Word64Rec);
 var T : Word256;
 begin
   Word256InitWord128(T, A.Value128);
@@ -4161,9 +4162,9 @@ begin
   A.Value128 := Q;
 end;
 
-procedure Decimal128DivideWord64(var A: Decimal128; const B: Word64);
+procedure Decimal128DivideWord64(var A: Decimal128; const B: Word64Rec);
 var Q : Word128;
-    R : Word64;
+    R : Word64Rec;
 begin
   Word128DivideWord64(A.Value128, B, Q, R);
   A.Value128 := Q;
@@ -4241,7 +4242,7 @@ var
   I, L : Integer;
   Ch : Char;
   Digit : Integer;
-  C, D : Word64;
+  C, D : Word64Rec;
   E : Byte;
   T : Word128;
   RoundingDigit : Integer;
@@ -4377,7 +4378,7 @@ var
   I, L : Integer;
   Ch : AnsiChar;
   Digit : Integer;
-  C, D : Word64;
+  C, D : Word64Rec;
   E : Byte;
   T : Word128;
   RoundingDigit : Integer;
@@ -4550,9 +4551,9 @@ begin
 end;
 
 // Returns number of bytes required to encode value B
-function HugeDecimalEncLength64(const B: Word64): Integer;
+function HugeDecimalEncLength64(const B: Word64Rec): Integer;
 var
-  L : Word64;
+  L : Word64Rec;
   R : Byte;
   C : Integer;
 begin
@@ -4634,7 +4635,7 @@ begin
 end;
 
 // Pre: A not initialised
-procedure HugeDecimalInitWord64(out A: HugeDecimal; const B: Word64);
+procedure HugeDecimalInitWord64(out A: HugeDecimal; const B: Word64Rec);
 begin
   HugeDecimalInit(A);
   HugeDecimalAssignWord64(A, B);
@@ -4749,9 +4750,9 @@ end;
 
 // Pre: A initialised
 // Post: A normalised
-procedure HugeDecimalAssignWord64(var A: HugeDecimal; const B: Word64);
+procedure HugeDecimalAssignWord64(var A: HugeDecimal; const B: Word64Rec);
 var
-  L : Word64;
+  L : Word64Rec;
   R : Byte;
   I : Integer;
 begin
@@ -4851,7 +4852,7 @@ end;
 // Post: A normalised
 procedure HugeDecimalAssignDecimal64(var A: HugeDecimal; const B: Decimal64);
 var
-  Val64 : Word64;
+  Val64 : Word64Rec;
   DigitCnt, DigitIdx : Integer;
   Digit : Byte;
 const
@@ -5139,7 +5140,7 @@ end;
 function HugeDecimalToWord32(const A: HugeDecimal): Word32;
 var
   DigitsLen, DigIdx : Integer;
-  T : Word64;
+  T : Word64Rec;
   Digit : Byte;
 begin
   if A.Precision > 0 then
@@ -5164,7 +5165,7 @@ begin
 end;
 
 // Pre: A is normalised
-function HugeDecimalToWord64(const A: HugeDecimal): Word64;
+function HugeDecimalToWord64(const A: HugeDecimal): Word64Rec;
 var
   DigitsLen, DigIdx : Integer;
   T : Word128;
@@ -5260,7 +5261,7 @@ function HugeDecimalToDecimal64(const A: HugeDecimal): Decimal64;
 var
   Digit : Byte;
   DigitIdx, DigitsLen, IntDigits : Integer;
-  Val64 : Word64;
+  Val64 : Word64Rec;
 begin
   DigitsLen := Length(A.Digits);
   if DigitsLen = 0 then
@@ -7039,7 +7040,7 @@ begin
   Result := Decimal64IsOverflow(A.Value);
 end;
 
-function Word64IsSDecimal64Range(const A: Word64): Boolean;
+function Word64IsSDecimal64Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64CompareInt64(A, Decimal64MaxInt) <= 0;
 end;
@@ -7105,7 +7106,7 @@ begin
     end;
 end;
 
-procedure SDecimal64InitWord64(var A: SDecimal64; const B: Word64);
+procedure SDecimal64InitWord64(var A: SDecimal64; const B: Word64Rec);
 begin
   if Word64IsZero(B) then
     SDecimal64InitZero(A)
@@ -7194,7 +7195,7 @@ begin
   Result := Decimal64ToWord32(A.Value);
 end;
 
-function SDecimal64ToWord64(const A: SDecimal64): Word64;
+function SDecimal64ToWord64(const A: SDecimal64): Word64Rec;
 begin
   if A.Sign < 0 then
     raise EDecimalError.Create(SOverflowError);
@@ -7986,7 +7987,7 @@ begin
   Result := Decimal128IsOverflow(A.Value);
 end;
 
-function Word64IsSDecimal128Range(const A: Word64): Boolean;
+function Word64IsSDecimal128Range(const A: Word64Rec): Boolean;
 begin
   Result := Word64CompareWord64(A, Decimal128MaxInt) <= 0;
 end;
@@ -8060,7 +8061,7 @@ begin
     end;
 end;
 
-procedure SDecimal128InitWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128InitWord64(var A: SDecimal128; const B: Word64Rec);
 begin
   if Word64IsZero(B) then
     SDecimal128InitZero(A)
@@ -8149,7 +8150,7 @@ begin
   Result := Decimal128ToWord32(A.Value);
 end;
 
-function SDecimal128ToWord64(const A: SDecimal128): Word64;
+function SDecimal128ToWord64(const A: SDecimal128): Word64Rec;
 begin
   if A.Sign < 0 then
     raise EDecimalError.Create(SOverflowError);
@@ -8184,7 +8185,7 @@ begin
 end;
 
 function SDecimal128Trunc(const A: SDecimal128): Int128;
-var T : Word64;
+var T : Word64Rec;
     Q : Int128;
 begin
   T := Decimal128Trunc(A.Value);
@@ -8195,7 +8196,7 @@ begin
 end;
 
 function SDecimal128Round(const A: SDecimal128): Int128;
-var T : Word64;
+var T : Word64Rec;
     Q : Int128;
 begin
   T := Decimal128Round(A.Value);
@@ -8205,7 +8206,7 @@ begin
   Result := Q;
 end;
 
-function SDecimal128FracWord(const A: SDecimal128): Word64;
+function SDecimal128FracWord(const A: SDecimal128): Word64Rec;
 begin
   Result := Decimal128FracWord(A.Value);
 end;
@@ -8225,7 +8226,7 @@ begin
   Result := (A.Sign >= 0) and Decimal128EqualsWord32(A.Value, B);
 end;
 
-function SDecimal128EqualsWord64(const A: SDecimal128; const B: Word64): Boolean;
+function SDecimal128EqualsWord64(const A: SDecimal128; const B: Word64Rec): Boolean;
 begin
   Result := (A.Sign >= 0) and Decimal128EqualsWord64(A.Value, B);
 end;
@@ -8329,7 +8330,7 @@ begin
     Result := -1;
 end;
 
-function SDecimal128CompareWord64(const A: SDecimal128; const B: Word64): Integer;
+function SDecimal128CompareWord64(const A: SDecimal128; const B: Word64Rec): Integer;
 begin
   if A.Sign = 0 then
     if Word64IsZero(B) then
@@ -8373,7 +8374,7 @@ begin
 end;
 
 function SDecimal128CompareInt64(const A: SDecimal128; const B: Int64): Integer;
-var T : Word64;
+var T : Word64Rec;
 begin
   if A.Sign = 0 then
     begin
@@ -8541,7 +8542,7 @@ begin
     end;
 end;
 
-procedure SDecimal128AddWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128AddWord64(var A: SDecimal128; const B: Word64Rec);
 var S : Int8;
     T : Decimal128;
 begin
@@ -8701,7 +8702,7 @@ begin
     end;
 end;
 
-procedure SDecimal128SubtractWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128SubtractWord64(var A: SDecimal128; const B: Word64Rec);
 var S : Int8;
     T : Decimal128;
 begin
@@ -8801,7 +8802,7 @@ begin
   Decimal128MultiplyWord32(A.Value, B);
 end;
 
-procedure SDecimal128MultiplyWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128MultiplyWord64(var A: SDecimal128; const B: Word64Rec);
 begin
   if A.Sign = 0 then
     exit;
@@ -8856,7 +8857,7 @@ begin
   Decimal128DivideWord32(A.Value, B);
 end;
 
-procedure SDecimal128DivideWord64(var A: SDecimal128; const B: Word64);
+procedure SDecimal128DivideWord64(var A: SDecimal128; const B: Word64Rec);
 begin
   if Word64IsZero(B) then
     raise EDecimalError.Create(SDivisionByZero);
@@ -9056,7 +9057,7 @@ begin
     end;
 end;
 
-procedure SHugeDecimalAssignWord64(var A: SHugeDecimal; const B: Word64);
+procedure SHugeDecimalAssignWord64(var A: SHugeDecimal; const B: Word64Rec);
 begin
   if Word64IsZero(B) then
     SHugeDecimalAssignZero(A)
@@ -9228,7 +9229,7 @@ begin
     Result := HugeDecimalToWord32(A.Value);
 end;
 
-function SHugeDecimalToWord64(const A: SHugeDecimal): Word64;
+function SHugeDecimalToWord64(const A: SHugeDecimal): Word64Rec;
 begin
   if A.Sign = 0 then
     Word64InitZero(Result)
@@ -10467,7 +10468,7 @@ end;
 procedure Test_HugeDecimal;
 var
   A, B : HugeDecimal;
-  F : Word64;
+  F : Word64Rec;
   G : Word128;
 begin
   HugeDecimalInit(A);
@@ -12003,7 +12004,7 @@ end;
 
 procedure Test_SDecimal128;
 var A, B : SDecimal128;
-    C : Word64;
+    C : Word64Rec;
 begin
   SDecimal128InitZero(A);
   Assert(SDecimal128IsZero(A));
