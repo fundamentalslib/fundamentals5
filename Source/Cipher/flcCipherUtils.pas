@@ -83,6 +83,7 @@ type
 { Secure clear helper function                                                 }
 {                                                                              }
 procedure SecureClear(var Buffer; const BufferSize: Integer);
+procedure SecureClearBytes(var B: TBytes);
 procedure SecureClearStr(var S: RawByteString);
 
 
@@ -112,6 +113,12 @@ begin
   if BufferSize <= 0 then
     exit;
   FillChar(Buffer, BufferSize, $00);
+end;
+
+procedure SecureClearBytes(var B: TBytes);
+begin
+  SecureClear(Pointer(B)^, Length(B));
+  B := nil;
 end;
 
 procedure SecureClearStr(var S: RawByteString);
