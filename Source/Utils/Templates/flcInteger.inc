@@ -1,7 +1,7 @@
 {*******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.20                                                     }
+{   File version:     5.22                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
@@ -53,6 +53,8 @@
 {   2019/02/24  5.18  Compilable with Delphi 7.                                }
 {   2020/03/10  5.19  Rename Word64 to Word64Rec.                              }
 {   2020/03/20  5.20  UInt64 implementations for Word64 if SupportUInt64.      }
+{   2020/03/20  5.21  SetBitScanReverse implementations using lookup table.    }
+{   2020/03/21  5.22  Memory safe Word64Divide operations.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1574,20 +1576,29 @@ begin
   Result := -1;
 end;
 
+const
+  Word8SetBitScanReverseLookup: array[Byte] of Integer = (
+      -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+      4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+      5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+      7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+    );
+
 function Word8SetBitScanReverse(const A: Byte): Integer;
-var B : Byte;
 begin
-  Result := 7;
-  B := A;
-  while B > 0 do
-    if B and $80 <> 0 then
-      exit
-    else
-      begin
-        Dec(Result);
-        B := B shl 1;
-      end;
-  Result := -1;
+  Result := Word8SetBitScanReverseLookup[A];
 end;
 
 function Word8ClearBitScanForward(const A: Byte): Integer;
@@ -1917,20 +1928,12 @@ begin
   Result := -1;
 end;
 
-function Word16SetBitScanReverse(const A: Word): Integer;
-var B : Word;
+function Word16SetBitScanReverse(const A: Word16): Integer;
 begin
-  Result := 15;
-  B := A;
-  while B > 0 do
-    if B and $8000 <> 0 then
-      exit
-    else
-      begin
-        Dec(Result);
-        B := B shl 1;
-      end;
-  Result := -1;
+  if A and $FF00 <> 0 then
+    Result := Word8SetBitScanReverseLookup[Byte(A shr 8)] + 8
+  else
+    Result := Word8SetBitScanReverseLookup[Byte(A)];
 end;
 
 function Word16ClearBitScanForward(const A: Word): Integer;
@@ -2359,19 +2362,17 @@ begin
 end;
 
 function Word32SetBitScanReverse(const A: Word32): Integer;
-var B : Word32;
 begin
-  Result := 31;
-  B := A;
-  while B > 0 do
-    if B and $80000000 <> 0 then
-      exit
+  if A and $FFFF0000 <> 0 then
+    if A and $FF000000 <> 0 then
+      Result := Word8SetBitScanReverseLookup[Byte(A shr 24)] + 24
     else
-      begin
-        Dec(Result);
-        B := B shl 1;
-      end;
-  Result := -1;
+      Result := Word8SetBitScanReverseLookup[Byte(A shr 16)] + 16
+  else
+    if A and $0000FF00 <> 0 then
+      Result := Word8SetBitScanReverseLookup[Byte(A shr 8)] + 8
+    else
+      Result := Word8SetBitScanReverseLookup[Byte(A)];
 end;
 
 function Word32ClearBitScanForward(const A: Word32): Integer;
@@ -3284,15 +3285,14 @@ end;
 
 // Returns index (0-63) of highest set bit in A, or -1 if none set
 function Word64SetBitScanReverse(const A: Word64Rec): Integer;
-var B : Integer;
+var
+  B : Word32;
 begin
-  for B := 63 downto 0 do
-    if Word64Rec(A).Word32s[B shr 5] and Word32(1 shl (B and $1F)) <> 0 then
-      begin
-        Result := B;
-        exit;
-      end;
-  Result := -1;
+  B := Word64Rec(A).Word32s[1];
+  if B <> 0 then
+    Result := Word32SetBitScanReverse(B) + 32
+  else
+    Result := Word32SetBitScanReverse(Word64Rec(A).Word32s[0]);
 end;
 
 // Returns index (0-63) of lowest clear bit in A, or -1 if none clear
@@ -3979,9 +3979,12 @@ end;
 
 {$IFDEF SupportUInt64}
 procedure Word64DivideWord8(const A: Word64Rec; const B: Byte; out Q: Word64Rec; out R: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : Word64Rec;
 begin
-  UInt64(Q) := UInt64(A) div B;
-  R := UInt64(A) mod B;
+  C := A;
+  UInt64(Q) := UInt64(C) div B;
+  R := UInt64(C) mod B;
 end;
 {$ELSE}
 procedure Word64DivideWord8(const A: Word64Rec; const B: Byte; out Q: Word64Rec; out R: Byte);
@@ -4014,9 +4017,12 @@ end;
 
 {$IFDEF SupportUInt64}
 procedure Word64DivideWord16(const A: Word64Rec; const B: Word; out Q: Word64Rec; out R: Word); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : Word64Rec;
 begin
-  UInt64(Q) := UInt64(A) div B;
-  R := UInt64(A) mod B;
+  C := A;
+  UInt64(Q) := UInt64(C) div B;
+  R := UInt64(C) mod B;
 end;
 {$ELSE}
 procedure Word64DivideWord16(const A: Word64Rec; const B: Word; out Q: Word64Rec; out R: Word);
@@ -4049,9 +4055,12 @@ end;
 
 {$IFDEF SupportUInt64}
 procedure Word64DivideWord32(const A: Word64Rec; const B: Word32; out Q: Word64Rec; out R: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : Word64Rec;
 begin
-  UInt64(Q) := UInt64(A) div B;
-  R := UInt64(A) mod B;
+  C := A;
+  UInt64(Q) := UInt64(C) div B;
+  R := UInt64(C) mod B;
 end;
 {$ELSE}
 procedure Word64DivideWord32(const A: Word64Rec; const B: Word32; out Q: Word64Rec; out R: Word32);
@@ -4114,9 +4123,12 @@ end;
 
 {$IFDEF SupportUInt64}
 procedure Word64DivideWord64(const A, B: Word64Rec; var Q, R: Word64Rec); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C : Word64Rec;
 begin
-  UInt64(Q) := UInt64(A) div UInt64(B);
-  UInt64(R) := UInt64(A) mod UInt64(B);
+  C := A;
+  UInt64(Q) := UInt64(C) div UInt64(B);
+  UInt64(R) := UInt64(C) mod UInt64(B);
 end;
 {$ELSE}
 procedure Word64DivideWord64(const A, B: Word64Rec; var Q, R: Word64Rec);
@@ -14798,6 +14810,26 @@ var X : array[Byte] of Byte;
     A : Integer;
     F, G : SmallInt;
 begin
+  Assert(Word8SetBitScanReverse(0) = -1);
+  Assert(Word8SetBitScanReverse(1) = 0);
+  Assert(Word8SetBitScanReverse(2) = 1);
+  Assert(Word8SetBitScanReverse(3) = 1);
+  Assert(Word8SetBitScanReverse(4) = 2);
+  Assert(Word8SetBitScanReverse(5) = 2);
+  Assert(Word8SetBitScanReverse(6) = 2);
+  Assert(Word8SetBitScanReverse(7) = 2);
+  Assert(Word8SetBitScanReverse(8) = 3);
+  Assert(Word8SetBitScanReverse($10) = 4);
+  Assert(Word8SetBitScanReverse($12) = 4);
+  Assert(Word8SetBitScanReverse($20) = 5);
+  Assert(Word8SetBitScanReverse($3F) = 5);
+  Assert(Word8SetBitScanReverse($40) = 6);
+  Assert(Word8SetBitScanReverse($41) = 6);
+  Assert(Word8SetBitScanReverse($80) = 7);
+  Assert(Word8SetBitScanReverse($81) = 7);
+  Assert(Word8SetBitScanReverse($F0) = 7);
+  Assert(Word8SetBitScanReverse($FF) = 7);
+
   // Word8HashTable
   for A := 0 to 255 do
     X[A] := 0;
@@ -14839,6 +14871,27 @@ procedure Test_Word16;
 var X : array[Word] of Word;
     A : Integer;
 begin
+  Assert(Word16SetBitScanReverse(0) = -1);
+  Assert(Word16SetBitScanReverse(1) = 0);
+  Assert(Word16SetBitScanReverse(2) = 1);
+  Assert(Word16SetBitScanReverse(3) = 1);
+  Assert(Word16SetBitScanReverse(4) = 2);
+  Assert(Word16SetBitScanReverse(5) = 2);
+  Assert(Word16SetBitScanReverse(6) = 2);
+  Assert(Word16SetBitScanReverse(7) = 2);
+  Assert(Word16SetBitScanReverse(8) = 3);
+  Assert(Word16SetBitScanReverse($10) = 4);
+  Assert(Word16SetBitScanReverse($100) = 8);
+  Assert(Word16SetBitScanReverse($1000) = 12);
+  Assert(Word16SetBitScanReverse($F0) = 7);
+  Assert(Word16SetBitScanReverse($FF) = 7);
+  Assert(Word16SetBitScanReverse($1234) = 12);
+  Assert(Word16SetBitScanReverse($2000) = 13);
+  Assert(Word16SetBitScanReverse($4000) = 14);
+  Assert(Word16SetBitScanReverse($8000) = 15);
+  Assert(Word16SetBitScanReverse($F000) = 15);
+  Assert(Word16SetBitScanReverse($FFFF) = 15);
+
   // Word16Hash
   for A := 0 to 65535 do
     X[A] := 0;
@@ -14854,10 +14907,33 @@ procedure Test_Word32;
 var C, D : Word64Rec;
     A    : Word32;
 begin
-  // Compare
   Assert(Word32Compare(1, 2) = -1);
   Assert(Word32Compare(1, 1) = 0);
   Assert(Word32Compare(2, 1) = 1);
+
+  Assert(Word32SetBitScanReverse(0) = -1);
+  Assert(Word32SetBitScanReverse(1) = 0);
+  Assert(Word32SetBitScanReverse(2) = 1);
+  Assert(Word32SetBitScanReverse(3) = 1);
+  Assert(Word32SetBitScanReverse(4) = 2);
+  Assert(Word32SetBitScanReverse(5) = 2);
+  Assert(Word32SetBitScanReverse(6) = 2);
+  Assert(Word32SetBitScanReverse(7) = 2);
+  Assert(Word32SetBitScanReverse(8) = 3);
+  Assert(Word32SetBitScanReverse($10) = 4);
+  Assert(Word32SetBitScanReverse($100) = 8);
+  Assert(Word32SetBitScanReverse($1000) = 12);
+  Assert(Word32SetBitScanReverse($10000) = 16);
+  Assert(Word32SetBitScanReverse($100000) = 20);
+  Assert(Word32SetBitScanReverse($1000000) = 24);
+  Assert(Word32SetBitScanReverse($10000000) = 28);
+  Assert(Word32SetBitScanReverse($FFFFFFFF) = 31);
+  Assert(Word32SetBitScanReverse($80000000) = 31);
+  Assert(Word32SetBitScanReverse($08000000) = 27);
+  Assert(Word32SetBitScanReverse($08000001) = 27);
+  Assert(Word32SetBitScanReverse($FF) = 7);
+  Assert(Word32SetBitScanReverse($F0) = 7);
+  Assert(Word32SetBitScanReverse($12345678) = 28);
 
   Word32MultiplyWord32($FFFFFFFF, $FFFFFFFE, C);
   Assert(C.Word32s[0] = $00000002);

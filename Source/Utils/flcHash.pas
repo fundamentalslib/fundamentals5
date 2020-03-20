@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.23                                                     }
+{   File version:     5.24                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -59,6 +59,7 @@
 {   2018/07/11  5.21  Word32 type changes.                                     }
 {   2018/08/12  5.22  String type changes.                                     }
 {   2019/09/24  5.23  Optimise RipeMD/SHA1/SHA256/SHA512.                      }
+{   2020/03/20  5.24  Optimise Word64 routines used in SHA256/512.             }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -153,60 +154,61 @@ uses
 type
   PByte = ^Byte;
   PWord = ^Word;
-  Word64 = packed record
+  Word64Rec = packed record
     case Integer of
-    0 : (Bytes   : array[0..7] of Byte);
-    1 : (Words   : array[0..3] of Word);
-    2 : (Word32s : array[0..1] of Word32);
+    0 : (Bytes   : packed array[0..7] of Byte);
+    1 : (Word16s : packed array[0..3] of Word16);
+    2 : (Word32s : packed array[0..1] of Word32);
   end;
-  PWord64 = ^Word64;
-  T128BitDigest = record
+  PWord64Rec = ^Word64Rec;
+  T128BitDigest = packed record
     case integer of
-      0 : (Int64s  : array[0..1] of Int64);
-      1 : (Word32s : array[0..3] of Word32);
-      2 : (Words   : array[0..7] of Word);
-      3 : (Bytes   : array[0..15] of Byte);
+      0 : (Int64s  : packed array[0..1] of Int64);
+      1 : (Word32s : packed array[0..3] of Word32);
+      2 : (Word16s : packed array[0..7] of Word16);
+      3 : (Bytes   : packed array[0..15] of Byte);
     end;
   P128BitDigest = ^T128BitDigest;
-  T160BitDigest = record
+  T160BitDigest = packed record
     case integer of
-      0 : (Word32s : array[0..4] of Word32);
-      1 : (Words   : array[0..9] of Word);
-      2 : (Bytes   : array[0..19] of Byte);
+      0 : (Word32s : packed array[0..4] of Word32);
+      1 : (Word16s : packed array[0..9] of Word16);
+      2 : (Bytes   : packed array[0..19] of Byte);
     end;
   P160BitDigest = ^T160BitDigest;
-  T224BitDigest = record
+  T224BitDigest = packed record
     case integer of
-      0 : (Word32s : array[0..6] of Word32);
-      1 : (Words   : array[0..13] of Word);
-      2 : (Bytes   : array[0..27] of Byte);
+      0 : (Word32s : packed array[0..6] of Word32);
+      1 : (Word16s : packed array[0..13] of Word16);
+      2 : (Bytes   : packed array[0..27] of Byte);
     end;
   P224BitDigest = ^T224BitDigest;
-  T256BitDigest = record
+  T256BitDigest = packed record
     case integer of
-      0 : (Word32s : array[0..7] of Word32);
-      1 : (Words   : array[0..15] of Word);
-      2 : (Bytes   : array[0..31] of Byte);
+      0 : (Word64s : packed array[0..3] of Word64);
+      1 : (Word32s : packed array[0..7] of Word32);
+      2 : (Word16s : packed array[0..15] of Word16);
+      3 : (Bytes   : packed array[0..31] of Byte);
     end;
   P256BitDigest = ^T256BitDigest;
-  T384BitDigest = record
+  T384BitDigest = packed record
     case integer of
-      0 : (Word64s : array[0..5] of Word64);
-      1 : (Word32s : array[0..11] of Word32);
-      2 : (Words   : array[0..23] of Word);
-      3 : (Bytes   : array[0..47] of Byte);
+      0 : (Word64s : packed array[0..5] of Word64);
+      1 : (Word32s : packed array[0..11] of Word32);
+      2 : (Word16s : packed array[0..23] of Word16);
+      3 : (Bytes   : packed array[0..47] of Byte);
     end;
   P384BitDigest = ^T384BitDigest;
-  T512BitDigest = record
+  T512BitDigest = packed record
     case integer of
-      0 : (Word64s : array[0..7] of Word64);
-      1 : (Word32s : array[0..15] of Word32);
-      2 : (Words   : array[0..31] of Word);
-      3 : (Bytes   : array[0..63] of Byte);
+      0 : (Word64s : packed array[0..7] of Word64);
+      1 : (Word32s : packed array[0..15] of Word32);
+      2 : (Word16s : packed array[0..31] of Word16);
+      3 : (Bytes   : packed array[0..63] of Byte);
     end;
   P512BitDigest = ^T512BitDigest;
-  T512BitBuf  = array[0..63] of Byte;
-  T1024BitBuf = array[0..127] of Byte;
+  T512BitBuf  = packed array[0..63] of Byte;
+  T1024BitBuf = packed array[0..127] of Byte;
 
 const
   MaxHashDigestSize = Sizeof(T512BitDigest);
@@ -276,7 +278,7 @@ type
 { Secure memory clear                                                          }
 {   Used to clear keys and other sensitive data from memory                    }
 {                                                                              }
-procedure SecureClear(var Buf; const BufSize: Integer);
+procedure SecureClear(var Buf; const BufSize: NativeInt);
 procedure SecureClear512(var Buf: T512BitBuf);
 procedure SecureClear1024(var Buf: T1024BitBuf);
 procedure SecureClearStr(var S: String);
@@ -359,10 +361,10 @@ procedure SetCRC32Poly(const Poly: Word32);
 
 procedure CRC32Init(var CRC32: Word32);
 function  CRC32Byte(const CRC32: Word32; const Octet: Byte): Word32;
-function  CRC32Buf(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
-function  CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
+function  CRC32Buf(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
+function  CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
 
-function  CalcCRC32(const Buf; const BufSize: Integer): Word32; overload;
+function  CalcCRC32(const Buf; const BufSize: NativeInt): Word32; overload;
 function  CalcCRC32(const Buf: RawByteString): Word32; overload;
 
 
@@ -1037,7 +1039,7 @@ end;
 {                                                                              }
 { Secure memory clear                                                          }
 {                                                                              }
-procedure SecureClear(var Buf; const BufSize: Integer);
+procedure SecureClear(var Buf; const BufSize: NativeInt);
 begin
   if BufSize <= 0 then
     exit;
@@ -1055,7 +1057,7 @@ begin
 end;
 
 procedure SecureClearStr(var S: String);
-var L : Integer;
+var L : NativeInt;
 begin
   L := Length(S);
   if L = 0 then
@@ -1066,7 +1068,7 @@ begin
 end;
 
 procedure SecureClearBytes(var B: TBytes);
-var L : Integer;
+var L : NativeInt;
 begin
   L := Length(B);
   if L = 0 then
@@ -1076,7 +1078,7 @@ begin
 end;
 
 procedure SecureClearStrB(var S: RawByteString);
-var L : Integer;
+var L : NativeInt;
 begin
   L := Length(S);
   if L = 0 then
@@ -1087,7 +1089,7 @@ begin
 end;
 
 procedure SecureClearStrU(var S: UnicodeString);
-var L : Integer;
+var L : NativeInt;
 begin
   L := Length(S);
   if L = 0 then
@@ -1377,9 +1379,9 @@ begin
   Result := CalcCRC32Byte(CRC32, Octet);
 end;
 
-function CRC32Buf(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
+function CRC32Buf(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
 var P : PByte;
-    I : Integer;
+    I : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
@@ -1392,9 +1394,9 @@ begin
     end;
 end;
 
-function CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: Integer): Word32;
+function CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
 var P : PByte;
-    I : Integer;
+    I : NativeInt;
     C : Byte;
 begin
   if not CRC32TableInit then
@@ -1416,7 +1418,7 @@ begin
   CRC32 := $FFFFFFFF;
 end;
 
-function CalcCRC32(const Buf; const BufSize: Integer): Word32;
+function CalcCRC32(const Buf; const BufSize: NativeInt): Word32;
 begin
   CRC32Init(Result);
   Result := not CRC32Buf(Result, Buf, BufSize);
@@ -2014,72 +2016,79 @@ end;
 {                                                                              }
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
+{$IFDEF SupportUInt64}
+procedure Word64InitZero(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  UInt64(A) := 0;
+end;
+{$ELSE}
 procedure Word64InitZero(var A: Word64);
 begin
-  A.Word32s[0] := 0;
-  A.Word32s[1] := 0;
+  Word64Rec(A).Word32s[0] := 0;
+  Word64Rec(A).Word32s[1] := 0;
 end;
+{$ENDIF}
 
 {$IFDEF SupportUInt64}
 procedure Word64Not(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  PUInt64(@A)^ := not PUInt64(@A)^;
+  UInt64(A) := not UInt64(A);
 end;
 {$ELSE}
 procedure Word64Not(var A: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  A.Word32s[0] := not A.Word32s[0];
-  A.Word32s[1] := not A.Word32s[1];
+  Word64Rec(A).Word32s[0] := not Word64Rec(A).Word32s[0];
+  Word64Rec(A).Word32s[1] := not Word64Rec(A).Word32s[1];
 end;
 {$ENDIF}
 
 {$IFDEF SupportUInt64}
 procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  PUInt64(@A)^ := PUInt64(@A)^ and PUInt64(@B)^;
+  UInt64(A) := UInt64(A) and UInt64(B);
 end;
 {$ELSE}
 procedure Word64AndWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  A.Word32s[0] := A.Word32s[0] and B.Word32s[0];
-  A.Word32s[1] := A.Word32s[1] and B.Word32s[1];
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] and Word64Rec(B).Word32s[0];
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] and Word64Rec(B).Word32s[1];
 end;
 {$ENDIF}
 
 {$IFDEF SupportUInt64}
 procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  PUInt64(@A)^ := PUInt64(@A)^ xor PUInt64(@B)^;
+  UInt64(A) := UInt64(A) xor UInt64(B);
 end;
 {$ELSE}
 procedure Word64XorWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  A.Word32s[0] := A.Word32s[0] xor B.Word32s[0];
-  A.Word32s[1] := A.Word32s[1] xor B.Word32s[1];
+  Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[0] xor Word64Rec(B).Word32s[0];
+  Word64Rec(A).Word32s[1] := Word64Rec(A).Word32s[1] xor Word64Rec(B).Word32s[1];
 end;
 {$ENDIF}
 
 {$IFDEF SupportUInt64}
 procedure Word64AddWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  PUInt64(@A)^ := UInt64(PUInt64(@A)^ + PUInt64(@B)^);
+  Inc(UInt64(A), UInt64(B));
 end;
 {$ELSE}
 procedure Word64AddWord64(var A: Word64; const B: Word64); {$IFDEF UseInline}inline;{$ENDIF}
 var C, D : Int64;
 begin
-  C := Int64(A.Word32s[0]) + B.Word32s[0];
-  D := Int64(A.Word32s[1]) + B.Word32s[1];
+  C := Int64(Word64Rec(A).Word32s[0]) + Word64Rec(B).Word32s[0];
+  D := Int64(Word64Rec(A).Word32s[1]) + Word64Rec(B).Word32s[1];
   Inc(D, C shr 32);
-  A.Word32s[0] := C and $FFFFFFFF;
-  A.Word32s[1] := D and $FFFFFFFF;
+  Word64Rec(A).Word32s[0] := C and $FFFFFFFF;
+  Word64Rec(A).Word32s[1] := D and $FFFFFFFF;
 end;
 {$ENDIF}
 
 {$IFDEF SupportUInt64}
 procedure Word64Shr(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  PUInt64(@A)^ := PUInt64(@A)^ shr B;
+  UInt64(A) := UInt64(A) shr B;
 end;
 {$ELSE}
 procedure Word64Shr(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
@@ -2091,15 +2100,15 @@ begin
   if B < 32 then
     begin
       C := 32 - B;
-      A1 := A.Word32s[1];
-      A.Word32s[0] := (A.Word32s[0] shr B) or (A1 shl C);
-      A.Word32s[1] := A1 shr B;
+      A1 := Word64Rec(A).Word32s[1];
+      Word64Rec(A).Word32s[0] := (Word64Rec(A).Word32s[0] shr B) or (A1 shl C);
+      Word64Rec(A).Word32s[1] := A1 shr B;
     end
   else
     begin
       C := B - 32;
-      A.Word32s[0] := A.Word32s[1] shr C;
-      A.Word32s[1] := 0;
+      Word64Rec(A).Word32s[0] := Word64Rec(A).Word32s[1] shr C;
+      Word64Rec(A).Word32s[1] := 0;
     end;
 end;
 {$ENDIF}
@@ -2110,9 +2119,9 @@ var
   C : UInt64;
   D : Byte;
 begin
-  C := PUInt64(@A)^;
+  C := UInt64(A);
   D := 64 - B;
-  PUInt64(@A)^ := (C shr B) or (C shl D);
+  UInt64(A) := (C shr B) or (C shl D);
 end;
 {$ELSE}
 procedure Word64Ror(var A: Word64; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
@@ -2125,8 +2134,8 @@ begin
   if B < 32 then
     begin
       D := 32 - B;
-      A0 := A.Word32s[0];
-      A1 := A.Word32s[1];
+      A0 := Word64Rec(A).Word32s[0];
+      A1 := Word64Rec(A).Word32s[1];
       E := (A1 shr B) or (A0 shl D);
       F := (A0 shr B) or (A1 shl D);
     end
@@ -2134,13 +2143,13 @@ begin
     begin
       C := B - 32;
       D := 32 - C;
-      A0 := A.Word32s[0];
-      A1 := A.Word32s[1];
+      A0 := Word64Rec(A).Word32s[0];
+      A1 := Word64Rec(A).Word32s[1];
       E := (A0 shr C) or (A1 shl D);
       F := (A1 shr C) or (A0 shl D);
     end;
-  A.Word32s[1] := E;
-  A.Word32s[0] := F;
+  Word64Rec(A).Word32s[1] := E;
+  Word64Rec(A).Word32s[0] := F;
 end;
 {$ENDIF}
 
@@ -2150,7 +2159,7 @@ var B : Word64;
 begin
   B := A;
   for I := 0 to 7 do
-    A.Bytes[I] := B.Bytes[7 - I];
+    Word64Rec(A).Bytes[I] := Word64Rec(B).Bytes[7 - I];
 end;
 
 procedure SwapEndianBuf64(var Buf; const Count: Integer);
@@ -2760,22 +2769,22 @@ end;
 {                                                                              }
 procedure SHA384InitDigest(var Digest: T512BitDigest);
 begin
-  Digest.Word64s[0].Word32s[0] := $c1059ed8;
-  Digest.Word64s[0].Word32s[1] := $cbbb9d5d;
-  Digest.Word64s[1].Word32s[0] := $367cd507;
-  Digest.Word64s[1].Word32s[1] := $629a292a;
-  Digest.Word64s[2].Word32s[0] := $3070dd17;
-  Digest.Word64s[2].Word32s[1] := $9159015a;
-  Digest.Word64s[3].Word32s[0] := $f70e5939;
-  Digest.Word64s[3].Word32s[1] := $152fecd8;
-  Digest.Word64s[4].Word32s[0] := $ffc00b31;
-  Digest.Word64s[4].Word32s[1] := $67332667;
-  Digest.Word64s[5].Word32s[0] := $68581511;
-  Digest.Word64s[5].Word32s[1] := $8eb44a87;
-  Digest.Word64s[6].Word32s[0] := $64f98fa7;
-  Digest.Word64s[6].Word32s[1] := $db0c2e0d;
-  Digest.Word64s[7].Word32s[0] := $befa4fa4;
-  Digest.Word64s[7].Word32s[1] := $47b5481d;
+  Word64Rec(Digest.Word64s[0]).Word32s[0] := $c1059ed8;
+  Word64Rec(Digest.Word64s[0]).Word32s[1] := $cbbb9d5d;
+  Word64Rec(Digest.Word64s[1]).Word32s[0] := $367cd507;
+  Word64Rec(Digest.Word64s[1]).Word32s[1] := $629a292a;
+  Word64Rec(Digest.Word64s[2]).Word32s[0] := $3070dd17;
+  Word64Rec(Digest.Word64s[2]).Word32s[1] := $9159015a;
+  Word64Rec(Digest.Word64s[3]).Word32s[0] := $f70e5939;
+  Word64Rec(Digest.Word64s[3]).Word32s[1] := $152fecd8;
+  Word64Rec(Digest.Word64s[4]).Word32s[0] := $ffc00b31;
+  Word64Rec(Digest.Word64s[4]).Word32s[1] := $67332667;
+  Word64Rec(Digest.Word64s[5]).Word32s[0] := $68581511;
+  Word64Rec(Digest.Word64s[5]).Word32s[1] := $8eb44a87;
+  Word64Rec(Digest.Word64s[6]).Word32s[0] := $64f98fa7;
+  Word64Rec(Digest.Word64s[6]).Word32s[1] := $db0c2e0d;
+  Word64Rec(Digest.Word64s[7]).Word32s[0] := $befa4fa4;
+  Word64Rec(Digest.Word64s[7]).Word32s[1] := $47b5481d;
 end;
 
 procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
@@ -2839,22 +2848,22 @@ end;
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 procedure SHA512InitDigest(var Digest: T512BitDigest);
 begin
-  Digest.Word64s[0].Word32s[0] := $f3bcc908;
-  Digest.Word64s[0].Word32s[1] := $6a09e667;
-  Digest.Word64s[1].Word32s[0] := $84caa73b;
-  Digest.Word64s[1].Word32s[1] := $bb67ae85;
-  Digest.Word64s[2].Word32s[0] := $fe94f82b;
-  Digest.Word64s[2].Word32s[1] := $3c6ef372;
-  Digest.Word64s[3].Word32s[0] := $5f1d36f1;
-  Digest.Word64s[3].Word32s[1] := $a54ff53a;
-  Digest.Word64s[4].Word32s[0] := $ade682d1;
-  Digest.Word64s[4].Word32s[1] := $510e527f;
-  Digest.Word64s[5].Word32s[0] := $2b3e6c1f;
-  Digest.Word64s[5].Word32s[1] := $9b05688c;
-  Digest.Word64s[6].Word32s[0] := $fb41bd6b;
-  Digest.Word64s[6].Word32s[1] := $1f83d9ab;
-  Digest.Word64s[7].Word32s[0] := $137e2179;
-  Digest.Word64s[7].Word32s[1] := $5be0cd19;
+  Word64Rec(Digest.Word64s[0]).Word32s[0] := $f3bcc908;
+  Word64Rec(Digest.Word64s[0]).Word32s[1] := $6a09e667;
+  Word64Rec(Digest.Word64s[1]).Word32s[0] := $84caa73b;
+  Word64Rec(Digest.Word64s[1]).Word32s[1] := $bb67ae85;
+  Word64Rec(Digest.Word64s[2]).Word32s[0] := $fe94f82b;
+  Word64Rec(Digest.Word64s[2]).Word32s[1] := $3c6ef372;
+  Word64Rec(Digest.Word64s[3]).Word32s[0] := $5f1d36f1;
+  Word64Rec(Digest.Word64s[3]).Word32s[1] := $a54ff53a;
+  Word64Rec(Digest.Word64s[4]).Word32s[0] := $ade682d1;
+  Word64Rec(Digest.Word64s[4]).Word32s[1] := $510e527f;
+  Word64Rec(Digest.Word64s[5]).Word32s[0] := $2b3e6c1f;
+  Word64Rec(Digest.Word64s[5]).Word32s[1] := $9b05688c;
+  Word64Rec(Digest.Word64s[6]).Word32s[0] := $fb41bd6b;
+  Word64Rec(Digest.Word64s[6]).Word32s[1] := $1f83d9ab;
+  Word64Rec(Digest.Word64s[7]).Word32s[0] := $137e2179;
+  Word64Rec(Digest.Word64s[7]).Word32s[1] := $5be0cd19;
 end;
 
 // BSIG0(x) = ROTR^28(x) XOR ROTR^34(x) XOR ROTR^39(x)
@@ -3005,8 +3014,8 @@ begin
       T1 := H[7];
       Word64AddWord64(T1, SHA512Transform2(H[4]));
       Word64AddWord64(T1, SHA512Transform5(H[4], H[5], H[6]));
-      K.Word32s[0] := SHA512K[I * 2 + 1];
-      K.Word32s[1] := SHA512K[I * 2];
+      Word64Rec(K).Word32s[0] := SHA512K[I * 2 + 1];
+      Word64Rec(K).Word32s[1] := SHA512K[I * 2];
       Word64AddWord64(T1, K);
       Word64AddWord64(T1, W[I]);
       // T2 = BSIG0(a) + MAJ(a,b,c)
