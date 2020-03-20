@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
@@ -54,7 +54,8 @@
 {   2020/03/10  5.19  Rename Word64 to Word64Rec.                              }
 {   2020/03/20  5.20  UInt64 implementations for Word64 if SupportUInt64.      }
 {   2020/03/20  5.21  SetBitScanReverse implementations using lookup table.    }
-{   2020/03/21  5.22  Memory safe Word64Divide operations.                     }
+{   2020/03/20  5.22  Memory safe Word64Divide operations.                     }
+{   2020/03/20  5.23  Define exception classes.                                }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -84,8 +85,23 @@ unit flcInteger;
 interface
 
 uses
+  { System }
+  SysUtils,
+
   { Fundamentals }
   flcStdTypes;
+
+
+
+{                                                                              }
+{ Exceptions                                                                   }
+{                                                                              }
+type
+  EIntDivByZero = class(Exception);
+  EIntOverflowError = class(Exception);
+  EIntRangeError = class(Exception);
+  EIntConvertError = class(EConvertError);
+  EIntInvalidOp = class(Exception);
 
 
 
@@ -96,101 +112,101 @@ type
   Word32Pair = packed record
     case Integer of
     0 : (A, B    : Word32);
-    1 : (Bytes   : array[0..7] of Byte);
-    2 : (Word16s : array[0..3] of Word16);
-    3 : (Word32s : array[0..1] of Word32);
+    1 : (Bytes   : packed array[0..7] of Byte);
+    2 : (Word16s : packed array[0..3] of Word16);
+    3 : (Word32s : packed array[0..1] of Word32);
   end;
   PWord32Pair = ^Word32Pair;
 
   Word64Rec = packed record
     case Integer of
-    0 : (Bytes   : array[0..7] of Byte);
-    1 : (Word16s : array[0..3] of Word16);
-    2 : (Word32s : array[0..1] of Word32);
+    0 : (Bytes   : packed array[0..7] of Byte);
+    1 : (Word16s : packed array[0..3] of Word16);
+    2 : (Word32s : packed array[0..1] of Word32);
   end;
   PWord64Rec = ^Word64Rec;
 
   Word128 = packed record
     case Integer of
-    0 : (Bytes   : array[0..15] of Byte);
-    1 : (Word16s : array[0..7] of Word16);
-    2 : (Word32s : array[0..3] of Word32);
-    3 : (Word64s : array[0..1] of Word64Rec);
+    0 : (Bytes   : packed array[0..15] of Byte);
+    1 : (Word16s : packed array[0..7] of Word16);
+    2 : (Word32s : packed array[0..3] of Word32);
+    3 : (Word64s : packed array[0..1] of Word64Rec);
   end;
   PWord128 = ^Word128;
 
   Word256 = packed record
     case Integer of
-    0 : (Bytes    : array[0..31] of Byte);
-    1 : (Word16s  : array[0..15] of Word16);
-    2 : (Word32s  : array[0..7] of Word32);
-    3 : (Word64s  : array[0..3] of Word64Rec);
-    4 : (Word128s : array[0..1] of Word128);
+    0 : (Bytes    : packed array[0..31] of Byte);
+    1 : (Word16s  : packed array[0..15] of Word16);
+    2 : (Word32s  : packed array[0..7] of Word32);
+    3 : (Word64s  : packed array[0..3] of Word64Rec);
+    4 : (Word128s : packed array[0..1] of Word128);
   end;
   PWord256 = ^Word256;
 
   Word512 = packed record
     case Integer of
-    0 : (Bytes    : array[0..63] of Byte);
-    1 : (Word16s  : array[0..31] of Word16);
-    2 : (Word32s  : array[0..15] of Word32);
-    3 : (Word64s  : array[0..7] of Word64Rec);
-    4 : (Word128s : array[0..3] of Word128);
-    5 : (Word256s : array[0..1] of Word256);
+    0 : (Bytes    : packed array[0..63] of Byte);
+    1 : (Word16s  : packed array[0..31] of Word16);
+    2 : (Word32s  : packed array[0..15] of Word32);
+    3 : (Word64s  : packed array[0..7] of Word64Rec);
+    4 : (Word128s : packed array[0..3] of Word128);
+    5 : (Word256s : packed array[0..1] of Word256);
   end;
   PWord512 = ^Word512;
 
   Word1024 = packed record
     case Integer of
-    0 : (Bytes    : array[0..127] of Byte);
-    1 : (Word16s  : array[0..63] of Word16);
-    2 : (Word32s  : array[0..31] of Word32);
-    3 : (Word64s  : array[0..15] of Word64Rec);
-    4 : (Word128s : array[0..7] of Word128);
-    5 : (Word256s : array[0..3] of Word256);
-    6 : (Word512s : array[0..1] of Word512);
+    0 : (Bytes    : packed array[0..127] of Byte);
+    1 : (Word16s  : packed array[0..63] of Word16);
+    2 : (Word32s  : packed array[0..31] of Word32);
+    3 : (Word64s  : packed array[0..15] of Word64Rec);
+    4 : (Word128s : packed array[0..7] of Word128);
+    5 : (Word256s : packed array[0..3] of Word256);
+    6 : (Word512s : packed array[0..1] of Word512);
   end;
   PWord1024 = ^Word1024;
 
   Word2048 = packed record
     case Integer of
-    0 : (Bytes     : array[0..255] of Byte);
-    1 : (Word16s   : array[0..127] of Word16);
-    2 : (Word32s   : array[0..63] of Word32);
-    3 : (Word64s   : array[0..31] of Word64Rec);
-    4 : (Word128s  : array[0..15] of Word128);
-    5 : (Word256s  : array[0..7] of Word256);
-    6 : (Word512s  : array[0..3] of Word512);
-    7 : (Word1024s : array[0..1] of Word1024);
+    0 : (Bytes     : packed array[0..255] of Byte);
+    1 : (Word16s   : packed array[0..127] of Word16);
+    2 : (Word32s   : packed array[0..63] of Word32);
+    3 : (Word64s   : packed array[0..31] of Word64Rec);
+    4 : (Word128s  : packed array[0..15] of Word128);
+    5 : (Word256s  : packed array[0..7] of Word256);
+    6 : (Word512s  : packed array[0..3] of Word512);
+    7 : (Word1024s : packed array[0..1] of Word1024);
   end;
   PWord2048 = ^Word2048;
 
   Word4096 = packed record
     case Integer of
-    0 : (Bytes     : array[0..511] of Byte);
-    1 : (Word16s   : array[0..255] of Word16);
-    2 : (Word32s   : array[0..127] of Word32);
-    3 : (Word64s   : array[0..63] of Word64Rec);
-    4 : (Word128s  : array[0..31] of Word128);
-    5 : (Word256s  : array[0..15] of Word256);
-    6 : (Word512s  : array[0..7] of Word512);
-    7 : (Word1024s : array[0..3] of Word1024);
-    8 : (Word2048s : array[0..1] of Word2048);
+    0 : (Bytes     : packed array[0..511] of Byte);
+    1 : (Word16s   : packed array[0..255] of Word16);
+    2 : (Word32s   : packed array[0..127] of Word32);
+    3 : (Word64s   : packed array[0..63] of Word64Rec);
+    4 : (Word128s  : packed array[0..31] of Word128);
+    5 : (Word256s  : packed array[0..15] of Word256);
+    6 : (Word512s  : packed array[0..7] of Word512);
+    7 : (Word1024s : packed array[0..3] of Word1024);
+    8 : (Word2048s : packed array[0..1] of Word2048);
   end;
   PWord4096 = ^Word4096;
 
   Word8192 = packed record
     case Integer of
-    0 : (Bytes     : array[0..1023] of Byte);
-    1 : (Word16s   : array[0..511] of Word16);
-    2 : (Word32s   : array[0..255] of Word32);
-    3 : (Word64s   : array[0..127] of Word64Rec);
-    4 : (Word128s  : array[0..63] of Word128);
-    5 : (Word256s  : array[0..31] of Word256);
-    6 : (Word512s  : array[0..15] of Word512);
-    7 : (Word1024s : array[0..7] of Word1024);
-    8 : (Word2048s : array[0..3] of Word2048);
-    9 : (Word4096s : array[0..1] of Word4096);
+    0 : (Bytes     : packed array[0..1023] of Byte);
+    1 : (Word16s   : packed array[0..511] of Word16);
+    2 : (Word32s   : packed array[0..255] of Word32);
+    3 : (Word64s   : packed array[0..127] of Word64Rec);
+    4 : (Word128s  : packed array[0..63] of Word128);
+    5 : (Word256s  : packed array[0..31] of Word256);
+    6 : (Word512s  : packed array[0..15] of Word512);
+    7 : (Word1024s : packed array[0..7] of Word1024);
+    8 : (Word2048s : packed array[0..3] of Word2048);
+    9 : (Word4096s : packed array[0..1] of Word4096);
   end;
   PWord8192 = ^Word8192;
 
@@ -224,43 +240,43 @@ type
   Int32Pair = packed record
     case Integer of
     0 : (A, B      : Int32);
-    1 : (Bytes     : array[0..7] of Byte);
-    2 : (Word16s   : array[0..3] of Word16);
-    3 : (Word32s   : array[0..1] of Word32);
-    4 : (Int8s     : array[0..7] of Int8);
-    5 : (Int16s    : array[0..3] of Int16);
-    6 : (Int32s    : array[0..1] of Int32);
+    1 : (Bytes     : packed array[0..7] of Byte);
+    2 : (Word16s   : packed array[0..3] of Word16);
+    3 : (Word32s   : packed array[0..1] of Word32);
+    4 : (Int8s     : packed array[0..7] of Int8);
+    5 : (Int16s    : packed array[0..3] of Int16);
+    6 : (Int32s    : packed array[0..1] of Int32);
   end;
   PInt32Pair = ^Int32Pair;
 
   Int64Rec = packed record
     case Integer of
-    0 : (Bytes   : array[0..7] of Byte);
-    1 : (Word16s : array[0..3] of Word16);
-    2 : (Word32s : array[0..1] of Word32);
-    3 : (Int32s  : array[0..1] of Int32);
+    0 : (Bytes   : packed array[0..7] of Byte);
+    1 : (Word16s : packed array[0..3] of Word16);
+    2 : (Word32s : packed array[0..1] of Word32);
+    3 : (Int32s  : packed array[0..1] of Int32);
   end;
   PInt64Rec = ^Int64Rec;
 
   Int128 = packed record
     case Integer of
-    0 : (Bytes     : array[0..15] of Byte);
-    1 : (Word16s   : array[0..7] of Word16);
-    2 : (Word32s   : array[0..3] of Word32);
-    3 : (Word64s   : array[0..1] of Word64Rec);
-    4 : (Int32s    : array[0..3] of Int32);
-    5 : (Int64s    : array[0..1] of Int64);
+    0 : (Bytes     : packed array[0..15] of Byte);
+    1 : (Word16s   : packed array[0..7] of Word16);
+    2 : (Word32s   : packed array[0..3] of Word32);
+    3 : (Word64s   : packed array[0..1] of Word64Rec);
+    4 : (Int32s    : packed array[0..3] of Int32);
+    5 : (Int64s    : packed array[0..1] of Int64);
   end;
   PInt128 = ^Int128;
 
   Int256 = packed record
     case Integer of
-    0 : (Bytes   : array[0..31] of Byte);
-    1 : (Word16s : array[0..15] of Word16);
-    2 : (Word32s : array[0..7] of Word32);
-    3 : (Word64s : array[0..3] of Word64Rec);
-    4 : (Int32s  : array[0..7] of Int32);
-    5 : (Int64s  : array[0..3] of Int64);
+    0 : (Bytes   : packed array[0..31] of Byte);
+    1 : (Word16s : packed array[0..15] of Word16);
+    2 : (Word32s : packed array[0..7] of Word32);
+    3 : (Word64s : packed array[0..3] of Word64Rec);
+    4 : (Int32s  : packed array[0..7] of Int32);
+    5 : (Int64s  : packed array[0..3] of Int64);
   end;
   PInt256 = ^Int256;
 
@@ -1721,9 +1737,9 @@ type
   VarWord32Pair = packed record
     ControlByte : Byte;
     case Integer of
-    0 : (DataWord8s  : array[0..7] of Byte);
-    1 : (DataWord16s : array[0..3] of Word);
-    2 : (DataWord32s : array[0..1] of Word32);
+    0 : (DataWord8s  : packed array[0..7] of Byte);
+    1 : (DataWord16s : packed array[0..3] of Word);
+    2 : (DataWord32s : packed array[0..1] of Word32);
   end;
 
 procedure VarWord32PairInitZero(var A: VarWord32Pair);
@@ -1740,12 +1756,12 @@ type
   VarInt32Pair = packed record
     ControlByte : Byte;
     case Integer of
-    0 : (DataWord8s  : array[0..7] of Byte);
-    1 : (DataWord16s : array[0..3] of Word);
-    2 : (DataWord32s : array[0..1] of Word32);
-    3 : (DataInt8s   : array[0..7] of ShortInt);
-    4 : (DataInt16s  : array[0..3] of SmallInt);
-    5 : (DataInt32s  : array[0..1] of Int32);
+    0 : (DataWord8s  : packed array[0..7] of Byte);
+    1 : (DataWord16s : packed array[0..3] of Word);
+    2 : (DataWord32s : packed array[0..1] of Word32);
+    3 : (DataInt8s   : packed array[0..7] of ShortInt);
+    4 : (DataInt16s  : packed array[0..3] of SmallInt);
+    5 : (DataInt32s  : packed array[0..1] of Int32);
   end;
 
 procedure VarInt32PairInitZero(var A: VarInt32Pair);
@@ -1773,83 +1789,49 @@ uses
 {                                                                              }
 { Errors                                                                       }
 {                                                                              }
-{$IFDEF DELPHI2005_UP}
-// Raise errors using Error function in System.pas
-{$IFOPT Q+}
-procedure RaiseOverflowError;
+const
+  SDivByZeroError = 'Division by zero';
+
+procedure RaiseDivByZeroError; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Error(reIntOverflow);
-end;
-{$ENDIF}
-{$IFOPT R+}
-procedure RaiseRangeError;
-begin
-  Error(reRangeError);
-end;
-{$ENDIF}
-procedure RaiseDivByZeroError;
-begin
-  Error(reDivByZero);
+  raise EIntDivByZero.Create(SDivByZeroError);
 end;
 
-procedure RaiseInvalidOpError;
-begin
-  Error(reInvalidOp);
-end;
-
-procedure RaiseConvertError;
-begin
-  Error(reInvalidOp);
-end;
-{$ELSE}
-// Raise range errors using Assert mechanism in System.pas to avoid
-// dependancy on SysUtils.pas
-{$IFOPT C+}{$DEFINE OPT_C_ON}{$ELSE}{$UNDEF OPT_C_ON}{$C+}{$ENDIF}
 {$IFOPT Q+}
-resourcestring
+const
   SOverflowError = 'Overflow error';
 
-procedure RaiseOverflowError;
+procedure RaiseOverflowError; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Assert(False, SOverflowError);
+  raise EIntOverflowError.Create(SOverflowError);
 end;
 {$ENDIF}
+
 {$IFOPT R+}
-resourcestring
+const
   SRangeError = 'Range error';
 
 procedure RaiseRangeError;
 begin
-  Assert(False, SOverflowError);
+  raise EIntRangeError.Create(SRangeError);
 end;
 {$ENDIF}
-resourcestring
-  SDivByZeroError = 'Division by zero';
+
+const
+  SConvertError = 'Conversion error';
+
+procedure RaiseConvertError; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  raise EIntConvertError.Create(SConvertError);
+end;
+
+const
   SInvalidOpError = 'Invalid operation';
-  SConvertError   = 'Conversion error';
 
-procedure RaiseDivByZeroError;
+procedure RaiseInvalidOpError; {$IFDEF UseInline}inline;{$ENDIF}
 begin
-  Assert(False, SDivByZeroError);
+  raise EIntInvalidOp.Create(SInvalidOpError);
 end;
-
-procedure RaiseInvalidOpError;
-begin
-  Assert(False, SInvalidOpError);
-end;
-
-procedure RaiseConvertError;
-begin
-  Assert(False, SConvertError);
-end;
-{$ENDIF}
-{$IFNDEF OPT_C_ON}{$C-}{$ENDIF}
-
-
-
-{$IFDEF DELPHI7_DOWN}
-  {$Q-}
-{$ENDIF}
 
 
 
