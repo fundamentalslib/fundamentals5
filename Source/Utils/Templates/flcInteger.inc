@@ -1,7 +1,7 @@
 {*******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.23                                                     }
+{   File version:     5.24                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
@@ -56,6 +56,7 @@
 {   2020/03/20  5.21  SetBitScanReverse implementations using lookup table.    }
 {   2020/03/20  5.22  Memory safe Word64Divide operations.                     }
 {   2020/03/20  5.23  Define exception classes.                                }
+{   2020/03/22  5.24  Word32 improvements.                                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -439,10 +440,14 @@ function  Word32IsInt32Range(const A: Word32): Boolean;
 
 function  Word32Compare(const A, B: Word32): Integer;
 
-function  Word32IsBitSet(const A: Word32; const B: Integer): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word32SetBit(var A: Word32; const B: Integer);              {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word32ClearBit(var A: Word32; const B: Integer);            {$IFDEF UseInline}inline;{$ENDIF}
-procedure Word32ToggleBit(var A: Word32; const B: Integer);           {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32IsBitSet(const A: Word32; const B: Integer): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32IsHighBitSet(const A: Word32): Boolean;                {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32SetBit(var A: Word32; const B: Integer);               {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32SetBitF(const A: Word32; const B: Integer): Word32;    {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32ClearBit(var A: Word32; const B: Integer);             {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32ClearBitF(const A: Word32; const B: Integer): Word32;  {$IFDEF UseInline}inline;{$ENDIF}
+procedure Word32ToggleBit(var A: Word32; const B: Integer);            {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32ToggleBitF(const A: Word32; const B: Integer): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  Word32SetBitScanForward(const A: Word32): Integer;
 function  Word32SetBitScanReverse(const A: Word32): Integer;
@@ -452,7 +457,9 @@ function  Word32ClearBitScanReverse(const A: Word32): Integer;
 procedure Word32Shl(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 procedure Word32Shr(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
 procedure Word32Rol(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32RolF(const A: Word32; const B: Byte): Word32; {$IFNDEF ASM386_DELPHI}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
 procedure Word32Ror(var A: Word32; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+function  Word32RorF(const A: Word32; const B: Byte): Word32; {$IFNDEF ASM386_DELPHI}{$IFDEF UseInline}inline;{$ENDIF}{$ENDIF}
 
 procedure Word32Shl1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
 procedure Word32Shr1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
@@ -462,6 +469,8 @@ procedure Word32Ror1(var A: Word32); {$IFDEF UseInline}inline;{$ENDIF}
 function  Word32BitCount(const A: Word32): Integer;
 
 function  Word32SwapEndian(const A: Word32): Word32;
+
+function  Word32ReverseBits(const Value: Word32): Word32;
 
 procedure Word32MultiplyWord32(const A, B: Word32; out R: Word64Rec);
 procedure Word32MultiplyDivWord32(const A, B, C: Word32; var Q: Word64Rec; var R: Word32);
@@ -1424,10 +1433,6 @@ procedure Test;
 
 implementation
 
-uses
-  { System }
-  Math;
-
 
 
 {                                                                              }
@@ -2306,11 +2311,24 @@ begin
     Result := (A and (1 shl B) <> 0);
 end;
 
+function Word32IsHighBitSet(const A: Word32): Boolean;
+begin
+  Result := A and $80000000 <> 0;
+end;
+
 procedure Word32SetBit(var A: Word32; const B: Integer);
 begin
   if (B < 0) or (B > 31) then
     exit;
   A := A or (1 shl B);
+end;
+
+function Word32SetBitF(const A: Word32; const B: Integer): Word32;
+begin
+  if (B < 0) or (B > 31) then
+    Result := A
+  else
+    Result := A or (1 shl B);
 end;
 
 procedure Word32ClearBit(var A: Word32; const B: Integer);
@@ -2320,6 +2338,14 @@ begin
   A := A and not (1 shl B);
 end;
 
+function Word32ClearBitF(const A: Word32; const B: Integer): Word32;
+begin
+  if (B < 0) or (B > 31) then
+    Result := A
+  else
+    Result := A and not (1 shl B);
+end;
+
 procedure Word32ToggleBit(var A: Word32; const B: Integer);
 begin
   if (B < 0) or (B > 31) then
@@ -2327,6 +2353,25 @@ begin
   A := A xor (1 shl B);
 end;
 
+function Word32ToggleBitF(const A: Word32; const B: Integer): Word32;
+begin
+  if (B < 0) or (B > 31) then
+    Result := A
+  else
+    Result := A xor (1 shl B);
+end;
+
+{$IFDEF ASM386_DELPHI}
+function Word32SetBitScanForward(const A: Word32): Integer; register; assembler;
+asm
+      OR      EAX, EAX
+      JZ      @NoBits
+      BSF     EAX, EAX
+      RET
+  @NoBits:
+      MOV     EAX, -1
+end;
+{$ELSE}
 function Word32SetBitScanForward(const A: Word32): Integer;
 var B : Word32;
 begin
@@ -2342,7 +2387,19 @@ begin
       end;
   Result := -1;
 end;
+{$ENDIF}
 
+{$IFDEF ASM386_DELPHI}
+function Word32SetBitScanReverse(const A: Word32): Integer; register; assembler;
+asm
+      OR      EAX, EAX
+      JZ      @NoBits
+      BSR     EAX, EAX
+      RET
+  @NoBits:
+      MOV     EAX, -1
+end;
+{$ELSE}
 function Word32SetBitScanReverse(const A: Word32): Integer;
 begin
   if A and $FFFF0000 <> 0 then
@@ -2356,13 +2413,31 @@ begin
     else
       Result := Word8SetBitScanReverseLookup[Byte(A)];
 end;
+{$ENDIF}
 
+{$IFDEF ASM386_DELPHI}
+function Word32ClearBitScanForward(const A: Word32): Integer; register; assembler;
+asm
+      NOT     EAX
+      OR      EAX, EAX
+      JZ      @NoBits
+      BSF     EAX, EAX
+      RET
+  @NoBits:
+      MOV     EAX, -1
+end;
+{$ELSE}
 function Word32ClearBitScanForward(const A: Word32): Integer;
 var B : Word32;
 begin
+  if A = $FFFFFFFF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 0;
   B := A;
-  while B > 0 do
+  repeat
     if B and 1 = 0 then
       exit
     else
@@ -2370,15 +2445,34 @@ begin
         Inc(Result);
         B := B shr 1;
       end;
+  until Result = 32;
   Result := -1;
 end;
+{$ENDIF}
 
+{$IFDEF ASM386_DELPHI}
+function Word32ClearBitScanReverse(const A: Word32): Integer; register; assembler;
+asm
+      NOT     EAX
+      OR      EAX, EAX
+      JZ      @NoBits
+      BSR     EAX, EAX
+      RET
+  @NoBits:
+      MOV     EAX, -1
+end;
+{$ELSE}
 function Word32ClearBitScanReverse(const A: Word32): Integer;
 var B : Word32;
 begin
+  if A = $FFFFFFFF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 31;
   B := A;
-  while B > 0 do
+  repeat
     if B and $80000000 = 0 then
       exit
     else
@@ -2386,8 +2480,9 @@ begin
         Dec(Result);
         B := B shl 1;
       end;
-  Result := -1;
+  until Result = -1;
 end;
+{$ENDIF}
 
 procedure Word32Shl(var A: Word32; const B: Byte);
 begin
@@ -2402,7 +2497,7 @@ end;
 procedure Word32Rol(var A: Word32; const B: Byte);
 var C, D : Byte;
 begin
-  C := B mod 32;
+  C := B and $1F;
   if C = 0 then
     exit;
   D := 32 - C;
@@ -2410,16 +2505,62 @@ begin
        Word32(A shr D);
 end;
 
+{$IFDEF ASM386_DELPHI}
+function Word32RolF(const A: Word32; const B: Byte): Word32; register; assembler;
+asm
+      MOV     CL, DL
+      ROL     EAX, CL
+end;
+{$ELSE}
+function Word32RolF(const A: Word32; const B: Byte): Word32;
+var C, D : Byte;
+begin
+  C := B and $1F;
+  if C = 0 then
+    Result := A
+  else
+    begin
+      D := 32 - C;
+      Result :=
+          Word32(A shl C) or
+          Word32(A shr D);
+    end;
+end;
+{$ENDIF}
+
 procedure Word32Ror(var A: Word32; const B: Byte);
 var C, D : Byte;
 begin
-  C := B mod 32;
+  C := B and $1F;
   if C = 0 then
     exit;
   D := 32 - C;
   A := Word32(A shr C) or
        Word32(A shl D);
 end;
+
+{$IFDEF ASM386_DELPHI}
+function Word32RorF(const A: Word32; const B: Byte): Word32; register; assembler;
+asm
+      MOV     CL, DL
+      ROR     EAX, CL
+end;
+{$ELSE}
+function Word32RorF(const A: Word32; const B: Byte): Word32;
+var C, D : Byte;
+begin
+  C := B and $1F;
+  if C = 0 then
+    Result := A
+  else
+    begin
+      D := 32 - C;
+      Result :=
+          Word32(A shr C) or
+          Word32(A shl D);
+    end;
+end;
+{$ENDIF}
 
 procedure Word32Shl1(var A: Word32);
 begin
@@ -2460,7 +2601,7 @@ begin
 end;
 
 {$IFDEF ASM386_DELPHI}
-function Word32SwapEndian(const A: Word32): Word32; assembler;
+function Word32SwapEndian(const A: Word32): Word32; register; assembler;
 asm
       XCHG    AH, AL
       ROL     EAX, 16
@@ -2473,6 +2614,51 @@ begin
             ((A and $0000FF00) shl 8)   or
             ((A and $00FF0000) shr 8)   or
             ((A and $FF000000) shr 24);
+end;
+{$ENDIF}
+
+{$IFDEF ASM386_DELPHI}
+function Word32ReverseBits(const Value: Word32): Word32; register; assembler;
+asm
+      BSWAP   EAX
+      MOV     EDX, EAX
+      AND     EAX, 0AAAAAAAAh
+      SHR     EAX, 1
+      AND     EDX, 055555555h
+      SHL     EDX, 1
+      OR      EAX, EDX
+      MOV     EDX, EAX
+      AND     EAX, 0CCCCCCCCh
+      SHR     EAX, 2
+      AND     EDX, 033333333h
+      SHL     EDX, 2
+      OR      EAX, EDX
+      MOV     EDX, EAX
+      AND     EAX, 0F0F0F0F0h
+      SHR     EAX, 4
+      AND     EDX, 00F0F0F0Fh
+      SHL     EDX, 4
+      OR      EAX, EDX
+end;
+{$ELSE}
+function Word32ReverseBits(const Value: Word32): Word32;
+var
+  R  : Word32;
+  BV : Word32;
+  BR : Word32;
+  I  : Byte;
+begin
+  R := 0;
+  BV := 1;
+  BR := $80000000;
+  for I := 0 to 31 do
+    begin
+      if Value and BV <> 0 then
+        R := R or BR;
+      BV := BV shl 1;
+      BR := BR shr 1;
+    end;
+  Result := R;
 end;
 {$ENDIF}
 
@@ -14893,6 +15079,19 @@ begin
   Assert(Word32Compare(1, 1) = 0);
   Assert(Word32Compare(2, 1) = 1);
 
+  Assert(Word32SetBitF(0, 0) = 1);
+  Assert(Word32SetBitF(0, 1) = 2);
+  Assert(Word32SetBitF(2, 1) = 2);
+  Assert(Word32SetBitF(2, 2) = 6);
+
+  Assert(Word32IsBitSet($102F, 5));
+  Assert(not Word32IsBitSet($100F, 5));
+
+  Assert(Word32SetBitF($100F, 5) = $102F);
+  Assert(Word32ClearBitF($102F, 5) = $100F);
+  Assert(Word32ToggleBitF($102F, 5) = $100F);
+  Assert(Word32ToggleBitF($100F, 5) = $102F);
+
   Assert(Word32SetBitScanReverse(0) = -1);
   Assert(Word32SetBitScanReverse(1) = 0);
   Assert(Word32SetBitScanReverse(2) = 1);
@@ -14916,6 +15115,47 @@ begin
   Assert(Word32SetBitScanReverse($FF) = 7);
   Assert(Word32SetBitScanReverse($F0) = 7);
   Assert(Word32SetBitScanReverse($12345678) = 28);
+
+  Assert(Word32SetBitScanForward(0) = -1);
+  Assert(Word32SetBitScanForward(1) = 0);
+  Assert(Word32SetBitScanForward($80000000) = 31);
+  Assert(Word32SetBitScanForward($1020) = 5);
+
+  Assert(Word32SetBitScanReverse(0) = -1);
+  Assert(Word32SetBitScanReverse(1) = 0);
+  Assert(Word32SetBitScanReverse($80000000) = 31);
+  Assert(Word32SetBitScanReverse($1020) = 12);
+
+  Assert(Word32ClearBitScanForward(0) = 0);
+  Assert(Word32ClearBitScanForward(1) = 1);
+  Assert(Word32ClearBitScanForward($80000000) = 0);
+  Assert(Word32ClearBitScanForward($FFFFFFFF) = -1);
+  Assert(Word32ClearBitScanForward($1020) = 0);
+
+  Assert(Word32ClearBitScanReverse(0) = 31);
+  Assert(Word32ClearBitScanReverse(1) = 31);
+  Assert(Word32ClearBitScanReverse($80000000) = 30);
+  Assert(Word32ClearBitScanReverse($FFFFFFFF) = -1);
+  Assert(Word32ClearBitScanReverse($1020) = 31);
+
+  Assert(Word32ReverseBits($12345678) = $1E6A2C48);
+  Assert(Word32ReverseBits($1) = $80000000);
+  Assert(Word32ReverseBits($80000000) = $1);
+
+  Assert(Word32RolF(0, 1) = 0);
+  Assert(Word32RolF(1, 0) = 1);
+  Assert(Word32RolF(1, 1) = 2);
+  Assert(Word32RolF($80000000, 1) = 1);
+  Assert(Word32RolF($80000001, 1) = 3);
+  Assert(Word32RolF(1, 2) = 4);
+  Assert(Word32RolF(1, 31) = $80000000);
+  Assert(Word32RolF(5, 2) = 20);
+
+  Assert(Word32RorF(0, 1) = 0);
+  Assert(Word32RorF(1, 0) = 1);
+  Assert(Word32RorF(1, 1) = $80000000);
+  Assert(Word32RorF(2, 1) = 1);
+  Assert(Word32RorF(4, 2) = 1);
 
   Word32MultiplyWord32($FFFFFFFF, $FFFFFFFE, C);
   Assert(C.Word32s[0] = $00000002);
