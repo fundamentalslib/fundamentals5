@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.40                                                     }
+{   File version:     5.41                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -167,6 +167,7 @@
 {   2018/07/17  5.38  Int32/Word32 arrays.                                     }
 {   2018/08/12  5.39  String type changes.                                     }
 {   2019/04/02  5.40  Integer/Cardinal array changes.                          }
+{   2020/03/22  5.41  Rename parameters to avoid conflict with properties.     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -340,8 +341,8 @@ type
     procedure RemoveDuplicates(const IsSortedAscending: Boolean); virtual;
 
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; virtual; abstract;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); virtual; abstract;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); virtual; abstract;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); virtual; abstract;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); virtual; abstract;
     function  AppendArray(const V: AArray): Integer; overload; virtual; abstract;
   end;
   EArray = class(EType);
@@ -375,13 +376,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInt32Array interface                                                        }
     property  Item[const Idx: Integer]: Int32 read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: Int32Array read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Int32); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Int32); virtual;
     function  AppendItem(const Value: Int32): Integer; virtual;
     function  AppendArray(const V: Int32Array): Integer; overload; virtual;
     function  PosNext(const Find: Int32; const PrevPos: Integer = -1;
@@ -417,13 +418,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ALongIntArray interface                                                      }
     property  Item[const Idx: Integer]: LongInt read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: LongIntArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: LongInt); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: LongInt); virtual;
     function  AppendItem(const Value: LongInt): Integer; virtual;
     function  AppendArray(const V: LongIntArray): Integer; overload; virtual;
     function  PosNext(const Find: LongInt; const PrevPos: Integer = -1;
@@ -468,13 +469,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AWord32Array interface                                                       }
     property  Item[const Idx: Integer]: Word32 read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: Word32Array read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Word32); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Word32); virtual;
     function  AppendItem(const Value: Word32): Integer; virtual;
     function  AppendArray(const V: Word32Array): Integer; overload; virtual;
     function  PosNext(const Find: Word32; const PrevPos: Integer = -1;
@@ -510,13 +511,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ALongWordArray interface                                                     }
     property  Item[const Idx: Integer]: LongWord read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: LongWordArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: LongWord); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: LongWord); virtual;
     function  AppendItem(const Value: LongWord): Integer; virtual;
     function  AppendArray(const V: LongWordArray): Integer; overload; virtual;
     function  PosNext(const Find: LongWord; const PrevPos: Integer = -1;
@@ -561,13 +562,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInt64Array interface                                                        }
     property  Item[const Idx: Integer]: Int64 read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: Int64Array read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Int64); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Int64); virtual;
     function  AppendItem(const Value: Int64): Integer; virtual;
     function  AppendArray(const V: Int64Array): Integer; overload; virtual;
     function  PosNext(const Find: Int64; const PrevPos: Integer = -1;
@@ -603,13 +604,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ASingleArray interface                                                       }
     property  Item[const Idx: Integer]: Single read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: SingleArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Single); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Single); virtual;
     function  AppendItem(const Value: Single): Integer; virtual;
     function  AppendArray(const V: SingleArray): Integer; overload; virtual;
     function  PosNext(const Find: Single; const PrevPos: Integer = -1;
@@ -645,13 +646,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ADoubleArray interface                                                       }
     property  Item[const Idx: Integer]: Double read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: DoubleArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Double); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Double); virtual;
     function  AppendItem(const Value: Double): Integer; virtual;
     function  AppendArray(const V: DoubleArray): Integer; overload; virtual;
     function  PosNext(const Find: Double; const PrevPos: Integer = -1;
@@ -687,13 +688,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AExtendedArray interface                                                     }
     property  Item[const Idx: Integer]: Extended read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: ExtendedArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Extended); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Extended); virtual;
     function  AppendItem(const Value: Extended): Integer; virtual;
     function  AppendArray(const V: ExtendedArray): Integer; overload; virtual;
     function  PosNext(const Find: Extended; const PrevPos: Integer = -1;
@@ -730,13 +731,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AAnsiStringArray interface                                                   }
     property  Item[const Idx: Integer]: AnsiString read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: AnsiStringArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: AnsiString); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: AnsiString); virtual;
     function  AppendItem(const Value: AnsiString): Integer; virtual;
     function  AppendArray(const V: AnsiStringArray): Integer; overload; virtual;
     function  PosNext(const Find: AnsiString; const PrevPos: Integer = -1;
@@ -773,13 +774,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ARawByteStringArray interface                                                }
     property  Item[const Idx: Integer]: RawByteString read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: RawByteStringArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: RawByteString); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: RawByteString); virtual;
     function  AppendItem(const Value: RawByteString): Integer; virtual;
     function  AppendArray(const V: RawByteStringArray): Integer; overload; virtual;
     function  PosNext(const Find: RawByteString; const PrevPos: Integer = -1;
@@ -821,13 +822,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AUnicodeStringArray interface                                                }
     property  Item[const Idx: Integer]: UnicodeString read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: UnicodeStringArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: UnicodeString); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: UnicodeString); virtual;
     function  AppendItem(const Value: UnicodeString): Integer; virtual;
     function  AppendArray(const V: UnicodeStringArray): Integer; overload; virtual;
     function  PosNext(const Find: UnicodeString; const PrevPos: Integer = -1;
@@ -860,13 +861,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AStringArray interface                                                       }
     property  Item[const Idx: Integer]: String read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: StringArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: String); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: String); virtual;
     function  AppendItem(const Value: String): Integer; virtual;
     function  AppendArray(const V: StringArray): Integer; overload; virtual;
     function  PosNext(const Find: String; const PrevPos: Integer = -1;
@@ -902,13 +903,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { APointerArray interface                                                      }
     property  Item[const Idx: Integer]: Pointer read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: PointerArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: Pointer); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Pointer); virtual;
     function  AppendItem(const Value: Pointer): Integer; virtual;
     function  AppendArray(const V: PointerArray): Integer; overload; virtual;
     function  PosNext(const Find: Pointer; const PrevPos: Integer = -1;
@@ -941,13 +942,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInterfaceArray interface                                                    }
     property  Item[const Idx: Integer]: IInterface read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: InterfaceArray read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: IInterface); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: IInterface); virtual;
     function  AppendItem(const Value: IInterface): Integer; virtual;
     function  AppendArray(const V: InterfaceArray): Integer; overload; virtual;
     function  PosNext(const Find: IInterface; const PrevPos: Integer = -1;
@@ -971,7 +972,7 @@ type
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: ObjectArray); virtual;
     function  GetAsString: String; override;
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -984,7 +985,7 @@ type
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AObjectArray interface                                                   }
     property  Item[const Idx: Integer]: TObject read GetItem write SetItem; default;
@@ -993,14 +994,14 @@ type
     function  AppendArray(const V: ObjectArray): Integer; overload; virtual;
 
     function  PosNext(const Find: TObject; const PrevPos: Integer): Integer; overload;
-    function  PosNext(var Item: TObject; const ClassType: TClass; const PrevPos: Integer = -1): Integer; overload;
-    function  PosNext(var Item: TObject; const ClassName: String; const PrevPos: Integer = -1): Integer; overload;
-    function  Find(const ClassType: TClass; const Count: Integer = 1): TObject; overload;
-    function  Find(const ClassName: String; const Count: Integer = 1): TObject; overload;
-    function  FindAll(const ClassType: TClass): ObjectArray; overload;
-    function  FindAll(const ClassName: String): ObjectArray; overload;
-    function  CountItems(const ClassType: TClass): Integer; overload;
-    function  CountItems(const ClassName: String): Integer; overload;
+    function  PosNext(var AItem: TObject; const AClassType: TClass; const PrevPos: Integer = -1): Integer; overload;
+    function  PosNext(var AItem: TObject; const AClassName: String; const PrevPos: Integer = -1): Integer; overload;
+    function  Find(const AClassType: TClass; const ACount: Integer = 1): TObject; overload;
+    function  Find(const AClassName: String; const ACount: Integer = 1): TObject; overload;
+    function  FindAll(const AClassType: TClass): ObjectArray; overload;
+    function  FindAll(const AClassName: String): ObjectArray; overload;
+    function  CountItems(const AClassType: TClass): Integer; overload;
+    function  CountItems(const AClassName: String): Integer; overload;
     function  DeleteValue(const Value: TObject): Boolean;
     function  DeleteAll(const Value: TObject): Integer;
 
@@ -1037,8 +1038,8 @@ type
     function  IsEqual(const V: TObject): Boolean; override;
 
     { AArray                                                                   }
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendArray(const V: AArray): Integer; override;
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
@@ -1048,7 +1049,7 @@ type
     property  Bit[const Idx: Integer]: Boolean read GetBit write SetBit; default;
     property  RangeL[const Idx: Integer]: LongWord read GetRangeL write SetRangeL;
     function  IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean; virtual;
-    procedure Fill(const Idx, Count: Integer; const Value: Boolean); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Boolean); virtual;
     function  AppendItem(const Value: Boolean): Integer; virtual;
     procedure Invert; virtual;
 
@@ -1056,7 +1057,7 @@ type
               const Start: Integer = 0): Integer; virtual;
     function  FindRange(const Value: Boolean = False;
               const Start: Integer = 0;
-              const Count: Integer = 1): Integer; virtual;
+              const ACount: Integer = 1): Integer; virtual;
   end;
 
 
@@ -1087,7 +1088,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Int32); override;
     function  GetRange(const LoIdx, HiIdx: Integer): Int32Array; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int32Array); override;
-    procedure SetData(const Data: Int32Array); virtual;
+    procedure SetData(const AData: Int32Array); virtual;
 
   public
     constructor Create(const V: Int32Array = nil); overload;
@@ -1098,8 +1099,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInt32Array                                                            }
     procedure Assign(const V: Int32Array); overload;
@@ -1133,7 +1134,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: LongInt); override;
     function  GetRange(const LoIdx, HiIdx: Integer): LongIntArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: LongIntArray); override;
-    procedure SetData(const Data: LongIntArray); virtual;
+    procedure SetData(const AData: LongIntArray); virtual;
 
   public
     constructor Create(const V: LongIntArray = nil); overload;
@@ -1144,8 +1145,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ALongIntArray                                                            }
     procedure Assign(const V: LongIntArray); overload;
@@ -1187,7 +1188,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Word32); override;
     function  GetRange(const LoIdx, HiIdx: Integer): Word32Array; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: Word32Array); override;
-    procedure SetData(const Data: Word32Array); virtual;
+    procedure SetData(const AData: Word32Array); virtual;
 
   public
     constructor Create(const V: Word32Array = nil); overload;
@@ -1198,8 +1199,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AWord32Array                                                            }
     procedure Assign(const V: Word32Array); overload;
@@ -1233,7 +1234,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: LongWord); override;
     function  GetRange(const LoIdx, HiIdx: Integer): LongWordArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: LongWordArray); override;
-    procedure SetData(const Data: LongWordArray); virtual;
+    procedure SetData(const AData: LongWordArray); virtual;
 
   public
     constructor Create(const V: LongWordArray = nil); overload;
@@ -1244,8 +1245,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ALongWordArray                                                            }
     procedure Assign(const V: LongWordArray); overload;
@@ -1287,7 +1288,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Int64); override;
     function  GetRange(const LoIdx, HiIdx: Integer): Int64Array; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array); override;
-    procedure SetData(const Data: Int64Array); virtual;
+    procedure SetData(const AData: Int64Array); virtual;
 
   public
     constructor Create(const V: Int64Array = nil); overload;
@@ -1298,8 +1299,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInt64Array                                                            }
     procedure Assign(const V: Int64Array); overload;
@@ -1333,7 +1334,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Single); override;
     function  GetRange(const LoIdx, HiIdx: Integer): SingleArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: SingleArray); override;
-    procedure SetData(const Data: SingleArray); virtual;
+    procedure SetData(const AData: SingleArray); virtual;
 
   public
     constructor Create(const V: SingleArray = nil); overload;
@@ -1344,8 +1345,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ASingleArray                                                            }
     procedure Assign(const V: SingleArray); overload;
@@ -1379,7 +1380,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Double); override;
     function  GetRange(const LoIdx, HiIdx: Integer): DoubleArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: DoubleArray); override;
-    procedure SetData(const Data: DoubleArray); virtual;
+    procedure SetData(const AData: DoubleArray); virtual;
 
   public
     constructor Create(const V: DoubleArray = nil); overload;
@@ -1390,8 +1391,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ADoubleArray                                                            }
     procedure Assign(const V: DoubleArray); overload;
@@ -1425,7 +1426,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Extended); override;
     function  GetRange(const LoIdx, HiIdx: Integer): ExtendedArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: ExtendedArray); override;
-    procedure SetData(const Data: ExtendedArray); virtual;
+    procedure SetData(const AData: ExtendedArray); virtual;
 
   public
     constructor Create(const V: ExtendedArray = nil); overload;
@@ -1436,8 +1437,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AExtendedArray                                                            }
     procedure Assign(const V: ExtendedArray); overload;
@@ -1472,7 +1473,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: AnsiString); override;
     function  GetRange(const LoIdx, HiIdx: Integer): AnsiStringArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: AnsiStringArray); override;
-    procedure SetData(const Data: AnsiStringArray); virtual;
+    procedure SetData(const AData: AnsiStringArray); virtual;
 
   public
     constructor Create(const V: AnsiStringArray = nil); overload;
@@ -1483,8 +1484,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AAnsiStringArray                                                            }
     procedure Assign(const V: AnsiStringArray); overload;
@@ -1519,7 +1520,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: RawByteString); override;
     function  GetRange(const LoIdx, HiIdx: Integer): RawByteStringArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: RawByteStringArray); override;
-    procedure SetData(const Data: RawByteStringArray); virtual;
+    procedure SetData(const AData: RawByteStringArray); virtual;
 
   public
     constructor Create(const V: RawByteStringArray = nil); overload;
@@ -1530,8 +1531,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { ARawByteStringArray                                                            }
     procedure Assign(const V: RawByteStringArray); overload;
@@ -1573,7 +1574,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: UnicodeString); override;
     function  GetRange(const LoIdx, HiIdx: Integer): UnicodeStringArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: UnicodeStringArray); override;
-    procedure SetData(const Data: UnicodeStringArray); virtual;
+    procedure SetData(const AData: UnicodeStringArray); virtual;
 
   public
     constructor Create(const V: UnicodeStringArray = nil); overload;
@@ -1584,8 +1585,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AUnicodeStringArray                                                            }
     procedure Assign(const V: UnicodeStringArray); overload;
@@ -1619,7 +1620,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: String); override;
     function  GetRange(const LoIdx, HiIdx: Integer): StringArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: StringArray); override;
-    procedure SetData(const Data: StringArray); virtual;
+    procedure SetData(const AData: StringArray); virtual;
 
   public
     constructor Create(const V: StringArray = nil); overload;
@@ -1630,8 +1631,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AStringArray                                                            }
     procedure Assign(const V: StringArray); overload;
@@ -1665,7 +1666,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: Pointer); override;
     function  GetRange(const LoIdx, HiIdx: Integer): PointerArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: PointerArray); override;
-    procedure SetData(const Data: PointerArray); virtual;
+    procedure SetData(const AData: PointerArray); virtual;
 
   public
     constructor Create(const V: PointerArray = nil); overload;
@@ -1676,8 +1677,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { APointerArray                                                            }
     procedure Assign(const V: PointerArray); overload;
@@ -1711,7 +1712,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: IInterface); override;
     function  GetRange(const LoIdx, HiIdx: Integer): InterfaceArray; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: InterfaceArray); override;
-    procedure SetData(const Data: InterfaceArray); virtual;
+    procedure SetData(const AData: InterfaceArray); virtual;
 
   public
     constructor Create(const V: InterfaceArray = nil); overload;
@@ -1722,8 +1723,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AInterfaceArray                                                            }
     procedure Assign(const V: InterfaceArray); overload;
@@ -1750,7 +1751,7 @@ type
     FIsItemOwner : Boolean;
 
     procedure Init; override;
-    procedure SetData(const Data: ObjectArray); virtual;
+    procedure SetData(const AData: ObjectArray); virtual;
 
     { AArray                                                                   }
     function  GetCount: Integer; override;
@@ -1761,12 +1762,12 @@ type
     procedure SetItem(const Idx: Integer; const Value: TObject); override;
     function  GetRange(const LoIdx, HiIdx: Integer): ObjectArray; override;
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
 
   public
     { TObjectArray interface                                                   }
     constructor Create(const V: ObjectArray = nil;
-                const IsItemOwner: Boolean = False); reintroduce; overload;
+                const AIsItemOwner: Boolean = False); reintroduce; overload;
     destructor Destroy; override;
 
     property  Data: ObjectArray read FData write SetData;
@@ -1778,8 +1779,8 @@ type
 
     { AArray                                                                   }
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AObjectArray                                                             }
     function  AppendItem(const Value: TObject): Integer; override;
@@ -1832,17 +1833,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: AnsiString); override;
-    procedure SetData(const Data: AnsiStringArray); override;
+    procedure SetData(const AData: AnsiStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: AnsiString): Integer; override;
 
     function  PosNext(const Find: AnsiString; const PrevPos: Integer = -1): Integer;
@@ -1867,17 +1868,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: RawByteString); override;
-    procedure SetData(const Data: RawByteStringArray); override;
+    procedure SetData(const AData: RawByteStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: RawByteString): Integer; override;
 
     function  PosNext(const Find: RawByteString; const PrevPos: Integer = -1): Integer;
@@ -1901,17 +1902,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: UnicodeString); override;
-    procedure SetData(const Data: UnicodeStringArray); override;
+    procedure SetData(const AData: UnicodeStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: UnicodeString): Integer; override;
 
     function  PosNext(const Find: UnicodeString; const PrevPos: Integer = -1): Integer;
@@ -1939,7 +1940,7 @@ type
     function  GetAsString: String; override;
 
     function  GetAddOnSet: Boolean; virtual; abstract;
-    procedure SetAddOnSet(const AddOnSet: Boolean); virtual; abstract;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); virtual; abstract;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; virtual; abstract;
     procedure SetDuplicatesAction(const Value: TDictionaryDuplicatesAction); virtual; abstract;
 
@@ -3526,7 +3527,7 @@ type
     procedure SetItem(const Key: AnsiString; const Value: TObject); virtual; abstract;
 
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -3567,7 +3568,7 @@ type
     procedure SetItem(const Key: RawByteString; const Value: TObject); virtual; abstract;
 
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -3607,7 +3608,7 @@ type
     procedure SetItem(const Key: UnicodeString; const Value: TObject); virtual; abstract;
 
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -3647,7 +3648,7 @@ type
     procedure SetItem(const Key: String; const Value: TObject); virtual; abstract;
 
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -3708,9 +3709,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongIntDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: LongInt); override;
@@ -3718,11 +3719,11 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: ALongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: ALongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -3756,11 +3757,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TLongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TLongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: LongInt): Integer; override;
   end;
@@ -3794,9 +3795,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongIntDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: LongInt); override;
@@ -3804,11 +3805,11 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: ALongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: ALongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -3842,11 +3843,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TLongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TLongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: LongInt): Integer; override;
   end;
@@ -3879,9 +3880,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongIntDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: LongInt); override;
@@ -3889,11 +3890,11 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: ALongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: ALongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -3927,11 +3928,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TLongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TLongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: LongInt): Integer; override;
   end;
@@ -3964,9 +3965,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongIntDictionary                                                    }
     procedure SetItem(const Key: String; const Value: LongInt); override;
@@ -3974,11 +3975,11 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: ALongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: ALongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -4012,11 +4013,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TLongIntArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TLongIntArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: LongInt): Integer; override;
   end;
@@ -4065,9 +4066,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongWordDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: LongWord); override;
@@ -4075,11 +4076,11 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: ALongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: ALongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -4113,11 +4114,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TLongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TLongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: LongWord): Integer; override;
   end;
@@ -4151,9 +4152,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongWordDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: LongWord); override;
@@ -4161,11 +4162,11 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: ALongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: ALongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -4199,11 +4200,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TLongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TLongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: LongWord): Integer; override;
   end;
@@ -4236,9 +4237,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongWordDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: LongWord); override;
@@ -4246,11 +4247,11 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: ALongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: ALongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -4284,11 +4285,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TLongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TLongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: LongWord): Integer; override;
   end;
@@ -4321,9 +4322,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ALongWordDictionary                                                    }
     procedure SetItem(const Key: String; const Value: LongWord); override;
@@ -4331,11 +4332,11 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: ALongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: ALongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -4369,11 +4370,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TLongWordArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TLongWordArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: LongWord): Integer; override;
   end;
@@ -4424,9 +4425,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInt64Dictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: Int64); override;
@@ -4434,11 +4435,11 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -4472,11 +4473,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: Int64): Integer; override;
   end;
@@ -4510,9 +4511,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInt64Dictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: Int64); override;
@@ -4520,11 +4521,11 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: AInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: AInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -4558,11 +4559,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: Int64): Integer; override;
   end;
@@ -4595,9 +4596,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInt64Dictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: Int64); override;
@@ -4605,11 +4606,11 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -4643,11 +4644,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: Int64): Integer; override;
   end;
@@ -4680,9 +4681,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInt64Dictionary                                                    }
     procedure SetItem(const Key: String; const Value: Int64); override;
@@ -4690,11 +4691,11 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -4728,11 +4729,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TInt64Array = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TInt64Array = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: Int64): Integer; override;
   end;
@@ -4766,9 +4767,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ASingleDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: Single); override;
@@ -4776,11 +4777,11 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: ASingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: ASingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -4814,11 +4815,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TSingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TSingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: Single): Integer; override;
   end;
@@ -4852,9 +4853,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ASingleDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: Single); override;
@@ -4862,11 +4863,11 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: ASingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: ASingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -4900,11 +4901,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TSingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TSingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: Single): Integer; override;
   end;
@@ -4937,9 +4938,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ASingleDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: Single); override;
@@ -4947,11 +4948,11 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: ASingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: ASingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -4985,11 +4986,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TSingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TSingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: Single): Integer; override;
   end;
@@ -5022,9 +5023,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ASingleDictionary                                                    }
     procedure SetItem(const Key: String; const Value: Single); override;
@@ -5032,11 +5033,11 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: ASingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: ASingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -5070,11 +5071,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TSingleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TSingleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: Single): Integer; override;
   end;
@@ -5108,9 +5109,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ADoubleDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: Double); override;
@@ -5118,11 +5119,11 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: ADoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: ADoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -5156,11 +5157,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TDoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TDoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: Double): Integer; override;
   end;
@@ -5194,9 +5195,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ADoubleDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: Double); override;
@@ -5204,11 +5205,11 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: ADoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: ADoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -5242,11 +5243,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TDoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TDoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: Double): Integer; override;
   end;
@@ -5279,9 +5280,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ADoubleDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: Double); override;
@@ -5289,11 +5290,11 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: ADoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: ADoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -5327,11 +5328,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TDoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TDoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: Double): Integer; override;
   end;
@@ -5364,9 +5365,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ADoubleDictionary                                                    }
     procedure SetItem(const Key: String; const Value: Double); override;
@@ -5374,11 +5375,11 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: ADoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: ADoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -5412,11 +5413,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TDoubleArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TDoubleArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: Double): Integer; override;
   end;
@@ -5450,9 +5451,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AExtendedDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: Extended); override;
@@ -5460,11 +5461,11 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -5498,11 +5499,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: Extended): Integer; override;
   end;
@@ -5536,9 +5537,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AExtendedDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: Extended); override;
@@ -5546,11 +5547,11 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: AExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: AExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -5584,11 +5585,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: Extended): Integer; override;
   end;
@@ -5621,9 +5622,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AExtendedDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: Extended); override;
@@ -5631,11 +5632,11 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -5669,11 +5670,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: Extended): Integer; override;
   end;
@@ -5706,9 +5707,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AExtendedDictionary                                                    }
     procedure SetItem(const Key: String; const Value: Extended); override;
@@ -5716,11 +5717,11 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -5754,11 +5755,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TExtendedArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TExtendedArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: Extended): Integer; override;
   end;
@@ -5792,9 +5793,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AAnsiStringDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: AnsiString); override;
@@ -5802,11 +5803,11 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -5840,11 +5841,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: AnsiString): Integer; override;
   end;
@@ -5877,9 +5878,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AAnsiStringDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: AnsiString); override;
@@ -5887,11 +5888,11 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -5925,11 +5926,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: AnsiString): Integer; override;
   end;
@@ -5962,9 +5963,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AAnsiStringDictionary                                                    }
     procedure SetItem(const Key: String; const Value: AnsiString); override;
@@ -5972,11 +5973,11 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -6010,11 +6011,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TAnsiStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: AnsiString): Integer; override;
   end;
@@ -6049,9 +6050,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ARawByteStringDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: RawByteString); override;
@@ -6059,11 +6060,11 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: ARawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: ARawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -6097,11 +6098,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TRawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: RawByteString): Integer; override;
   end;
@@ -6135,9 +6136,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ARawByteStringDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: RawByteString); override;
@@ -6145,11 +6146,11 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: ARawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: ARawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -6183,11 +6184,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TRawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: RawByteString): Integer; override;
   end;
@@ -6220,9 +6221,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ARawByteStringDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: RawByteString); override;
@@ -6230,11 +6231,11 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: ARawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: ARawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -6268,11 +6269,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TRawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: RawByteString): Integer; override;
   end;
@@ -6305,9 +6306,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { ARawByteStringDictionary                                                    }
     procedure SetItem(const Key: String; const Value: RawByteString); override;
@@ -6315,11 +6316,11 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: ARawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: ARawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -6353,11 +6354,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TRawByteStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: RawByteString): Integer; override;
   end;
@@ -6391,9 +6392,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AUnicodeStringDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: UnicodeString); override;
@@ -6401,11 +6402,11 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -6439,11 +6440,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: UnicodeString): Integer; override;
   end;
@@ -6477,9 +6478,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AUnicodeStringDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: UnicodeString); override;
@@ -6487,11 +6488,11 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -6525,11 +6526,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: UnicodeString): Integer; override;
   end;
@@ -6562,9 +6563,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AUnicodeStringDictionary                                                    }
     procedure SetItem(const Key: String; const Value: UnicodeString); override;
@@ -6572,11 +6573,11 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -6610,11 +6611,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TUnicodeStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: UnicodeString): Integer; override;
   end;
@@ -6648,9 +6649,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AStringDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: String); override;
@@ -6658,11 +6659,11 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -6696,11 +6697,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: String): Integer; override;
   end;
@@ -6734,9 +6735,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AStringDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: String); override;
@@ -6744,11 +6745,11 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -6782,11 +6783,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: String): Integer; override;
   end;
@@ -6819,9 +6820,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AStringDictionary                                                    }
     procedure SetItem(const Key: String; const Value: String); override;
@@ -6829,11 +6830,11 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -6867,11 +6868,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TStringArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TStringArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: String): Integer; override;
   end;
@@ -6905,9 +6906,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { APointerDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: Pointer); override;
@@ -6915,11 +6916,11 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: APointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: APointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -6953,11 +6954,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TPointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TPointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: Pointer): Integer; override;
   end;
@@ -6991,9 +6992,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { APointerDictionary                                                    }
     procedure SetItem(const Key: RawByteString; const Value: Pointer); override;
@@ -7001,11 +7002,11 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: APointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: APointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -7039,11 +7040,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TPointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TPointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: Pointer): Integer; override;
   end;
@@ -7076,9 +7077,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { APointerDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: Pointer); override;
@@ -7086,11 +7087,11 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: APointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: APointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -7124,11 +7125,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TPointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TPointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: Pointer): Integer; override;
   end;
@@ -7161,9 +7162,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { APointerDictionary                                                    }
     procedure SetItem(const Key: String; const Value: Pointer); override;
@@ -7171,11 +7172,11 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: APointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: APointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -7209,11 +7210,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TPointerArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TPointerArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: Pointer): Integer; override;
   end;
@@ -7247,9 +7248,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInterfaceDictionary                                                    }
     procedure SetItem(const Key: AnsiString; const Value: IInterface); override;
@@ -7257,11 +7258,11 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -7295,11 +7296,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: IInterface): Integer; override;
   end;
@@ -7333,9 +7334,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInterfaceDictionary                                                    }
     procedure SetItem(const Key: UnicodeString; const Value: IInterface); override;
@@ -7343,11 +7344,11 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -7381,11 +7382,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: IInterface): Integer; override;
   end;
@@ -7418,9 +7419,9 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AInterfaceDictionary                                                    }
     procedure SetItem(const Key: String; const Value: IInterface); override;
@@ -7428,11 +7429,11 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -7466,11 +7467,11 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TInterfaceArray = nil;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TInterfaceArray = nil;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: IInterface): Integer; override;
   end;
@@ -7504,25 +7505,25 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AObjectDictionary                                                    }
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
     
     procedure SetItem(const Key: AnsiString; const Value: TObject); override;
 
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AAnsiStringArray = nil;
-                const Values: AObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
+                const AValues: AObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AAnsiStringArray read FKeys;
@@ -7560,12 +7561,12 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TAnsiStringArray = nil;
-                const Values: TObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+                const AValues: TObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: AnsiString; var Value: TObject): Integer; override;
   end;
@@ -7599,25 +7600,25 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AObjectDictionary                                                    }
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
     
     procedure SetItem(const Key: RawByteString; const Value: TObject); override;
 
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: ARawByteStringArray = nil;
-                const Values: AObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
+                const AValues: AObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: ARawByteStringArray read FKeys;
@@ -7655,12 +7656,12 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TRawByteStringArray = nil;
-                const Values: TObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+                const AValues: TObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: RawByteString; var Value: TObject): Integer; override;
   end;
@@ -7693,25 +7694,25 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AObjectDictionary                                                    }
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
     
     procedure SetItem(const Key: UnicodeString; const Value: TObject); override;
 
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AUnicodeStringArray = nil;
-                const Values: AObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
+                const AValues: AObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AUnicodeStringArray read FKeys;
@@ -7749,12 +7750,12 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TUnicodeStringArray = nil;
-                const Values: TObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+                const AValues: TObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: UnicodeString; var Value: TObject): Integer; override;
   end;
@@ -7787,25 +7788,25 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { AObjectDictionary                                                    }
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
     
     procedure SetItem(const Key: String; const Value: TObject); override;
 
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: AStringArray = nil;
-                const Values: AObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: AStringArray = nil;
+                const AValues: AObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: AStringArray read FKeys;
@@ -7843,12 +7844,12 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: TStringArray = nil;
-                const Values: TObjectArray = nil;
-                const IsItemOwner: Boolean = False;
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: TStringArray = nil;
+                const AValues: TObjectArray = nil;
+                const AIsItemOwner: Boolean = False;
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: String; var Value: TObject): Integer; override;
   end;
@@ -8078,7 +8079,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: TObject);
 
   public
-    constructor Create(const IsItemOwner: Boolean = False);
+    constructor Create(const AIsItemOwner: Boolean = False);
     destructor Destroy; override;
 
     procedure Assign(const Source: TObject); override;
@@ -8723,10 +8724,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AInt32Array.Fill(const Idx, Count: Integer; const Value: Int32);
+procedure AInt32Array.Fill(const Idx, ACount: Integer; const Value: Int32);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -8850,31 +8851,31 @@ begin
     raise EInt32Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AInt32Array.Delete(const Idx: Integer; const Count: Integer);
+procedure AInt32Array.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AInt32Array.Insert(const Idx: Integer; const Count: Integer);
+procedure AInt32Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -8929,10 +8930,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure ALongIntArray.Fill(const Idx, Count: Integer; const Value: LongInt);
+procedure ALongIntArray.Fill(const Idx, ACount: Integer; const Value: LongInt);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -9056,31 +9057,31 @@ begin
     raise ELongIntArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure ALongIntArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ALongIntArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure ALongIntArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ALongIntArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -9135,10 +9136,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AWord32Array.Fill(const Idx, Count: Integer; const Value: Word32);
+procedure AWord32Array.Fill(const Idx, ACount: Integer; const Value: Word32);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -9262,31 +9263,31 @@ begin
     raise EWord32Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AWord32Array.Delete(const Idx: Integer; const Count: Integer);
+procedure AWord32Array.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AWord32Array.Insert(const Idx: Integer; const Count: Integer);
+procedure AWord32Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -9341,10 +9342,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure ALongWordArray.Fill(const Idx, Count: Integer; const Value: LongWord);
+procedure ALongWordArray.Fill(const Idx, ACount: Integer; const Value: LongWord);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -9468,31 +9469,31 @@ begin
     raise ELongWordArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure ALongWordArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ALongWordArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure ALongWordArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ALongWordArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -9547,10 +9548,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AInt64Array.Fill(const Idx, Count: Integer; const Value: Int64);
+procedure AInt64Array.Fill(const Idx, ACount: Integer; const Value: Int64);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -9681,31 +9682,31 @@ begin
     raise EInt64Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AInt64Array.Delete(const Idx: Integer; const Count: Integer);
+procedure AInt64Array.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AInt64Array.Insert(const Idx: Integer; const Count: Integer);
+procedure AInt64Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -9760,10 +9761,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure ASingleArray.Fill(const Idx, Count: Integer; const Value: Single);
+procedure ASingleArray.Fill(const Idx, ACount: Integer; const Value: Single);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -9894,31 +9895,31 @@ begin
     raise ESingleArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure ASingleArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ASingleArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure ASingleArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ASingleArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -9973,10 +9974,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure ADoubleArray.Fill(const Idx, Count: Integer; const Value: Double);
+procedure ADoubleArray.Fill(const Idx, ACount: Integer; const Value: Double);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -10107,31 +10108,31 @@ begin
     raise EDoubleArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure ADoubleArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ADoubleArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure ADoubleArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ADoubleArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -10186,10 +10187,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AExtendedArray.Fill(const Idx, Count: Integer; const Value: Extended);
+procedure AExtendedArray.Fill(const Idx, ACount: Integer; const Value: Extended);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -10320,31 +10321,31 @@ begin
     raise EExtendedArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AExtendedArray.Delete(const Idx: Integer; const Count: Integer);
+procedure AExtendedArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AExtendedArray.Insert(const Idx: Integer; const Count: Integer);
+procedure AExtendedArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 {$IFDEF SupportAnsiString}
@@ -10400,10 +10401,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AAnsiStringArray.Fill(const Idx, Count: Integer; const Value: AnsiString);
+procedure AAnsiStringArray.Fill(const Idx, ACount: Integer; const Value: AnsiString);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -10527,31 +10528,31 @@ begin
     raise EAnsiStringArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AAnsiStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure AAnsiStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AAnsiStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure AAnsiStringArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 {$ENDIF}
@@ -10607,10 +10608,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure ARawByteStringArray.Fill(const Idx, Count: Integer; const Value: RawByteString);
+procedure ARawByteStringArray.Fill(const Idx, ACount: Integer; const Value: RawByteString);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -10734,31 +10735,31 @@ begin
     raise ERawByteStringArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure ARawByteStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ARawByteStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure ARawByteStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ARawByteStringArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -10813,10 +10814,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AUnicodeStringArray.Fill(const Idx, Count: Integer; const Value: UnicodeString);
+procedure AUnicodeStringArray.Fill(const Idx, ACount: Integer; const Value: UnicodeString);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -10940,31 +10941,31 @@ begin
     raise EUnicodeStringArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AUnicodeStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure AUnicodeStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AUnicodeStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure AUnicodeStringArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -11019,10 +11020,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AStringArray.Fill(const Idx, Count: Integer; const Value: String);
+procedure AStringArray.Fill(const Idx, ACount: Integer; const Value: String);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -11138,31 +11139,31 @@ begin
     raise EStringArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure AStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure AStringArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -11217,10 +11218,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure APointerArray.Fill(const Idx, Count: Integer; const Value: Pointer);
+procedure APointerArray.Fill(const Idx, ACount: Integer; const Value: Pointer);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -11344,31 +11345,31 @@ begin
     raise EPointerArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure APointerArray.Delete(const Idx: Integer; const Count: Integer);
+procedure APointerArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure APointerArray.Insert(const Idx: Integer; const Count: Integer);
+procedure APointerArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -11423,10 +11424,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure AInterfaceArray.Fill(const Idx, Count: Integer; const Value: IInterface);
+procedure AInterfaceArray.Fill(const Idx, ACount: Integer; const Value: IInterface);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -11542,31 +11543,31 @@ begin
     raise EInterfaceArray.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure AInterfaceArray.Delete(const Idx: Integer; const Count: Integer);
+procedure AInterfaceArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure AInterfaceArray.Insert(const Idx: Integer; const Count: Integer);
+procedure AInterfaceArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 
 
@@ -11735,16 +11736,16 @@ begin
 end;
 {$IFDEF DEBUG}{$IFNDEF FREEPASCAL}{$WARNINGS ON}{$ENDIF}{$ENDIF}
 
-procedure AObjectArray.Delete(const Idx, Count: Integer);
+procedure AObjectArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(Idx + I, GetItem(Idx + Count + I));
+        SetItem(Idx + I, GetItem(Idx + ACount + I));
       SetCount(C - L);
     end;
 end;
@@ -11761,115 +11762,115 @@ begin
   Result := -1;
 end;
 
-function AObjectArray.PosNext(var Item: TObject; const ClassType: TClass;
+function AObjectArray.PosNext(var AItem: TObject; const AClassType: TClass;
     const PrevPos: Integer): Integer;
 var I : Integer;
 begin
   for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
     begin
-      Item := GetItem(I);
-      if Item.InheritsFrom(ClassType) then
+      AItem := GetItem(I);
+      if AItem.InheritsFrom(AClassType) then
         begin
           Result := I;
           exit;
         end;
     end;
-  Item := nil;
+  AItem := nil;
   Result := -1;
 end;
 
-function AObjectArray.PosNext(var Item: TObject; const ClassName: String;
+function AObjectArray.PosNext(var AItem: TObject; const AClassName: String;
     const PrevPos: Integer): Integer;
 var I : Integer;
 begin
   for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
     begin
-      Item := GetItem(I);
-      if Assigned(Item) and Item.ClassNameIs(ClassName) then
+      AItem := GetItem(I);
+      if Assigned(AItem) and AItem.ClassNameIs(AClassName) then
         begin
           Result := I;
           exit;
         end;
     end;
-  Item := nil;
+  AItem := nil;
   Result := -1;
 end;
 
-function AObjectArray.Find(const ClassType: TClass; const Count: Integer): TObject;
+function AObjectArray.Find(const AClassType: TClass; const ACount: Integer): TObject;
 var I, J : Integer;
 begin
   Result := nil;
   I := -1;
-  for J := 1 to Count do
+  for J := 1 to ACount do
     begin
-      I := PosNext(Result, ClassType, I);
+      I := PosNext(Result, AClassType, I);
       if I = -1 then
         break;
     end;
 end;
 
-function AObjectArray.Find(const ClassName: String; const Count: Integer): TObject;
+function AObjectArray.Find(const AClassName: String; const ACount: Integer): TObject;
 var I, J : Integer;
 begin
   Result := nil;
   I := -1;
-  for J := 1 to Count do
+  for J := 1 to ACount do
     begin
-      I := PosNext(Result, ClassName, I);
+      I := PosNext(Result, AClassName, I);
       if I = -1 then
         break;
     end;
 end;
 
-function AObjectArray.FindAll(const ClassType: TClass): ObjectArray;
+function AObjectArray.FindAll(const AClassType: TClass): ObjectArray;
 var I : Integer;
     V : TObject;
 begin
   SetLength(Result, 0);
-  I := PosNext(V, ClassType);
+  I := PosNext(V, AClassType);
   while I >= 0 do
     begin
       DynArrayAppend(Result, V);
-      I := PosNext(V, ClassType, I);
+      I := PosNext(V, AClassType, I);
     end;
 end;
 
-function AObjectArray.FindAll(const ClassName: String): ObjectArray;
+function AObjectArray.FindAll(const AClassName: String): ObjectArray;
 var I : Integer;
     V : TObject;
 begin
   SetLength(Result, 0);
-  I := PosNext(V, ClassName);
+  I := PosNext(V, AClassName);
   while I >= 0 do
     begin
       DynArrayAppend(Result, V);
-      I := PosNext(V, ClassName, I);
+      I := PosNext(V, AClassName, I);
     end;
 end;
 
-function AObjectArray.CountItems(const ClassType: TClass): Integer;
+function AObjectArray.CountItems(const AClassType: TClass): Integer;
 var I : Integer;
     V : TObject;
 begin
   Result := 0;
-  I := PosNext(V, ClassType);
+  I := PosNext(V, AClassType);
   while I >= 0 do
     begin
       Inc(Result);
-      I := PosNext(V, ClassType, I);
+      I := PosNext(V, AClassType, I);
     end;
 end;
 
-function AObjectArray.CountItems(const ClassName: String): Integer;
+function AObjectArray.CountItems(const AClassName: String): Integer;
 var I : Integer;
     V : TObject;
 begin
   Result := 0;
-  I := PosNext(V, ClassName);
+  I := PosNext(V, AClassName);
   while I >= 0 do
     begin
       Inc(Result);
-      I := PosNext(V, ClassName, I);
+      I := PosNext(V, AClassName, I);
     end;
 end;
 
@@ -11949,10 +11950,10 @@ begin
     end;
 end;
 
-procedure ABitArray.Fill(const Idx, Count: Integer; const Value: Boolean);
+procedure ABitArray.Fill(const Idx, ACount: Integer; const Value: Boolean);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Bit[I] := Value;
 end;
 
@@ -12052,10 +12053,10 @@ begin
 end;
 
 function ABitArray.FindRange(const Value: Boolean; const Start: Integer;
-    const Count: Integer): Integer;
+    const ACount: Integer): Integer;
 var I, C, F : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     begin
       Result := -1;
       exit;
@@ -12070,7 +12071,7 @@ begin
     if Bit[I + F] = Value then
       begin
         Inc(F);
-        if F = Count then
+        if F = ACount then
           begin
             Result := I;
             exit;
@@ -12084,20 +12085,20 @@ begin
   Result := -1;
 end;
 
-procedure ABitArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ABitArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
-  if (Idx < 0) or (Idx + Count > C) then
+  if (Idx < 0) or (Idx + ACount > C) then
     RaiseIndexError(Idx);
   {$ENDIF}
-  for I := Idx + Count to C - 1 do
-    SetBit(I - Count, GetBit(I));
-  SetCount(C - Count);
+  for I := Idx + ACount to C - 1 do
+    SetBit(I - ACount, GetBit(I));
+  SetCount(C - ACount);
 end;
 
-procedure ABitArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ABitArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C : Integer;
 begin
   C := GetCount;
@@ -12105,10 +12106,10 @@ begin
   if (Idx < 0) or (Idx > C) then
     RaiseIndexError(Idx);
   {$ENDIF}
-  SetCount(C + Count);
+  SetCount(C + ACount);
   for I := Idx to C - 1 do
-    SetBit(I + Count, GetBit(I));
-  Fill(Idx, Idx + Count - 1, False);
+    SetBit(I + ACount, GetBit(I));
+  Fill(Idx, Idx + ACount - 1, False);
 end;
 
 function ABitArray.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
@@ -12228,22 +12229,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TInt32Array.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TInt32Array.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TInt32Array.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TInt32Array.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -12273,9 +12274,9 @@ begin
   SetData(V);
 end;
 
-procedure TInt32Array.SetData(const Data: Int32Array);
+procedure TInt32Array.SetData(const AData: Int32Array);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -12397,22 +12398,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TLongIntArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TLongIntArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TLongIntArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TLongIntArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -12442,9 +12443,9 @@ begin
   SetData(V);
 end;
 
-procedure TLongIntArray.SetData(const Data: LongIntArray);
+procedure TLongIntArray.SetData(const AData: LongIntArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -12566,22 +12567,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TWord32Array.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TWord32Array.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TWord32Array.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TWord32Array.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -12611,9 +12612,9 @@ begin
   SetData(V);
 end;
 
-procedure TWord32Array.SetData(const Data: Word32Array);
+procedure TWord32Array.SetData(const AData: Word32Array);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -12735,22 +12736,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TLongWordArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TLongWordArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TLongWordArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TLongWordArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -12780,9 +12781,9 @@ begin
   SetData(V);
 end;
 
-procedure TLongWordArray.SetData(const Data: LongWordArray);
+procedure TLongWordArray.SetData(const AData: LongWordArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -12904,22 +12905,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TInt64Array.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TInt64Array.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TInt64Array.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TInt64Array.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -12949,9 +12950,9 @@ begin
   SetData(V);
 end;
 
-procedure TInt64Array.SetData(const Data: Int64Array);
+procedure TInt64Array.SetData(const AData: Int64Array);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13073,22 +13074,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TSingleArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TSingleArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TSingleArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TSingleArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13118,9 +13119,9 @@ begin
   SetData(V);
 end;
 
-procedure TSingleArray.SetData(const Data: SingleArray);
+procedure TSingleArray.SetData(const AData: SingleArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13242,22 +13243,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TDoubleArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TDoubleArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TDoubleArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TDoubleArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13287,9 +13288,9 @@ begin
   SetData(V);
 end;
 
-procedure TDoubleArray.SetData(const Data: DoubleArray);
+procedure TDoubleArray.SetData(const AData: DoubleArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13411,22 +13412,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TExtendedArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TExtendedArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TExtendedArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TExtendedArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13456,9 +13457,9 @@ begin
   SetData(V);
 end;
 
-procedure TExtendedArray.SetData(const Data: ExtendedArray);
+procedure TExtendedArray.SetData(const AData: ExtendedArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13581,22 +13582,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TAnsiStringArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TAnsiStringArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemoveA(FData, Idx, Count);
+  N := DynArrayRemoveA(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TAnsiStringArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TAnsiStringArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsertA(FData, Idx, Count);
+  I := DynArrayInsertA(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13626,9 +13627,9 @@ begin
   SetData(V);
 end;
 
-procedure TAnsiStringArray.SetData(const Data: AnsiStringArray);
+procedure TAnsiStringArray.SetData(const AData: AnsiStringArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13751,22 +13752,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TRawByteStringArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TRawByteStringArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemoveB(FData, Idx, Count);
+  N := DynArrayRemoveB(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TRawByteStringArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TRawByteStringArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsertB(FData, Idx, Count);
+  I := DynArrayInsertB(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13796,9 +13797,9 @@ begin
   SetData(V);
 end;
 
-procedure TRawByteStringArray.SetData(const Data: RawByteStringArray);
+procedure TRawByteStringArray.SetData(const AData: RawByteStringArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -13920,22 +13921,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TUnicodeStringArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TUnicodeStringArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemoveU(FData, Idx, Count);
+  N := DynArrayRemoveU(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TUnicodeStringArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TUnicodeStringArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsertU(FData, Idx, Count);
+  I := DynArrayInsertU(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -13965,9 +13966,9 @@ begin
   SetData(V);
 end;
 
-procedure TUnicodeStringArray.SetData(const Data: UnicodeStringArray);
+procedure TUnicodeStringArray.SetData(const AData: UnicodeStringArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14089,22 +14090,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TStringArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TStringArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TStringArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TStringArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -14134,9 +14135,9 @@ begin
   SetData(V);
 end;
 
-procedure TStringArray.SetData(const Data: StringArray);
+procedure TStringArray.SetData(const AData: StringArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14258,22 +14259,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TPointerArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TPointerArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TPointerArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TPointerArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -14303,9 +14304,9 @@ begin
   SetData(V);
 end;
 
-procedure TPointerArray.SetData(const Data: PointerArray);
+procedure TPointerArray.SetData(const AData: PointerArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14352,11 +14353,11 @@ end;
 {                                                                              }
 { TObjectArray                                                                 }
 {                                                                              }
-constructor TObjectArray.Create(const V: ObjectArray; const IsItemOwner: Boolean);
+constructor TObjectArray.Create(const V: ObjectArray; const AIsItemOwner: Boolean);
 begin
   inherited Create;
   FData := V;
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14394,9 +14395,9 @@ begin
   Result := FIsItemOwner;
 end;
 
-procedure TObjectArray.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TObjectArray.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
 end;
 
 function TObjectArray.GetCount: Integer;
@@ -14483,11 +14484,11 @@ begin
   Result := Copy(FData, LoIdx, MinInt(HiIdx, FCount - 1) - LoIdx + 1);
 end;
 
-procedure TObjectArray.SetData(const Data: ObjectArray);
+procedure TObjectArray.SetData(const AData: ObjectArray);
 begin
   if FIsItemOwner then
     FreeItems;
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14506,22 +14507,22 @@ begin
     end;
 end;
 
-procedure TObjectArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TObjectArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count, FIsItemOwner);
+  N := DynArrayRemove(FData, Idx, ACount, FIsItemOwner);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TObjectArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TObjectArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -14605,22 +14606,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure TInterfaceArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TInterfaceArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count);
+  N := DynArrayRemove(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TInterfaceArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TInterfaceArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -14650,9 +14651,9 @@ begin
   SetData(V);
 end;
 
-procedure TInterfaceArray.SetData(const Data: InterfaceArray);
+procedure TInterfaceArray.SetData(const AData: InterfaceArray);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -14886,10 +14887,10 @@ end;
 {                                                                              }
 { THashedAnsiStringArray                                                       }
 {                                                                              }
-constructor THashedAnsiStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedAnsiStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedAnsiStringArray.Init;
@@ -14959,16 +14960,16 @@ begin
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedAnsiStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedAnsiStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -14979,17 +14980,17 @@ begin
       end;
 end;
 
-procedure THashedAnsiStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedAnsiStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedAnsiStringArray.SetData(const Data: AnsiStringArray);
+procedure THashedAnsiStringArray.SetData(const AData: AnsiStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -15071,10 +15072,10 @@ end;
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {                                                                              }
-constructor THashedRawByteStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedRawByteStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedRawByteStringArray.Init;
@@ -15144,16 +15145,16 @@ begin
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedRawByteStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedRawByteStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -15164,17 +15165,17 @@ begin
       end;
 end;
 
-procedure THashedRawByteStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedRawByteStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedRawByteStringArray.SetData(const Data: RawByteStringArray);
+procedure THashedRawByteStringArray.SetData(const AData: RawByteStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -15255,10 +15256,10 @@ end;
 {                                                                              }
 { THashedUnicodeStringArray                                                    }
 {                                                                              }
-constructor THashedUnicodeStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedUnicodeStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedUnicodeStringArray.Init;
@@ -15328,16 +15329,16 @@ begin
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedUnicodeStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedUnicodeStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -15348,17 +15349,17 @@ begin
       end;
 end;
 
-procedure THashedUnicodeStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedUnicodeStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedUnicodeStringArray.SetData(const Data: UnicodeStringArray);
+procedure THashedUnicodeStringArray.SetData(const AData: UnicodeStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -17748,16 +17749,16 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: ALongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -17765,26 +17766,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongIntArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongIntDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TLongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongIntDictionaryA.Destroy;
@@ -17804,9 +17805,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongIntDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongIntDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongIntDictionaryA.GetHashTableSize: Integer;
@@ -17928,9 +17929,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongIntDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongIntDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongIntDictionaryA.LocateItem(const Key: AnsiString; var Value: LongInt): Integer;
@@ -18108,16 +18109,16 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: ALongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -18125,26 +18126,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongIntArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongIntDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TLongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongIntDictionaryB.Destroy;
@@ -18164,9 +18165,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongIntDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongIntDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongIntDictionaryB.GetHashTableSize: Integer;
@@ -18288,9 +18289,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongIntDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongIntDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongIntDictionaryB.LocateItem(const Key: RawByteString; var Value: LongInt): Integer;
@@ -18467,16 +18468,16 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: ALongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -18484,26 +18485,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongIntArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongIntDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TLongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongIntDictionaryU.Destroy;
@@ -18523,9 +18524,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongIntDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongIntDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongIntDictionaryU.GetHashTableSize: Integer;
@@ -18647,9 +18648,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongIntDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongIntDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongIntDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongInt): Integer;
@@ -18826,16 +18827,16 @@ begin
 end;
 
 constructor TGeneralLongIntDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: ALongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -18843,26 +18844,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongIntArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongIntDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TLongIntArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongIntDictionary.Destroy;
@@ -18882,9 +18883,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongIntDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongIntDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongIntDictionary.GetHashTableSize: Integer;
@@ -19006,9 +19007,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongIntDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongIntDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongIntDictionary.LocateItem(const Key: String; var Value: LongInt): Integer;
@@ -19186,16 +19187,16 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: ALongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -19203,26 +19204,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongWordArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongWordDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TLongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongWordDictionaryA.Destroy;
@@ -19242,9 +19243,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongWordDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongWordDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongWordDictionaryA.GetHashTableSize: Integer;
@@ -19366,9 +19367,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongWordDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongWordDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongWordDictionaryA.LocateItem(const Key: AnsiString; var Value: LongWord): Integer;
@@ -19546,16 +19547,16 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: ALongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -19563,26 +19564,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongWordArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongWordDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TLongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongWordDictionaryB.Destroy;
@@ -19602,9 +19603,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongWordDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongWordDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongWordDictionaryB.GetHashTableSize: Integer;
@@ -19726,9 +19727,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongWordDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongWordDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongWordDictionaryB.LocateItem(const Key: RawByteString; var Value: LongWord): Integer;
@@ -19905,16 +19906,16 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: ALongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -19922,26 +19923,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongWordArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongWordDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TLongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongWordDictionaryU.Destroy;
@@ -19961,9 +19962,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongWordDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongWordDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongWordDictionaryU.GetHashTableSize: Integer;
@@ -20085,9 +20086,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongWordDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongWordDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongWordDictionaryU.LocateItem(const Key: UnicodeString; var Value: LongWord): Integer;
@@ -20264,16 +20265,16 @@ begin
 end;
 
 constructor TGeneralLongWordDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: ALongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -20281,26 +20282,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TLongWordArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TLongWordDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TLongWordArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralLongWordDictionary.Destroy;
@@ -20320,9 +20321,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralLongWordDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralLongWordDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralLongWordDictionary.GetHashTableSize: Integer;
@@ -20444,9 +20445,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralLongWordDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralLongWordDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralLongWordDictionary.LocateItem(const Key: String; var Value: LongWord): Integer;
@@ -20624,16 +20625,16 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -20641,26 +20642,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInt64Array.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInt64DictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInt64DictionaryA.Destroy;
@@ -20680,9 +20681,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInt64DictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInt64DictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInt64DictionaryA.GetHashTableSize: Integer;
@@ -20804,9 +20805,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInt64DictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInt64DictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInt64DictionaryA.LocateItem(const Key: AnsiString; var Value: Int64): Integer;
@@ -20984,16 +20985,16 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: AInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -21001,26 +21002,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInt64Array.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInt64DictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInt64DictionaryB.Destroy;
@@ -21040,9 +21041,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInt64DictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInt64DictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInt64DictionaryB.GetHashTableSize: Integer;
@@ -21164,9 +21165,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInt64DictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInt64DictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInt64DictionaryB.LocateItem(const Key: RawByteString; var Value: Int64): Integer;
@@ -21343,16 +21344,16 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -21360,26 +21361,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInt64Array.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInt64DictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInt64DictionaryU.Destroy;
@@ -21399,9 +21400,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInt64DictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInt64DictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInt64DictionaryU.GetHashTableSize: Integer;
@@ -21523,9 +21524,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInt64DictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInt64DictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInt64DictionaryU.LocateItem(const Key: UnicodeString; var Value: Int64): Integer;
@@ -21702,16 +21703,16 @@ begin
 end;
 
 constructor TGeneralInt64Dictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -21719,26 +21720,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInt64Array.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInt64Dictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TInt64Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInt64Dictionary.Destroy;
@@ -21758,9 +21759,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInt64Dictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInt64Dictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInt64Dictionary.GetHashTableSize: Integer;
@@ -21882,9 +21883,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInt64Dictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInt64Dictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInt64Dictionary.LocateItem(const Key: String; var Value: Int64): Integer;
@@ -22062,16 +22063,16 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: ASingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -22079,26 +22080,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TSingleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TSingleDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TSingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralSingleDictionaryA.Destroy;
@@ -22118,9 +22119,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralSingleDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralSingleDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralSingleDictionaryA.GetHashTableSize: Integer;
@@ -22242,9 +22243,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralSingleDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralSingleDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralSingleDictionaryA.LocateItem(const Key: AnsiString; var Value: Single): Integer;
@@ -22422,16 +22423,16 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: ASingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -22439,26 +22440,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TSingleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TSingleDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TSingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralSingleDictionaryB.Destroy;
@@ -22478,9 +22479,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralSingleDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralSingleDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralSingleDictionaryB.GetHashTableSize: Integer;
@@ -22602,9 +22603,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralSingleDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralSingleDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralSingleDictionaryB.LocateItem(const Key: RawByteString; var Value: Single): Integer;
@@ -22781,16 +22782,16 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: ASingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -22798,26 +22799,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TSingleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TSingleDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TSingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralSingleDictionaryU.Destroy;
@@ -22837,9 +22838,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralSingleDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralSingleDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralSingleDictionaryU.GetHashTableSize: Integer;
@@ -22961,9 +22962,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralSingleDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralSingleDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralSingleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Single): Integer;
@@ -23140,16 +23141,16 @@ begin
 end;
 
 constructor TGeneralSingleDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: ASingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -23157,26 +23158,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TSingleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TSingleDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TSingleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralSingleDictionary.Destroy;
@@ -23196,9 +23197,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralSingleDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralSingleDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralSingleDictionary.GetHashTableSize: Integer;
@@ -23320,9 +23321,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralSingleDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralSingleDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralSingleDictionary.LocateItem(const Key: String; var Value: Single): Integer;
@@ -23500,16 +23501,16 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: ADoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -23517,26 +23518,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TDoubleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TDoubleDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TDoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralDoubleDictionaryA.Destroy;
@@ -23556,9 +23557,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralDoubleDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralDoubleDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralDoubleDictionaryA.GetHashTableSize: Integer;
@@ -23680,9 +23681,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralDoubleDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralDoubleDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralDoubleDictionaryA.LocateItem(const Key: AnsiString; var Value: Double): Integer;
@@ -23860,16 +23861,16 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: ADoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -23877,26 +23878,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TDoubleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TDoubleDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TDoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralDoubleDictionaryB.Destroy;
@@ -23916,9 +23917,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralDoubleDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralDoubleDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralDoubleDictionaryB.GetHashTableSize: Integer;
@@ -24040,9 +24041,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralDoubleDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralDoubleDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralDoubleDictionaryB.LocateItem(const Key: RawByteString; var Value: Double): Integer;
@@ -24219,16 +24220,16 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: ADoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -24236,26 +24237,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TDoubleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TDoubleDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TDoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralDoubleDictionaryU.Destroy;
@@ -24275,9 +24276,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralDoubleDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralDoubleDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralDoubleDictionaryU.GetHashTableSize: Integer;
@@ -24399,9 +24400,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralDoubleDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralDoubleDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralDoubleDictionaryU.LocateItem(const Key: UnicodeString; var Value: Double): Integer;
@@ -24578,16 +24579,16 @@ begin
 end;
 
 constructor TGeneralDoubleDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: ADoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -24595,26 +24596,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TDoubleArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TDoubleDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TDoubleArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralDoubleDictionary.Destroy;
@@ -24634,9 +24635,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralDoubleDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralDoubleDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralDoubleDictionary.GetHashTableSize: Integer;
@@ -24758,9 +24759,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralDoubleDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralDoubleDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralDoubleDictionary.LocateItem(const Key: String; var Value: Double): Integer;
@@ -24938,16 +24939,16 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -24955,26 +24956,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TExtendedArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TExtendedDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralExtendedDictionaryA.Destroy;
@@ -24994,9 +24995,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralExtendedDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralExtendedDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralExtendedDictionaryA.GetHashTableSize: Integer;
@@ -25118,9 +25119,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralExtendedDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralExtendedDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralExtendedDictionaryA.LocateItem(const Key: AnsiString; var Value: Extended): Integer;
@@ -25298,16 +25299,16 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: AExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -25315,26 +25316,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TExtendedArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TExtendedDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralExtendedDictionaryB.Destroy;
@@ -25354,9 +25355,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralExtendedDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralExtendedDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralExtendedDictionaryB.GetHashTableSize: Integer;
@@ -25478,9 +25479,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralExtendedDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralExtendedDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralExtendedDictionaryB.LocateItem(const Key: RawByteString; var Value: Extended): Integer;
@@ -25657,16 +25658,16 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -25674,26 +25675,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TExtendedArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TExtendedDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralExtendedDictionaryU.Destroy;
@@ -25713,9 +25714,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralExtendedDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralExtendedDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralExtendedDictionaryU.GetHashTableSize: Integer;
@@ -25837,9 +25838,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralExtendedDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralExtendedDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralExtendedDictionaryU.LocateItem(const Key: UnicodeString; var Value: Extended): Integer;
@@ -26016,16 +26017,16 @@ begin
 end;
 
 constructor TGeneralExtendedDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -26033,26 +26034,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TExtendedArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TExtendedDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TExtendedArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralExtendedDictionary.Destroy;
@@ -26072,9 +26073,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralExtendedDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralExtendedDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralExtendedDictionary.GetHashTableSize: Integer;
@@ -26196,9 +26197,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralExtendedDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralExtendedDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralExtendedDictionary.LocateItem(const Key: String; var Value: Extended): Integer;
@@ -26376,16 +26377,16 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -26393,26 +26394,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TAnsiStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TAnsiStringDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralAnsiStringDictionaryA.Destroy;
@@ -26432,9 +26433,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralAnsiStringDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralAnsiStringDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralAnsiStringDictionaryA.GetHashTableSize: Integer;
@@ -26556,9 +26557,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralAnsiStringDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralAnsiStringDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralAnsiStringDictionaryA.LocateItem(const Key: AnsiString; var Value: AnsiString): Integer;
@@ -26735,16 +26736,16 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -26752,26 +26753,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TAnsiStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TAnsiStringDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralAnsiStringDictionaryU.Destroy;
@@ -26791,9 +26792,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralAnsiStringDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralAnsiStringDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralAnsiStringDictionaryU.GetHashTableSize: Integer;
@@ -26915,9 +26916,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralAnsiStringDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralAnsiStringDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralAnsiStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: AnsiString): Integer;
@@ -27094,16 +27095,16 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -27111,26 +27112,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TAnsiStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TAnsiStringDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TAnsiStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralAnsiStringDictionary.Destroy;
@@ -27150,9 +27151,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralAnsiStringDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralAnsiStringDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralAnsiStringDictionary.GetHashTableSize: Integer;
@@ -27274,9 +27275,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralAnsiStringDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralAnsiStringDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralAnsiStringDictionary.LocateItem(const Key: String; var Value: AnsiString): Integer;
@@ -27455,16 +27456,16 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: ARawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -27472,26 +27473,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TRawByteStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TRawByteStringDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TRawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralRawByteStringDictionaryA.Destroy;
@@ -27511,9 +27512,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralRawByteStringDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralRawByteStringDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralRawByteStringDictionaryA.GetHashTableSize: Integer;
@@ -27635,9 +27636,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralRawByteStringDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralRawByteStringDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralRawByteStringDictionaryA.LocateItem(const Key: AnsiString; var Value: RawByteString): Integer;
@@ -27815,16 +27816,16 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: ARawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -27832,26 +27833,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TRawByteStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TRawByteStringDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TRawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralRawByteStringDictionaryB.Destroy;
@@ -27871,9 +27872,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralRawByteStringDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralRawByteStringDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralRawByteStringDictionaryB.GetHashTableSize: Integer;
@@ -27995,9 +27996,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralRawByteStringDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralRawByteStringDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralRawByteStringDictionaryB.LocateItem(const Key: RawByteString; var Value: RawByteString): Integer;
@@ -28174,16 +28175,16 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: ARawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -28191,26 +28192,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TRawByteStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TRawByteStringDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TRawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralRawByteStringDictionaryU.Destroy;
@@ -28230,9 +28231,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralRawByteStringDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralRawByteStringDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralRawByteStringDictionaryU.GetHashTableSize: Integer;
@@ -28354,9 +28355,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralRawByteStringDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralRawByteStringDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralRawByteStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: RawByteString): Integer;
@@ -28533,16 +28534,16 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: ARawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -28550,26 +28551,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TRawByteStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TRawByteStringDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TRawByteStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralRawByteStringDictionary.Destroy;
@@ -28589,9 +28590,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralRawByteStringDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralRawByteStringDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralRawByteStringDictionary.GetHashTableSize: Integer;
@@ -28713,9 +28714,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralRawByteStringDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralRawByteStringDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralRawByteStringDictionary.LocateItem(const Key: String; var Value: RawByteString): Integer;
@@ -28893,16 +28894,16 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -28910,26 +28911,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TUnicodeStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TUnicodeStringDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralUnicodeStringDictionaryA.Destroy;
@@ -28949,9 +28950,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralUnicodeStringDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralUnicodeStringDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralUnicodeStringDictionaryA.GetHashTableSize: Integer;
@@ -29073,9 +29074,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralUnicodeStringDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralUnicodeStringDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralUnicodeStringDictionaryA.LocateItem(const Key: AnsiString; var Value: UnicodeString): Integer;
@@ -29253,16 +29254,16 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -29270,26 +29271,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TUnicodeStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TUnicodeStringDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralUnicodeStringDictionaryU.Destroy;
@@ -29309,9 +29310,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralUnicodeStringDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralUnicodeStringDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralUnicodeStringDictionaryU.GetHashTableSize: Integer;
@@ -29433,9 +29434,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralUnicodeStringDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralUnicodeStringDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralUnicodeStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: UnicodeString): Integer;
@@ -29612,16 +29613,16 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -29629,26 +29630,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TUnicodeStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TUnicodeStringDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TUnicodeStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralUnicodeStringDictionary.Destroy;
@@ -29668,9 +29669,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralUnicodeStringDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralUnicodeStringDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralUnicodeStringDictionary.GetHashTableSize: Integer;
@@ -29792,9 +29793,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralUnicodeStringDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralUnicodeStringDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralUnicodeStringDictionary.LocateItem(const Key: String; var Value: UnicodeString): Integer;
@@ -29972,16 +29973,16 @@ begin
 end;
 
 constructor TGeneralStringDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -29989,26 +29990,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TStringDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralStringDictionaryA.Destroy;
@@ -30028,9 +30029,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralStringDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralStringDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralStringDictionaryA.GetHashTableSize: Integer;
@@ -30152,9 +30153,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralStringDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralStringDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralStringDictionaryA.LocateItem(const Key: AnsiString; var Value: String): Integer;
@@ -30332,16 +30333,16 @@ begin
 end;
 
 constructor TGeneralStringDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -30349,26 +30350,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TStringDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralStringDictionaryU.Destroy;
@@ -30388,9 +30389,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralStringDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralStringDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralStringDictionaryU.GetHashTableSize: Integer;
@@ -30512,9 +30513,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralStringDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralStringDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralStringDictionaryU.LocateItem(const Key: UnicodeString; var Value: String): Integer;
@@ -30691,16 +30692,16 @@ begin
 end;
 
 constructor TGeneralStringDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -30708,26 +30709,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TStringArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TStringDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TStringArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralStringDictionary.Destroy;
@@ -30747,9 +30748,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralStringDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralStringDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralStringDictionary.GetHashTableSize: Integer;
@@ -30871,9 +30872,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralStringDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralStringDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralStringDictionary.LocateItem(const Key: String; var Value: String): Integer;
@@ -31051,16 +31052,16 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: APointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -31068,26 +31069,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TPointerArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TPointerDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TPointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralPointerDictionaryA.Destroy;
@@ -31107,9 +31108,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralPointerDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralPointerDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralPointerDictionaryA.GetHashTableSize: Integer;
@@ -31231,9 +31232,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralPointerDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralPointerDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralPointerDictionaryA.LocateItem(const Key: AnsiString; var Value: Pointer): Integer;
@@ -31411,16 +31412,16 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: APointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -31428,26 +31429,26 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TPointerArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TPointerDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TPointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralPointerDictionaryB.Destroy;
@@ -31467,9 +31468,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralPointerDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralPointerDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralPointerDictionaryB.GetHashTableSize: Integer;
@@ -31591,9 +31592,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralPointerDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralPointerDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralPointerDictionaryB.LocateItem(const Key: RawByteString; var Value: Pointer): Integer;
@@ -31770,16 +31771,16 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: APointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -31787,26 +31788,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TPointerArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TPointerDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TPointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralPointerDictionaryU.Destroy;
@@ -31826,9 +31827,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralPointerDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralPointerDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralPointerDictionaryU.GetHashTableSize: Integer;
@@ -31950,9 +31951,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralPointerDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralPointerDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralPointerDictionaryU.LocateItem(const Key: UnicodeString; var Value: Pointer): Integer;
@@ -32129,16 +32130,16 @@ begin
 end;
 
 constructor TGeneralPointerDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: APointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -32146,26 +32147,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TPointerArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TPointerDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TPointerArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralPointerDictionary.Destroy;
@@ -32185,9 +32186,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralPointerDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralPointerDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralPointerDictionary.GetHashTableSize: Integer;
@@ -32309,9 +32310,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralPointerDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralPointerDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralPointerDictionary.LocateItem(const Key: String; var Value: Pointer): Integer;
@@ -32489,16 +32490,16 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -32506,26 +32507,26 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInterfaceArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInterfaceDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInterfaceDictionaryA.Destroy;
@@ -32545,9 +32546,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInterfaceDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInterfaceDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInterfaceDictionaryA.GetHashTableSize: Integer;
@@ -32669,9 +32670,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInterfaceDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInterfaceDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInterfaceDictionaryA.LocateItem(const Key: AnsiString; var Value: IInterface): Integer;
@@ -32849,16 +32850,16 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -32866,26 +32867,26 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInterfaceArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInterfaceDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInterfaceDictionaryU.Destroy;
@@ -32905,9 +32906,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInterfaceDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInterfaceDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInterfaceDictionaryU.GetHashTableSize: Integer;
@@ -33029,9 +33030,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInterfaceDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInterfaceDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInterfaceDictionaryU.LocateItem(const Key: UnicodeString; var Value: IInterface): Integer;
@@ -33208,16 +33209,16 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -33225,26 +33226,26 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TInterfaceArray.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TInterfaceDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TInterfaceArray; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralInterfaceDictionary.Destroy;
@@ -33264,9 +33265,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralInterfaceDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralInterfaceDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralInterfaceDictionary.GetHashTableSize: Integer;
@@ -33388,9 +33389,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralInterfaceDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralInterfaceDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralInterfaceDictionary.LocateItem(const Key: String; var Value: IInterface): Integer;
@@ -33568,16 +33569,16 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryA.CreateEx(
-    const Keys: AAnsiStringArray;
-    const Values: AObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AAnsiStringArray;
+    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -33585,27 +33586,27 @@ begin
       FKeys := TAnsiStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TObjectArray.Create;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FValues.IsItemOwner := IsItemOwner;
-  FCaseSensitive := KeysCaseSensitive;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FValues.IsItemOwner := AIsItemOwner;
+  FCaseSensitive := AKeysCaseSensitive;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TObjectDictionaryA.CreateEx(
-    const Keys: TAnsiStringArray;
-    const Values: TObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TAnsiStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, IsItemOwner, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AIsItemOwner, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralObjectDictionaryA.Destroy;
@@ -33625,9 +33626,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralObjectDictionaryA.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralObjectDictionaryA.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralObjectDictionaryA.GetHashTableSize: Integer;
@@ -33640,9 +33641,9 @@ begin
   Result := FValues.IsItemOwner;
 end;
 
-procedure TGeneralObjectDictionaryA.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TGeneralObjectDictionaryA.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FValues.IsItemOwner := IsItemOwner;
+  FValues.IsItemOwner := AIsItemOwner;
 end;
 
 procedure TGeneralObjectDictionaryA.Rehash;
@@ -33759,9 +33760,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralObjectDictionaryA.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralObjectDictionaryA.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralObjectDictionaryA.LocateItem(const Key: AnsiString; var Value: TObject): Integer;
@@ -33963,16 +33964,16 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryB.CreateEx(
-    const Keys: ARawByteStringArray;
-    const Values: AObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: ARawByteStringArray;
+    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -33980,27 +33981,27 @@ begin
       FKeys := TRawByteStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TObjectArray.Create;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FValues.IsItemOwner := IsItemOwner;
-  FCaseSensitive := KeysCaseSensitive;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FValues.IsItemOwner := AIsItemOwner;
+  FCaseSensitive := AKeysCaseSensitive;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TObjectDictionaryB.CreateEx(
-    const Keys: TRawByteStringArray;
-    const Values: TObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TRawByteStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, IsItemOwner, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AIsItemOwner, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralObjectDictionaryB.Destroy;
@@ -34020,9 +34021,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralObjectDictionaryB.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralObjectDictionaryB.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralObjectDictionaryB.GetHashTableSize: Integer;
@@ -34035,9 +34036,9 @@ begin
   Result := FValues.IsItemOwner;
 end;
 
-procedure TGeneralObjectDictionaryB.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TGeneralObjectDictionaryB.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FValues.IsItemOwner := IsItemOwner;
+  FValues.IsItemOwner := AIsItemOwner;
 end;
 
 procedure TGeneralObjectDictionaryB.Rehash;
@@ -34154,9 +34155,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralObjectDictionaryB.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralObjectDictionaryB.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralObjectDictionaryB.LocateItem(const Key: RawByteString; var Value: TObject): Integer;
@@ -34357,16 +34358,16 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryU.CreateEx(
-    const Keys: AUnicodeStringArray;
-    const Values: AObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AUnicodeStringArray;
+    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -34374,27 +34375,27 @@ begin
       FKeys := TUnicodeStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TObjectArray.Create;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FValues.IsItemOwner := IsItemOwner;
-  FCaseSensitive := KeysCaseSensitive;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FValues.IsItemOwner := AIsItemOwner;
+  FCaseSensitive := AKeysCaseSensitive;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TObjectDictionaryU.CreateEx(
-    const Keys: TUnicodeStringArray;
-    const Values: TObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TUnicodeStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, IsItemOwner, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AIsItemOwner, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralObjectDictionaryU.Destroy;
@@ -34414,9 +34415,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralObjectDictionaryU.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralObjectDictionaryU.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralObjectDictionaryU.GetHashTableSize: Integer;
@@ -34429,9 +34430,9 @@ begin
   Result := FValues.IsItemOwner;
 end;
 
-procedure TGeneralObjectDictionaryU.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TGeneralObjectDictionaryU.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FValues.IsItemOwner := IsItemOwner;
+  FValues.IsItemOwner := AIsItemOwner;
 end;
 
 procedure TGeneralObjectDictionaryU.Rehash;
@@ -34548,9 +34549,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralObjectDictionaryU.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralObjectDictionaryU.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralObjectDictionaryU.LocateItem(const Key: UnicodeString; var Value: TObject): Integer;
@@ -34751,16 +34752,16 @@ begin
 end;
 
 constructor TGeneralObjectDictionary.CreateEx(
-    const Keys: AStringArray;
-    const Values: AObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: AStringArray;
+    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -34768,27 +34769,27 @@ begin
       FKeys := TStringArray.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TObjectArray.Create;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FValues.IsItemOwner := IsItemOwner;
-  FCaseSensitive := KeysCaseSensitive;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FValues.IsItemOwner := AIsItemOwner;
+  FCaseSensitive := AKeysCaseSensitive;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TObjectDictionary.CreateEx(
-    const Keys: TStringArray;
-    const Values: TObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: TStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, IsItemOwner, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AIsItemOwner, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 
 destructor TGeneralObjectDictionary.Destroy;
@@ -34808,9 +34809,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneralObjectDictionary.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneralObjectDictionary.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneralObjectDictionary.GetHashTableSize: Integer;
@@ -34823,9 +34824,9 @@ begin
   Result := FValues.IsItemOwner;
 end;
 
-procedure TGeneralObjectDictionary.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TGeneralObjectDictionary.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FValues.IsItemOwner := IsItemOwner;
+  FValues.IsItemOwner := AIsItemOwner;
 end;
 
 procedure TGeneralObjectDictionary.Rehash;
@@ -34942,9 +34943,9 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneralObjectDictionary.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneralObjectDictionary.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneralObjectDictionary.LocateItem(const Key: String; var Value: TObject): Integer;
@@ -35936,10 +35937,10 @@ end;
 {                                                                              }
 { TSparseObjectArray                                                           }
 {                                                                              }
-constructor TSparseObjectArray.Create(const IsItemOwner: Boolean);
+constructor TSparseObjectArray.Create(const AIsItemOwner: Boolean);
 begin
   inherited Create;
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
 end;
 
 destructor TSparseObjectArray.Destroy;

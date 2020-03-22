@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.39                                                     }
+{   File version:     5.41                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -166,11 +166,18 @@
 {   2016/01/16  5.37  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.38  Int32/Word32 arrays.                                     }
 {   2018/08/12  5.39  String type changes.                                     }
+{   2019/04/02  5.40  Integer/Cardinal array changes.                          }
+{   2020/03/22  5.41  Rename parameters to avoid conflict with properties.     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE7 Win32                    5.37  2016/01/16                       }
-{   Delphi XE7 Win64                    5.37  2016/01/16                       }
+{   Delphi 7 Win32                      5.39  2019/02/24                       }
+{   Delphi XE2 Win32                    5.39  2019/03/02                       }
+{   Delphi XE2 Win64                    5.39  2019/03/02                       }
+{   Delphi XE3 Win32                    5.39  2019/03/02                       }
+{   Delphi XE3 Win64                    5.39  2019/03/02                       }
+{   Delphi XE7 Win32                    5.39  2019/03/02                       }
+{   Delphi XE7 Win64                    5.39  2019/03/02                       }
 {                                                                              }
 {*******************************************************************************}
 
@@ -334,8 +341,8 @@ type
     procedure RemoveDuplicates(const IsSortedAscending: Boolean); virtual;
 
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; virtual; abstract;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); virtual; abstract;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); virtual; abstract;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); virtual; abstract;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); virtual; abstract;
     function  AppendArray(const V: AArray): Integer; overload; virtual; abstract;
   end;
   EArray = class(EType);
@@ -373,13 +380,13 @@ type
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;{%ENDIF}
     function  AppendArray(const V: AArray): Integer; overload; override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     {-A%1%Array interface                                                      }
     property  Item[const Idx: Integer]: %3% read GetItem write SetItem; default;
     property  Range[const LoIdx, HiIdx: Integer]: %1%Array read GetRange write SetRange;
-    procedure Fill(const Idx, Count: Integer; const Value: %3%); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: %3%); virtual;
     function  AppendItem(const Value: %3%): Integer; virtual;
     function  AppendArray(const V: %1%Array): Integer; overload; virtual;
     function  PosNext(const Find: %3%; const PrevPos: Integer = -1{%IF 2};
@@ -443,7 +450,7 @@ type
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: ObjectArray); virtual;
     function  GetAsString: String; override;
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;
 
   public
     { AType                                                                    }
@@ -456,7 +463,7 @@ type
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
     function  AppendArray(const V: AArray): Integer; overload; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AObjectArray interface                                                   }
     property  Item[const Idx: Integer]: TObject read GetItem write SetItem; default;
@@ -465,14 +472,14 @@ type
     function  AppendArray(const V: ObjectArray): Integer; overload; virtual;
 
     function  PosNext(const Find: TObject; const PrevPos: Integer): Integer; overload;
-    function  PosNext(var Item: TObject; const ClassType: TClass; const PrevPos: Integer = -1): Integer; overload;
-    function  PosNext(var Item: TObject; const ClassName: String; const PrevPos: Integer = -1): Integer; overload;
-    function  Find(const ClassType: TClass; const Count: Integer = 1): TObject; overload;
-    function  Find(const ClassName: String; const Count: Integer = 1): TObject; overload;
-    function  FindAll(const ClassType: TClass): ObjectArray; overload;
-    function  FindAll(const ClassName: String): ObjectArray; overload;
-    function  CountItems(const ClassType: TClass): Integer; overload;
-    function  CountItems(const ClassName: String): Integer; overload;
+    function  PosNext(var AItem: TObject; const AClassType: TClass; const PrevPos: Integer = -1): Integer; overload;
+    function  PosNext(var AItem: TObject; const AClassName: String; const PrevPos: Integer = -1): Integer; overload;
+    function  Find(const AClassType: TClass; const ACount: Integer = 1): TObject; overload;
+    function  Find(const AClassName: String; const ACount: Integer = 1): TObject; overload;
+    function  FindAll(const AClassType: TClass): ObjectArray; overload;
+    function  FindAll(const AClassName: String): ObjectArray; overload;
+    function  CountItems(const AClassType: TClass): Integer; overload;
+    function  CountItems(const AClassName: String): Integer; overload;
     function  DeleteValue(const Value: TObject): Boolean;
     function  DeleteAll(const Value: TObject): Integer;
 
@@ -509,8 +516,8 @@ type
     function  IsEqual(const V: TObject): Boolean; override;
 
     { AArray                                                                   }
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendArray(const V: AArray): Integer; override;
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
@@ -520,7 +527,7 @@ type
     property  Bit[const Idx: Integer]: Boolean read GetBit write SetBit; default;
     property  RangeL[const Idx: Integer]: LongWord read GetRangeL write SetRangeL;
     function  IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean; virtual;
-    procedure Fill(const Idx, Count: Integer; const Value: Boolean); virtual;
+    procedure Fill(const Idx, ACount: Integer; const Value: Boolean); virtual;
     function  AppendItem(const Value: Boolean): Integer; virtual;
     procedure Invert; virtual;
 
@@ -528,7 +535,7 @@ type
               const Start: Integer = 0): Integer; virtual;
     function  FindRange(const Value: Boolean = False;
               const Start: Integer = 0;
-              const Count: Integer = 1): Integer; virtual;
+              const ACount: Integer = 1): Integer; virtual;
   end;
 
 
@@ -560,7 +567,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: %2%); override;
     function  GetRange(const LoIdx, HiIdx: Integer): %1%Array; override;
     procedure SetRange(const LoIdx, HiIdx: Integer; const V: %1%Array); override;
-    procedure SetData(const Data: %1%Array); virtual;
+    procedure SetData(const AData: %1%Array); virtual;
 
   public
     constructor Create(const V: %1%Array = nil); overload;
@@ -571,8 +578,8 @@ type
     { AArray                                                                   }
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { A%1%Array                                                            }
     procedure Assign(const V: %1%Array); overload;
@@ -639,7 +646,7 @@ type
     FIsItemOwner : Boolean;
 
     procedure Init; override;
-    procedure SetData(const Data: ObjectArray); virtual;
+    procedure SetData(const AData: ObjectArray); virtual;
 
     { AArray                                                                   }
     function  GetCount: Integer; override;
@@ -650,12 +657,12 @@ type
     procedure SetItem(const Idx: Integer; const Value: TObject); override;
     function  GetRange(const LoIdx, HiIdx: Integer): ObjectArray; override;
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
 
   public
     { TObjectArray interface                                                   }
     constructor Create(const V: ObjectArray = nil;
-                const IsItemOwner: Boolean = False); reintroduce; overload;
+                const AIsItemOwner: Boolean = False); reintroduce; overload;
     destructor Destroy; override;
 
     property  Data: ObjectArray read FData write SetData;
@@ -667,8 +674,8 @@ type
 
     { AArray                                                                   }
     function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
     { AObjectArray                                                             }
     function  AppendItem(const Value: TObject): Integer; override;
@@ -721,17 +728,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: AnsiString); override;
-    procedure SetData(const Data: AnsiStringArray); override;
+    procedure SetData(const AData: AnsiStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: AnsiString): Integer; override;
 
     function  PosNext(const Find: AnsiString; const PrevPos: Integer = -1): Integer;
@@ -756,17 +763,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: RawByteString); override;
-    procedure SetData(const Data: RawByteStringArray); override;
+    procedure SetData(const AData: RawByteStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: RawByteString): Integer; override;
 
     function  PosNext(const Find: RawByteString; const PrevPos: Integer = -1): Integer;
@@ -790,17 +797,17 @@ type
 
     procedure Init; override;
     procedure SetItem(const Idx: Integer; const Value: UnicodeString); override;
-    procedure SetData(const Data: UnicodeStringArray); override;
+    procedure SetData(const AData: UnicodeStringArray); override;
 
   public
-    constructor Create(const CaseSensitive: Boolean = True);
+    constructor Create(const ACaseSensitive: Boolean = True);
 
     procedure Assign(const Source: TObject); override;
     procedure Clear; override;
 
     procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    procedure Delete(const Idx: Integer; const Count: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const Count: Integer = 1); override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
     function  AppendItem(const Value: UnicodeString): Integer; override;
 
     function  PosNext(const Find: UnicodeString; const PrevPos: Integer = -1): Integer;
@@ -828,7 +835,7 @@ type
     function  GetAsString: String; override;
 
     function  GetAddOnSet: Boolean; virtual; abstract;
-    procedure SetAddOnSet(const AddOnSet: Boolean); virtual; abstract;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); virtual; abstract;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; virtual; abstract;
     procedure SetDuplicatesAction(const Value: TDictionaryDuplicatesAction); virtual; abstract;
 
@@ -898,7 +905,7 @@ type
     procedure SetItem(const Key: %6%; const Value: %2%); virtual; abstract;{%IF 8}
 
     function  GetIsItemOwner: Boolean; virtual; abstract;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); virtual; abstract;{%ENDIF}
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); virtual; abstract;{%ENDIF}
 
   public
     { AType                                                                    }
@@ -1054,7 +1061,7 @@ type
     FAddOnSet         : Boolean;
     FDuplicatesAction : TDictionaryDuplicatesAction;
 
-    function  LocateKey(const Key: %5%; var LookupIdx: Integer;
+    function  LocateKey(const Key: %5%; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; virtual;
     procedure DeleteByIndex(const Idx: Integer; const Hash: Integer = -1);
     procedure Rehash;
@@ -1064,25 +1071,25 @@ type
     { ADictionary                                                              }
     function  GetKeysCaseSensitive: Boolean; override;
     function  GetAddOnSet: Boolean; override;
-    procedure SetAddOnSet(const AddOnSet: Boolean); override;
+    procedure SetAddOnSet(const AAddOnSet: Boolean); override;
     function  GetDuplicatesAction: TDictionaryDuplicatesAction; override;
-    procedure SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction); override;
+    procedure SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction); override;
 
     { A%1%Dictionary                                                    }{%IF 3}
     function  GetIsItemOwner: Boolean; override;
-    procedure SetIsItemOwner(const IsItemOwner: Boolean); override;
+    procedure SetIsItemOwner(const AIsItemOwner: Boolean); override;
     {%ENDIF}
     procedure SetItem(const Key: %5%; const Value: %2%); override;
 
   public
     { TGeneral%1%Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const Keys: A%5%Array = nil;
-                const Values: A%1%Array = nil;{%IF 3}
-                const IsItemOwner: Boolean = False;{%ENDIF}
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: A%5%Array = nil;
+                const AValues: A%1%Array = nil;{%IF 3}
+                const AIsItemOwner: Boolean = False;{%ENDIF}
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
     property  Keys: A%5%Array read FKeys;
@@ -1116,16 +1123,16 @@ type
   T%1%Dictionary%4% = class(TGeneral%1%Dictionary%4%)
   protected
     function  GetItem(const Key: %5%): %2%; override;
-    function  LocateKey(const Key: %5%; var LookupIdx: Integer;
+    function  LocateKey(const Key: %5%; var LookupIdx: Word32;
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const Keys: T%5%Array = nil;
-                const Values: T%1%Array = nil;{%IF 3}
-                const IsItemOwner: Boolean = False;{%ENDIF}
-                const KeysCaseSensitive: Boolean = True;
-                const AddOnSet: Boolean = True;
-                const DuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
+    constructor CreateEx(const AKeys: T%5%Array = nil;
+                const AValues: T%1%Array = nil;{%IF 3}
+                const AIsItemOwner: Boolean = False;{%ENDIF}
+                const AKeysCaseSensitive: Boolean = True;
+                const AAddOnSet: Boolean = True;
+                const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
 
     function  LocateItem(const Key: %5%; var Value: %2%): Integer; override;
   end;
@@ -1461,7 +1468,7 @@ type
     procedure SetItem(const Idx: Integer; const Value: TObject);
 
   public
-    constructor Create(const IsItemOwner: Boolean = False);
+    constructor Create(const AIsItemOwner: Boolean = False);
     destructor Destroy; override;
 
     procedure Assign(const Source: TObject); override;
@@ -2072,10 +2079,10 @@ begin
     Item[L + I] := V[I];
 end;
 
-procedure A%1%Array.Fill(const Idx, Count: Integer; const Value: %2%);
+procedure A%1%Array.Fill(const Idx, ACount: Integer; const Value: %2%);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Item[I] := Value;
 end;
 
@@ -2206,31 +2213,31 @@ begin
     raise E%1%Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
 end;
 
-procedure A%1%Array.Delete(const Idx: Integer; const Count: Integer);
+procedure A%1%Array.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + Count));
+        SetItem(I, GetItem(I + ACount));
       SetCount(C - L);
     end;
 end;
 
-procedure A%1%Array.Insert(const Idx: Integer; const Count: Integer);
+procedure A%1%Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     exit;
   C := GetCount;
-  SetCount(C + Count);
+  SetCount(C + ACount);
   J := MinInt(MaxInt(Idx, 0), C);
   L := C - J;
   for I := C - 1 downto C - L do
-    SetItem(I + Count, GetItem(I));
+    SetItem(I + ACount, GetItem(I));
 end;
 {%ENDDEF}
 {%TEMPLATE ATypeArrayImpl  'Int32'         'Int32'         ''              ''              '0'    ''         ''           'IntToStr'     'StrToInt'        }
@@ -2415,16 +2422,16 @@ begin
 end;
 {$IFDEF DEBUG}{$IFNDEF FREEPASCAL}{$WARNINGS ON}{$ENDIF}{$ENDIF}
 
-procedure AObjectArray.Delete(const Idx, Count: Integer);
+procedure AObjectArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   J := MaxInt(Idx, 0);
   C := GetCount;
-  L := MinInt(Count, C - J);
+  L := MinInt(ACount, C - J);
   if L > 0 then
     begin
       for I := J to J + C - 1 do
-        SetItem(Idx + I, GetItem(Idx + Count + I));
+        SetItem(Idx + I, GetItem(Idx + ACount + I));
       SetCount(C - L);
     end;
 end;
@@ -2441,115 +2448,115 @@ begin
   Result := -1;
 end;
 
-function AObjectArray.PosNext(var Item: TObject; const ClassType: TClass;
+function AObjectArray.PosNext(var AItem: TObject; const AClassType: TClass;
     const PrevPos: Integer): Integer;
 var I : Integer;
 begin
   for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
     begin
-      Item := GetItem(I);
-      if Item.InheritsFrom(ClassType) then
+      AItem := GetItem(I);
+      if AItem.InheritsFrom(AClassType) then
         begin
           Result := I;
           exit;
         end;
     end;
-  Item := nil;
+  AItem := nil;
   Result := -1;
 end;
 
-function AObjectArray.PosNext(var Item: TObject; const ClassName: String;
+function AObjectArray.PosNext(var AItem: TObject; const AClassName: String;
     const PrevPos: Integer): Integer;
 var I : Integer;
 begin
   for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
     begin
-      Item := GetItem(I);
-      if Assigned(Item) and Item.ClassNameIs(ClassName) then
+      AItem := GetItem(I);
+      if Assigned(AItem) and AItem.ClassNameIs(AClassName) then
         begin
           Result := I;
           exit;
         end;
     end;
-  Item := nil;
+  AItem := nil;
   Result := -1;
 end;
 
-function AObjectArray.Find(const ClassType: TClass; const Count: Integer): TObject;
+function AObjectArray.Find(const AClassType: TClass; const ACount: Integer): TObject;
 var I, J : Integer;
 begin
   Result := nil;
   I := -1;
-  for J := 1 to Count do
+  for J := 1 to ACount do
     begin
-      I := PosNext(Result, ClassType, I);
+      I := PosNext(Result, AClassType, I);
       if I = -1 then
         break;
     end;
 end;
 
-function AObjectArray.Find(const ClassName: String; const Count: Integer): TObject;
+function AObjectArray.Find(const AClassName: String; const ACount: Integer): TObject;
 var I, J : Integer;
 begin
   Result := nil;
   I := -1;
-  for J := 1 to Count do
+  for J := 1 to ACount do
     begin
-      I := PosNext(Result, ClassName, I);
+      I := PosNext(Result, AClassName, I);
       if I = -1 then
         break;
     end;
 end;
 
-function AObjectArray.FindAll(const ClassType: TClass): ObjectArray;
+function AObjectArray.FindAll(const AClassType: TClass): ObjectArray;
 var I : Integer;
     V : TObject;
 begin
   SetLength(Result, 0);
-  I := PosNext(V, ClassType);
+  I := PosNext(V, AClassType);
   while I >= 0 do
     begin
       DynArrayAppend(Result, V);
-      I := PosNext(V, ClassType, I);
+      I := PosNext(V, AClassType, I);
     end;
 end;
 
-function AObjectArray.FindAll(const ClassName: String): ObjectArray;
+function AObjectArray.FindAll(const AClassName: String): ObjectArray;
 var I : Integer;
     V : TObject;
 begin
   SetLength(Result, 0);
-  I := PosNext(V, ClassName);
+  I := PosNext(V, AClassName);
   while I >= 0 do
     begin
       DynArrayAppend(Result, V);
-      I := PosNext(V, ClassName, I);
+      I := PosNext(V, AClassName, I);
     end;
 end;
 
-function AObjectArray.CountItems(const ClassType: TClass): Integer;
+function AObjectArray.CountItems(const AClassType: TClass): Integer;
 var I : Integer;
     V : TObject;
 begin
   Result := 0;
-  I := PosNext(V, ClassType);
+  I := PosNext(V, AClassType);
   while I >= 0 do
     begin
       Inc(Result);
-      I := PosNext(V, ClassType, I);
+      I := PosNext(V, AClassType, I);
     end;
 end;
 
-function AObjectArray.CountItems(const ClassName: String): Integer;
+function AObjectArray.CountItems(const AClassName: String): Integer;
 var I : Integer;
     V : TObject;
 begin
   Result := 0;
-  I := PosNext(V, ClassName);
+  I := PosNext(V, AClassName);
   while I >= 0 do
     begin
       Inc(Result);
-      I := PosNext(V, ClassName, I);
+      I := PosNext(V, AClassName, I);
     end;
 end;
 
@@ -2629,10 +2636,10 @@ begin
     end;
 end;
 
-procedure ABitArray.Fill(const Idx, Count: Integer; const Value: Boolean);
+procedure ABitArray.Fill(const Idx, ACount: Integer; const Value: Boolean);
 var I : Integer;
 begin
-  for I := Idx to Idx + Count - 1 do
+  for I := Idx to Idx + ACount - 1 do
     Bit[I] := Value;
 end;
 
@@ -2732,10 +2739,10 @@ begin
 end;
 
 function ABitArray.FindRange(const Value: Boolean; const Start: Integer;
-    const Count: Integer): Integer;
+    const ACount: Integer): Integer;
 var I, C, F : Integer;
 begin
-  if Count <= 0 then
+  if ACount <= 0 then
     begin
       Result := -1;
       exit;
@@ -2750,7 +2757,7 @@ begin
     if Bit[I + F] = Value then
       begin
         Inc(F);
-        if F = Count then
+        if F = ACount then
           begin
             Result := I;
             exit;
@@ -2764,20 +2771,20 @@ begin
   Result := -1;
 end;
 
-procedure ABitArray.Delete(const Idx: Integer; const Count: Integer);
+procedure ABitArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
-  if (Idx < 0) or (Idx + Count > C) then
+  if (Idx < 0) or (Idx + ACount > C) then
     RaiseIndexError(Idx);
   {$ENDIF}
-  for I := Idx + Count to C - 1 do
-    SetBit(I - Count, GetBit(I));
-  SetCount(C - Count);
+  for I := Idx + ACount to C - 1 do
+    SetBit(I - ACount, GetBit(I));
+  SetCount(C - ACount);
 end;
 
-procedure ABitArray.Insert(const Idx: Integer; const Count: Integer);
+procedure ABitArray.Insert(const Idx: Integer; const ACount: Integer);
 var I, C : Integer;
 begin
   C := GetCount;
@@ -2785,10 +2792,10 @@ begin
   if (Idx < 0) or (Idx > C) then
     RaiseIndexError(Idx);
   {$ENDIF}
-  SetCount(C + Count);
+  SetCount(C + ACount);
   for I := Idx to C - 1 do
-    SetBit(I + Count, GetBit(I));
-  Fill(Idx, Idx + Count - 1, False);
+    SetBit(I + ACount, GetBit(I));
+  Fill(Idx, Idx + ACount - 1, False);
 end;
 
 function ABitArray.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
@@ -2908,22 +2915,22 @@ begin
   FData[Result] := Value;
 end;
 
-procedure T%1%Array.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure T%1%Array.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove%4%(FData, Idx, Count);
+  N := DynArrayRemove%4%(FData, Idx, ACount);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure T%1%Array.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure T%1%Array.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert%4%(FData, Idx, Count);
+  I := DynArrayInsert%4%(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -2953,9 +2960,9 @@ begin
   SetData(V);
 end;
 
-procedure T%1%Array.SetData(const Data: %1%Array);
+procedure T%1%Array.SetData(const AData: %1%Array);
 begin
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -3018,11 +3025,11 @@ end;
 {                                                                              }
 { TObjectArray                                                                 }
 {                                                                              }
-constructor TObjectArray.Create(const V: ObjectArray; const IsItemOwner: Boolean);
+constructor TObjectArray.Create(const V: ObjectArray; const AIsItemOwner: Boolean);
 begin
   inherited Create;
   FData := V;
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -3060,9 +3067,9 @@ begin
   Result := FIsItemOwner;
 end;
 
-procedure TObjectArray.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TObjectArray.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
 end;
 
 function TObjectArray.GetCount: Integer;
@@ -3149,11 +3156,11 @@ begin
   Result := Copy(FData, LoIdx, MinInt(HiIdx, FCount - 1) - LoIdx + 1);
 end;
 
-procedure TObjectArray.SetData(const Data: ObjectArray);
+procedure TObjectArray.SetData(const AData: ObjectArray);
 begin
   if FIsItemOwner then
     FreeItems;
-  FData := Data;
+  FData := AData;
   FCount := Length(FData);
   FCapacity := FCount;
 end;
@@ -3172,22 +3179,22 @@ begin
     end;
 end;
 
-procedure TObjectArray.Delete(const Idx: Integer; const Count: Integer = 1);
+procedure TObjectArray.Delete(const Idx: Integer; const ACount: Integer = 1);
 var N : Integer;
 begin
-  N := DynArrayRemove(FData, Idx, Count, FIsItemOwner);
+  N := DynArrayRemove(FData, Idx, ACount, FIsItemOwner);
   Dec(FCapacity, N);
   Dec(FCount, N);
 end;
 
-procedure TObjectArray.Insert(const Idx: Integer; const Count: Integer = 1);
+procedure TObjectArray.Insert(const Idx: Integer; const ACount: Integer = 1);
 var I : Integer;
 begin
-  I := DynArrayInsert(FData, Idx, Count);
+  I := DynArrayInsert(FData, Idx, ACount);
   if I >= 0 then
     begin
-      Inc(FCapacity, Count);
-      Inc(FCount, Count);
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
     end;
 end;
 
@@ -3384,10 +3391,10 @@ end;
 {                                                                              }
 { THashedAnsiStringArray                                                       }
 {                                                                              }
-constructor THashedAnsiStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedAnsiStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedAnsiStringArray.Init;
@@ -3457,16 +3464,16 @@ begin
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedAnsiStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedAnsiStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -3477,17 +3484,17 @@ begin
       end;
 end;
 
-procedure THashedAnsiStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedAnsiStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedAnsiStringArray.SetData(const Data: AnsiStringArray);
+procedure THashedAnsiStringArray.SetData(const AData: AnsiStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -3569,10 +3576,10 @@ end;
 {                                                                              }
 { THashedRawByteStringArray                                                    }
 {                                                                              }
-constructor THashedRawByteStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedRawByteStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedRawByteStringArray.Init;
@@ -3637,21 +3644,21 @@ begin
   // Swap lookup
   if LocateItemHash(FData[Idx1], L1, I1) and
      LocateItemHash(FData[Idx2], L2, I2) then
-    Swap(FLookup[L1][I1], FLookup[L2][I2]);
+    SwapInt(FLookup[L1][I1], FLookup[L2][I2]);
   // Swap array items
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedRawByteStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedRawByteStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -3662,17 +3669,17 @@ begin
       end;
 end;
 
-procedure THashedRawByteStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedRawByteStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedRawByteStringArray.SetData(const Data: RawByteStringArray);
+procedure THashedRawByteStringArray.SetData(const AData: RawByteStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -3753,10 +3760,10 @@ end;
 {                                                                              }
 { THashedUnicodeStringArray                                                    }
 {                                                                              }
-constructor THashedUnicodeStringArray.Create(const CaseSensitive: Boolean);
+constructor THashedUnicodeStringArray.Create(const ACaseSensitive: Boolean);
 begin
   inherited Create(nil);
-  FCaseSensitive := CaseSensitive;
+  FCaseSensitive := ACaseSensitive;
 end;
 
 procedure THashedUnicodeStringArray.Init;
@@ -3821,21 +3828,21 @@ begin
   // Swap lookup
   if LocateItemHash(FData[Idx1], L1, I1) and
      LocateItemHash(FData[Idx2], L2, I2) then
-    Swap(FLookup[L1][I1], FLookup[L2][I2]);
+    SwapInt(FLookup[L1][I1], FLookup[L2][I2]);
   // Swap array items
   inherited ExchangeItems(Idx1, Idx2);
 end;
 
-procedure THashedUnicodeStringArray.Delete(const Idx: Integer; const Count: Integer);
+procedure THashedUnicodeStringArray.Delete(const Idx: Integer; const ACount: Integer);
 var I, L, V : Integer;
     P : PInteger;
 begin
   // Delete lookup
-  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + Count - 1) do
+  for I := MaxInt(0, Idx) to MinInt(FCount, Idx + ACount - 1) do
     if LocateItemHash(FData[I], L, V) then
       DynArrayRemove(FLookup[L], V, 1);
   // Delete array
-  inherited Delete(Idx, Count);
+  inherited Delete(Idx, ACount);
   // Reindex
   for I := 0 to Length(FLookup) - 1 do
     for V := 0 to Length(FLookup[I]) - 1 do
@@ -3846,17 +3853,17 @@ begin
       end;
 end;
 
-procedure THashedUnicodeStringArray.Insert(const Idx: Integer; const Count: Integer);
+procedure THashedUnicodeStringArray.Insert(const Idx: Integer; const ACount: Integer);
 begin
   // Insert array
-  inherited Insert(Idx, Count);
+  inherited Insert(Idx, ACount);
   // Rebuild hash table
   Rehash;
 end;
 
-procedure THashedUnicodeStringArray.SetData(const Data: UnicodeStringArray);
+procedure THashedUnicodeStringArray.SetData(const AData: UnicodeStringArray);
 begin
-  inherited SetData(Data);
+  inherited SetData(AData);
   Rehash;
 end;
 
@@ -4208,16 +4215,16 @@ end;
 
 {%DEFINE ObjectDictionaryConstructor}
 constructor TGeneralObjectDictionary%2%.CreateEx(
-    const Keys: A%3%Array;
-    const Values: AObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: A%3%Array;
+    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -4225,41 +4232,41 @@ begin
       FKeys := T%3%Array.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := TObjectArray.Create;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FValues.IsItemOwner := IsItemOwner;
-  FCaseSensitive := KeysCaseSensitive;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FValues.IsItemOwner := AIsItemOwner;
+  FCaseSensitive := AKeysCaseSensitive;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor TObjectDictionary%2%.CreateEx(
-    const Keys: T%3%Array;
-    const Values: TObjectArray; const IsItemOwner: Boolean;
-    const KeysCaseSensitive: Boolean; const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: T%3%Array;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
+    const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, IsItemOwner, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AIsItemOwner, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 {%ENDDEF}
 {%DEFINE TTypeDictionaryConstructor}
 constructor TGeneral%1%Dictionary%2%.CreateEx(
-    const Keys: A%3%Array;
-    const Values: A%1%Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: A%3%Array;
+    const AValues: A%1%Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
 begin
   inherited Create;
-  if Assigned(Keys) then
+  if Assigned(AKeys) then
     begin
-      FKeys := Keys;
+      FKeys := AKeys;
       L := FKeys.Count;
     end
   else
@@ -4267,26 +4274,26 @@ begin
       FKeys := T%3%Array.Create;
       L := 0;
     end;
-  if Assigned(Values) then
-    FValues := Values
+  if Assigned(AValues) then
+    FValues := AValues
   else
     FValues := T%1%Array.Create;
-  FCaseSensitive := KeysCaseSensitive;
+  FCaseSensitive := AKeysCaseSensitive;
   FValues.Count := L;
-  FAddOnSet := AddOnSet;
-  FDuplicatesAction := DuplicatesAction;
+  FAddOnSet := AAddOnSet;
+  FDuplicatesAction := ADuplicatesAction;
   if L > 0 then
     Rehash;
 end;
 
 constructor T%1%Dictionary%2%.CreateEx(
-    const Keys: T%3%Array;
-    const Values: T%1%Array; const KeysCaseSensitive: Boolean;
-    const AddOnSet: Boolean;
-    const DuplicatesAction: TDictionaryDuplicatesAction);
+    const AKeys: T%3%Array;
+    const AValues: T%1%Array; const AKeysCaseSensitive: Boolean;
+    const AAddOnSet: Boolean;
+    const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  inherited CreateEx(Keys, Values, KeysCaseSensitive, AddOnSet,
-      DuplicatesAction);
+  inherited CreateEx(AKeys, AValues, AKeysCaseSensitive, AAddOnSet,
+      ADuplicatesAction);
 end;
 {%ENDDEF}
 {%DEFINE ADictionaryByArrayImpl}
@@ -4321,9 +4328,9 @@ begin
   Result := FAddOnSet;
 end;
 
-procedure TGeneral%1%Dictionary%6%.SetAddOnSet(const AddOnSet: Boolean);
+procedure TGeneral%1%Dictionary%6%.SetAddOnSet(const AAddOnSet: Boolean);
 begin
-  FAddOnSet := AddOnSet;
+  FAddOnSet := AAddOnSet;
 end;
 
 function TGeneral%1%Dictionary%6%.GetHashTableSize: Integer;
@@ -4336,9 +4343,9 @@ begin
   Result := FValues.IsItemOwner;
 end;
 
-procedure TGeneral%1%Dictionary%6%.SetIsItemOwner(const IsItemOwner: Boolean);
+procedure TGeneral%1%Dictionary%6%.SetIsItemOwner(const AIsItemOwner: Boolean);
 begin
-  FValues.IsItemOwner := IsItemOwner;
+  FValues.IsItemOwner := AIsItemOwner;
 end;{%ENDIF}
 
 procedure TGeneral%1%Dictionary%6%.Rehash;
@@ -4355,9 +4362,10 @@ begin
     DynArrayAppend(FLookup[HashStr%6%(FKeys[I], 1, -1, FCaseSensitive, 0) and L], I);
 end;
 
-function TGeneral%1%Dictionary%6%.LocateKey(const Key: %7%; var LookupIdx: Integer;
+function TGeneral%1%Dictionary%6%.LocateKey(const Key: %7%; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, J, L : Integer;
+var H : Word32;
+    I, J, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
@@ -4380,7 +4388,8 @@ begin
 end;
 
 procedure TGeneral%1%Dictionary%6%.Add(const Key: %7%; const Value: %3%);
-var H, L, I : Integer;
+var H : Word32;
+    L, I : Integer;
 begin
   if FDuplicatesAction in [ddIgnore, ddError] then
     if LocateKey(Key, H, False) >= 0 then
@@ -4423,20 +4432,22 @@ begin
 end;
 
 procedure TGeneral%1%Dictionary%6%.Delete(const Key: %7%);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   DeleteByIndex(I, H);
 end;
 
 function TGeneral%1%Dictionary%6%.HasKey(const Key: %7%): Boolean;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False) >= 0;
 end;
 
 procedure TGeneral%1%Dictionary%6%.Rename(const Key, NewKey: %7%);
-var I, J, H : Integer;
+var I, J : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   FKeys[I] := NewKey;
@@ -4451,13 +4462,13 @@ begin
   Result := FDuplicatesAction;
 end;
 
-procedure TGeneral%1%Dictionary%6%.SetDuplicatesAction(const DuplicatesAction: TDictionaryDuplicatesAction);
+procedure TGeneral%1%Dictionary%6%.SetDuplicatesAction(const ADuplicatesAction: TDictionaryDuplicatesAction);
 begin
-  FDuplicatesAction := DuplicatesAction;
+  FDuplicatesAction := ADuplicatesAction;
 end;
 
 function TGeneral%1%Dictionary%6%.LocateItem(const Key: %7%; var Value: %3%): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -4499,7 +4510,8 @@ begin
 end;
 
 procedure TGeneral%1%Dictionary%6%.SetItem(const Key: %7%; const Value: %3%);
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -4557,7 +4569,8 @@ begin
 end;
 {%IF 4}
 function TGeneral%1%Dictionary%6%.ReleaseItem(const Key: %7%): TObject;
-var I, H : Integer;
+var I : Integer;
+    H : Word32;
 begin
   I := LocateKey(Key, H, True);
   Result := FValues.ReleaseItem(I);
@@ -4592,14 +4605,15 @@ end;
 {                                                                              }
 {-T%1%Dictionary%6%                                                            }
 {                                                                              }
-function T%1%Dictionary%6%.LocateKey(const Key: %7%; var LookupIdx: Integer;
+function T%1%Dictionary%6%.LocateKey(const Key: %7%; var LookupIdx: Word32;
     const ErrorIfNotFound: Boolean): Integer;
-var H, I, L : Integer;
+var H : Word32;
+    I, L : Integer;
 begin
   L := FHashSize;
   if L > 0 then
     begin
-      LongWord(H) := HashStr%6%(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
+      H := HashStr%6%(Key, 1, -1, FCaseSensitive, 0) and (L - 1);
       LookupIdx := H;
       for I := 0 to Length(FLookup[H]) - 1 do
         begin
@@ -4615,7 +4629,8 @@ begin
 end;
 
 function T%1%Dictionary%6%.GetItem(const Key: %7%): %3%;
-var H, I : Integer;
+var H : Word32;
+    I : Integer;
 begin
   I := LocateKey(Key, H, False);
   if I >= 0 then
@@ -4625,7 +4640,7 @@ begin
 end;
 
 function T%1%Dictionary%6%.LocateItem(const Key: %7%; var Value: %3%): Integer;
-var H : Integer;
+var H : Word32;
 begin
   Result := LocateKey(Key, H, False);
   if Result >= 0 then
@@ -5105,10 +5120,10 @@ end;
 {                                                                              }
 { TSparseObjectArray                                                           }
 {                                                                              }
-constructor TSparseObjectArray.Create(const IsItemOwner: Boolean);
+constructor TSparseObjectArray.Create(const AIsItemOwner: Boolean);
 begin
   inherited Create;
-  FIsItemOwner := IsItemOwner;
+  FIsItemOwner := AIsItemOwner;
 end;
 
 destructor TSparseObjectArray.Destroy;
