@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.41                                                     }
+{   File version:     5.42                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -168,6 +168,7 @@
 {   2018/08/12  5.39  String type changes.                                     }
 {   2019/04/02  5.40  Integer/Cardinal array changes.                          }
 {   2020/03/22  5.41  Rename parameters to avoid conflict with properties.     }
+{   2020/03/22  5.42  Remove dependency on flcBits32.                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -8250,7 +8251,6 @@ implementation
 
 uses
   { Fundamentals }
-  flcBits32,
   flcDynArrays,
   flcUTF,
   flcStrings;
@@ -11929,6 +11929,17 @@ end;
 {                                                                              }
 { ABitArray                                                                    }
 {                                                                              }
+const
+  BitMaskTable32: array[0..31] of Word32 =
+    ($00000001, $00000002, $00000004, $00000008,
+     $00000010, $00000020, $00000040, $00000080,
+     $00000100, $00000200, $00000400, $00000800,
+     $00001000, $00002000, $00004000, $00008000,
+     $00010000, $00020000, $00040000, $00080000,
+     $00100000, $00200000, $00400000, $00800000,
+     $01000000, $02000000, $04000000, $08000000,
+     $10000000, $20000000, $40000000, $80000000);
+
 function ABitArray.GetRangeL(const Idx: Integer): LongWord;
 var I : Integer;
 begin
@@ -14700,6 +14711,60 @@ end;
 {                                                                              }
 { TBitArray                                                                    }
 {                                                                              }
+function Word32IsBitSet(const A: Word32; const B: Integer): Boolean;
+begin
+  if (B < 0) or (B > 31) then
+    Result := False
+  else
+    Result := (A and (1 shl B) <> 0);
+end;
+
+function Word32SetBitF(const A: Word32; const B: Integer): Word32;
+begin
+  if (B < 0) or (B > 31) then
+    Result := A
+  else
+    Result := A or (1 shl B);
+end;
+
+function Word32ClearBitF(const A: Word32; const B: Integer): Word32;
+begin
+  if (B < 0) or (B > 31) then
+    Result := A
+  else
+    Result := A and not (1 shl B);
+end;
+
+function LowBitMask32(const HighBitIndex: Word32): Word32;
+begin
+  if HighBitIndex >= 32 then
+    Result := 0
+  else
+    Result := BitMaskTable32[HighBitIndex] - 1;
+end;
+
+function HighBitMask32(const LowBitIndex: Word32): Word32;
+begin
+  if LowBitIndex >= 32 then
+    Result := 0
+  else
+    Result := not BitMaskTable32[LowBitIndex] + 1;
+end;
+
+function RangeBitMask32(const LowBitIndex, HighBitIndex: Word32): Word32;
+begin
+  if (LowBitIndex >= 32) and (HighBitIndex >= 32) then
+    begin
+      Result := 0;
+      exit;
+    end;
+  Result := $FFFFFFFF;
+  if LowBitIndex > 0 then
+    Result := Result xor (BitMaskTable32[LowBitIndex] - 1);
+  if HighBitIndex < 31 then
+    Result := Result xor (not BitMaskTable32[HighBitIndex + 1] + 1);
+end;
+
 const
   TrueLongWord  : LongWord = $FFFFFFFF;
   FalseLongWord : LongWord = $00000000;
@@ -14710,7 +14775,7 @@ begin
   if (Idx < 0) or (Idx >= FCount) then
     RaiseIndexError(Idx);
   {$ENDIF}
-  Result := IsBitSet32(FData[Idx shr 5], Idx and 31);
+  Result := Word32IsBitSet(FData[Idx shr 5], Idx and 31);
 end;
 
 procedure TBitArray.SetBit(const Idx: Integer; const Value: Boolean);
@@ -14722,9 +14787,9 @@ begin
   {$ENDIF}
   L := @FData[Idx shr 5];
   if Value then
-    L^ := SetBit32(L^, Idx and 31)
+    L^ := Word32SetBitF(L^, Idx and 31)
   else
-    L^ := ClearBit32(L^, Idx and 31);
+    L^ := Word32ClearBitF(L^, Idx and 31);
 end;
 
 function TBitArray.GetCount: Integer;
