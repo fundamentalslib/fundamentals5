@@ -1,7 +1,7 @@
 {*******************************************************************************}
 {                                                                              }
 {   File name:        flcInteger.pas                                           }
-{   File version:     5.24                                                     }
+{   File version:     5.25                                                     }
 {   Description:      Integer functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
@@ -57,6 +57,7 @@
 {   2020/03/20  5.22  Memory safe Word64Divide operations.                     }
 {   2020/03/20  5.23  Define exception classes.                                }
 {   2020/03/22  5.24  Word32 improvements.                                     }
+{   2020/03/22  5.25  Word8/Word16 improvements.                               }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -1591,9 +1592,14 @@ end;
 function Word8ClearBitScanForward(const A: Byte): Integer;
 var B : Byte;
 begin
+  if A = $FF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 0;
   B := A;
-  while B > 0 do
+  repeat
     if B and 1 = 0 then
       exit
     else
@@ -1601,23 +1607,29 @@ begin
         Inc(Result);
         B := B shr 1;
       end;
+  until Result = 8;
   Result := -1;
 end;
 
 function Word8ClearBitScanReverse(const A: Byte): Integer;
 var B : Byte;
 begin
+  if A = $FF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 7;
   B := A;
-  while B > 0 do
+  repeat
     if B and $80 = 0 then
       exit
     else
       begin
         Dec(Result);
-        B := B shl 1;
+        B := Byte(B shl 1);
       end;
-  Result := -1;
+  until Result = -1;
 end;
 
 procedure Word8Shl(var A: Byte; const B: Byte);
@@ -1924,11 +1936,16 @@ begin
 end;
 
 function Word16ClearBitScanForward(const A: Word): Integer;
-var B : Word;
+var B : Word16;
 begin
+  if A = $FFFF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 0;
   B := A;
-  while B > 0 do
+  repeat
     if B and 1 = 0 then
       exit
     else
@@ -1936,23 +1953,29 @@ begin
         Inc(Result);
         B := B shr 1;
       end;
+  until Result = 16;
   Result := -1;
 end;
 
-function Word16ClearBitScanReverse(const A: Word): Integer;
-var B : Word;
+function Word16ClearBitScanReverse(const A: Word16): Integer;
+var B : Word16;
 begin
+  if A = $FFFF then
+    begin
+      Result := -1;
+      exit;
+    end;
   Result := 15;
   B := A;
-  while B > 0 do
+  repeat
     if B and $8000 = 0 then
       exit
     else
       begin
         Dec(Result);
-        B := B shl 1;
+        B := Word16(B shl 1);
       end;
-  Result := -1;
+  until Result = -1;
 end;
 
 procedure Word16Shl(var A: Word; const B: Byte);
@@ -2478,7 +2501,7 @@ begin
     else
       begin
         Dec(Result);
-        B := B shl 1;
+        B := Word32(B shl 1);
       end;
   until Result = -1;
 end;
@@ -14998,6 +15021,28 @@ begin
   Assert(Word8SetBitScanReverse($F0) = 7);
   Assert(Word8SetBitScanReverse($FF) = 7);
 
+  Assert(Word8SetBitScanForward(0) = -1);
+  Assert(Word8SetBitScanForward(1) = 0);
+  Assert(Word8SetBitScanForward($80) = 7);
+  Assert(Word8SetBitScanForward($20) = 5);
+
+  Assert(Word8SetBitScanReverse(0) = -1);
+  Assert(Word8SetBitScanReverse(1) = 0);
+  Assert(Word8SetBitScanReverse($80) = 7);
+  Assert(Word8SetBitScanReverse($20) = 5);
+
+  Assert(Word8ClearBitScanForward(0) = 0);
+  Assert(Word8ClearBitScanForward(1) = 1);
+  Assert(Word8ClearBitScanForward($80) = 0);
+  Assert(Word8ClearBitScanForward($FF) = -1);
+  Assert(Word8ClearBitScanForward($20) = 0);
+
+  Assert(Word8ClearBitScanReverse(0) = 7);
+  Assert(Word8ClearBitScanReverse(1) = 7);
+  Assert(Word8ClearBitScanReverse($80) = 6);
+  Assert(Word8ClearBitScanReverse($FF) = -1);
+  Assert(Word8ClearBitScanReverse($20) = 7);
+
   // Word8HashTable
   for A := 0 to 255 do
     X[A] := 0;
@@ -15059,6 +15104,28 @@ begin
   Assert(Word16SetBitScanReverse($8000) = 15);
   Assert(Word16SetBitScanReverse($F000) = 15);
   Assert(Word16SetBitScanReverse($FFFF) = 15);
+
+  Assert(Word16SetBitScanForward(0) = -1);
+  Assert(Word16SetBitScanForward(1) = 0);
+  Assert(Word16SetBitScanForward($8000) = 15);
+  Assert(Word16SetBitScanForward($1020) = 5);
+
+  Assert(Word16SetBitScanReverse(0) = -1);
+  Assert(Word16SetBitScanReverse(1) = 0);
+  Assert(Word16SetBitScanReverse($8000) = 15);
+  Assert(Word16SetBitScanReverse($1020) = 12);
+
+  Assert(Word16ClearBitScanForward(0) = 0);
+  Assert(Word16ClearBitScanForward(1) = 1);
+  Assert(Word16ClearBitScanForward($8000) = 0);
+  Assert(Word16ClearBitScanForward($FFFF) = -1);
+  Assert(Word16ClearBitScanForward($1020) = 0);
+
+  Assert(Word16ClearBitScanReverse(0) = 15);
+  Assert(Word16ClearBitScanReverse(1) = 15);
+  Assert(Word16ClearBitScanReverse($8000) = 14);
+  Assert(Word16ClearBitScanReverse($FFFF) = -1);
+  Assert(Word16ClearBitScanReverse($1020) = 15);
 
   // Word16Hash
   for A := 0 to 65535 do
