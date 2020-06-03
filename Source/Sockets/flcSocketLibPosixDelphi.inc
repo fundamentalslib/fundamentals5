@@ -40,7 +40,10 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Linux x64              5.03  2018/09/10                        }
+{   Delphi 10.2-10.4 Linux64            5.03  2020/06/02                       }
+{   Delphi 10.2-10.4 iOS32/64           5.03  2020/06/02                       }
+{   Delphi 10.2-10.4 OSX32/64           5.03  2020/06/02                       }
+{   Delphi 10.2-10.4 Android32/64       5.03  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -156,20 +159,30 @@ const
 
 function  FDMASK(const d: Int32): TFD_MASK;
 function  FD_ISSET(fd: Int32; const fdset: TFDSet): Boolean;
-procedure FD_SET(const fd: Int32; var fdset: TFDSet);
+procedure FD_SET(const fd: Int32; var fdset: TFDSet);
 procedure FD_CLR(const fd: Int32; var fdset: TFDSet);
 procedure FD_ZERO(out fdset: TFDSet);
-function  FD_COUNT(const fdset: TFDSet): Integer;
+function  FD_COUNT(const fdset: TFDSet): Integer;
 
-const
+const
   NI_MAXHOST = Posix.NetDB.NI_MAXHOST;
   NI_MAXSERV = Posix.NetDB.NI_MAXSERV;
   NI_NUMERICSERV = Posix.NetDB.NI_NUMERICSERV;
-
   AI_NUMERICHOST = Posix.NetDB.AI_NUMERICHOST;
 
+{$IFDEF OS_ANDROID32}
+{$IFDEF DELPHI10_4_UP}
+  {$DEFINE SockLen_Int32}
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF SockLen_Int32}
+type
+  TSockLen = Int32;
+{$ELSE}
 type
   TSockLen = FixedUInt;
+{$ENDIF}
 
 type
   TPollfd = record

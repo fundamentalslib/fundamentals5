@@ -5,7 +5,7 @@
 {   File version:     5.13                                                     }
 {   Description:      WinSock API                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -52,17 +52,8 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 5 Win32                      4.10  2011/09/27                       }
-{   Delphi 6 Win32                      4.10  2011/09/27                       }
-{   Delphi 7 Win32                      4.10  2011/09/27                       }
-{   Delphi 2006 Win32                   4.10  2011/09/27                       }
-{   Delphi 2007 Win32                   4.10  2011/09/27                       }
-{   Delphi 2009 Win32                   4.10  2011/09/27                       }
-{   Delphi XE7 Win32                    5.11  2016/01/09                       }
-{   Delphi XE7 Win64                    5.11  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.13  2018/09/10                       }
-{   Delphi 10.2 Win64                   5.13  2018/09/10                       }
-{   FreePascal 2.5.1 Win32 i386         4.09  2010/07/21                       }
+{   Delphi 2010-10.4 Win32/Win64        5.13  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.13  2020/06/02                       }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }

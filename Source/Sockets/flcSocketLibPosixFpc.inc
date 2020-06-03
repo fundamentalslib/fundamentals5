@@ -5,7 +5,7 @@
 {   File version:     5.09                                                     }
 {   Description:      FreePascal Posix socket library                          }
 {                                                                              }
-{   Copyright:        Copyright © 2001-2018, David J Butler                    }
+{   Copyright:        Copyright © 2001-2020, David J Butler                    }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -46,8 +46,7 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   FreePascal 2.6.2 Linux i386        4.07  2014/04/23                        }
-{   FreePascal 2.6.2 Linux x64         4.07  2015/04/01                        }
+{   FreePascal 3.0.4 Win64              5.09  2020/06/02                       }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }

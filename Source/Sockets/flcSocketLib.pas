@@ -5,7 +5,7 @@
 {   File version:     5.22                                                     }
 {   Description:      Platform independent socket library.                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -61,25 +61,12 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 5 Win32                      4.14  2011/09/27                       }
-{   Delphi 6 Win32                      4.14  2011/09/27                       }
-{   Delphi 7 Win32                      4.14  2011/09/27                       }
-{   Delphi 2006 Win32                   4.14  2011/09/27                       }
-{   Delphi 2007 Win32                   4.14  2011/09/27                       }
-{   Delphi 2009 Win32                   4.14  2011/09/27                       }
-{   Delphi XE2 Win32                    5.21  2019/03/02                       }
-{   Delphi XE2 Win64                    5.21  2019/03/02                       }
-{   Delphi XE6 Win32                    5.21  2019/03/02                       }
-{   Delphi XE6 Win64                    5.21  2019/03/02                       }
-{   Delphi XE7 Win32                    5.21  2019/03/02                       }
-{   Delphi XE7 Win64                    5.21  2019/03/02                       }
-{   Delphi 10.2 Win32                   5.21  2019/04/16                       }
-{   Delphi 10.2 Win64                   5.21  2019/04/16                       }
-{   Delphi 10.2 Linux64                 5.21  2019/04/16                       }
-{   Delphi 10.2 OSX32                   5.21  2018/09/24                       }
-{   FreePascal 2.6.2 Linux i386         4.15  2014/04/23                       }
-{   FreePascal 2.6.2 Linux x64          4.15  2015/04/01                       }
-{   FreePascal 2.6.2 Win32 i386         4.15  2014/04/23                       }
+{   Delphi 2010-10.4 Win32/Win64        5.22  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.22  2020/06/02                       }
+{   Delphi 10.2-10.4 iOS32/64           5.22  2020/06/02                       }
+{   Delphi 10.2-10.4 OSX32/64           5.22  2020/06/02                       }
+{   Delphi 10.2-10.4 Android32/64       5.22  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.22  2020/06/02                       }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }
@@ -300,26 +287,26 @@ function  SocketGetServByPort(const Port: Integer; const Proto: Pointer): PServE
 function  SocketGetSockName(const S: TSocketHandle; out Name: TSocketAddr): Integer;
 function  SocketGetSockOpt(const S: TSocketHandle; const Level, OptName: Integer;
           const OptVal: Pointer; var OptLen: Integer): Integer;
-function  Sockethtons(const HostShort: Word): Word;
-function  Sockethtonl(const HostLong: Word32): Word32;
+function  Sockethtons(const HostShort: Word): Word; {$IFDEF UseInline}inline;{$ENDIF}
+function  Sockethtonl(const HostLong: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 function  Socketinet_ntoa(const InAddr: TIP4Addr): RawByteString;
 function  Socketinet_addr(const P: Pointer): TIP4Addr;
 function  SocketListen(const S: TSocketHandle; const Backlog: Integer): Integer;
-function  Socketntohs(const NetShort: Word): Word;
-function  Socketntohl(const NetLong: Word32): Word32;
+function  Socketntohs(const NetShort: Word): Word; {$IFDEF UseInline}inline;{$ENDIF}
+function  Socketntohl(const NetLong: Word32): Word32; {$IFDEF UseInline}inline;{$ENDIF}
 function  SocketsPoll(const Fd: Pointer; const FdCount: Integer; const Timeout: Integer): Integer;
-function  SocketRecv(const S: TSocketHandle; var Buf; const Len: Integer; const Flags: TSocketRecvFlags): Integer;
+function  SocketRecv(const S: TSocketHandle; var Buf; const Len: Integer; const Flags: TSocketRecvFlags): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  SocketRecvFrom(const S: TSocketHandle; var Buf; const Len: Integer; const Flags: TSocketRecvFlags;
-          out From: TSocketAddr): Integer;
+          out From: TSocketAddr): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  SocketSelect(const nfds: Word32;
           var ReadFDS, WriteFDS, ExceptFDS: TSocketHandleArray;
           const TimeOutMicroseconds: Int64): Integer; overload;
 function  SocketSelect(const S: TSocketHandle;
           var ReadSelect, WriteSelect, ExceptSelect: Boolean;
           const TimeOutMicroseconds: Int64): Integer; overload;
-function  SocketSend(const S: TSocketHandle; const Buf; const Len, Flags: Integer): Integer;
+function  SocketSend(const S: TSocketHandle; const Buf; const Len, Flags: Integer): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  SocketSendTo(const S: TSocketHandle; const Buf; const Len, Flags: Integer;
-          const AddrTo: TSocketAddr): Integer;
+          const AddrTo: TSocketAddr): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  SocketSetSockOpt(const S: TSocketHandle; const Level, OptName: Integer;
           const OptVal: Pointer; const OptLen: Integer): Integer;
 function  SocketShutdown(const S: TSocketHandle; const How: TSocketShutdown): Integer;
@@ -1011,7 +998,9 @@ begin
       Move(AddrIn6.sin6_addr, Result.AddrIP6, SizeOf(TIP6Addr));
     end;
   else
-    raise ESocketLib.Create('Address family not supported', -1);
+    // raise ESocketLib.Create('Address family not supported', -1);   //// 2020/05/05
+    FillChar(Result, SizeOf(Result), 0);
+    Result.AddrFamily := iaNone;
   end;
 end;
 

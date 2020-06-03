@@ -5,7 +5,7 @@
 {   File version:     5.11                                                     }
 {   Description:      Platform independent socket class.                       }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -50,17 +50,12 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE2 Win32                    5.10  2019/03/02                       }
-{   Delphi XE2 Win64                    5.10  2019/03/02                       }
-{   Delphi XE6 Win32                    5.10  2019/03/02                       }
-{   Delphi XE6 Win64                    5.10  2019/03/02                       }
-{   Delphi XE7 Win32                    5.10  2019/03/02                       }
-{   Delphi XE7 Win64                    5.10  2019/03/02                       }
-{   Delphi 10.2 Win32                   5.11  2019/04/16                       }
-{   Delphi 10.2 Win64                   5.11  2019/04/16                       }
-{   Delphi 10.2 Linux64                 5.11  2019/04/16                       }
-{   FreePascal 2.6.2 Linux i386         4.07  2014/04/23                       }
-{   FreePascal 2.6.2 Win32 i386         4.07  2014/04/23                       }
+{   Delphi 2010-10.4 Win32/Win64        5.11  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.11  2020/06/02                       }
+{   Delphi 10.2-10.4 iOS32/64           5.11  2020/06/02                       }
+{   Delphi 10.2-10.4 OSX32/64           5.11  2020/06/02                       }
+{   Delphi 10.2-10.4 Android32/64       5.11  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.11  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -102,6 +97,9 @@ uses
   {$ENDIF}
   SysUtils,
   SyncObjs,
+  {$IFDEF SOCKET_POSIX_DELPHI}
+  Posix.SysSocket,
+  {$ENDIF}
 
   { Fundamentals }
   flcStdTypes,
@@ -239,14 +237,13 @@ type
                 const Overlapped: Boolean = False;
                 const SocketHandle: TSocketHandle = INVALID_SOCKETHANDLE);
     destructor Destroy; override;
-    procedure Finalise;
 
     property  AddressFamily: TIPAddressFamily read FAddressFamily;
     property  Protocol: TIPProtocol read FProtocol;
     property  Overlapped: Boolean read FOverlapped;
 
     property  SocketHandle: TSocketHandle read FSocketHandle;
-    function  IsSocketHandleInvalid: Boolean;
+    function  IsSocketHandleInvalid: Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     procedure AllocateSocketHandle;
     function  ReleaseSocketHandle: TSocketHandle;
 
@@ -527,12 +524,6 @@ begin
 end;
 
 destructor TSysSocket.Destroy;
-begin
-  Finalise;
-  inherited Destroy;
-end;
-
-procedure TSysSocket.Finalise;
 var
   SckHnd : TSocketHandle;
   {$IFDEF SOCKET_WIN}
@@ -559,6 +550,7 @@ begin
       DestroyWindow(WinHnd); // don't check for DestroyWindow errors during destruction
     end;
   {$ENDIF}
+  inherited Destroy;
 end;
 
 procedure TSysSocket.Log(const LogType: TSysSocketLogType; const Msg: String);
