@@ -5,7 +5,7 @@
 {   File version:     5.71                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -117,29 +117,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 5 Win32                      4.60  2015/03/14                       }
-{   Delphi 6 Win32                      4.60  2015/03/14                       }
-{   Delphi 7 Win32                      5.71  2019/02/24                       }
-{   Delphi 2007 Win32                   4.57  2012/08/29                       }
-{   Delphi 2009 Win32                   4.50  2011/09/27                       }
-{   Delphi 2009 .NET                    4.46  2009/10/09                       }
-{   Delphi XE                           4.57  2012/08/29                       }
-{   Delphi XE2 Win32                    5.71  2019/03/02                       }
-{   Delphi XE2 Win64                    5.71  2019/03/02                       }
-{   Delphi XE3 Win32                    5.71  2019/03/02                       }
-{   Delphi XE3 Win64                    5.71  2019/03/02                       }
-{   Delphi XE6 Win32                    5.71  2019/03/02                       }
-{   Delphi XE6 Win64                    5.71  2019/03/02                       }
-{   Delphi XE7 Win32                    5.71  2019/03/02                       }
-{   Delphi XE7 Win64                    5.71  2019/03/02                       }
-{   Delphi 10 Win32                     5.62  2016/01/09                       }
-{   Delphi 10 Win64                     5.62  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.67  2018/07/17                       }
-{   Delphi 10.2 Win64                   5.67  2018/07/17                       }
-{   Delphi 10.2 Linux64                 5.67  2018/07/17                       }
-{   FreePascal 2.0.4 Linux i386         4.45  2009/06/06                       }
-{   FreePascal 2.4.0 OSX x86-64         4.47  2010/06/27                       }
-{   FreePascal 3.0.4 Win32              5.71  2019/02/24                       }
+{   Delphi 2010-10.4 Win32/Win64        5.71  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.71  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.71  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -163,9 +143,9 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
-  flcStdTypes,
-  flcASCII;
+  flcStdTypes;
 
 
 
@@ -183,8 +163,8 @@ type
 {                                                                              }
 const
   { Common characters }
-  chTab          = AsciiHT;
-  chSpace        = AsciiSP;
+  chTab          = ByteChar(#9);
+  chSpace        = ByteChar(#32);
   chDecimalPoint = ByteChar('.');
   chComma        = ByteChar(',');
   chBackSlash    = ByteChar('\');
@@ -205,10 +185,10 @@ const
   chAsterisk     = ByteChar('*');
 
   { Common sequences }
-  CRLF        = AsciiCR + AsciiLF;
-  LFCR        = AsciiLF + AsciiCR;
+  CRLF        = ByteChar(#13) + ByteChar(#10);
+  LFCR        = ByteChar(#10) + ByteChar(#13);
   DosNewLine  = CRLF;
-  UnixNewLine = AsciiLF;
+  UnixNewLine = ByteChar(#10);
 
   { Character sets }
   csComplete        = [ByteChar(#0)..ByteChar(#255)];
@@ -253,10 +233,10 @@ const
 { UCS4 constants                                                               }
 {                                                                              }
 const
-  Ucs4NULL             = UCS4Char(AsciiNULL);
-  Ucs4HT               = UCS4Char(AsciiHT);
-  Ucs4LF               = UCS4Char(AsciiLF);
-  Ucs4CR               = UCS4Char(AsciiCR);
+  Ucs4NULL             = UCS4Char(0);
+  Ucs4HT               = UCS4Char(9);
+  Ucs4LF               = UCS4Char(10);
+  Ucs4CR               = UCS4Char(13);
   Ucs4StringTerminator = UCS4Char($9C);
 
 
@@ -1422,7 +1402,8 @@ implementation
 
 uses
   { Fundamentals }
-  flcUtils;
+  flcUtils,
+  flcASCII;
 
 
 
@@ -10255,15 +10236,15 @@ begin
         if I <= L then
           begin
             H1 := S[I];
-            if IsHexByteChar(H1) then
+            if IsHexByteCharDigit(H1) then
               begin
                 H2Ch := False;
                 if I < L then
                   begin
                     H2 := S[I + 1];
-                    if IsHexByteChar(H2) then
+                    if IsHexByteCharDigit(H2) then
                       begin
-                        V := HexByteCharToInt(H1) * 16 + HexByteCharToInt(H2);
+                        V := HexByteCharDigitToInt(H1) * 16 + HexByteCharDigitToInt(H2);
                         R := R + ByteChar(V);
                         Inc(I, 2);
                         H2Ch := True;
@@ -10271,7 +10252,7 @@ begin
                   end;
                 if not H2Ch then
                   begin
-                    V := HexByteCharToInt(H1);
+                    V := HexByteCharDigitToInt(H1);
                     R := R + ByteChar(V);
                     Inc(I);
                   end;
