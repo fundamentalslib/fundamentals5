@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.42                                                     }
+{   File version:     5.44                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -169,16 +169,14 @@
 {   2019/04/02  5.40  Integer/Cardinal array changes.                          }
 {   2020/03/22  5.41  Rename parameters to avoid conflict with properties.     }
 {   2020/03/22  5.42  Remove dependency on flcBits32.                          }
+{   2020/03/31  5.43  LongWord changes in bit array. Integer array changes.    }
+{   2020/06/02  5.44  UInt64 changes.                                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.39  2019/02/24                       }
-{   Delphi XE2 Win32                    5.39  2019/03/02                       }
-{   Delphi XE2 Win64                    5.39  2019/03/02                       }
-{   Delphi XE3 Win32                    5.39  2019/03/02                       }
-{   Delphi XE3 Win64                    5.39  2019/03/02                       }
-{   Delphi XE7 Win32                    5.39  2019/03/02                       }
-{   Delphi XE7 Win64                    5.39  2019/03/02                       }
+{   Delphi 2010-10.4 Win32/Win64        5.44  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.44  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.44  2020/06/02                       }
 {                                                                              }
 {*******************************************************************************}
 
@@ -273,7 +271,7 @@ type
     function  IsEmpty: Boolean; virtual;
     function  IsEqual(const V: TObject): Boolean; virtual;
     function  Compare(const V: TObject): TCompareResult; virtual;
-    function  HashValue: LongWord; virtual;
+    function  HashValue: Word32; virtual;
 
     property  AsString: String read GetAsString write SetAsString;
     property  AsUTF8String: RawByteString read GetAsUTF8String write SetAsUTF8String;
@@ -293,7 +291,7 @@ procedure TypeAssign(const A, B: TObject);
 procedure TypeClear(const V: TObject);
 function  TypeIsEqual(const A, B: TObject): Boolean;
 function  TypeCompare(const A, B: TObject): TCompareResult;
-function  TypeHashValue(const A: TObject): LongWord;
+function  TypeHashValue(const A: TObject): Word32;
 function  TypeGetAsString(const V: TObject): String;
 procedure TypeSetAsString(const V: TObject; const S: String);
 function  TypeGetAsUTF8String(const V: TObject): RawByteString;
@@ -397,8 +395,9 @@ type
 
 
 {%ENDDEF}
-{%TEMPLATE ATypeArray 'Int32'      'B'  'Int32'      '' 'I' }
-{%TEMPLATE ATypeArray 'LongInt'    'B'  'LongInt'    '' 'I' }
+{%TEMPLATE ATypeArray 'Int32'      'B'  'Int32'      ''  'I' }
+{%TEMPLATE ATypeArray 'Int64'      'B'  'Int64'      ''  'I' }
+{%TEMPLATE ATypeArray 'LongInt'    'B'  'LongInt'    ''  'I' }
 {                                                                              }
 { AIntegerArray                                                                }
 {                                                                              }
@@ -409,6 +408,7 @@ type
 
 
 {%TEMPLATE ATypeArray 'Word32'     'B'  'Word32'     '' 'I' }
+{%TEMPLATE ATypeArray 'Word64'     'B'  'Word64'     '' 'I' }
 {%TEMPLATE ATypeArray 'LongWord'   'B'  'LongWord'   '' 'I' }
 {                                                                              }
 { ACardinalArray                                                               }
@@ -419,7 +419,6 @@ type
 
 
 
-{%TEMPLATE ATypeArray 'Int64'         'B'  'Int64'         ''  'I' }
 {%TEMPLATE ATypeArray 'Single'        'B'  'Single'        ''  'I' }
 {%TEMPLATE ATypeArray 'Double'        'B'  'Double'        ''  'I' }
 {%TEMPLATE ATypeArray 'Extended'      'B'  'Extended'      ''  'I' }
@@ -508,8 +507,8 @@ type
   protected
     function  GetBit(const Idx: Integer): Boolean; virtual; abstract;
     procedure SetBit(const Idx: Integer; const Value: Boolean); virtual; abstract;
-    function  GetRangeL(const Idx: Integer): LongWord; virtual;
-    procedure SetRangeL(const Idx: Integer; const Value: LongWord); virtual;
+    function  GetRangeL(const Idx: Integer): Word32; virtual;
+    procedure SetRangeL(const Idx: Integer; const Value: Word32); virtual;
 
   public
     { AType                                                                    }
@@ -526,7 +525,7 @@ type
 
     { ABitArray interface                                                      }
     property  Bit[const Idx: Integer]: Boolean read GetBit write SetBit; default;
-    property  RangeL[const Idx: Integer]: LongWord read GetRangeL write SetRangeL;
+    property  RangeL[const Idx: Integer]: Word32 read GetRangeL write SetRangeL;
     function  IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean; virtual;
     procedure Fill(const Idx, ACount: Integer; const Value: Boolean); virtual;
     function  AppendItem(const Value: Boolean): Integer; virtual;
@@ -594,8 +593,9 @@ type
 
 
 {%ENDDEF}
-{%TEMPLATE AArrayDynArray 'Int32'    'Int32'}
-{%TEMPLATE AArrayDynArray 'LongInt'  'LongInt'}
+{%TEMPLATE AArrayDynArray 'Int32'    'Int32'   }
+{%TEMPLATE AArrayDynArray 'Int64'    'Int64'   }
+{%TEMPLATE AArrayDynArray 'LongInt'  'LongInt' }
 {                                                                              }
 { TIntegerArray                                                                }
 {                                                                              }
@@ -604,7 +604,29 @@ type
 
 
 
+{                                                                              }
+{ TNativeIntArray                                                              }
+{                                                                              }
+{$IFDEF CPU_32}
+type
+  TNativeIntArray = TInt32Array;
+{$ELSE}{$IFDEF CPU_64}
+type
+  TNativeIntArray = TInt64Array;
+{$ENDIF}{$ENDIF}
+
+
+
+{                                                                              }
+{ TIntArray                                                                    }
+{                                                                              }
+type
+  TIntArray = TInt64Array;
+
+
+
 {%TEMPLATE AArrayDynArray 'Word32'    'Word32'}
+{%TEMPLATE AArrayDynArray 'Word64'    'Word64'}
 {%TEMPLATE AArrayDynArray 'LongWord'  'LongWord'}
 {                                                                              }
 { TCardinalArray                                                               }
@@ -614,7 +636,51 @@ type
 
 
 
-{%TEMPLATE AArrayDynArray 'Int64'         'Int64'         }
+{                                                                              }
+{ TUInt32Array                                                                 }
+{                                                                              }
+type
+  TUInt32Array = Word32Array;
+
+
+
+{                                                                              }
+{ TUInt64Array                                                                 }
+{                                                                              }
+type
+  TUInt64Array = Word64Array;
+
+
+
+{                                                                              }
+{ TNativeUIntArray                                                             }
+{                                                                              }
+{$IFDEF CPU_32}
+type
+  TNativeUIntArray = TUInt32Array;
+{$ELSE}{$IFDEF CPU_64}
+type
+  TNativeUIntArray = TUInt64Array;
+{$ENDIF}{$ENDIF}
+
+
+
+{                                                                              }
+{ TNativeWordArray                                                             }
+{                                                                              }
+type
+  TNativeWordArray = TNativeUIntArray;
+
+
+
+{                                                                              }
+{ TUIntArray                                                                   }
+{                                                                              }
+type
+  TUIntArray = TUInt64Array;
+
+
+
 {%TEMPLATE AArrayDynArray 'Single'        'Single'        }
 {%TEMPLATE AArrayDynArray 'Double'        'Double'        }
 {%TEMPLATE AArrayDynArray 'Extended'      'Extended'      }
@@ -691,7 +757,7 @@ type
 type
   TBitArray = class(ABitArray)
   protected
-    FData  : LongWordArray;
+    FData  : Word32Array;
     FCount : Integer;
 
     { AArray                                                                   }
@@ -701,8 +767,8 @@ type
     { ABitArray                                                                }
     function  GetBit(const Idx: Integer): Boolean; override;
     procedure SetBit(const Idx: Integer; const Value: Boolean); override;
-    function  GetRangeL(const Idx: Integer): LongWord; override;
-    procedure SetRangeL(const Idx: Integer; const Value: LongWord); override;
+    function  GetRangeL(const Idx: Integer): Word32; override;
+    procedure SetRangeL(const Idx: Integer; const Value: Word32); override;
 
   public
     { ABitArray                                                                }
@@ -1054,8 +1120,8 @@ type
 type
   TGeneral%1%Dictionary%4% = class(A%1%Dictionary%4%)
   protected
-    FKeys             : A%5%Array;
-    FValues           : A%1%Array;
+    FKeys             : T%5%Array;
+    FValues           : T%1%Array;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -1085,16 +1151,17 @@ type
   public
     { TGeneral%1%Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: A%5%Array = nil;
-                const AValues: A%1%Array = nil;{%IF 3}
+    constructor CreateEx(
+                const AKeys: T%5%Array = nil;
+                const AValues: T%1%Array = nil;{%IF 3}
                 const AIsItemOwner: Boolean = False;{%ENDIF}
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: A%5%Array read FKeys;
-    property  Values: A%1%Array read FValues;
+    property  Keys: T%5%Array read FKeys;
+    property  Values: T%1%Array read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -1128,7 +1195,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: T%5%Array = nil;
+    constructor CreateEx(
+                const AKeys: T%5%Array = nil;
                 const AValues: T%1%Array = nil;{%IF 3}
                 const AIsItemOwner: Boolean = False;{%ENDIF}
                 const AKeysCaseSensitive: Boolean = True;
@@ -1694,7 +1762,7 @@ begin
   raise EType.CreateFmt('%s cannot compare with %s', [ClassName, ObjectClassName(V)]);
 end;
 
-function AType.HashValue: LongWord;
+function AType.HashValue: Word32;
 begin
   try
     Result := HashStr(GetAsString, 1, -1, True);
@@ -1853,7 +1921,7 @@ begin
         [ObjectClassName(A), ObjectClassName(B)]);
 end;
 
-function TypeHashValue(const A: TObject): LongWord;
+function TypeHashValue(const A: TObject): Word32;
 begin
   if not Assigned(A) then
     Result := 0 else
@@ -2241,10 +2309,11 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE ATypeArrayImpl  'Int32'         'Int32'         ''              ''              '0'    ''         ''           'IntToStr'     'StrToInt'        }
+{%TEMPLATE ATypeArrayImpl  'Int64'         'Int64'         ''              ''              '0'    'LongInt'  ''           'IntToStr'     'StrToInt64'      }
 {%TEMPLATE ATypeArrayImpl  'LongInt'       'LongInt'       ''              ''              '0'    ''         ''           'IntToStr'     'StrToInt'        }
 {%TEMPLATE ATypeArrayImpl  'Word32'        'Word32'        ''              ''              '0'    ''         ''           'IntToStr'     'StrToInt64'      }
+{%TEMPLATE ATypeArrayImpl  'Word64'        'Word64'        ''              ''              '0'    ''         ''           'UIntToString' 'StringToUInt64'  }
 {%TEMPLATE ATypeArrayImpl  'LongWord'      'LongWord'      ''              ''              '0'    ''         ''           'IntToStr'     'StrToInt64'      }
-{%TEMPLATE ATypeArrayImpl  'Int64'         'Int64'         ''              ''              '0'    'LongInt'  ''           'IntToStr'     'StrToInt64'      }
 {%TEMPLATE ATypeArrayImpl  'Single'        'Single'        ''              ''              '0.0'  'Int64'    ''           'FloatToStr'   'StrToFloat'      }
 {%TEMPLATE ATypeArrayImpl  'Double'        'Double'        ''              ''              '0.0'  'Int64'    ''           'FloatToStr'   'StrToFloat'      }
 {%TEMPLATE ATypeArrayImpl  'Extended'      'Extended'      ''              ''              '0.0'  'Int64'    ''           'FloatToStr'   'StrToFloat'      }
@@ -2626,21 +2695,22 @@ const
      $01000000, $02000000, $04000000, $08000000,
      $10000000, $20000000, $40000000, $80000000);
 
-function ABitArray.GetRangeL(const Idx: Integer): LongWord;
+function ABitArray.GetRangeL(const Idx: Integer): Word32;
 var I : Integer;
 begin
   Result := 0;
-  for I := 0 to BitsPerLongWord - 1 do
+  for I := 0 to 31 do
     if Bit[Idx + I] then
       Result := Result or BitMaskTable32[I];
 end;
 
-procedure ABitArray.SetRangeL(const Idx: Integer; const Value: LongWord);
-var I : Integer;
-    C : LongWord;
+procedure ABitArray.SetRangeL(const Idx: Integer; const Value: Word32);
+var
+  I : Integer;
+  C : Word32;
 begin
   C := 1;
-  for I := Idx to Idx + BitsPerLongWord - 1 do
+  for I := Idx to Idx + 31 do
     begin
       Bit[I] := Value and C <> 0;
       C := C shl 1;
@@ -2648,14 +2718,16 @@ begin
 end;
 
 procedure ABitArray.Fill(const Idx, ACount: Integer; const Value: Boolean);
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := Idx to Idx + ACount - 1 do
     Bit[I] := Value;
 end;
 
 function ABitArray.IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean;
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := LoIdx to HiIdx do
     if Bit[I] <> Value then
@@ -2667,7 +2739,8 @@ begin
 end;
 
 procedure ABitArray.Assign(const Source: TObject);
-var I, L : Integer;
+var
+  I, L : Integer;
 begin
   if Source is ABitArray then
     begin
@@ -2681,7 +2754,8 @@ begin
 end;
 
 function ABitArray.IsEqual(const V: TObject): Boolean;
-var I, L : Integer;
+var
+  I, L : Integer;
 begin
   if V is ABitArray then
     begin
@@ -2704,7 +2778,8 @@ begin
 end;
 
 procedure ABitArray.ExchangeItems(const Idx1, Idx2: Integer);
-var I : Boolean;
+var
+  I : Boolean;
 begin
   I := Bit[Idx1];
   Bit[Idx1] := Bit[Idx2];
@@ -2724,14 +2799,16 @@ begin
 end;
 
 procedure ABitArray.Invert;
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := 0 to Count - 1 do
     Bit[I] := not Bit[I];
 end;
 
 function ABitArray.Find(const Value: Boolean; const Start: Integer): Integer;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   if Start < 0 then
     I := 0
@@ -2751,7 +2828,8 @@ end;
 
 function ABitArray.FindRange(const Value: Boolean; const Start: Integer;
     const ACount: Integer): Integer;
-var I, C, F : Integer;
+var
+  I, C, F : Integer;
 begin
   if ACount <= 0 then
     begin
@@ -2783,7 +2861,8 @@ begin
 end;
 
 procedure ABitArray.Delete(const Idx: Integer; const ACount: Integer);
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -2796,7 +2875,8 @@ begin
 end;
 
 procedure ABitArray.Insert(const Idx: Integer; const ACount: Integer);
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -2810,7 +2890,8 @@ begin
 end;
 
 function ABitArray.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -2825,7 +2906,8 @@ begin
 end;
 
 function ABitArray.AppendArray(const V: AArray): Integer;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   if V is ABitArray then
     begin
@@ -3019,10 +3101,11 @@ end;
 {%ENDDEF}
 
 {%TEMPLATE AArrayDynArrayImpl 'Int32'         'Z'  'Int32'         ''  }
+{%TEMPLATE AArrayDynArrayImpl 'Int64'         'Z'  'Int64'         ''  }
 {%TEMPLATE AArrayDynArrayImpl 'LongInt'       'Z'  'LongInt'       ''  }
 {%TEMPLATE AArrayDynArrayImpl 'Word32'        'Z'  'Word32'        ''  }
+{%TEMPLATE AArrayDynArrayImpl 'Word64'        'Z'  'Word64'        ''  }
 {%TEMPLATE AArrayDynArrayImpl 'LongWord'      'Z'  'LongWord'      ''  }
-{%TEMPLATE AArrayDynArrayImpl 'Int64'         'Z'  'Int64'         ''  }
 {%TEMPLATE AArrayDynArrayImpl 'Single'        'Z'  'Single'        ''  }
 {%TEMPLATE AArrayDynArrayImpl 'Double'        'Z'  'Double'        ''  }
 {%TEMPLATE AArrayDynArrayImpl 'Extended'      'Z'  'Extended'      ''  }
@@ -3270,8 +3353,8 @@ begin
 end;
 
 const
-  TrueLongWord  : LongWord = $FFFFFFFF;
-  FalseLongWord : LongWord = $00000000;
+  TrueWord32  : Word32 = $FFFFFFFF;
+  FalseWord32 : Word32 = $00000000;
 
 function TBitArray.GetBit(const Idx: Integer): Boolean;
 begin
@@ -3283,7 +3366,8 @@ begin
 end;
 
 procedure TBitArray.SetBit(const Idx: Integer; const Value: Boolean);
-var L : ^LongWord;
+var
+  L : PWord32;
 begin
   {$IFOPT R+}
   if (Idx < 0) or (Idx >= FCount) then
@@ -3305,12 +3389,13 @@ procedure TBitArray.SetCount(const NewCount: Integer);
 begin
   if NewCount = FCount then
     exit;
-  SetLengthAndZero(FData, (NewCount + BitsPerLongWord - 1) div BitsPerLongWord);
+  SetLengthAndZero(FData, (NewCount + 31) div 32);
   FCount := NewCount;
 end;
 
-function TBitArray.GetRangeL(const Idx: Integer): LongWord;
-var F : Byte;
+function TBitArray.GetRangeL(const Idx: Integer): Word32;
+var
+  F : Byte;
   I : Integer;
 begin
   {$IFOPT R+}
@@ -3325,13 +3410,14 @@ begin
     begin
       Result := FData[I] shr F;
       if I + 1 < Length(FData) then
-        Result := Result or (FData[I + 1] shl (BitsPerLongWord - F));
+        Result := Result or (FData[I + 1] shl (32 - F));
     end;
 end;
 
-procedure TBitArray.SetRangeL(const Idx: Integer; const Value: LongWord);
-var F : Byte;
-    I : Integer;
+procedure TBitArray.SetRangeL(const Idx: Integer; const Value: Word32);
+var
+  F : Byte;
+  I : Integer;
 begin
   {$IFOPT R+}
   if (Idx < 0) or (Idx >= FCount) then
@@ -3347,12 +3433,12 @@ begin
                or (Value shl F);
       if I + 1 < Length(FData) then
         FData[I + 1] := (FData[I + 1] and HighBitMask32(F))
-                     or (Value shr (BitsPerLongWord - F));
+                     or (Value shr (32 - F));
     end;
 end;
 
 function TBitArray.IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean;
-var B, I   : LongWord;
+var B, I   : Word32;
     IL, IH : Integer;
 begin
   {$IFOPT R+}
@@ -3365,7 +3451,8 @@ begin
   B := HighBitMask32(LoIdx and 31);
   I := FData[IL];
   if Value then
-    Result := I or B = I else
+    Result := I or B = I
+  else
     Result := I and not B = I;
   if not Result or (IL = IH) then
     exit;
@@ -3373,14 +3460,15 @@ begin
   B := LowBitMask32(HiIdx and 31);
   I := FData[IH];
   if Value then
-    Result := I or B = I else
+    Result := I or B = I
+  else
     Result := I and not B = I;
   if not Result or (IH = IL + 1) then
     exit;
   // Check bits in FStore[IL + 1..IR - 1]
   for I := IL + 1 to IH - 1 do
-    if (Value and (FData[I] <> TrueLongWord)) or
-       (not Value and (FData[I] <> FalseLongWord)) then
+    if (Value and (FData[I] <> TrueWord32)) or
+       (not Value and (FData[I] <> FalseWord32)) then
       begin
         Result := False;
         exit;
@@ -3389,8 +3477,9 @@ begin
 end;
 
 procedure TBitArray.Fill(const LoIdx, HiIdx: Integer; const Value: Boolean);
-var B, I   : LongWord;
-    IL, IH : Integer;
+var
+  B, I   : Word32;
+  IL, IH : Integer;
 begin
   {$IFOPT R+}
   if (LoIdx < 0) or (LoIdx > HiIdx) or (HiIdx >= FCount) then
@@ -3404,7 +3493,8 @@ begin
     B := HighBitMask32(LoIdx and 31);
   I := FData[IL];
   if Value then
-    FData[IL] := I or B else
+    FData[IL] := I or B
+  else
     FData[IL] := I and not B;
   if IH = IL then
     exit;
@@ -3412,15 +3502,17 @@ begin
   B := LowBitMask32(HiIdx and 31);
   I := FData[IH];
   if Value then
-    FData[IH] := I or B else
+    FData[IH] := I or B
+  else
     FData[IH] := I and not B;
   if IH = IL + 1 then
     exit;
   // Set bits in FData[IL + 1..IR - 1]
   for I := IL + 1 to IH - 1 do
     if Value then
-      FData[I] := TrueLongWord else
-      FData[I] := FalseLongWord;
+      FData[I] := TrueWord32
+    else
+      FData[I] := FalseWord32;
 end;
 
 
@@ -4280,8 +4372,8 @@ end;
 
 {%DEFINE ObjectDictionaryConstructor}
 constructor TGeneralObjectDictionary%2%.CreateEx(
-    const AKeys: A%3%Array;
-    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeys: T%3%Array;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
     const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -4322,8 +4414,8 @@ end;
 {%ENDDEF}
 {%DEFINE TTypeDictionaryConstructor}
 constructor TGeneral%1%Dictionary%2%.CreateEx(
-    const AKeys: A%3%Array;
-    const AValues: A%1%Array; const AKeysCaseSensitive: Boolean;
+    const AKeys: T%3%Array;
+    const AValues: T%1%Array; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;

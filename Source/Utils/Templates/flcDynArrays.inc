@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDynArrays.pas                                         }
-{   File version:     5.31                                                     }
+{   File version:     5.34                                                     }
 {   Description:      Utility functions for dynamic arrays                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -69,15 +69,15 @@
 {   2016/04/16  5.29  Changes for FreePascal 3.0.0.                            }
 {   2018/07/17  5.30  Int32/Word32 functions.                                  }
 {   2018/08/12  5.31  String type changes.                                     }
+{   2019/03/22  5.32  FreePascal 3.04 Win64 changes.                           }
+{   2019/04/02  5.33  Integer/Cardinal functions.                              }
+{   2020/03/31  5.34  Word64 functions.                                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.28  2016/01/09                       }
-{   Delphi XE7 Win32                    5.28  2016/01/09                       }
-{   Delphi XE7 Win64                    5.28  2016/01/09                       }
-{   Delphi 10 Win32                     5.28  2016/01/09                       }
-{   Delphi 10 Win64                     5.28  2016/01/09                       }
-{   FreePascal 3.0.0 Win32              5.29  2016/04/16                       }
+{   Delphi 2010-10.4 Win32/Win64        5.34  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.34  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.34  2020/06/02                       }
 {                                                                              }
 {*******************************************************************************}
 
@@ -114,13 +114,16 @@ uses
 {%DEFINE DynArrayAppend}
 function  DynArrayAppend%1%(var V: %2%Array; const R: %3%): Integer; overload; {$IFDEF UseInline}inline;{$ENDIF}{%ENDDEF}
 {%TEMPLATE DynArrayAppend ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayAppend ''  'Word'          'Word'}
+{%TEMPLATE DynArrayAppend ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayAppend ''  'Word32'        'Word32'}
+{%TEMPLATE DynArrayAppend ''  'Word64'        'Word64'}
 {%TEMPLATE DynArrayAppend ''  'LongWord'      'LongWord'}
+{%TEMPLATE DynArrayAppend ''  'Cardinal'      'Cardinal'}
 {%TEMPLATE DynArrayAppend ''  'NativeUInt'    'NativeUInt'}
 {%TEMPLATE DynArrayAppend ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayAppend ''  'SmallInt'      'SmallInt'}
 {%TEMPLATE DynArrayAppend ''  'LongInt'       'LongInt'}
+{%TEMPLATE DynArrayAppend ''  'Integer'       'Integer'}
 {%TEMPLATE DynArrayAppend ''  'Int32'         'Int32'}
 {%TEMPLATE DynArrayAppend ''  'Int64'         'Int64'}
 {%TEMPLATE DynArrayAppend ''  'NativeInt'     'NativeInt'}
@@ -144,13 +147,15 @@ function  DynArrayAppend%1%(var V: %2%Array; const R: %3%): Integer; overload; {
 {%DEFINE DynArrayAppendArray}
 function  DynArrayAppend%1%Array(var V: %1%Array; const R: %2%): Integer; overload;{%ENDDEF}
 {%TEMPLATE DynArrayAppendArray 'Byte'          'array of Byte'}
-{%TEMPLATE DynArrayAppendArray 'Word'          'array of Word'}
+{%TEMPLATE DynArrayAppendArray 'Word16'        'array of Word16'}
 {%TEMPLATE DynArrayAppendArray 'Word32'        'array of Word32'}
+{%TEMPLATE DynArrayAppendArray 'Word64'        'array of Word64'}
 {%TEMPLATE DynArrayAppendArray 'Cardinal'      'array of Cardinal'}
 {%TEMPLATE DynArrayAppendArray 'NativeUInt'    'array of NativeUInt'}
 {%TEMPLATE DynArrayAppendArray 'ShortInt'      'array of ShortInt'}
 {%TEMPLATE DynArrayAppendArray 'SmallInt'      'array of SmallInt'}
-{%TEMPLATE DynArrayAppendArray 'Integer'       'array of LongInt'}
+{%TEMPLATE DynArrayAppendArray 'LongInt'       'array of LongInt'}
+{%TEMPLATE DynArrayAppendArray 'Integer'       'array of Integer'}
 {%TEMPLATE DynArrayAppendArray 'Int32'         'array of Int32'}
 {%TEMPLATE DynArrayAppendArray 'Int64'         'array of Int64'}
 {%TEMPLATE DynArrayAppendArray 'NativeInt'     'array of NativeInt'}
@@ -172,13 +177,16 @@ function  DynArrayAppend%1%Array(var V: %1%Array; const R: %2%): Integer; overlo
 {%DEFINE DynArrayRemove}
 function  DynArrayRemove%1%(var V: %2%Array; const Idx: Integer; const Count: Integer = 1): Integer; overload;{%ENDDEF}
 {%TEMPLATE DynArrayRemove ''  'Byte'}
-{%TEMPLATE DynArrayRemove ''  'Word'}
+{%TEMPLATE DynArrayRemove ''  'Word16'}
 {%TEMPLATE DynArrayRemove ''  'Word32'}
+{%TEMPLATE DynArrayRemove ''  'Word64'}
 {%TEMPLATE DynArrayRemove ''  'LongWord'}
+{%TEMPLATE DynArrayRemove ''  'Cardinal'}
 {%TEMPLATE DynArrayRemove ''  'NativeUInt'}
 {%TEMPLATE DynArrayRemove ''  'ShortInt'}
 {%TEMPLATE DynArrayRemove ''  'SmallInt'}
 {%TEMPLATE DynArrayRemove ''  'LongInt'}
+{%TEMPLATE DynArrayRemove ''  'Integer'}
 {%TEMPLATE DynArrayRemove ''  'Int32'}
 {%TEMPLATE DynArrayRemove ''  'Int64'}
 {%TEMPLATE DynArrayRemove ''  'NativeInt'}
@@ -200,7 +208,7 @@ function  DynArrayRemove(var V: ObjectArray; const Idx: Integer; const Count: In
 {%DEFINE DynArrayRemoveDuplicates}
 procedure DynArrayRemoveDuplicates%1%(var V: %2%Array; const IsSorted: Boolean); overload;{%ENDDEF}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'Byte'}
-{%TEMPLATE DynArrayRemoveDuplicates ''  'Word'}
+{%TEMPLATE DynArrayRemoveDuplicates ''  'Word16'}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'LongWord'}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'ShortInt'}
 {%TEMPLATE DynArrayRemoveDuplicates ''  'SmallInt'}
@@ -219,7 +227,7 @@ procedure DynArrayRemoveDuplicates%1%(var V: %2%Array; const IsSorted: Boolean);
 {%DEFINE DynArrayTrimLeft}
 procedure DynArrayTrimLeft%1%(var S: %2%Array; const TrimList: array of %3%); overload;{%ENDDEF}
 {%TEMPLATE DynArrayTrimLeft ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayTrimLeft ''  'Word'          'Word'}
+{%TEMPLATE DynArrayTrimLeft ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayTrimLeft ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayTrimLeft ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayTrimLeft ''  'SmallInt'      'SmallInt'}
@@ -237,7 +245,7 @@ procedure DynArrayTrimLeft%1%(var S: %2%Array; const TrimList: array of %3%); ov
 {%DEFINE DynArrayTrimRight}
 procedure DynArrayTrimRight%1%(var S: %2%Array; const TrimList: array of %3%); overload;{%ENDDEF}
 {%TEMPLATE DynArrayTrimRight ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayTrimRight ''  'Word'          'Word'}
+{%TEMPLATE DynArrayTrimRight ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayTrimRight ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayTrimRight ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayTrimRight ''  'SmallInt'      'SmallInt'}
@@ -256,8 +264,9 @@ procedure DynArrayTrimRight%1%(var S: %2%Array; const TrimList: array of %3%); o
 {%DEFINE DynArrayInsert}
 function  DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: Integer): Integer; overload;{%ENDDEF}
 {%TEMPLATE DynArrayInsert ''  'Byte'}
-{%TEMPLATE DynArrayInsert ''  'Word'}
+{%TEMPLATE DynArrayInsert ''  'Word16'}
 {%TEMPLATE DynArrayInsert ''  'Word32'}
+{%TEMPLATE DynArrayInsert ''  'Word64'}
 {%TEMPLATE DynArrayInsert ''  'LongWord'}
 {%TEMPLATE DynArrayInsert ''  'NativeUInt'}
 {%TEMPLATE DynArrayInsert ''  'ShortInt'}
@@ -284,13 +293,16 @@ function  DynArrayInsert%1%(var V: %2%Array; const Idx: Integer; const Count: In
 function  DynArrayPosNext%1%(const Find: %3%; const V: %2%Array; const PrevPos: Integer = -1;
           const IsSortedAscending: Boolean = False): Integer; overload;{%ENDDEF}
 {%TEMPLATE DynArrayPosNext ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayPosNext ''  'Word'          'Word'}
+{%TEMPLATE DynArrayPosNext ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayPosNext ''  'Word32'        'Word32'}
+{%TEMPLATE DynArrayPosNext ''  'Word64'        'Word64'}
 {%TEMPLATE DynArrayPosNext ''  'LongWord'      'LongWord'}
+{%TEMPLATE DynArrayPosNext ''  'Cardinal'      'Cardinal'}
 {%TEMPLATE DynArrayPosNext ''  'NativeUInt'    'NativeUInt'}
 {%TEMPLATE DynArrayPosNext ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayPosNext ''  'SmallInt'      'SmallInt'}
 {%TEMPLATE DynArrayPosNext ''  'LongInt'       'LongInt'}
+{%TEMPLATE DynArrayPosNext ''  'Integer'       'Integer'}
 {%TEMPLATE DynArrayPosNext ''  'Int32'         'Int32'}
 {%TEMPLATE DynArrayPosNext ''  'Int64'         'Int64'}
 {%TEMPLATE DynArrayPosNext ''  'NativeInt'     'NativeInt'}
@@ -317,7 +329,7 @@ function  DynArrayPosNext(const ClassName: String; const V: ObjectArray;
 function  DynArrayCount%1%(const Find: %3%; const V: %2%Array;
           const IsSortedAscending: Boolean = False): Integer; overload;{%ENDDEF}
 {%TEMPLATE DynArrayCount ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayCount ''  'Word'          'Word'}
+{%TEMPLATE DynArrayCount ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayCount ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayCount ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayCount ''  'SmallInt'      'SmallInt'}
@@ -338,7 +350,7 @@ function  DynArrayCount%1%(const Find: %3%; const V: %2%Array;
 procedure DynArrayRemoveAll%1%(const Find: %3%; var V: %2%Array;
           const IsSortedAscending: Boolean = False); overload; {%ENDDEF}
 {%TEMPLATE DynArrayRemoveAll ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayRemoveAll ''  'Word'          'Word'}
+{%TEMPLATE DynArrayRemoveAll ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayRemoveAll ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayRemoveAll ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayRemoveAll ''  'SmallInt'      'SmallInt'}
@@ -357,7 +369,7 @@ procedure DynArrayRemoveAll%1%(const Find: %3%; var V: %2%Array;
 function  DynArrayIntersection%1%(const V1, V2: %2%Array;
           const IsSortedAscending: Boolean = False): %2%Array; overload;{%ENDDEF}
 {%TEMPLATE DynArrayIntersection ''  'Byte'}
-{%TEMPLATE DynArrayIntersection ''  'Word'}
+{%TEMPLATE DynArrayIntersection ''  'Word16'}
 {%TEMPLATE DynArrayIntersection ''  'LongWord'}
 {%TEMPLATE DynArrayIntersection ''  'ShortInt'}
 {%TEMPLATE DynArrayIntersection ''  'SmallInt'}
@@ -376,7 +388,7 @@ function  DynArrayIntersection%1%(const V1, V2: %2%Array;
 function  DynArrayDifference%1%(const V1, V2: %2%Array;
           const IsSortedAscending: Boolean = False): %2%Array; overload;{%ENDDEF}
 {%TEMPLATE DynArrayDifference ''  'Byte'}
-{%TEMPLATE DynArrayDifference ''  'Word'}
+{%TEMPLATE DynArrayDifference ''  'Word16'}
 {%TEMPLATE DynArrayDifference ''  'LongWord'}
 {%TEMPLATE DynArrayDifference ''  'ShortInt'}
 {%TEMPLATE DynArrayDifference ''  'SmallInt'}
@@ -394,7 +406,7 @@ function  DynArrayDifference%1%(const V1, V2: %2%Array;
 {%DEFINE DynArrayReverse}
 procedure DynArrayReverse%1%(var V: %2%Array); overload;{%ENDDEF}
 {%TEMPLATE DynArrayReverse ''  'Byte'}
-{%TEMPLATE DynArrayReverse ''  'Word'}
+{%TEMPLATE DynArrayReverse ''  'Word16'}
 {%TEMPLATE DynArrayReverse ''  'LongWord'}
 {%TEMPLATE DynArrayReverse ''  'ShortInt'}
 {%TEMPLATE DynArrayReverse ''  'SmallInt'}
@@ -415,8 +427,9 @@ procedure DynArrayReverse%1%(var V: %2%Array); overload;{%ENDDEF}
 function  As%1%Array(const V: array of %2%): %1%Array; overload;{%ENDDEF}
 {%TEMPLATE OpenArrayAsDynArray 'Boolean'       'Boolean'}
 {%TEMPLATE OpenArrayAsDynArray 'Byte'          'Byte'}
-{%TEMPLATE OpenArrayAsDynArray 'Word'          'Word'}
+{%TEMPLATE OpenArrayAsDynArray 'Word16'        'Word16'}
 {%TEMPLATE OpenArrayAsDynArray 'Word32'        'Word32'}
+{%TEMPLATE OpenArrayAsDynArray 'Word64'        'Word64'}
 {%TEMPLATE OpenArrayAsDynArray 'LongWord'      'LongWord'}
 {%TEMPLATE OpenArrayAsDynArray 'Cardinal'      'Cardinal'}
 {%TEMPLATE OpenArrayAsDynArray 'NativeUInt'    'NativeUInt'}
@@ -446,7 +459,7 @@ function  AsInterfaceArray(const V: array of IInterface): InterfaceArray; overlo
 function  DynArrayRange%1%(const First: %1%; const Count: Integer;
           const Increment: %1% = 1): %1%Array;{%ENDDEF}
 {%TEMPLATE DynArrayRange 'Byte'}
-{%TEMPLATE DynArrayRange 'Word'}
+{%TEMPLATE DynArrayRange 'Word16'}
 {%TEMPLATE DynArrayRange 'LongWord'}
 {%TEMPLATE DynArrayRange 'Cardinal'}
 {%TEMPLATE DynArrayRange 'ShortInt'}
@@ -461,7 +474,7 @@ function  DynArrayRange%1%(const First: %1%; const Count: Integer;
 {%DEFINE DynArrayDup}
 function  DynArrayDup%1%(const V: %2%; const Count: Integer): %1%Array;{%ENDDEF}
 {%TEMPLATE DynArrayDup 'Byte'          'Byte'       }
-{%TEMPLATE DynArrayDup 'Word'          'Word'       }
+{%TEMPLATE DynArrayDup 'Word16'        'Word16'     }
 {%TEMPLATE DynArrayDup 'LongWord'      'LongWord'   }
 {%TEMPLATE DynArrayDup 'Cardinal'      'Cardinal'   }
 {%TEMPLATE DynArrayDup 'NativeUInt'    'NativeUInt' }
@@ -486,13 +499,16 @@ function  DynArrayDup%1%(const V: %2%; const Count: Integer): %1%Array;{%ENDDEF}
 {%DEFINE SetLengthAndZero}
 procedure SetLengthAndZero(var V: %1%Array; const NewLength: Integer); overload;{%ENDDEF}
 {%TEMPLATE SetLengthAndZero 'Byte'       }
-{%TEMPLATE SetLengthAndZero 'Word'       }
+{%TEMPLATE SetLengthAndZero 'Word16'     }
 {%TEMPLATE SetLengthAndZero 'Word32'     }
+{%TEMPLATE SetLengthAndZero 'Word64'     }
 {%TEMPLATE SetLengthAndZero 'LongWord'   }
+{%TEMPLATE SetLengthAndZero 'Cardinal'   }
 {%TEMPLATE SetLengthAndZero 'NativeUInt' }
 {%TEMPLATE SetLengthAndZero 'ShortInt'   }
 {%TEMPLATE SetLengthAndZero 'SmallInt'   }
 {%TEMPLATE SetLengthAndZero 'LongInt'    }
+{%TEMPLATE SetLengthAndZero 'Integer'    }
 {%TEMPLATE SetLengthAndZero 'Int32'      }
 {%TEMPLATE SetLengthAndZero 'Int64'      }
 {%TEMPLATE SetLengthAndZero 'NativeInt'  }
@@ -509,7 +525,7 @@ procedure SetLengthAndZero(var V: ObjectArray; const NewLength: Integer;
 {%DEFINE DynArrayIsEqual}
 function  DynArrayIsEqual%1%(const V1, V2: %2%Array): Boolean; overload;{%ENDDEF}
 {%TEMPLATE DynArrayIsEqual ''  'Byte'}
-{%TEMPLATE DynArrayIsEqual ''  'Word'}
+{%TEMPLATE DynArrayIsEqual ''  'Word16'}
 {%TEMPLATE DynArrayIsEqual ''  'LongWord'}
 {%TEMPLATE DynArrayIsEqual ''  'ShortInt'}
 {%TEMPLATE DynArrayIsEqual ''  'SmallInt'}
@@ -530,7 +546,7 @@ function  DynArrayIsEqual%1%(const V1, V2: %2%Array): Boolean; overload;{%ENDDEF
 {%DEFINE DynArrayToDynArray}
 function  %1%ArrayTo%2%Array(const V: %1%Array): %2%Array;{%ENDDEF}
 {%TEMPLATE DynArrayToDynArray 'Byte'     'LongInt'}
-{%TEMPLATE DynArrayToDynArray 'Word'     'LongInt'}
+{%TEMPLATE DynArrayToDynArray 'Word16'   'LongInt'}
 {%TEMPLATE DynArrayToDynArray 'ShortInt' 'LongInt'}
 {%TEMPLATE DynArrayToDynArray 'SmallInt' 'LongInt'}
 {%TEMPLATE DynArrayToDynArray 'LongInt'  'Int64'}
@@ -554,7 +570,7 @@ function  %1%ArrayTo%2%Array(const V: %1%Array): %2%Array;{%ENDDEF}
 function  %1%ArrayFromIndexes(const V: %1%Array;
           const Indexes: IntegerArray): %1%Array;{%ENDDEF}
 {%TEMPLATE DynArrayFromIndexes 'Byte'}
-{%TEMPLATE DynArrayFromIndexes 'Word'}
+{%TEMPLATE DynArrayFromIndexes 'Word16'}
 {%TEMPLATE DynArrayFromIndexes 'LongWord'}
 {%TEMPLATE DynArrayFromIndexes 'Cardinal'}
 {%TEMPLATE DynArrayFromIndexes 'ShortInt'}
@@ -570,12 +586,14 @@ function  %1%ArrayFromIndexes(const V: %1%Array;
 {%DEFINE DynArraySort}
 procedure DynArraySort%1%(const V: %2%Array); overload;{%ENDDEF}
 {%TEMPLATE DynArraySort ''  'Byte'}
-{%TEMPLATE DynArraySort ''  'Word'}
+{%TEMPLATE DynArraySort ''  'Word16'}
 {%TEMPLATE DynArraySort ''  'LongWord'}
+{%TEMPLATE DynArraySort ''  'Cardinal'}
 {%TEMPLATE DynArraySort ''  'NativeUInt'}
 {%TEMPLATE DynArraySort ''  'ShortInt'}
 {%TEMPLATE DynArraySort ''  'SmallInt'}
 {%TEMPLATE DynArraySort ''  'LongInt'}
+{%TEMPLATE DynArraySort ''  'Integer'}
 {%TEMPLATE DynArraySort ''  'Int64'}
 {%TEMPLATE DynArraySort ''  'NativeInt'}
 {%TEMPLATE DynArraySort ''  'Single'}
@@ -639,14 +657,17 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayAppendImpl ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayAppendImpl ''  'Word'          'Word'}
+{%TEMPLATE DynArrayAppendImpl ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayAppendImpl ''  'Word32'        'Word32'}
+{%TEMPLATE DynArrayAppendImpl ''  'Word64'        'Word64'}
 {%TEMPLATE DynArrayAppendImpl ''  'LongWord'      'LongWord'}
+{%TEMPLATE DynArrayAppendImpl ''  'Cardinal'      'Cardinal'}
 {%TEMPLATE DynArrayAppendImpl ''  'NativeUInt'    'NativeUInt'}
 {%TEMPLATE DynArrayAppendImpl ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayAppendImpl ''  'SmallInt'      'SmallInt'}
 {%TEMPLATE DynArrayAppendImpl ''  'Int32'         'Int32'}
 {%TEMPLATE DynArrayAppendImpl ''  'LongInt'       'LongInt'}
+{%TEMPLATE DynArrayAppendImpl ''  'Integer'       'Integer'}
 {%TEMPLATE DynArrayAppendImpl ''  'Int64'         'Int64'}
 {%TEMPLATE DynArrayAppendImpl ''  'NativeInt'     'NativeInt'}
 {%TEMPLATE DynArrayAppendImpl ''  'Single'        'Single'}
@@ -681,14 +702,16 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayAppendArrayImpl 'Byte'       'Byte'}
-{%TEMPLATE DynArrayAppendArrayImpl 'Word'       'Word'}
+{%TEMPLATE DynArrayAppendArrayImpl 'Word16'     'Word16'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Word32'     'Word32'}
+{%TEMPLATE DynArrayAppendArrayImpl 'Word64'     'Word64'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Cardinal'   'Cardinal'}
 {%TEMPLATE DynArrayAppendArrayImpl 'NativeUInt' 'NativeUInt'}
 {%TEMPLATE DynArrayAppendArrayImpl 'ShortInt'   'ShortInt'}
 {%TEMPLATE DynArrayAppendArrayImpl 'SmallInt'   'SmallInt'}
+{%TEMPLATE DynArrayAppendArrayImpl 'LongInt'    'LongInt'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Int32'      'Int32'}
-{%TEMPLATE DynArrayAppendArrayImpl 'LongInt'    'Integer'}
+{%TEMPLATE DynArrayAppendArrayImpl 'Integer'    'Integer'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Int64'      'Int64'}
 {%TEMPLATE DynArrayAppendArrayImpl 'NativeInt'  'NativeInt'}
 {%TEMPLATE DynArrayAppendArrayImpl 'Single'     'Single'}
@@ -791,13 +814,16 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayRemoveMemImpl 'Byte'       'Byte'}
-{%TEMPLATE DynArrayRemoveMemImpl 'Word'       'Word'}
+{%TEMPLATE DynArrayRemoveMemImpl 'Word16'     'Word16'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Word32'     'Word32'}
+{%TEMPLATE DynArrayRemoveMemImpl 'Word64'     'Word64'}
 {%TEMPLATE DynArrayRemoveMemImpl 'LongWord'   'LongWord'}
+{%TEMPLATE DynArrayRemoveMemImpl 'Cardinal'   'Cardinal'}
 {%TEMPLATE DynArrayRemoveMemImpl 'NativeUInt' 'NativeUInt'}
 {%TEMPLATE DynArrayRemoveMemImpl 'ShortInt'   'ShortInt'}
 {%TEMPLATE DynArrayRemoveMemImpl 'SmallInt'   'SmallInt'}
 {%TEMPLATE DynArrayRemoveMemImpl 'LongInt'    'LongInt'}
+{%TEMPLATE DynArrayRemoveMemImpl 'Integer'    'Integer'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Int32'      'Int32'}
 {%TEMPLATE DynArrayRemoveMemImpl 'Int64'      'Int64'}
 {%TEMPLATE DynArrayRemoveMemImpl 'NativeInt'  'NativeInt'}
@@ -967,7 +993,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'Byte'          'Byte'      }
-{%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'Word'          'Word'      }
+{%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'Word16'        'Word16'    }
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'LongWord'      'LongWord'  }
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'ShortInt'      'ShortInt'  }
 {%TEMPLATE DynArrayRemoveDuplicatesImpl ''  'SmallInt'      'SmallInt'  }
@@ -1007,7 +1033,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayTrimLeftImpl ''  'Word'          'Word'}
+{%TEMPLATE DynArrayTrimLeftImpl ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayTrimLeftImpl ''  'SmallInt'      'SmallInt'}
@@ -1046,7 +1072,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayTrimRightImpl ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayTrimRightImpl ''  'Word'          'Word'}
+{%TEMPLATE DynArrayTrimRightImpl ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayTrimRightImpl ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayTrimRightImpl ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayTrimRightImpl ''  'SmallInt'      'SmallInt'}
@@ -1088,8 +1114,9 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayInsertImpl ''  'Byte'          'Byte'          '0'}
-{%TEMPLATE DynArrayInsertImpl ''  'Word'          'Word'          '0'}
+{%TEMPLATE DynArrayInsertImpl ''  'Word16'        'Word16'        '0'}
 {%TEMPLATE DynArrayInsertImpl ''  'Word32'        'Word32'        '0'}
+{%TEMPLATE DynArrayInsertImpl ''  'Word64'        'Word64'        '0'}
 {%TEMPLATE DynArrayInsertImpl ''  'LongWord'      'LongWord'      '0'}
 {%TEMPLATE DynArrayInsertImpl ''  'NativeUInt'    'NativeUInt'    '0'}
 {%TEMPLATE DynArrayInsertImpl ''  'ShortInt'      'ShortInt'      '0'}
@@ -1173,13 +1200,16 @@ end;
 {%ENDDEF}
 {%DEFINE DynArrayPosNextArrayImpl}{%TEMPLATE DynArrayPosNextImpl '%2%' '%3%' 'ArrayValue' 'Find' '%1%'}{%ENDDEF}
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'Byte'          'Byte'       }
-{%TEMPLATE DynArrayPosNextArrayImpl ''  'Word'          'Word'       }
+{%TEMPLATE DynArrayPosNextArrayImpl ''  'Word16'        'Word16'     }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'Word32'        'Word32'     }
+{%TEMPLATE DynArrayPosNextArrayImpl ''  'Word64'        'Word64'     }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'LongWord'      'LongWord'   }
+{%TEMPLATE DynArrayPosNextArrayImpl ''  'Cardinal'      'Cardinal'   }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'NativeUInt'    'NativeUInt' }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'ShortInt'      'ShortInt'   }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'SmallInt'      'SmallInt'   }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'LongInt'       'LongInt'    }
+{%TEMPLATE DynArrayPosNextArrayImpl ''  'Integer'       'Integer'    }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'Int32'         'Int32'      }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'Int64'         'Int64'      }
 {%TEMPLATE DynArrayPosNextArrayImpl ''  'NativeInt'     'NativeInt'  }
@@ -1282,7 +1312,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayCountImpl ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayCountImpl ''  'Word'          'Word'}
+{%TEMPLATE DynArrayCountImpl ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayCountImpl ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayCountImpl ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayCountImpl ''  'SmallInt'      'SmallInt'}
@@ -1319,7 +1349,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayRemoveAllImpl ''  'Byte'          'Byte'}
-{%TEMPLATE DynArrayRemoveAllImpl ''  'Word'          'Word'}
+{%TEMPLATE DynArrayRemoveAllImpl ''  'Word16'        'Word16'}
 {%TEMPLATE DynArrayRemoveAllImpl ''  'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayRemoveAllImpl ''  'ShortInt'      'ShortInt'}
 {%TEMPLATE DynArrayRemoveAllImpl ''  'SmallInt'      'SmallInt'}
@@ -1403,7 +1433,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayIntersectionImpl ''  'Byte'}
-{%TEMPLATE DynArrayIntersectionImpl ''  'Word'}
+{%TEMPLATE DynArrayIntersectionImpl ''  'Word16'}
 {%TEMPLATE DynArrayIntersectionImpl ''  'LongWord'}
 {%TEMPLATE DynArrayIntersectionImpl ''  'ShortInt'}
 {%TEMPLATE DynArrayIntersectionImpl ''  'SmallInt'}
@@ -1485,7 +1515,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayDifferenceImpl ''  'Byte'}
-{%TEMPLATE DynArrayDifferenceImpl ''  'Word'}
+{%TEMPLATE DynArrayDifferenceImpl ''  'Word16'}
 {%TEMPLATE DynArrayDifferenceImpl ''  'LongWord'}
 {%TEMPLATE DynArrayDifferenceImpl ''  'ShortInt'}
 {%TEMPLATE DynArrayDifferenceImpl ''  'SmallInt'}
@@ -1507,26 +1537,26 @@ var I, L : Integer;
 begin
   L := Length(V);
   for I := 1 to L div 2 do
-    Swap%1%(V[I - 1], V[L - I]);
+    Swap%3%(V[I - 1], V[L - I]);
 end;
 {%ENDDEF}
-{%TEMPLATE DynArrayReverseImpl ''  'Byte'}
-{%TEMPLATE DynArrayReverseImpl ''  'Word'}
-{%TEMPLATE DynArrayReverseImpl ''  'LongWord'}
-{%TEMPLATE DynArrayReverseImpl ''  'ShortInt'}
-{%TEMPLATE DynArrayReverseImpl ''  'SmallInt'}
-{%TEMPLATE DynArrayReverseImpl ''  'LongInt'}
-{%TEMPLATE DynArrayReverseImpl ''  'Int64'}
+{%TEMPLATE DynArrayReverseImpl ''  'Byte'     ''}
+{%TEMPLATE DynArrayReverseImpl ''  'Word16'   ''}
+{%TEMPLATE DynArrayReverseImpl ''  'LongWord' 'LW'}
+{%TEMPLATE DynArrayReverseImpl ''  'ShortInt' ''}
+{%TEMPLATE DynArrayReverseImpl ''  'SmallInt' ''}
+{%TEMPLATE DynArrayReverseImpl ''  'LongInt'  'LI'}
+{%TEMPLATE DynArrayReverseImpl ''  'Int64'    ''}
 {$IFDEF SupportAnsiString}
-{%TEMPLATE DynArrayReverseImpl 'A' 'AnsiString'}
+{%TEMPLATE DynArrayReverseImpl 'A' 'AnsiString' 'A'}
 {$ENDIF}
-{%TEMPLATE DynArrayReverseImpl 'U' 'UnicodeString'}
-{%TEMPLATE DynArrayReverseImpl ''  'String'}
-{%TEMPLATE DynArrayReverseImpl ''  'Pointer'}
-{%TEMPLATE DynArrayReverseImpl ''  'Object'}
-{%TEMPLATE DynArrayReverseImpl ''  'Single'}
-{%TEMPLATE DynArrayReverseImpl ''  'Double'}
-{%TEMPLATE DynArrayReverseImpl ''  'Extended'}
+{%TEMPLATE DynArrayReverseImpl 'U' 'UnicodeString' 'U'}
+{%TEMPLATE DynArrayReverseImpl ''  'String' ''}
+{%TEMPLATE DynArrayReverseImpl ''  'Pointer' ''}
+{%TEMPLATE DynArrayReverseImpl ''  'Object'  ''}
+{%TEMPLATE DynArrayReverseImpl ''  'Single'  ''}
+{%TEMPLATE DynArrayReverseImpl ''  'Double'  ''}
+{%TEMPLATE DynArrayReverseImpl '' 'Extended' 'Ext'}
 
 
 {                                                                              }
@@ -1543,8 +1573,9 @@ end;
 {%ENDDEF}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Boolean'       'Boolean'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Byte'          'Byte'}
-{%TEMPLATE OpenArrayAsDynArrayImpl 'Word'          'Word'}
+{%TEMPLATE OpenArrayAsDynArrayImpl 'Word16'        'Word16'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Word32'        'Word32'}
+{%TEMPLATE OpenArrayAsDynArrayImpl 'Word64'        'Word64'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'LongWord'      'LongWord'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'Cardinal'      'Cardinal'}
 {%TEMPLATE OpenArrayAsDynArrayImpl 'NativeUInt'    'NativeUInt'}
@@ -1586,7 +1617,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayRangeImpl 'Byte'}
-{%TEMPLATE DynArrayRangeImpl 'Word'}
+{%TEMPLATE DynArrayRangeImpl 'Word16'}
 {%TEMPLATE DynArrayRangeImpl 'LongWord'}
 {%TEMPLATE DynArrayRangeImpl 'Cardinal'}
 {%TEMPLATE DynArrayRangeImpl 'ShortInt'}
@@ -1627,7 +1658,7 @@ begin
     Result[I] := V;
 end;
 {%ENDDEF}
-{%TEMPLATE DynArrayDupImpl 'Word'          'Word'}
+{%TEMPLATE DynArrayDupImpl 'Word16'        'Word16'}
 {%TEMPLATE DynArrayDupImpl 'LongWord'      'LongWord'}
 {%TEMPLATE DynArrayDupImpl 'Cardinal'      'Cardinal'}
 {%TEMPLATE DynArrayDupImpl 'NativeUInt'    'NativeUInt'}
@@ -1670,13 +1701,16 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE SetLengthAndZeroImpl 'Byte'       'Byte'       '0'}
-{%TEMPLATE SetLengthAndZeroImpl 'Word'       'Word'       '0'}
+{%TEMPLATE SetLengthAndZeroImpl 'Word16'     'Word16'     '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'Word32'     'Word32'     '0'}
+{%TEMPLATE SetLengthAndZeroImpl 'Word64'     'Word64'     '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'LongWord'   'LongWord'   '0'}
+{%TEMPLATE SetLengthAndZeroImpl 'Cardinal'   'Cardinal'   '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'NativeUInt' 'NativeUInt' '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'ShortInt'   'ShortInt'   '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'SmallInt'   'SmallInt'   '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'LongInt'    'LongInt'    '0'}
+{%TEMPLATE SetLengthAndZeroImpl 'Integer'    'Integer'    '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'Int32'      'Int32'      '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'Int64'      'Int64'      '0'}
 {%TEMPLATE SetLengthAndZeroImpl 'NativeInt'  'NativeInt'  '0'}
@@ -1741,7 +1775,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayIsEqualMemImpl   'Byte'}
-{%TEMPLATE DynArrayIsEqualMemImpl   'Word'}
+{%TEMPLATE DynArrayIsEqualMemImpl   'Word16'}
 {%TEMPLATE DynArrayIsEqualMemImpl   'LongWord'}
 {%TEMPLATE DynArrayIsEqualMemImpl   'ShortInt'}
 {%TEMPLATE DynArrayIsEqualMemImpl   'SmallInt'}
@@ -1774,7 +1808,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayToDynArrayImpl 'Byte'     'LongInt'  '' ''}
-{%TEMPLATE DynArrayToDynArrayImpl 'Word'     'LongInt'  '' ''}
+{%TEMPLATE DynArrayToDynArrayImpl 'Word16'   'LongInt'  '' ''}
 {%TEMPLATE DynArrayToDynArrayImpl 'ShortInt' 'LongInt'  '' ''}
 {%TEMPLATE DynArrayToDynArrayImpl 'SmallInt' 'LongInt'  '' ''}
 {%TEMPLATE DynArrayToDynArrayImpl 'LongInt'  'Int64'    '' ''}
@@ -1809,7 +1843,7 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArrayFromIndexesImpl 'Byte'}
-{%TEMPLATE DynArrayFromIndexesImpl 'Word'}
+{%TEMPLATE DynArrayFromIndexesImpl 'Word16'}
 {%TEMPLATE DynArrayFromIndexesImpl 'LongWord'}
 {%TEMPLATE DynArrayFromIndexesImpl 'Cardinal'}
 {%TEMPLATE DynArrayFromIndexesImpl 'ShortInt'}
@@ -1876,12 +1910,14 @@ begin
 end;
 {%ENDDEF}
 {%TEMPLATE DynArraySortImpl ''  'Byte'          'Byte'       }
-{%TEMPLATE DynArraySortImpl ''  'Word'          'Word'       }
+{%TEMPLATE DynArraySortImpl ''  'Word16'        'Word16'     }
 {%TEMPLATE DynArraySortImpl ''  'LongWord'      'LongWord'   }
+{%TEMPLATE DynArraySortImpl ''  'Cardinal'      'Cardinal'   }
 {%TEMPLATE DynArraySortImpl ''  'NativeUInt'    'NativeUInt' }
 {%TEMPLATE DynArraySortImpl ''  'ShortInt'      'ShortInt'   }
 {%TEMPLATE DynArraySortImpl ''  'SmallInt'      'SmallInt'   }
 {%TEMPLATE DynArraySortImpl ''  'LongInt'       'LongInt'    }
+{%TEMPLATE DynArraySortImpl ''  'Integer'       'Integer'    }
 {%TEMPLATE DynArraySortImpl ''  'Int64'         'Int64'      }
 {%TEMPLATE DynArraySortImpl ''  'NativeInt'     'NativeInt'  }
 {%TEMPLATE DynArraySortImpl ''  'Single'        'Single'     }
