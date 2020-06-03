@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherRSA.pas                                         }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      RSA cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -34,18 +34,25 @@
 {   Github:           https://github.com/fundamentalslib                       }
 {   E-mail:           fundamentals.library at gmail.com                        }
 {                                                                              }
+{   References:                                                                }
+{                                                                              }
+{     RFC 8017 - PKCS #1: RSA Cryptography Specifications Version 2.2          }
+{     https://tools.ietf.org/html/rfc8017                                      }
+{                                                                              }
+{                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2008/01/20  0.01  Initial development                                      }
-{   2010/08/04  0.02  Update for changes to HugeWord                           }
-{   2010/08/04  0.03  PKCS encoding                                            }
-{   2010/08/09  0.04  OAEP encoding                                            }
-{   2010/08/10  4.05  Test cases                                               }
-{   2010/12/01  4.06  RSAPublicKeyAssignBuf                                    }
-{   2015/03/31  4.07  Use RawByteString                                        }
-{   2015/06/08  4.08  RSASignMessage and RSACheckSignature                     }
+{   2008/01/20  0.01  Initial development.                                     }
+{   2010/08/04  0.02  Update for changes to HugeWord.                          }
+{   2010/08/04  0.03  EME_PKCS message encoding.                               }
+{   2010/08/09  0.04  EME_OAEP message encoding.                               }
+{   2010/08/10  4.05  Tests.                                                   }
+{   2010/12/01  4.06  RSAPublicKeyAssignBuf.                                   }
+{   2015/03/31  4.07  RawByteString changes.                                   }
+{   2015/06/08  4.08  RSASignMessage and RSACheckSignature.                    }
 {   2016/01/09  5.09  Revised for Fundamentals 5.                              }
 {   2018/07/17  5.10  Word32 changes.                                          }
+{   2020/05/16  5.11  EMSA_PKCS1 message encoding.                             }
 {                                                                              }
 {******************************************************************************}
 
@@ -58,6 +65,7 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
   flcStdTypes,
   flcHash,
@@ -72,13 +80,13 @@ type
   ERSA = class(Exception);
 
   TRSAPublicKey = record
-    KeySize  : Integer;
+    KeyBits  : Int32;
     Modulus  : HugeWord;
     Exponent : HugeWord;
   end;
 
   TRSAPrivateKey = record
-    KeySize        : Integer;
+    KeyBits        : Int32;
     Modulus        : HugeWord;
     Exponent       : HugeWord; // d
     PublicExponent : HugeWord; // e
@@ -92,46 +100,56 @@ type
 
   TRSAMessage = HugeWord;
 
-  TRSAEncryptionType = (
-    rsaetPKCS1,
-    rsaetOAEP);
+
+
+{ RSAPublicKey }
 
 procedure RSAPublicKeyInit(var Key: TRSAPublicKey);
 procedure RSAPublicKeyFinalise(var Key: TRSAPublicKey);
+
 procedure RSAPublicKeyAssign(var KeyD: TRSAPublicKey; const KeyS: TRSAPublicKey);
 procedure RSAPublicKeyAssignHex(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const HexMod, HexExp: String);
 procedure RSAPublicKeyAssignBuf(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf; const ModBufSize: Integer;
           const ExpBuf; const ExpBufSize: Integer;
           const ReverseByteOrder: Boolean);
 procedure RSAPublicKeyAssignBufStr(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf, ExpBuf: RawByteString);
+
+
+
+{ RSAPrivateKey }
 
 procedure RSAPrivateKeyInit(var Key: TRSAPrivateKey);
 procedure RSAPrivateKeyFinalise(var Key: TRSAPrivateKey);
+
 procedure RSAPrivateKeyAssign(var KeyD: TRSAPrivateKey; const KeyS: TRSAPrivateKey);
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const HexMod, HexExp: RawByteString);
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf; const ModBufSize: Integer;
           const ExpBuf; const ExpBufSize: Integer;
           const ReverseByteOrder: Boolean);
 procedure RSAPrivateKeyAssignBufStr(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf, ExpBuf: RawByteString);
+
+
+
+{ Generate }
 
 type
   TRSAGenerateCallback =
       procedure (const CallbackData: NativeUInt; var Abort: Boolean);
   ERSAGenerateAborted = class(ERSA);
 
-procedure RSAGenerateKeys(const KeySize: Integer;
+procedure RSAGenerateKeys(const KeyBits: Integer;
           var PrivateKey: TRSAPrivateKey;
           var PublicKey: TRSAPublicKey;
           const Callback: TRSAGenerateCallback = nil;
@@ -139,73 +157,169 @@ procedure RSAGenerateKeys(const KeySize: Integer;
 
 function  RSACipherMessageBufSize(const KeySize: Integer): Integer;
 
-procedure RSAEncodeMessagePKCS1(
-          const KeySize: Integer;
+
+
+{ EME_PKCS1 }
+{ Used in RSAES-PKCS1-v1_5 }
+
+procedure RSAEncodeMessageEME_PKCS1(
+          const KeyBits: Int32;
           const Buf; const BufSize: Integer;
           var EncodedMessage: TRSAMessage);
-procedure RSAEncodeMessageOAEP(
-          const KeySize: Integer;
+
+function  RSADecodeMessageEME_PKCS1(
+          const KeyBits: Int32;
+          const EncodedMessage: HugeWord;
+          var Buf; const BufSize: Integer): Integer;
+
+
+
+{ EME_OAEP }
+{ Used in RSAES-OAEP }
+
+procedure RSAEncodeMessageEME_OAEP(
+          const KeyBits: Int32;
           const Buf; const BufSize: Integer;
           var EncodedMessage: TRSAMessage);
+
+function  RSADecodeMessageEME_OAEP(
+          const KeyBits: Int32;
+          const EncodedMessage: HugeWord;
+          var Buf; const BufSize: Integer): Integer;
+
+
+
+{ RSACipher Message }
+
+function  RSACipherMessageToBuf(
+          const KeyBits: Int32;
+          const CipherMessage: TRSAMessage;
+          var CipherBuf; const CipherBufSize: Integer): Integer;
+
+procedure RSACipherBufToMessage(
+          const KeyBits: Int32;
+          const CipherBuf; const CipherBufSize: Integer;
+          var CipherMessage: TRSAMessage);
+
+
+
+{ RSA Encryption Type }
+
+type
+  TRSAEncryptionType = (
+    rsaetRSAES_PKCS1,
+    rsaetRSAES_OAEP
+  );
+
+
+
+{ Encrypt }
+
 procedure RSAEncryptMessage(
           const PublicKey: TRSAPublicKey;
           const PlainMessage: TRSAMessage;
           var CipherMessage: TRSAMessage);
-function  RSACipherMessageToBuf(
-          const KeySize: Integer;
-          const CipherMessage: TRSAMessage;
-          var CipherBuf; const CipherBufSize: Integer): Integer;
 
 function  RSAEncrypt(
           const EncryptionType: TRSAEncryptionType;
           const PublicKey: TRSAPublicKey;
           const PlainBuf; const PlainBufSize: Integer;
           var CipherBuf; const CipherBufSize: Integer): Integer;
+
 function  RSAEncryptStr(
           const EncryptionType: TRSAEncryptionType;
           const PublicKey: TRSAPublicKey;
           const Plain: RawByteString): RawByteString;
 
-procedure RSACipherBufToMessage(
-          const KeySize: Integer;
-          const CipherBuf; const CipherBufSize: Integer;
-          var CipherMessage: TRSAMessage);
+
+
+{ Decrypt }
+
 procedure RSADecryptMessage(
           const PrivateKey: TRSAPrivateKey;
           const CipherMessage: TRSAMessage;
           var EncodedMessage: TRSAMessage);
-function  RSADecodeMessagePKCS1(
-          const KeySize: Integer;
-          const EncodedMessage: HugeWord;
-          var Buf; const BufSize: Integer): Integer;
-function  RSADecodeMessageOAEP(
-          const KeySize: Integer;
-          const EncodedMessage: HugeWord;
-          var Buf; const BufSize: Integer): Integer;
 
 function  RSADecrypt(
           const EncryptionType: TRSAEncryptionType;
           const PrivateKey: TRSAPrivateKey;
           const CipherBuf; const CipherBufSize: Integer;
           var PlainBuf; const PlainBufSize: Integer): Integer;
+
 function  RSADecryptStr(
           const EncryptionType: TRSAEncryptionType;
           const PrivateKey: TRSAPrivateKey;
           const Cipher: RawByteString): RawByteString;
 
+
+
+{ Hash }
+
+type
+  TRSAHashType = (
+    rsahfMD5,
+    rsahfSHA1,
+    rsahfSHA256,
+    rsahfSHA384,
+    rsahfSHA512
+    );
+
+function  RSAHashBuf(
+          const HashType: TRSAHashType;
+          const Buf; const BufSize: NativeInt;
+          const Digest; const DigestSize: Integer): Integer;
+
+
+
+{ EMSA_PKCS1 }
+
+procedure RSAEncodeMessageEMSA_PKCS1(
+          const KeyBits: Int32;
+          const HashType: TRSAHashType;
+          const Buf; const BufSize: NativeInt;
+          var EncodedMessage: TRSAMessage);
+
+function  RSADecodeMessageEMSA_PKCS1(
+          const KeyBits: Int32;
+          const EncodedMessage: HugeWord;
+          var HashType: TRSAHashType;
+          var Buf; const BufSize: Integer): Integer;
+
+
+
+{ SignMsg }
+
+procedure RSASignBufToMsg(const KeyBits: Integer; var Msg: HugeWord; const Buf; const BufSize: Integer);
+
+function  RSASignMsgToBuf(const KeyBits: Integer; var Buf; const BufSize: Integer; const Msg: HugeWord): Integer;
+
+
+
+{ Sign / Verify }
+
+type
+  TRSASignMessageType = (
+    rsastMessage,
+    rsastEMSA_PKCS1
+    );
+
 function  RSASignMessage(
+          const SignType: TRSASignMessageType;
+          const HashType: TRSAHashType;
           const PrivateKey: TRSAPrivateKey;
-          const MessageHashBuf; const MessageHashBufSize: Integer;
+          const MessageBuf; const MessageBufSize: Integer;
           var SignatureBuf; const SignatureBufSize: Integer): Integer;
+
 function  RSACheckSignature(
+          const SignType: TRSASignMessageType;
           const PublicKey: TRSAPublicKey;
-          const MessageHashBuf; const MessageHashBufSize: Integer;
+          const MessageBuf; const MessageBufSize: NativeInt;
           const SignatureBuf; const SignatureBufSize: Integer): Boolean;
 
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF CIPHER_TEST}
 procedure Test;
@@ -227,6 +341,7 @@ uses
   Windows,
   {$ENDIF}
   {$ENDIF}
+
   { Fundamentals }
   flcUtils,
   flcRandom;
@@ -236,17 +351,9 @@ uses
 {                                                                              }
 { SecureClear                                                                  }
 {                                                                              }
-procedure SecureClearHugeWord(var A: HugeWord);
-begin
-  if (A.Alloc = 0) or not Assigned(A.Data) then
-    exit;
-  SecureClear(A.Data^, A.Alloc * HugeWordElementSize);
-end;
-
 procedure SecureHugeWordFinalise(var A: HugeWord);
 begin
-  SecureClearHugeWord(A);
-  HugeWordFinalise(A);
+  HugeWordClearAndFinalise(A);
 end;
 
 
@@ -263,7 +370,7 @@ const
 
 procedure RSAPublicKeyInit(var Key: TRSAPublicKey);
 begin
-  Key.KeySize := 0;
+  Key.KeyBits := 0;
   HugeWordInit(Key.Modulus);
   HugeWordInit(Key.Exponent);
 end;
@@ -276,51 +383,51 @@ end;
 
 procedure RSAPublicKeyAssign(var KeyD: TRSAPublicKey; const KeyS: TRSAPublicKey);
 begin
-  KeyD.KeySize := KeyS.KeySize;
+  KeyD.KeyBits := KeyS.KeyBits;
   HugeWordAssign(KeyD.Modulus, KeyS.Modulus);
   HugeWordAssign(KeyD.Exponent, KeyS.Exponent);
 end;
 
 procedure RSAPublicKeyAssignHex(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const HexMod, HexExp: String);
 begin
-  if (KeySize = 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  Key.KeySize := KeySize;
+  Key.KeyBits := KeyBits;
   HexToHugeWord(HexMod, Key.Modulus);
   HexToHugeWord(HexExp, Key.Exponent);
-  if (HugeWordGetBitCount(Key.Modulus) > KeySize) or
-     (HugeWordGetBitCount(Key.Exponent) > KeySize) then
+  if (HugeWordGetBitCount(Key.Modulus) > KeyBits) or
+     (HugeWordGetBitCount(Key.Exponent) > KeyBits) then
     raise ERSA.Create(SRSAInvalidKeySize);
 end;
 
 procedure RSAPublicKeyAssignBuf(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf; const ModBufSize: Integer;
           const ExpBuf; const ExpBufSize: Integer;
           const ReverseByteOrder: Boolean);
 begin
-  if (KeySize = 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  Key.KeySize := KeySize;
+  Key.KeyBits := KeyBits;
   HugeWordAssignBuf(Key.Modulus, ModBuf, ModBufSize, ReverseByteOrder);
   HugeWordAssignBuf(Key.Exponent, ExpBuf, ExpBufSize, ReverseByteOrder);
 end;
 
 procedure RSAPublicKeyAssignBufStr(var Key: TRSAPublicKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf, ExpBuf: RawByteString);
 begin
-  RSAPublicKeyAssignBuf(Key, KeySize, PByteChar(ModBuf)^, Length(ModBuf),
+  RSAPublicKeyAssignBuf(Key, KeyBits, PByteChar(ModBuf)^, Length(ModBuf),
       PByteChar(ExpBuf)^, Length(ExpBuf), True);
 end;
 
 procedure RSAPrivateKeyInit(var Key: TRSAPrivateKey);
 begin
-  Key.KeySize := 0;
+  Key.KeyBits := 0;
   HugeWordInit(Key.Modulus);
   HugeWordInit(Key.Exponent);
   HugeWordInit(Key.PublicExponent);
@@ -347,7 +454,7 @@ end;
 
 procedure RSAPrivateKeyAssign(var KeyD: TRSAPrivateKey; const KeyS: TRSAPrivateKey);
 begin
-  KeyD.KeySize := KeyS.KeySize;
+  KeyD.KeyBits := KeyS.KeyBits;
   HugeWordAssign(KeyD.Modulus, KeyS.Modulus);
   HugeWordAssign(KeyD.Exponent, KeyS.Exponent);
   HugeWordAssign(KeyD.PublicExponent, KeyS.PublicExponent);
@@ -360,49 +467,50 @@ begin
 end;
 
 procedure RSAPrivateKeyAssignHex(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const HexMod, HexExp: RawByteString);
 begin
-  if (KeySize = 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  Key.KeySize := KeySize;
+  Key.KeyBits := KeyBits;
   HexToHugeWordB(HexMod, Key.Modulus);
   HexToHugeWordB(HexExp, Key.Exponent);
-  if (HugeWordGetBitCount(Key.Modulus) > KeySize) or
-     (HugeWordGetBitCount(Key.Exponent) > KeySize) then
+  if (HugeWordGetBitCount(Key.Modulus) > KeyBits) or
+     (HugeWordGetBitCount(Key.Exponent) > KeyBits) then
     raise ERSA.Create(SRSAInvalidKeySize);
 end;
 
 procedure RSAPrivateKeyAssignBuf(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf; const ModBufSize: Integer;
           const ExpBuf; const ExpBufSize: Integer;
           const ReverseByteOrder: Boolean);
 begin
-  if (KeySize = 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  Key.KeySize := KeySize;
+  Key.KeyBits := KeyBits;
   HugeWordAssignBuf(Key.Modulus, ModBuf, ModBufSize, ReverseByteOrder);
   HugeWordAssignBuf(Key.Exponent, ExpBuf, ExpBufSize, ReverseByteOrder);
-  if (HugeWordGetBitCount(Key.Modulus) > KeySize) or
-     (HugeWordGetBitCount(Key.Exponent) > KeySize) then
+  if (HugeWordGetBitCount(Key.Modulus) > KeyBits) or
+     (HugeWordGetBitCount(Key.Exponent) > KeyBits) then
     raise ERSA.Create(SRSAInvalidKeySize);
 end;
 
 procedure RSAPrivateKeyAssignBufStr(var Key: TRSAPrivateKey;
-          const KeySize: Integer;
+          const KeyBits: Int32;
           const ModBuf, ExpBuf: RawByteString);
 begin
-  RSAPrivateKeyAssignBuf(Key, KeySize, PByteChar(ModBuf)^, Length(ModBuf),
+  RSAPrivateKeyAssignBuf(Key, KeyBits, PByteChar(ModBuf)^, Length(ModBuf),
       PByteChar(ExpBuf)^, Length(ExpBuf), True);
 end;
 
 { RSA Key Random Number                                                        }
 {   Returns a random number for use in RSA key generation.                     }
 procedure RSAKeyRandomNumber(const Bits: Integer; var A: HugeWord);
-var L : Integer;
+var
+  L : Integer;
 begin
   Assert(HugeWordElementBits >= 32);
   if (Bits <= 0) or
@@ -454,10 +562,11 @@ end;
 procedure RSAKeyRandomPrime2(const Bits: Integer; const P: HugeWord; var Q: HugeWord;
           const Callback: TRSAGenerateCallback;
           const CallbackData: NativeUInt);
-var Abort : Boolean;
-    L : HugeWord;
-    C : Integer;
-    N : Word32;
+var
+  Abort : Boolean;
+  L : HugeWord;
+  C : Integer;
+  N : Word32;
 begin
   Abort := False;
   C := Bits div HugeWordElementBits;
@@ -514,19 +623,20 @@ const
   RSAExpCount = 7;
   RSAExp : array[0..RSAExpCount - 1] of Integer = (3, 5, 7, 11, 17, 257, 65537);
 
-procedure RSAGenerateKeys(const KeySize: Integer;
+procedure RSAGenerateKeys(const KeyBits: Integer;
           var PrivateKey: TRSAPrivateKey;
           var PublicKey: TRSAPublicKey;
           const Callback: TRSAGenerateCallback;
           const CallbackData: NativeUInt);
-var Abort : Boolean;
-    Bits : Integer;
-    P, Q, N, E, D, G : HugeWord;
-    F, T : Word32;
-    R : Boolean;
+var
+  Abort : Boolean;
+  Bits : Integer;
+  P, Q, N, E, D, G : HugeWord;
+  F, T : Word32;
+  R : Boolean;
 begin
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
   Abort := False;
   HugeWordInit(P);
@@ -536,7 +646,7 @@ begin
   HugeWordInit(D);
   HugeWordInit(G);
   try
-    Bits := KeySize div 2;
+    Bits := KeyBits div 2;
     repeat
       R := False;
       repeat
@@ -544,7 +654,7 @@ begin
         RSAKeyRandomPrimePair(Bits, P, Q, Callback, CallbackData);
         // calculate n = p * q
         HugeWordMultiply(N, P, Q);
-        Assert(HugeWordGetBitCount(N) = KeySize);
+        Assert(HugeWordGetBitCount(N) = KeyBits);
         // save private key primes
         HugeWordAssign(PrivateKey.Prime1, P);
         HugeWordAssign(PrivateKey.Prime2, Q);
@@ -573,13 +683,13 @@ begin
       // d = inverse(e) mod phi
     until HugeWordModInv(E, PrivateKey.Phi, D);
     // populate PrivateKey and PublicKey
-    PrivateKey.KeySize := KeySize;
+    PrivateKey.KeyBits := KeyBits;
     HugeWordMod(D, P, PrivateKey.Exponent1); // d mod (p - 1)
     HugeWordMod(D, Q, PrivateKey.Exponent2); // d mod (q - 1)
     HugeWordAssign(PrivateKey.Modulus, N);
     HugeWordAssign(PrivateKey.Exponent, D);
     HugeWordAssign(PrivateKey.PublicExponent, E);
-    PublicKey.KeySize := KeySize;
+    PublicKey.KeyBits := KeyBits;
     HugeWordAssign(PublicKey.Modulus, N);
     HugeWordAssign(PublicKey.Exponent, E);
   finally
@@ -602,19 +712,20 @@ end;
 {   Encodes a message buffer as a RSA message.                                 }
 {   Uses EME-PKCS1-v1_5 encoding.                                              }
 {   EM = 0x00 || 0x02 || PS || 0x00 || M                                       }
-procedure RSAEncodeMessagePKCS1(
-          const KeySize: Integer;
+procedure RSAEncodeMessageEME_PKCS1(
+          const KeyBits: Int32;
           const Buf; const BufSize: Integer;
           var EncodedMessage: TRSAMessage);
-var N, L, I, C : Integer;
-    P, Q : PByte;
+var
+  N, L, I, C : Integer;
+  P, Q : PByte;
 begin
   // validate
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
   // message size
-  N := KeySize div 8; // number of bytes in key (max message size)
+  N := KeyBits div 8; // number of bytes in key (max message size)
   C := BufSize;
   if C < 0 then
     C := 0;
@@ -673,10 +784,11 @@ end;
 procedure RSAOAEPMGF1(
           const SeedBuf; const SeedBufSize: Integer;
           var MaskBuf; const MaskBufSize: Integer);
-var N, I, C, D, J : Integer;
-    HashStr : RawByteString;
-    HashSHA1 : T160BitDigest;
-    P, Q, R : PByte;
+var
+  N, I, C, D, J : Integer;
+  HashStr : RawByteString;
+  HashSHA1 : T160BitDigest;
+  P, Q, R : PByte;
 const
   hLen = SizeOf(T160BitDigest);
 begin
@@ -712,12 +824,74 @@ begin
     end;
 end;
 
+{ RSA Decode Message PKCS1                                                     }
+{   Decodes message previously encoded with RSAEncodeMessagePKCS1.             }
+{   Uses EME-PKCS1-v1_5 encoding.                                              }
+{   EM = 0x00 || 0x02 || PS || 0x00 || M                                       }
+{   Returns number of bytes needed to decode message.                          }
+function  RSADecodeMessageEME_PKCS1(
+          const KeyBits: Int32;
+          const EncodedMessage: HugeWord;
+          var Buf; const BufSize: Integer): Integer;
+var
+  L, I : Integer;
+  P, Q : PByte;
+begin
+  // validate
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  if HugeWordGetBitCount(EncodedMessage) <> KeyBits then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // decode
+  L := HugeWordGetSize(EncodedMessage) * HugeWordElementSize;
+  if L < 3 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // 0x00
+  P := EncodedMessage.Data;
+  Inc(P, L - 1);
+  if P^ <> 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // 0x02
+  Dec(P);
+  if P^ <> 2 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Dec(L, 2);
+  // PS
+  if L < 9 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  repeat
+    Dec(P);
+    Dec(L);
+  until (L = 0) or (P^ = 0);
+  // 0x00
+  if P^ <> 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // M
+  Result := L;
+  if L = 0 then
+    exit;
+  if BufSize = 0 then
+    exit;
+  Dec(P);
+  Q := @Buf;
+  for I := 0 to L - 1 do
+    begin
+      Q^ := P^;
+      if I >= BufSize then
+        exit;
+      Dec(P);
+      Inc(Q);
+    end;
+end;
+
 { RSA XOR Buf                                                                  }
 procedure RSAXORBuf(
           var Buf; const BufSize: Integer;
           const MaskBuf; const MaskSize: Integer);
-var N, I, J, C : Integer;
-    P, Q : PByte;
+var
+  N, I, J, C : Integer;
+  P, Q : PByte;
 begin
   Assert(MaskSize > 0);
 
@@ -765,22 +939,23 @@ const
   RSAOAEPHashBufSize = SizeOf(T160BitDigest);
 
 {.DEFINE DEBUG_RSAFixedSeed}
-procedure RSAEncodeMessageOAEP(
-          const KeySize: Integer;
+procedure RSAEncodeMessageEME_OAEP(
+          const KeyBits: Int32;
           const Buf; const BufSize: Integer;
           var EncodedMessage: TRSAMessage);
-var mLen, emLen, psLen, dbMaskLen, dbLen, I : Integer;
-    seed, PS, dbMask, pHash, DB, maskedDB, seedMask, maskedSeed, EM : RawByteString;
-    P, Q : PByte;
+var
+  mLen, emLen, psLen, dbMaskLen, dbLen, I : Integer;
+  seed, PS, dbMask, pHash, DB, maskedDB, seedMask, maskedSeed, EM : RawByteString;
+  P, Q : PByte;
 const
   hLen = RSAOAEPHashBufSize;
 begin
   // validate
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
   // message size
-  emLen := KeySize div 8; // number of bytes in key (max message size)
+  emLen := KeyBits div 8; // number of bytes in key (max message size)
   mLen := BufSize;
   if mLen < 0 then
     mLen := 0;
@@ -793,7 +968,7 @@ begin
   // Move(HashP, pHash[1], hLen);
   pHash := RawByteString(
            #$DA#$39#$A3#$EE#$5E#$6B#$4B#$0D#$32#$55 +
-           #$BF#$EF#$95#$60#$18#$90#$AF#$D8#$07#$09);
+           #$BF#$EF#$95#$60#$18#$90#$AF#$D8#$07#$09); ////
   // seed = random octet string of length hLen
   {$IFDEF DEBUG_RSAFixedSeed}
   seed := RawByteString(
@@ -855,246 +1030,6 @@ begin
     end;
 end;
 
-{ RSA Encrypt Message                                                          }
-procedure RSAEncryptMessage(
-          const PublicKey: TRSAPublicKey;
-          const PlainMessage: TRSAMessage;
-          var CipherMessage: TRSAMessage);
-begin
-  // validate
-  if (PublicKey.KeySize <= 0) or
-     (PublicKey.KeySize mod HugeWordElementBits <> 0) then
-    raise ERSA.Create(SRSAInvalidKeySize);
-  if HugeWordCompare(PlainMessage, PublicKey.Modulus) >= 0 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  Assert(HugeWordGetBitCount(PlainMessage) = PublicKey.KeySize);
-  // encrypt
-  HugeWordPowerAndMod(CipherMessage, PlainMessage, PublicKey.Exponent, PublicKey.Modulus);
-  Assert(HugeWordGetBitCount(CipherMessage) = PublicKey.KeySize);
-end;
-
-{ RSA Cipher Message To Buf                                                    }
-{   Copies cipher message to buffer.                                           }
-{   Returns the buffer size required for the message.                          }
-function RSACipherMessageToBuf(
-         const KeySize: Integer;
-         const CipherMessage: TRSAMessage;
-         var CipherBuf; const CipherBufSize: Integer): Integer;
-var L, I : Integer;
-    P, Q : PByte;
-begin
-  if HugeWordGetBitCount(CipherMessage) <> KeySize then
-    raise ERSA.Create(SRSAInvalidMessage);
-  L := KeySize div 8;
-  Result := L;
-  if CipherBufSize <= 0 then
-    exit;
-  P := CipherMessage.Data;
-  Inc(P, L - 1);
-  Q := @CipherBuf;
-  for I := 0 to L - 1 do
-    begin
-      if I >= CipherBufSize then
-        exit;
-      Q^ := P^;
-      Inc(Q);
-      Dec(P);
-    end;
-end;
-
-{ RSA Encrypt                                                                  }
-function RSAEncrypt(
-         const EncryptionType: TRSAEncryptionType;
-         const PublicKey: TRSAPublicKey;
-         const PlainBuf; const PlainBufSize: Integer;
-         var CipherBuf; const CipherBufSize: Integer): Integer;
-var EncodedMsg, CipherMsg : HugeWord;
-begin
-  // validate
-  if (PublicKey.KeySize <= 0) or
-     (PublicKey.KeySize mod HugeWordElementBits <> 0) then
-    raise ERSA.Create(SRSAInvalidKeySize);
-  if (PlainBufSize < 0) or
-     (CipherBufSize <= 0) then
-    raise ERSA.Create(SRSAInvalidBufferSize);
-  // encrypt
-  HugeWordInit(EncodedMsg);
-  HugeWordInit(CipherMsg);
-  try
-    case EncryptionType of
-      rsaetPKCS1 : RSAEncodeMessagePKCS1(PublicKey.KeySize, PlainBuf, PlainBufSize, EncodedMsg);
-      rsaetOAEP  : RSAEncodeMessageOAEP(PublicKey.KeySize, PlainBuf, PlainBufSize, EncodedMsg);
-    else
-      raise ERSA.Create(SRSAInvalidEncryptionType);
-    end;
-    RSAEncryptMessage(PublicKey, EncodedMsg, CipherMsg);
-    Result := RSACipherMessageToBuf(PublicKey.KeySize, CipherMsg, CipherBuf, CipherBufSize);
-    if Result > CipherBufSize then
-      raise ERSA.Create(SRSAInvalidBufferSize);
-  finally
-    SecureHugeWordFinalise(CipherMsg);
-    SecureHugeWordFinalise(EncodedMsg);
-  end;
-end;
-
-{ RSA Encrypt Str                                                              }
-function RSAEncryptStr(
-         const EncryptionType: TRSAEncryptionType;
-         const PublicKey: TRSAPublicKey;
-         const Plain: RawByteString): RawByteString;
-var L : Integer;
-begin
-  L := RSACipherMessageBufSize(PublicKey.KeySize);
-  SetLength(Result, L);
-  L := RSAEncrypt(EncryptionType, PublicKey, PByteChar(Plain)^, Length(Plain),
-      PByteChar(Result)^, L);
-  SetLength(Result, L);
-end;
-
-{ RSA Cipher Buf To Message                                                    }
-procedure RSACipherBufToMessage(
-          const KeySize: Integer;
-          const CipherBuf; const CipherBufSize: Integer;
-          var CipherMessage: TRSAMessage);
-var L, I : Integer;
-    P, Q : PByte;
-begin
-  // validate
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
-    raise ERSA.Create(SRSAInvalidKeySize);
-  // message size
-  L := KeySize div 8;
-  if CipherBufSize <> L then
-    raise ERSA.Create(SRSAInvalidBufferSize);
-  HugeWordSetSize(CipherMessage, L div HugeWordElementSize);
-  // move data
-  P := CipherMessage.Data;
-  Inc(P, L - 1);
-  Q := @CipherBuf;
-  for I := 0 to L - 1 do
-    begin
-      P^ := Q^;
-      Dec(P);
-      Inc(Q);
-    end;
-end;
-
-{ RSA Decrypt Message                                                          }
-{   Decrypts using m = c^d mod n                                               }
-procedure RSADecryptMessage(
-          const PrivateKey: TRSAPrivateKey;
-          const CipherMessage: TRSAMessage;
-          var EncodedMessage: TRSAMessage);
-begin
-  // validate
-  if (PrivateKey.KeySize <= 0) or
-     (PrivateKey.KeySize mod HugeWordElementBits <> 0) then
-    raise ERSA.Create(SRSAInvalidKeySize);
-  if HugeWordGetBitCount(CipherMessage) <> PrivateKey.KeySize then
-    raise ERSA.Create(SRSAInvalidMessage);
-  // decrypt
-  HugeWordPowerAndMod(EncodedMessage, CipherMessage, PrivateKey.Exponent, PrivateKey.Modulus);
-end;
-
-{
-Alternative decryption algorithm (works with smaller factors):
-if the second form (p, q, dP, dQ,qInv) of K is used:
-Let m1 = c^dP mod p
-Let m2 = c^dQ mod q
-Let h = (m1 - m2) . qInv mod p
-Let m = m2 + q . h
-}
-procedure RSADecryptMessage2(
-          const PrivateKey: TRSAPrivateKey;
-          const CipherMessage: TRSAMessage;
-          var EncodedMessage: TRSAMessage);
-var A, M1, M2, H, M : HugeWord;
-begin
-  HugeWordInit(A);
-  HugeWordInit(M1);
-  HugeWordInit(M2);
-  HugeWordInit(H);
-  try
-    // m1 = c^dP mod p
-    HugeWordPowerAndMod(M1, CipherMessage, PrivateKey.Exponent1, PrivateKey.Prime1);
-    // m2 = c^dQ mod q
-    HugeWordPowerAndMod(M2, CipherMessage, PrivateKey.Exponent2, PrivateKey.Prime2);
-    // h = (m1 - m2) . qInv mod p
-    HugeWordAssign(H, M1);
-    HugeWordSubtract(H, M2);
-    HugeWordMultiply(H, H, PrivateKey.Coefficient);
-    // m = m2 + q . h
-    HugeWordMultiply(M, PrivateKey.Prime2, H);
-    HugeWordAdd(M, M2);
-  finally
-    SecureHugeWordFinalise(H);
-    SecureHugeWordFinalise(M2);
-    SecureHugeWordFinalise(M1);
-    SecureHugeWordFinalise(A);
-  end;
-end;
-
-{ RSA Decode Message PKCS1                                                     }
-{   Decodes message previously encoded with RSAEncodeMessagePKCS1.             }
-{   Uses EME-PKCS1-v1_5 encoding.                                              }
-{   EM = 0x00 || 0x02 || PS || 0x00 || M                                       }
-{   Returns number of bytes needed to decode message.                          }
-function  RSADecodeMessagePKCS1(
-          const KeySize: Integer;
-          const EncodedMessage: HugeWord;
-          var Buf; const BufSize: Integer): Integer;
-var L, I : Integer;
-    P, Q : PByte;
-begin
-  // validate
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
-    raise ERSA.Create(SRSAInvalidKeySize);
-  if HugeWordGetBitCount(EncodedMessage) <> KeySize then
-    raise ERSA.Create(SRSAInvalidMessage);
-  // decode
-  L := HugeWordGetSize(EncodedMessage) * HugeWordElementSize;
-  if L < 3 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  // 0x00
-  P := EncodedMessage.Data;
-  Inc(P, L - 1);
-  if P^ <> 0 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  // 0x02
-  Dec(P);
-  if P^ <> 2 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  Dec(L, 2);
-  // PS
-  if L < 9 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  repeat
-    Dec(P);
-    Dec(L);
-  until (L = 0) or (P^ = 0);
-  // 0x00
-  if P^ <> 0 then
-    raise ERSA.Create(SRSAInvalidMessage);
-  // M
-  Result := L;
-  if L = 0 then
-    exit;
-  if BufSize = 0 then
-    exit;
-  Dec(P);
-  Q := @Buf;
-  for I := 0 to L - 1 do
-    begin
-      Q^ := P^;
-      if I >= BufSize then
-        exit;
-      Dec(P);
-      Inc(Q);
-    end;
-end;
-
 { RSA Decode Message OAEP                                                      }
 {   Decodes message previously encoded with RSAEncodeMessageOAEP.              }
 {   Uses EME-OAEP encoding using SHA1 hashing.                                 }
@@ -1113,21 +1048,22 @@ end;
 {   seedMask = MGF(maskedDB, hLen)                                             }
 {   maskedSeed = seed x seedMask                                               }
 {   EM = 0x00 || maskedSeed || maskedDB                                        }
-function  RSADecodeMessageOAEP(
-          const KeySize: Integer;
+function  RSADecodeMessageEME_OAEP(
+          const KeyBits: Int32;
           const EncodedMessage: HugeWord;
           var Buf; const BufSize: Integer): Integer;
-var I, L, emLen, dbLen : Integer;
-    maskedSeed, maskedDB, seedMask, seed, dbMask, DB, pHash, pHashPr : RawByteString;
-    P, Q : PByte;
+var
+  I, L, emLen, dbLen : Integer;
+  maskedSeed, maskedDB, seedMask, seed, dbMask, DB, pHash, pHashPr : RawByteString;
+  P, Q : PByte;
 const
   hLen = RSAOAEPHashBufSize;
 begin
   // validate
-  if (KeySize <= 0) or
-     (KeySize mod HugeWordElementBits <> 0) then
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  if HugeWordGetBitCount(EncodedMessage) <> KeySize then
+  if HugeWordGetBitCount(EncodedMessage) <> KeyBits then
     raise ERSA.Create(SRSAInvalidMessage);
   // decode
   emLen := HugeWordGetSize(EncodedMessage) * HugeWordElementSize;
@@ -1204,27 +1140,213 @@ begin
     Move(DB[I], Buf, L);
 end;
 
+{ RSA Cipher Message To Buf                                                    }
+{   Copies cipher message to buffer.                                           }
+{   Returns the buffer size required for the message.                          }
+function RSACipherMessageToBuf(
+         const KeyBits: Int32;
+         const CipherMessage: TRSAMessage;
+         var CipherBuf; const CipherBufSize: Integer): Integer;
+var
+  L, I : Integer;
+  P, Q : PByte;
+begin
+  if HugeWordGetBitCount(CipherMessage) <> KeyBits then
+    raise ERSA.Create(SRSAInvalidMessage);
+  L := KeyBits div 8;
+  Result := L;
+  if CipherBufSize <= 0 then
+    exit;
+  P := CipherMessage.Data;
+  Inc(P, L - 1);
+  Q := @CipherBuf;
+  for I := 0 to L - 1 do
+    begin
+      if I >= CipherBufSize then
+        exit;
+      Q^ := P^;
+      Inc(Q);
+      Dec(P);
+    end;
+end;
+
+{ RSA Cipher Buf To Message                                                    }
+procedure RSACipherBufToMessage(
+          const KeyBits: Int32;
+          const CipherBuf; const CipherBufSize: Integer;
+          var CipherMessage: TRSAMessage);
+var
+  L, I : Integer;
+  P, Q : PByte;
+begin
+  // validate
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  // message size
+  L := KeyBits div 8;
+  if CipherBufSize <> L then
+    raise ERSA.Create(SRSAInvalidBufferSize);
+  HugeWordSetSize(CipherMessage, L div HugeWordElementSize);
+  // move data
+  P := CipherMessage.Data;
+  Inc(P, L - 1);
+  Q := @CipherBuf;
+  for I := 0 to L - 1 do
+    begin
+      P^ := Q^;
+      Dec(P);
+      Inc(Q);
+    end;
+end;
+
+{ RSA Encrypt Message                                                          }
+procedure RSAEncryptMessage(
+          const PublicKey: TRSAPublicKey;
+          const PlainMessage: TRSAMessage;
+          var CipherMessage: TRSAMessage);
+begin
+  // validate
+  if (PublicKey.KeyBits <= 0) or
+     (PublicKey.KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  if HugeWordCompare(PlainMessage, PublicKey.Modulus) >= 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Assert(HugeWordGetBitCount(PlainMessage) = PublicKey.KeyBits);
+  // encrypt
+  HugeWordPowerAndMod(CipherMessage, PlainMessage, PublicKey.Exponent, PublicKey.Modulus);
+  Assert(HugeWordGetBitCount(CipherMessage) = PublicKey.KeyBits);
+end;
+
+{ RSA Encrypt                                                                  }
+function RSAEncrypt(
+         const EncryptionType: TRSAEncryptionType;
+         const PublicKey: TRSAPublicKey;
+         const PlainBuf; const PlainBufSize: Integer;
+         var CipherBuf; const CipherBufSize: Integer): Integer;
+var
+  EncodedMsg, CipherMsg : HugeWord;
+begin
+  // validate
+  if (PublicKey.KeyBits <= 0) or
+     (PublicKey.KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  if (PlainBufSize < 0) or
+     (CipherBufSize <= 0) then
+    raise ERSA.Create(SRSAInvalidBufferSize);
+  // encrypt
+  HugeWordInit(EncodedMsg);
+  HugeWordInit(CipherMsg);
+  try
+    case EncryptionType of
+      rsaetRSAES_PKCS1 : RSAEncodeMessageEME_PKCS1(PublicKey.KeyBits, PlainBuf, PlainBufSize, EncodedMsg);
+      rsaetRSAES_OAEP  : RSAEncodeMessageEME_OAEP(PublicKey.KeyBits, PlainBuf, PlainBufSize, EncodedMsg);
+    else
+      raise ERSA.Create(SRSAInvalidEncryptionType);
+    end;
+    RSAEncryptMessage(PublicKey, EncodedMsg, CipherMsg);
+    Result := RSACipherMessageToBuf(PublicKey.KeyBits, CipherMsg, CipherBuf, CipherBufSize);
+    if Result > CipherBufSize then
+      raise ERSA.Create(SRSAInvalidBufferSize);
+  finally
+    SecureHugeWordFinalise(CipherMsg);
+    SecureHugeWordFinalise(EncodedMsg);
+  end;
+end;
+
+{ RSA Encrypt Str                                                              }
+function RSAEncryptStr(
+         const EncryptionType: TRSAEncryptionType;
+         const PublicKey: TRSAPublicKey;
+         const Plain: RawByteString): RawByteString;
+var
+  L : Integer;
+begin
+  L := RSACipherMessageBufSize(PublicKey.KeyBits);
+  SetLength(Result, L);
+  L := RSAEncrypt(EncryptionType, PublicKey, PByteChar(Plain)^, Length(Plain),
+      PByteChar(Result)^, L);
+  SetLength(Result, L);
+end;
+
+{ RSA Decrypt Message                                                          }
+{   Decrypts using m = c^d mod n                                               }
+procedure RSADecryptMessage(
+          const PrivateKey: TRSAPrivateKey;
+          const CipherMessage: TRSAMessage;
+          var EncodedMessage: TRSAMessage);
+begin
+  // validate
+  if (PrivateKey.KeyBits <= 0) or
+     (PrivateKey.KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  if HugeWordGetBitCount(CipherMessage) <> PrivateKey.KeyBits then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // decrypt
+  HugeWordPowerAndMod(EncodedMessage, CipherMessage, PrivateKey.Exponent, PrivateKey.Modulus);
+end;
+
+{
+Alternative decryption algorithm (works with smaller factors):
+if the second form (p, q, dP, dQ,qInv) of K is used:
+Let m1 = c^dP mod p
+Let m2 = c^dQ mod q
+Let h = (m1 - m2) . qInv mod p
+Let m = m2 + q . h
+}
+procedure RSADecryptMessage2(
+          const PrivateKey: TRSAPrivateKey;
+          const CipherMessage: TRSAMessage;
+          var EncodedMessage: TRSAMessage);
+var
+  A, M1, M2, H, M : HugeWord;
+begin
+  HugeWordInit(A);
+  HugeWordInit(M1);
+  HugeWordInit(M2);
+  HugeWordInit(H);
+  try
+    // m1 = c^dP mod p
+    HugeWordPowerAndMod(M1, CipherMessage, PrivateKey.Exponent1, PrivateKey.Prime1);
+    // m2 = c^dQ mod q
+    HugeWordPowerAndMod(M2, CipherMessage, PrivateKey.Exponent2, PrivateKey.Prime2);
+    // h = (m1 - m2) . qInv mod p
+    HugeWordAssign(H, M1);
+    HugeWordSubtract(H, M2);
+    HugeWordMultiply(H, H, PrivateKey.Coefficient);
+    // m = m2 + q . h
+    HugeWordMultiply(M, PrivateKey.Prime2, H);
+    HugeWordAdd(M, M2);
+  finally
+    SecureHugeWordFinalise(H);
+    SecureHugeWordFinalise(M2);
+    SecureHugeWordFinalise(M1);
+    SecureHugeWordFinalise(A);
+  end;
+end;
+
 { RSA Decrypt                                                                  }
 function RSADecrypt(
          const EncryptionType: TRSAEncryptionType;
          const PrivateKey: TRSAPrivateKey;
          const CipherBuf; const CipherBufSize: Integer;
          var PlainBuf; const PlainBufSize: Integer): Integer;
-var CipherMsg, EncodedMsg : HugeWord;
+var
+  CipherMsg, EncodedMsg : HugeWord;
 begin
   // validate
-  if (PrivateKey.KeySize <= 0) or
-     (PrivateKey.KeySize mod HugeWordElementBits <> 0) then
+  if (PrivateKey.KeyBits <= 0) or
+     (PrivateKey.KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
   // decrypt
   HugeWordInit(CipherMsg);
   HugeWordInit(EncodedMsg);
   try
-    RSACipherBufToMessage(PrivateKey.KeySize, CipherBuf, CipherBufSize, CipherMsg);
+    RSACipherBufToMessage(PrivateKey.KeyBits, CipherBuf, CipherBufSize, CipherMsg);
     RSADecryptMessage(PrivateKey, CipherMsg, EncodedMsg);
     case EncryptionType of
-      rsaetPKCS1 : Result := RSADecodeMessagePKCS1(PrivateKey.KeySize, EncodedMsg, PlainBuf, PlainBufSize);
-      rsaetOAEP  : Result := RSADecodeMessageOAEP(PrivateKey.KeySize, EncodedMsg, PlainBuf, PlainBufSize);
+      rsaetRSAES_PKCS1 : Result := RSADecodeMessageEME_PKCS1(PrivateKey.KeyBits, EncodedMsg, PlainBuf, PlainBufSize);
+      rsaetRSAES_OAEP  : Result := RSADecodeMessageEME_OAEP(PrivateKey.KeyBits, EncodedMsg, PlainBuf, PlainBufSize);
     else
       raise ERSA.Create(SRSAInvalidEncryptionType);
     end;
@@ -1239,24 +1361,222 @@ function RSADecryptStr(
          const EncryptionType: TRSAEncryptionType;
          const PrivateKey: TRSAPrivateKey;
          const Cipher: RawByteString): RawByteString;
-var L, N : Integer;
+var
+  L, N : Integer;
 begin
   L := Length(Cipher);
   if L = 0 then
     raise ERSA.Create(SRSAInvalidMessage);
-  N := RSACipherMessageBufSize(PrivateKey.KeySize);
+  N := RSACipherMessageBufSize(PrivateKey.KeyBits);
   SetLength(Result, N);
   N := RSADecrypt(EncryptionType, PrivateKey, PByteChar(Cipher)^, L, PByteChar(Result)^, N);
   SetLength(Result, N);
 end;
 
+
+
+{ EMSA_PKCS1 }
+
+function GetRSAHashTypeDigestInfo(const HashType: TRSAHashType): TBytes;
+begin
+  case HashType of
+    rsahfMD5    : Result := TBytes.Create($30, $20, $30, $0c, $06, $08, $2a, $86, $48, $86, $f7, $0d, $02, $05, $05, $00, $04, $10);
+    rsahfSHA1   : Result := TBytes.Create($30, $21, $30, $09, $06, $05, $2b, $0e, $03, $02, $1a, $05, $00, $04, $14);
+    rsahfSHA256 : Result := TBytes.Create($30, $31, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $01, $05, $00, $04, $20);
+    rsahfSHA384 : Result := TBytes.Create($30, $41, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $02, $05, $00, $04, $30);
+    rsahfSHA512 : Result := TBytes.Create($30, $51, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $03, $05, $00, $04, $40);
+  else
+    Result := nil;
+  end;
+end;
+
+const
+  RSAHashTypeDigestSize : array[TRSAHashType] of Int32 = (
+    16,
+    20,
+    32,
+    48,
+    64
+    );
+
+function RSAHashBuf(
+         const HashType: TRSAHashType;
+         const Buf; const BufSize: NativeInt;
+         const Digest; const DigestSize: Integer): Integer;
+var
+  DigSize : Int32;
+begin
+  DigSize := RSAHashTypeDigestSize[HashType];
+  if DigestSize < DigSize then
+    raise ERSA.Create('Invalid digest buffer size');
+  case HashType of
+    rsahfMD5    : P128BitDigest(@Digest)^ := CalcMD5(Buf, BufSize);
+    rsahfSHA1   : P160BitDigest(@Digest)^ := CalcSHA1(Buf, BufSize);
+    rsahfSHA256 : P256BitDigest(@Digest)^ := CalcSHA256(Buf, BufSize);
+    rsahfSHA384 : P384BitDigest(@Digest)^ := CalcSHA384(Buf, BufSize);
+    rsahfSHA512 : P512BitDigest(@Digest)^ := CalcSHA512(Buf, BufSize);
+  else
+    raise ERSA.Create('Invalid hash type');
+  end;
+  Result := DigSize;
+end;
+
+procedure RSAEncodeMessageEMSA_PKCS1(
+          const KeyBits: Int32;
+          const HashType: TRSAHashType;
+          const Buf; const BufSize: NativeInt;
+          var EncodedMessage: TRSAMessage);
+var
+  KeySize : Integer;
+  H : T512BitDigest;
+  T : TBytes;
+  InfoSize : Integer;
+  TLen : Integer;
+  HshSize : Integer;
+  P : PByte;
+  I : Integer;
+  N : Integer;
+begin
+  // validate
+  if (KeyBits <= 0) or
+     (KeyBits mod HugeWordElementBits <> 0) then
+    raise ERSA.Create(SRSAInvalidKeySize);
+  // hash: H = Hash(M)
+  HshSize := RSAHashBuf(HashType, Buf, BufSize, H, SizeOf(H));
+  // DigestInfo ::= SEQUENCE { digestAlgorithm AlgorithmIdentifier, digest OCTET STRING }
+  T := GetRSAHashTypeDigestInfo(HashType);
+  InfoSize := Length(T);
+  TLen := InfoSize + HshSize;
+  SetLength(T, TLen);
+  Move(H, T[InfoSize], HshSize);
+  // EM = 0x00 || 0x01 || PS || 0x00 || T
+  KeySize := KeyBits div 8;
+  HugeWordSetSize(EncodedMessage, KeyBits div HugeWordElementBits);
+  P := EncodedMessage.Data;
+  Inc(P, KeySize - 1);
+  // 0x00
+  P^ := 0;
+  Dec(P);
+  // 0x01
+  P^ := 1;
+  Dec(P);
+  // PS
+  N := KeySize - 3 - TLen;
+  if N < 0 then
+    raise ERSA.Create('Invalid key size');
+  for I := 0 to N - 1 do
+    begin
+      P^ := $FF;
+      Dec(P);
+    end;
+  // 0x00
+  P^ := 0;
+  Dec(P);
+  // T
+  for I := 0 to TLen - 1 do
+    begin
+      P^ := T[I];
+      Dec(P);
+    end;
+end;
+
+function RSADecodeMessageEMSA_PKCS1(
+         const KeyBits: Int32;
+         const EncodedMessage: HugeWord;
+         var HashType: TRSAHashType;
+         var Buf; const BufSize: Integer): Integer;
+var
+  KeySize : Integer;
+  N : Integer;
+  P, Q, R : PByte;
+  Hsh : TRSAHashType;
+  HshPre : TBytes;
+  HshSiz : Integer;
+  I, L : Integer;
+  Fnd : Boolean;
+begin
+  KeySize := KeyBits div 8;
+  P := EncodedMessage.Data;
+  N := KeySize;
+  if EncodedMessage.Used < KeySize div HugeWordElementSize then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Inc(P, KeySize - 1);
+  // EM = 0x00 || 0x01 || PS || 0x00 || T
+  if P^ <> 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Dec(P);
+  Dec(N);
+  if P^ <> 1 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Dec(P);
+  Dec(N);
+  while (N > 0) and (P^ = $FF) do
+    begin
+      Dec(P);
+      Dec(N);
+    end;
+  if N = 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  if P^ <> 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  Dec(P);
+  Dec(N);
+  if N = 0 then
+    raise ERSA.Create(SRSAInvalidMessage);
+  // Check hash id
+  for Hsh := Low(TRSAHashType) to High(TRSAHashType) do
+    begin
+      HshPre := GetRSAHashTypeDigestInfo(Hsh);
+      if N > Length(HshPre) then
+        begin
+          Q := P;
+          Fnd := True;
+          for I := 0 to Length(HshPre) - 1 do
+            if Q^ <> HshPre[I] then
+              begin
+                Fnd := False;
+                break;
+              end
+            else
+              Dec(Q);
+          if Fnd then
+            begin
+              HashType := Hsh;
+              Dec(N, Length(HshPre));
+              HshSiz := RSAHashTypeDigestSize[Hsh];
+              Dec(N, HshSiz);
+              if N < 0 then
+                raise ERSA.Create(SRSAInvalidMessage);
+              // move hash digest to Buf
+              if HshSiz < BufSize then
+                L := HshSiz
+              else
+                L := BufSize;
+              R := @Buf;
+              for I := 0 to L - 1 do
+                begin
+                  R^ := Q^;
+                  Inc(R);
+                  Dec(Q);
+                end;
+              Result := KeySize - N;
+              exit;
+            end;
+        end;
+    end;
+  raise ERSA.Create('Invalid hash id');
+end;
+
+
+
 { RSA Sign Message                                                             }
-procedure RSASignBufToMsg(const KeySize: Integer; var Msg: HugeWord; const Buf; const BufSize: Integer);
+procedure RSASignBufToMsg(const KeyBits: Integer; var Msg: HugeWord; const Buf; const BufSize: Integer);
 var
   L, I : Integer;
   P, Q : PByte;
 begin
-  L := KeySize div 8;
+  Assert(KeyBits > 0);
+  L := KeyBits div 8;
   if BufSize > L then
     raise ERSA.Create(SRSAInvalidBufferSize);
   HugeWordSetSize(Msg, L div HugeWordElementSize);
@@ -1272,19 +1592,21 @@ begin
     end;
 end;
 
-function RSAMsgToSignBuf(const KeySize: Integer; var Buf; const BufSize: Integer; const Msg: HugeWord): Integer;
+function RSASignMsgToBuf(const KeyBits: Integer; var Buf; const BufSize: Integer; const Msg: HugeWord): Integer;
 var
   L, N, I, C : Integer;
   P, Q : PByte;
 begin
-  L := KeySize div 8;
+  L := KeyBits div 8;
   if BufSize < L then
     raise ERSA.Create(SRSAInvalidBufferSize);
   N := Msg.Used * HugeWordElementSize;
   P := Msg.Data;
-  Inc(P, N - 1);
-  Q := @Buf;
   C := MinInt(N, L);
+  if C > BufSize then
+    raise ERSA.Create(SRSAInvalidBufferSize);
+  Inc(P, C - 1); //// was N - 1
+  Q := @Buf;
   for I := 0 to C - 1 do
     begin
       Q^ := P^;
@@ -1295,27 +1617,34 @@ begin
 end;
 
 function RSASignMessage(
+         const SignType: TRSASignMessageType;
+         const HashType: TRSAHashType;
          const PrivateKey: TRSAPrivateKey;
-         const MessageHashBuf; const MessageHashBufSize: Integer;
+         const MessageBuf; const MessageBufSize: Integer;
          var SignatureBuf; const SignatureBufSize: Integer): Integer;
 var
   CipherMsg, EncodedMsg : HugeWord;
   L : Integer;
 begin
   // validate
-  if (PrivateKey.KeySize <= 0) or
-     (PrivateKey.KeySize mod HugeWordElementBits <> 0) then
+  if (PrivateKey.KeyBits <= 0) or
+     (PrivateKey.KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  L := PrivateKey.KeySize div 8;
+  L := PrivateKey.KeyBits div 8;
   if SignatureBufSize < L then
     raise ERSA.Create(SRSAInvalidBufferSize);
   // sign
   HugeWordInit(CipherMsg);
   HugeWordInit(EncodedMsg);
   try
-    RSASignBufToMsg(PrivateKey.KeySize, CipherMsg, MessageHashBuf, MessageHashBufSize);
+    case SignType of
+      rsastMessage    : RSASignBufToMsg(PrivateKey.KeyBits, CipherMsg, MessageBuf, MessageBufSize);
+      rsastEMSA_PKCS1 : RSAEncodeMessageEMSA_PKCS1(PrivateKey.KeyBits, HashType, MessageBuf, MessageBufSize, CipherMsg);
+    else
+      raise ERSA.Create('Invalid message type');
+    end;
     HugeWordPowerAndMod(EncodedMsg, CipherMsg, PrivateKey.Exponent, PrivateKey.Modulus);
-    RSAMsgToSignBuf(PrivateKey.KeySize, SignatureBuf, SignatureBufSize, EncodedMsg);
+    RSASignMsgToBuf(PrivateKey.KeyBits, SignatureBuf, SignatureBufSize, EncodedMsg);
   finally
     SecureHugeWordFinalise(EncodedMsg);
     SecureHugeWordFinalise(CipherMsg);
@@ -1324,46 +1653,63 @@ begin
 end;
 
 function RSACheckSignature(
+         const SignType: TRSASignMessageType;
          const PublicKey: TRSAPublicKey;
-         const MessageHashBuf; const MessageHashBufSize: Integer;
+         const MessageBuf; const MessageBufSize: NativeInt;
          const SignatureBuf; const SignatureBufSize: Integer): Boolean;
 var
   L, C : Integer;
-  HashBuf : Pointer;
-  HashBufSize : Integer;
+  RMsgBuf : Pointer;
+  RMsgBufSize : Integer;
   EncodedMsg, CipherMsg : HugeWord;
+  HashType : TRSAHashType;
+  Digest : T512BitDigest;
+  DigSize : Integer;
 begin
   // validate
-  if (PublicKey.KeySize <= 0) or
-     (PublicKey.KeySize mod HugeWordElementBits <> 0) then
+  if (PublicKey.KeyBits <= 0) or
+     (PublicKey.KeyBits mod HugeWordElementBits <> 0) then
     raise ERSA.Create(SRSAInvalidKeySize);
-  L := PublicKey.KeySize div 8;
+  L := PublicKey.KeyBits div 8;
   if SignatureBufSize < L then
     raise ERSA.Create(SRSAInvalidBufferSize);
   // check signature
-  HashBufSize := L;
-  GetMem(HashBuf, HashBufSize);
+  RMsgBufSize := L;
+  GetMem(RMsgBuf, RMsgBufSize);
   try
     HugeWordInit(EncodedMsg);
     HugeWordInit(CipherMsg);
     try
-      RSASignBufToMsg(PublicKey.KeySize, CipherMsg, SignatureBuf, SignatureBufSize);
+      RSASignBufToMsg(PublicKey.KeyBits, CipherMsg, SignatureBuf, SignatureBufSize);
       HugeWordPowerAndMod(EncodedMsg, CipherMsg, PublicKey.Exponent, PublicKey.Modulus);
-      C := RSAMsgToSignBuf(PublicKey.KeySize, HashBuf^, HashBufSize, EncodedMsg);
+      case SignType of
+        rsastMessage    :
+          begin
+            C := RSASignMsgToBuf(PublicKey.KeyBits, RMsgBuf^, RMsgBufSize, EncodedMsg);
+            Result := EqualMem(RMsgBuf^, MessageBuf, MinInt(C, MessageBufSize));
+          end;
+        rsastEMSA_PKCS1 :
+          begin
+            RSADecodeMessageEMSA_PKCS1(PublicKey.KeyBits, EncodedMsg, HashType, RMsgBuf^, RMsgBufSize);
+            DigSize := RSAHashBuf(HashType, MessageBuf, MessageBufSize, Digest, SizeOf(Digest));
+            Result := EqualMem(Digest, RMsgBuf^, DigSize);
+          end;
+      else
+        raise ERSA.Create('Invalid message type');
+      end;
     finally
       SecureHugeWordFinalise(CipherMsg);
       SecureHugeWordFinalise(EncodedMsg);
     end;
-    Result := EqualMem(HashBuf^, MessageHashBuf, MinInt(C, MessageHashBufSize));
   finally
-    FreeMem(HashBuf);
+    FreeMem(RMsgBuf);
   end;
 end;
 
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF CIPHER_TEST}
 {$ASSERTIONS ON}
@@ -1480,7 +1826,7 @@ var Pri : TRSAPrivateKey;
         'e0aab12d7b61a51f527a9a41f6c1687f' +
         'e2537298ca2a8f5946f8e5fd091dbdcb',
         '00000011');
-    TestStr(rsaetOAEP,
+    TestStr(rsaetRSAES_OAEP,
         RawByteString(
         #$d4#$36#$e9#$95#$69#$fd#$32#$a7#$c8#$a0#$5b#$bc#$90#$d3#$2c#$49));
   end;
@@ -1504,10 +1850,10 @@ var Pri : TRSAPrivateKey;
         '46B347FE76F209C0F4B9F1D457843B432CEA8060369748D858222F773758BAB16301345B02AEC17B' +
         '2C09E7CE9D37F4C5',
         '00010001');
-    TestStr(rsaetPKCS1, '');
-    TestStr(rsaetOAEP, '');
-    TestStr(rsaetPKCS1, 'Fundamentals');
-    TestStr(rsaetOAEP, '12345678901234567890123456789012345678901234567890');
+    TestStr(rsaetRSAES_PKCS1, '');
+    TestStr(rsaetRSAES_OAEP, '');
+    TestStr(rsaetRSAES_PKCS1, 'Fundamentals');
+    TestStr(rsaetRSAES_OAEP, '12345678901234567890123456789012345678901234567890');
   end;
 
   procedure TestSign;
@@ -1537,9 +1883,9 @@ var Pri : TRSAPrivateKey;
     Msg := 'Test message 123';
     Hash := CalcSHA256(Msg);
     SetLength(Sign, 128);
-    L := RSASignMessage(Pri, Hash, SizeOf(Hash), Sign[1], Length(Sign));
+    L := RSASignMessage(rsastMessage, rsahfSHA256, Pri, Hash, SizeOf(Hash), Sign[1], Length(Sign));
     Assert(L = 128);
-    Assert(RSACheckSignature(Pub, Hash, SizeOf(Hash), Sign[1], L));
+    Assert(RSACheckSignature(rsastMessage, Pub, Hash, SizeOf(Hash), Sign[1], L));
   end;
 
 begin
@@ -1596,13 +1942,13 @@ begin
 
   T := GetTickCount;
   Pln := '123456';
-  Enc := RSAEncryptStr(rsaetPKCS1, Pub, Pln);
+  Enc := RSAEncryptStr(rsaetRSAES_PKCS1, Pub, Pln);
   Assert(Enc <> Pln);
   T := GetTickCount - T;
   Writeln('EncryptStr: ', T, 'ms');
 
   T := GetTickCount;
-  Dec := RSADecryptStr(rsaetPKCS1, Pri, Enc);
+  Dec := RSADecryptStr(rsaetRSAES_PKCS1, Pri, Enc);
   Assert(Dec = Pln);
   T := GetTickCount - T;
   Writeln('DecryptStr: ', T, 'ms');

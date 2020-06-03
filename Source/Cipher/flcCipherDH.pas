@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      Diffie-Hellman (DH) cipher routines                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -928,7 +928,7 @@ begin
   HugeWordInit(X);
   HugeWordInit(M);
   try
-    HugeWordAssign(M, State.Q);
+    HugeWordAssign(M, State.Q);  //// Use State.PrimeQBitCount instead
     HugeWordSubtractWord32(M, 2);
     N := HugeWordGetSizeInBits(M);
     while (N > 0) and not HugeWordIsBitSet(M, N - 1) do
