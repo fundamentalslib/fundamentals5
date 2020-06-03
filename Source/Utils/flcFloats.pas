@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcFloats.pas                                            }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      Floating point types utility functions.                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 2003-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2003-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -37,10 +37,13 @@
 {   2003/03/14  3.01  Added FloatZero, FloatsEqual and FloatsCompare.          }
 {   2018/07/11  5.02  Move to flcFloats unit from flcUtils.                    }
 {   2018/08/12  5.03  String type changes.                                     }
+{   2020/06/02  5.04  Float type changes.                                      }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.02  2016/01/09                       }
+{   Delphi 2010-10.4 Win32/Win64        5.69  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.69  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.69  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -196,27 +199,27 @@ function  FloatApproxCompare(const A, B: Float;
 { Float-String conversions                                                     }
 {                                                                              }
 {$IFDEF SupportAnsiString}
-function  FloatToStringA(const A: Extended): AnsiString;
+function  FloatToStringA(const A: Float): AnsiString;
 {$ENDIF}
-function  FloatToStringB(const A: Extended): RawByteString;
-function  FloatToStringU(const A: Extended): UnicodeString;
-function  FloatToString(const A: Extended): String;
+function  FloatToStringB(const A: Float): RawByteString;
+function  FloatToStringU(const A: Float): UnicodeString;
+function  FloatToString(const A: Float): String;
 
-function  TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
-function  TryStringToFloatPW(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
-function  TryStringToFloatP(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
+function  TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
+function  TryStringToFloatPW(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
+function  TryStringToFloatP(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
 
-function  TryStringToFloatB(const A: RawByteString; out B: Extended): Boolean;
-function  TryStringToFloatU(const A: UnicodeString; out B: Extended): Boolean;
-function  TryStringToFloat(const A: String; out B: Extended): Boolean;
+function  TryStringToFloatB(const A: RawByteString; out B: Float): Boolean;
+function  TryStringToFloatU(const A: UnicodeString; out B: Float): Boolean;
+function  TryStringToFloat(const A: String; out B: Float): Boolean;
 
-function  StringToFloatB(const A: RawByteString): Extended;
-function  StringToFloatU(const A: UnicodeString): Extended;
-function  StringToFloat(const A: String): Extended;
+function  StringToFloatB(const A: RawByteString): Float;
+function  StringToFloatU(const A: UnicodeString): Float;
+function  StringToFloat(const A: String): Float;
 
-function  StringToFloatDefB(const A: RawByteString; const Default: Extended): Extended;
-function  StringToFloatDefU(const A: UnicodeString; const Default: Extended): Extended;
-function  StringToFloatDef(const A: String; const Default: Extended): Extended;
+function  StringToFloatDefB(const A: RawByteString; const Default: Float): Float;
+function  StringToFloatDefU(const A: UnicodeString; const Default: Float): Float;
+function  StringToFloatDef(const A: String; const Default: Float): Float;
 
 
 
@@ -564,14 +567,14 @@ end;
 {                                                                              }
 { Float-String conversions                                                     }
 {                                                                              }
-function FloatToStringS(const A: Extended): String;
-var B : Extended;
+function FloatToStringS(const A: Float): String;
+var B : Float;
     {$IFNDEF SupportShortString}
     S : String;
     {$ELSE}
     S : ShortString;
     {$ENDIF}
-    L, I : Integer;
+    L, I, J, C : Integer;
     E : Integer;
 begin
   // handle special floating point values
@@ -622,6 +625,18 @@ begin
     end
   else
     begin
+      // trim preceding zeros in exponent
+      I := E + 2;
+      J := I;
+      while (I <= L) and
+            (S[I] = '0') do
+        Inc(I);
+      C := I - J;
+      if C > 0 then
+        begin
+          Delete(S, J, C);
+          Dec(L, C);
+        end;
       // trim trailing zeros in mantissa
       I := E - 1;
       while S[I] = '0' do
@@ -640,37 +655,37 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function FloatToStringA(const A: Extended): AnsiString;
+function FloatToStringA(const A: Float): AnsiString;
 begin
   Result := AnsiString(FloatToStringS(A));
 end;
 {$ENDIF}
 
-function FloatToStringB(const A: Extended): RawByteString;
+function FloatToStringB(const A: Float): RawByteString;
 begin
   Result := RawByteString(FloatToStringS(A));
 end;
 
-function FloatToStringU(const A: Extended): UnicodeString;
+function FloatToStringU(const A: Float): UnicodeString;
 begin
   Result := UnicodeString(FloatToStringS(A));
 end;
 
-function FloatToString(const A: Extended): String;
+function FloatToString(const A: Float): String;
 begin
   Result := String(FloatToStringS(A));
 end;
 
-function TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
+function TryStringToFloatPA(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
-    DigValF : Extended;
+    DigValF : Float;
     P : PByteChar;
     Ch : AnsiChar;
     HasDig : Boolean;
     Neg : Boolean;
-    Res : Extended;
-    Ex : Extended;
+    Res : Float;
+    Ex : Float;
     ExI : Int64;
     L : Integer;
 begin
@@ -718,7 +733,7 @@ begin
               exit;
             end;
           Res := Res * 10.0;
-          DigVal := ByteCharToInt(Ch);
+          DigVal := ByteCharDigitToInt(Ch);
           if Neg then
             Res := Res - DigVal
           else
@@ -749,7 +764,7 @@ begin
                   Result := convertOverflow;
                   exit;
                 end;
-              DigVal := ByteCharToInt(Ch);
+              DigVal := ByteCharDigitToInt(Ch);
               Inc(ExI);
               DigValF := DigVal;
               DigValF := DigValF / Power(10.0, ExI);
@@ -809,16 +824,16 @@ begin
   Result := convertOK;
 end;
 
-function TryStringToFloatPW(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
+function TryStringToFloatPW(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
-    DigValF : Extended;
+    DigValF : Float;
     P : PWideChar;
     Ch : WideChar;
     HasDig : Boolean;
     Neg : Boolean;
-    Res : Extended;
-    Ex : Extended;
+    Res : Float;
+    Ex : Float;
     ExI : Int64;
     L : Integer;
 begin
@@ -866,7 +881,7 @@ begin
               exit;
             end;
           Res := Res * 10.0;
-          DigVal := WideCharToInt(Ch);
+          DigVal := WideCharDigitToInt(Ch);
           if Neg then
             Res := Res - DigVal
           else
@@ -897,7 +912,7 @@ begin
                   Result := convertOverflow;
                   exit;
                 end;
-              DigVal := WideCharToInt(Ch);
+              DigVal := WideCharDigitToInt(Ch);
               Inc(ExI);
               DigValF := DigVal;
               DigValF := DigValF / Power(10.0, ExI);
@@ -957,16 +972,16 @@ begin
   Result := convertOK;
 end;
 
-function TryStringToFloatP(const BufP: Pointer; const BufLen: Integer; out Value: Extended; out StrLen: Integer): TConvertResult;
+function TryStringToFloatP(const BufP: Pointer; const BufLen: Integer; out Value: Float; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
-    DigValF : Extended;
+    DigValF : Float;
     P : PChar;
     Ch : Char;
     HasDig : Boolean;
     Neg : Boolean;
-    Res : Extended;
-    Ex : Extended;
+    Res : Float;
+    Ex : Float;
     ExI : Int64;
     L : Integer;
 begin
@@ -1014,7 +1029,7 @@ begin
               exit;
             end;
           Res := Res * 10.0;
-          DigVal := CharToInt(Ch);
+          DigVal := CharDigitToInt(Ch);
           if Neg then
             Res := Res - DigVal
           else
@@ -1045,7 +1060,7 @@ begin
                   Result := convertOverflow;
                   exit;
                 end;
-              DigVal := CharToInt(Ch);
+              DigVal := CharDigitToInt(Ch);
               Inc(ExI);
               DigValF := DigVal;
               DigValF := DigValF / Power(10.0, ExI);
@@ -1105,7 +1120,7 @@ begin
   Result := convertOK;
 end;
 
-function TryStringToFloatB(const A: RawByteString; out B: Extended): Boolean;
+function TryStringToFloatB(const A: RawByteString; out B: Float): Boolean;
 var L, N : Integer;
 begin
   L := Length(A);
@@ -1115,7 +1130,7 @@ begin
       Result := False;
 end;
 
-function TryStringToFloatU(const A: UnicodeString; out B: Extended): Boolean;
+function TryStringToFloatU(const A: UnicodeString; out B: Float): Boolean;
 var L, N : Integer;
 begin
   L := Length(A);
@@ -1125,7 +1140,7 @@ begin
       Result := False;
 end;
 
-function TryStringToFloat(const A: String; out B: Extended): Boolean;
+function TryStringToFloat(const A: String; out B: Float): Boolean;
 var L, N : Integer;
 begin
   L := Length(A);
@@ -1143,37 +1158,37 @@ begin
   raise ERangeError.Create(SRangeCheckError);
 end;
 
-function StringToFloatB(const A: RawByteString): Extended;
+function StringToFloatB(const A: RawByteString): Float;
 begin
   if not TryStringToFloatB(A, Result) then
     RaiseRangeCheckError;
 end;
 
-function StringToFloatU(const A: UnicodeString): Extended;
+function StringToFloatU(const A: UnicodeString): Float;
 begin
   if not TryStringToFloatU(A, Result) then
     RaiseRangeCheckError;
 end;
 
-function StringToFloat(const A: String): Extended;
+function StringToFloat(const A: String): Float;
 begin
   if not TryStringToFloat(A, Result) then
     RaiseRangeCheckError;
 end;
 
-function StringToFloatDefB(const A: RawByteString; const Default: Extended): Extended;
+function StringToFloatDefB(const A: RawByteString; const Default: Float): Float;
 begin
   if not TryStringToFloatB(A, Result) then
     Result := Default;
 end;
 
-function StringToFloatDefU(const A: UnicodeString; const Default: Extended): Extended;
+function StringToFloatDefU(const A: UnicodeString; const Default: Float): Float;
 begin
   if not TryStringToFloatU(A, Result) then
     Result := Default;
 end;
 
-function StringToFloatDef(const A: String; const Default: Extended): Extended;
+function StringToFloatDef(const A: String; const Default: Float): Float;
 begin
   if not TryStringToFloat(A, Result) then
     Result := Default;
@@ -1184,7 +1199,7 @@ end;
 {$IFDEF FLOATS_TEST}
 {$ASSERTIONS ON}
 procedure Test_Float;
-{$IFNDEF ExtendedIsDouble}
+{$IFDEF ExtendedIs80Bits}
 var E : Integer;
 {$ENDIF}
 begin
@@ -1236,7 +1251,8 @@ begin
   Assert(FloatsCompare(0.5003, 0.5001, 1e-4) = crGreater, 'FloatsCompare');
   Assert(FloatsCompare(0.5003, 0.5001, 1e-5) = crGreater, 'FloatsCompare');
 
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
+  (*
   Assert(ExtendedApproxEqual(0.0, 0.0),                                'ExtendedApproxEqual');
   Assert(not ExtendedApproxEqual(0.0, 1e-100, 1e-10),                  'ExtendedApproxEqual');
   Assert(not ExtendedApproxEqual(1.0, 1e-100, 1e-10),                  'ExtendedApproxEqual');
@@ -1269,6 +1285,7 @@ begin
   Assert(ExtendedApproxCompare(1.2345e+10, 1.2349e+10, 1e-4) = crLess,      'ExtendedApproxCompare');
   Assert(ExtendedApproxCompare(-1.2345e-10, -1.2349e-10, 1e-3) = crEqual,   'ExtendedApproxCompare');
   Assert(ExtendedApproxCompare(-1.2345e-10, -1.2349e-10, 1e-4) = crGreater, 'ExtendedApproxCompare');
+  *)
   {$ENDIF}
 
   Assert(FloatApproxEqual(0.0, 0.0),                                'FloatApproxEqual');
@@ -1304,7 +1321,8 @@ begin
   Assert(FloatApproxCompare(-1.2345e-10, -1.2349e-10, 1e-3) = crEqual,   'FloatApproxCompare');
   Assert(FloatApproxCompare(-1.2345e-10, -1.2349e-10, 1e-4) = crGreater, 'FloatApproxCompare');
 
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
+  (*
   Assert(ExtendedExponentBase10(1.0, E),    'ExtendedExponent');
   Assert(E = 0,                          'ExtendedExponent');
   Assert(ExtendedExponentBase10(10.0, E),   'ExtendedExponent');
@@ -1319,16 +1337,18 @@ begin
   Assert(E = 0,                          'ExtendedExponent');
   Assert(ExtendedExponentBase10(-0.999, E), 'ExtendedExponent');
   Assert(E = 0,                          'ExtendedExponent');
+  *)
   {$ENDIF}
 end;
 
 procedure Test_FloatStr;
 var A : RawByteString;
-    E : Extended;
+    E : Float;
     L : Integer;
 begin
   // FloatToStr
   {$IFDEF SupportAnsiString}
+
   {$IFNDEF FREEPASCAL}
   Assert(FloatToStringA(0.0) = ToAnsiString('0'));
   Assert(FloatToStringA(-1.5) = ToAnsiString('-1.5'));
@@ -1337,23 +1357,23 @@ begin
   Assert(FloatToStringA(123) = ToAnsiString('123'));
   Assert(FloatToStringA(0.00000000000001) = ToAnsiString('0.00000000000001'));
   Assert(FloatToStringA(0.000000000000001) = ToAnsiString('0.000000000000001'));
-  Assert(FloatToStringA(0.0000000000000001) = ToAnsiString('1E-0016'));
+  Assert(FloatToStringA(0.0000000000000001) = ToAnsiString('1E-16'));
   Assert(FloatToStringA(0.0000000000000012345) = ToAnsiString('0.000000000000001'));
-  Assert(FloatToStringA(0.00000000000000012345) = ToAnsiString('1.2345E-0016'));
-  {$IFNDEF ExtendedIsDouble}
+  Assert(FloatToStringA(0.00000000000000012345) = ToAnsiString('1.2345E-16'));
+  {$IFDEF ExtendedIs80Bits}
   Assert(FloatToStringA(123456789.123456789) = ToAnsiString('123456789.123456789'));
   {$IFDEF DELPHIXE2_UP}
   Assert(FloatToStringA(123456789012345.1234567890123456789) = ToAnsiString('123456789012345.123'));
   {$ELSE}
   Assert(FloatToStringA(123456789012345.1234567890123456789) = ToAnsiString('123456789012345.1234'));
   {$ENDIF}
-  Assert(FloatToStringA(1234567890123456.1234567890123456789) = ToAnsiString('1.23456789012346E+0015'));
+  Assert(FloatToStringA(1234567890123456.1234567890123456789) = ToAnsiString('1.23456789012346E+15'));
   {$ENDIF}
   Assert(FloatToStringA(0.12345) = ToAnsiString('0.12345'));
-  Assert(FloatToStringA(1e100) = ToAnsiString('1E+0100'));
-  Assert(FloatToStringA(1.234e+100) = ToAnsiString('1.234E+0100'));
-  Assert(FloatToStringA(-1.5e-100) = ToAnsiString('-1.5E-0100'));
-  {$IFNDEF ExtendedIsDouble}
+  Assert(FloatToStringA(1e100) = ToAnsiString('1E+100'));
+  Assert(FloatToStringA(1.234e+100) = ToAnsiString('1.234E+100'));
+  Assert(FloatToStringA(-1.5e-100) = ToAnsiString('-1.5E-100'));
+  {$IFDEF ExtendedIs80Bits}
   Assert(FloatToStringA(1.234e+1000) = ToAnsiString('1.234E+1000'));
   Assert(FloatToStringA(-1e-4000) = ToAnsiString('0'));
   {$ENDIF}
@@ -1368,37 +1388,41 @@ begin
   Assert(FloatToStringU(-1.5) = '-1.5');
   Assert(FloatToStringU(1.5) = '1.5');
   Assert(FloatToStringU(1.1) = '1.1');
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   Assert(FloatToStringU(123456789.123456789) = '123456789.123456789');
   {$IFDEF DELPHIXE2_UP}
   Assert(FloatToStringU(123456789012345.1234567890123456789) = '123456789012345.123');
   {$ELSE}
   Assert(FloatToStringU(123456789012345.1234567890123456789) = '123456789012345.1234');
   {$ENDIF}
-  Assert(FloatToStringU(1234567890123456.1234567890123456789) = '1.23456789012346E+0015');
+  Assert(FloatToStringU(1234567890123456.1234567890123456789) = '1.23456789012346E+15');
   {$ENDIF}
   Assert(FloatToStringU(0.12345) = '0.12345');
-  Assert(FloatToStringU(1e100) = '1E+0100');
-  Assert(FloatToStringU(1.234e+100) = '1.234E+0100');
-  Assert(FloatToStringU(1.5e-100) = '1.5E-0100');
+  Assert(FloatToStringU(1e100) = '1E+100');
+  {$IFNDEF FREEPASCAL}
+  Assert(FloatToStringU(1.234e+100) = '1.234E+100');
+  {$ENDIF}
+  Assert(FloatToStringU(1.5e-100) = '1.5E-100');
 
   Assert(FloatToString(0.0) = '0');
   Assert(FloatToString(-1.5) = '-1.5');
   Assert(FloatToString(1.5) = '1.5');
   Assert(FloatToString(1.1) = '1.1');
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   Assert(FloatToString(123456789.123456789) = '123456789.123456789');
   {$IFDEF DELPHIXE2_UP}
   Assert(FloatToString(123456789012345.1234567890123456789) = '123456789012345.123');
   {$ELSE}
   Assert(FloatToString(123456789012345.1234567890123456789) = '123456789012345.1234');
   {$ENDIF}
-  Assert(FloatToString(1234567890123456.1234567890123456789) = '1.23456789012346E+0015');
+  Assert(FloatToString(1234567890123456.1234567890123456789) = '1.23456789012346E+15');
   {$ENDIF}
   Assert(FloatToString(0.12345) = '0.12345');
-  Assert(FloatToString(1e100) = '1E+0100');
-  Assert(FloatToString(1.234e+100) = '1.234E+0100');
-  Assert(FloatToString(1.5e-100) = '1.5E-0100');
+  Assert(FloatToString(1e100) = '1E+100');
+  {$IFNDEF FREEPASCAL}
+  Assert(FloatToString(1.234e+100) = '1.234E+100');
+  {$ENDIF}
+  Assert(FloatToString(1.5e-100) = '1.5E-100');
   {$ENDIF}
 
   // StrToFloat
@@ -1414,18 +1438,17 @@ begin
   Assert((E = 123.4) and (L = 10));
   A := ToAnsiString('1.2e300x');
   Assert(TryStringToFloatPA(PAnsiChar(A), Length(A), E, L) = convertOK);
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   Assert(ExtendedApproxEqual(E, 1.2e300, 1e-2) and (L = 7));
   {$ENDIF}
   A := ToAnsiString('1.2e-300e');
   Assert(TryStringToFloatPA(PAnsiChar(A), Length(A), E, L) = convertOK);
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   Assert(ExtendedApproxEqual(E, 1.2e-300, 1e-2) and (L = 8));
-  {$ENDIF}
   {$ENDIF}
 
   // 9999..9999 overflow
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   A := '';
   for L := 1 to 5000 do
     A := A + '9';
@@ -1434,7 +1457,7 @@ begin
   {$ENDIF}
 
   // 1200..0000
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   A := ToAnsiString('12');
   for L := 1 to 100 do
     A := A + '0';
@@ -1443,7 +1466,7 @@ begin
   {$ENDIF}
 
   // 0.0000..0001 overflow
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   A := '0.';
   for L := 1 to 5000 do
     A := A + '0';
@@ -1453,7 +1476,7 @@ begin
   {$ENDIF}
 
   // 0.0000..000123
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   A := '0.';
   for L := 1 to 100 do
     A := A + '0';
@@ -1463,7 +1486,7 @@ begin
   {$ENDIF}
 
   // 1200..0000e100
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   A := '12';
   for L := 1 to 100 do
     A := A + '0';
@@ -1471,6 +1494,8 @@ begin
   Assert(TryStringToFloatPA(PAnsiChar(A), Length(A), E, L) = convertOK);
   Assert(ExtendedApproxEqual(E, 1.2e+201, 1e-1) and (L = 106));
   {$ENDIF}
+
+  {$ENDIF} // $ENDIF SupportAnsiString
 
   Assert(StringToFloatB(ToRawByteString('0')) = 0.0);
   Assert(StringToFloatB(ToRawByteString('1')) = 1.0);
@@ -1483,7 +1508,7 @@ begin
   Assert(StringToFloatB(ToRawByteString('0000000000000000000000001.1000000000000000000000000')) = 1.1);
   Assert(StringToFloatB(ToRawByteString('.5')) = 0.5);
   Assert(StringToFloatB(ToRawByteString('-.5')) = -0.5);
-  {$IFNDEF ExtendedIsDouble}
+  {$IFDEF ExtendedIs80Bits}
   Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('1.123456789')), 1.123456789, 1e-10));
   Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('123456789.123456789')), 123456789.123456789, 1e-10));
   Assert(ExtendedApproxEqual(StringToFloatB(ToRawByteString('1.5e500')), 1.5e500, 1e-2));
