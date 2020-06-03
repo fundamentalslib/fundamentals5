@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHash.pas                                              }
-{   File version:     5.24                                                     }
+{   File version:     5.25                                                     }
 {   Description:      Hashing functions                                        }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -60,30 +60,20 @@
 {   2018/08/12  5.22  String type changes.                                     }
 {   2019/09/24  5.23  Optimise RipeMD/SHA1/SHA256/SHA512.                      }
 {   2020/03/20  5.24  Optimise Word64 routines used in SHA256/512.             }
+{   2020/05/16  5.25  NativeInt changes.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.22  2019/02/24                       }
-{   Delphi XE2 Win32                    5.22  2019/03/02                       }
-{   Delphi XE2 Win64                    5.22  2019/03/02                       }
-{   Delphi XE3 Win32                    5.22  2019/03/02                       }
-{   Delphi XE3 Win64                    5.22  2019/03/02                       }
-{   Delphi XE6 Win32                    5.22  2019/03/02                       }
-{   Delphi XE6 Win64                    5.22  2019/03/02                       }
-{   Delphi XE7 Win32                    5.22  2019/03/02                       }
-{   Delphi XE7 Win64                    5.22  2019/03/02                       }
-{   Delphi 10 Win32                     5.19  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.21  2018/07/17                       }
-{   Delphi 10.2 Win64                   5.21  2018/07/17                       }
-{   Delphi 10.2 Linux64                 5.21  2018/07/17                       }
-{   FreePascal 3.0.4 Win32              5.22  2019/02/24                       }
+{   Delphi 2010-10.4 Win32/Win64        5.25  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.25  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.25  2020/06/02                       }
 {                                                                              }
 { Definitions:                                                                 }
 {                                                                              }
 {   Hashes are algorithms for computing condensed representations of           }
 {   messages.                                                                  }
 {   The message is the data being condensed.                                   }
-{   The condensed representation is called the message digest.                 }           
+{   The condensed representation is called the message digest.                 }
 {                                                                              }
 {   Hashes are called secure if it is computationally infeasible to            }
 {   find a message that produce a given digest.                                }
@@ -125,7 +115,8 @@
 {$INCLUDE ..\flcInclude.inc}
 
 {$IFDEF FREEPASCAL}
-  {$WARNINGS OFF}{$HINTS OFF}
+  {$WARNINGS OFF}
+  {$HINTS OFF}
   {$Q-,R-} // bug in fpc
 {$ENDIF}
 
@@ -152,8 +143,6 @@ uses
 { Hash digests                                                                 }
 {                                                                              }
 type
-  PByte = ^Byte;
-  PWord = ^Word;
   Word64Rec = packed record
     case Integer of
     0 : (Bytes   : packed array[0..7] of Byte);
@@ -291,7 +280,7 @@ procedure SecureClearStrU(var S: UnicodeString);
 {                                                                              }
 { Checksum hashing                                                             }
 {                                                                              }
-function  CalcChecksum32(const Buf; const BufSize: Integer): Word32; overload;
+function  CalcChecksum32(const Buf; const BufSize: NativeInt): Word32; overload;
 function  CalcChecksum32B(const Buf: RawByteString): Word32;
 function  CalcChecksum32(const Buf: TBytes): Word32; overload;
 
@@ -300,13 +289,13 @@ function  CalcChecksum32(const Buf: TBytes): Word32; overload;
 {                                                                              }
 { XOR hashing                                                                  }
 {                                                                              }
-function  CalcXOR8(const Buf; const BufSize: Integer): Byte; overload;
+function  CalcXOR8(const Buf; const BufSize: NativeInt): Byte; overload;
 function  CalcXOR8(const Buf: RawByteString): Byte; overload;
 
-function  CalcXOR16(const Buf; const BufSize: Integer): Word; overload;
+function  CalcXOR16(const Buf; const BufSize: NativeInt): Word; overload;
 function  CalcXOR16(const Buf: RawByteString): Word; overload;
 
-function  CalcXOR32(const Buf; const BufSize: Integer): Word32; overload;
+function  CalcXOR32(const Buf; const BufSize: NativeInt): Word32; overload;
 function  CalcXOR32(const Buf: RawByteString): Word32; overload;
 
 
@@ -347,9 +336,9 @@ function  CalcXOR32(const Buf: RawByteString): Word32; overload;
 {                                                                              }
 procedure CRC16Init(var CRC16: Word);
 function  CRC16Byte(const CRC16: Word; const Octet: Byte): Word;
-function  CRC16Buf(const CRC16: Word; const Buf; const BufSize: Integer): Word;
+function  CRC16Buf(const CRC16: Word; const Buf; const BufSize: NativeInt): Word;
 
-function  CalcCRC16(const Buf; const BufSize: Integer): Word; overload;
+function  CalcCRC16(const Buf; const BufSize: NativeInt): Word; overload;
 function  CalcCRC16(const Buf: RawByteString): Word; overload;
 
 
@@ -374,9 +363,9 @@ function  CalcCRC32(const Buf: RawByteString): Word32; overload;
 {                                                                              }
 procedure Adler32Init(var Adler32: Word32);
 function  Adler32Byte(const Adler32: Word32; const Octet: Byte): Word32;
-function  Adler32Buf(const Adler32: Word32; const Buf; const BufSize: Integer): Word32;
+function  Adler32Buf(const Adler32: Word32; const Buf; const BufSize: NativeInt): Word32;
 
-function  CalcAdler32(const Buf; const BufSize: Integer): Word32; overload;
+function  CalcAdler32(const Buf; const BufSize: NativeInt): Word32; overload;
 function  CalcAdler32(const Buf: RawByteString): Word32; overload;
 
 
@@ -385,9 +374,9 @@ function  CalcAdler32(const Buf: RawByteString): Word32; overload;
 { ELF hashing                                                                  }
 {                                                                              }
 procedure ELFInit(var Digest: Word32);
-function  ELFBuf(const Digest: Word32; const Buf; const BufSize: Integer): Word32;
+function  ELFBuf(const Digest: Word32; const Buf; const BufSize: NativeInt): Word32;
 
-function  CalcELF(const Buf; const BufSize: Integer): Word32; overload;
+function  CalcELF(const Buf; const BufSize: NativeInt): Word32; overload;
 function  CalcELF(const Buf: RawByteString): Word32; overload;
 
 
@@ -431,11 +420,11 @@ function  KnuthHashU(const S: UnicodeString): Word32;
 {   would on average take 24 days to find a collision.                         }
 {                                                                              }
 procedure MD5InitDigest(var Digest: T128BitDigest);
-procedure MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: Integer);
-procedure MD5FinalBuf(var Digest: T128BitDigest; const Buf; const BufSize: Integer;
+procedure MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: NativeInt);
+procedure MD5FinalBuf(var Digest: T128BitDigest; const Buf; const BufSize: Int32;
           const TotalSize: Int64);
 
-function  CalcMD5(const Buf; const BufSize: Integer): T128BitDigest; overload;
+function  CalcMD5(const Buf; const BufSize: NativeInt): T128BitDigest; overload;
 function  CalcMD5(const Buf: RawByteString): T128BitDigest; overload;
 
 function  MD5DigestToStrA(const Digest: T128BitDigest): RawByteString;
@@ -460,11 +449,11 @@ const
   SHA1DigestSize = SHA1DigestBits div 8;
 
 procedure SHA1InitDigest(var Digest: T160BitDigest);
-procedure SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
-procedure SHA1FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Integer;
+procedure SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
+procedure SHA1FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Int32;
           const TotalSize: Int64);
 
-function  CalcSHA1(const Buf; const BufSize: Integer): T160BitDigest; overload;
+function  CalcSHA1(const Buf; const BufSize: NativeInt): T160BitDigest; overload;
 function  CalcSHA1(const Buf: RawByteString): T160BitDigest; overload;
 
 function  SHA1DigestToStrA(const Digest: T160BitDigest): RawByteString;
@@ -481,11 +470,11 @@ function  SHA1DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 {   SHA-224 is based on SHA-256                                                }
 {                                                                              }
 procedure SHA224InitDigest(var Digest: T256BitDigest);
-procedure SHA224Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
-procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64;
-          var OutDigest: T224BitDigest);
+procedure SHA224Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
+procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Int32;
+          const TotalSize: Int64; var OutDigest: T224BitDigest);
 
-function  CalcSHA224(const Buf; const BufSize: Integer): T224BitDigest; overload;
+function  CalcSHA224(const Buf; const BufSize: NativeInt): T224BitDigest; overload;
 function  CalcSHA224(const Buf: RawByteString): T224BitDigest; overload;
 
 function  SHA224DigestToStrA(const Digest: T224BitDigest): RawByteString;
@@ -499,10 +488,11 @@ function  SHA224DigestToHexU(const Digest: T224BitDigest): UnicodeString;
 {   256 bit SHA-2 hash                                                         }
 {                                                                              }
 procedure SHA256InitDigest(var Digest: T256BitDigest);
-procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
-procedure SHA256FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
+procedure SHA256FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Int32;
+          const TotalSize: Int64);
 
-function  CalcSHA256(const Buf; const BufSize: Integer): T256BitDigest; overload;
+function  CalcSHA256(const Buf; const BufSize: NativeInt): T256BitDigest; overload;
 function  CalcSHA256(const Buf: RawByteString): T256BitDigest; overload;
 
 function  SHA256DigestToStrA(const Digest: T256BitDigest): RawByteString;
@@ -517,10 +507,11 @@ function  SHA256DigestToHexU(const Digest: T256BitDigest): UnicodeString;
 {   SHA-384 is based on SHA-512                                                }
 {                                                                              }
 procedure SHA384InitDigest(var Digest: T512BitDigest);
-procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
-procedure SHA384FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64; var OutDigest: T384BitDigest);
+procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
+procedure SHA384FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Int32;
+          const TotalSize: Int64; var OutDigest: T384BitDigest);
 
-function  CalcSHA384(const Buf; const BufSize: Integer): T384BitDigest; overload;
+function  CalcSHA384(const Buf; const BufSize: NativeInt): T384BitDigest; overload;
 function  CalcSHA384(const Buf: RawByteString): T384BitDigest; overload;
 
 function  SHA384DigestToStrA(const Digest: T384BitDigest): RawByteString;
@@ -534,10 +525,11 @@ function  SHA384DigestToHexU(const Digest: T384BitDigest): UnicodeString;
 {   512 bit SHA-2 hash                                                         }
 {                                                                              }
 procedure SHA512InitDigest(var Digest: T512BitDigest);
-procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
-procedure SHA512FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
+procedure SHA512FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Int32;
+          const TotalSize: Int64);
 
-function  CalcSHA512(const Buf; const BufSize: Integer): T512BitDigest; overload;
+function  CalcSHA512(const Buf; const BufSize: NativeInt): T512BitDigest; overload;
 function  CalcSHA512(const Buf: RawByteString): T512BitDigest; overload;
 
 function  SHA512DigestToStrA(const Digest: T512BitDigest): RawByteString;
@@ -558,10 +550,11 @@ function  SHA512DigestToHexU(const Digest: T512BitDigest): UnicodeString;
 {   any patents on these algorithms.                                           }
 {                                                                              }
 procedure RipeMD160InitDigest(var Digest: T160BitDigest);
-procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
-procedure RipeMD160FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
+procedure RipeMD160FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Int32;
+          const TotalSize: Int64);
 
-function  CalcRipeMD160(const Buf; const BufSize: Integer): T160BitDigest; overload;
+function  CalcRipeMD160(const Buf; const BufSize: NativeInt): T160BitDigest; overload;
 function  CalcRipeMD160(const Buf: RawByteString): T160BitDigest; overload;
 
 function  RipeMD160DigestToStrA(const Digest: T160BitDigest): RawByteString;
@@ -580,15 +573,15 @@ function  RipeMD160DigestToHexU(const Digest: T160BitDigest): UnicodeString;
 {   has some reasonable cryptographic strengths.                               }
 {   See RFC 2104 for details on HMAC.                                          }
 {                                                                              }
-procedure HMAC_MD5Init(const Key: Pointer; const KeySize: Integer;
+procedure HMAC_MD5Init(const Key: Pointer; const KeySize: Int32;
           var Digest: T128BitDigest; var K: T512BitBuf);
-procedure HMAC_MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: NativeInt);
 procedure HMAC_MD5FinalBuf(const K: T512BitBuf; var Digest: T128BitDigest;
-          const Buf; const BufSize: Integer; const TotalSize: Int64);
+          const Buf; const BufSize: Int32; const TotalSize: Int64);
 
-function  CalcHMAC_MD5(const Key: Pointer; const KeySize: Integer;
-          const Buf; const BufSize: Integer): T128BitDigest; overload;
-function  CalcHMAC_MD5(const Key: RawByteString; const Buf; const BufSize: Integer): T128BitDigest; overload;
+function  CalcHMAC_MD5(const Key: Pointer; const KeySize: Int32;
+          const Buf; const BufSize: NativeInt): T128BitDigest; overload;
+function  CalcHMAC_MD5(const Key: RawByteString; const Buf; const BufSize: NativeInt): T128BitDigest; overload;
 function  CalcHMAC_MD5(const Key, Buf: RawByteString): T128BitDigest; overload;
 
 
@@ -596,15 +589,15 @@ function  CalcHMAC_MD5(const Key, Buf: RawByteString): T128BitDigest; overload;
 {                                                                              }
 { HMAC-SHA1 keyed hashing                                                      }
 {                                                                              }
-procedure HMAC_SHA1Init(const Key: Pointer; const KeySize: Integer;
+procedure HMAC_SHA1Init(const Key: Pointer; const KeySize: Int32;
           var Digest: T160BitDigest; var K: T512BitBuf);
-procedure HMAC_SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
 procedure HMAC_SHA1FinalBuf(const K: T512BitBuf; var Digest: T160BitDigest;
-          const Buf; const BufSize: Integer; const TotalSize: Int64);
+          const Buf; const BufSize: Int32; const TotalSize: Int64);
 
-function  CalcHMAC_SHA1(const Key: Pointer; const KeySize: Integer;
-          const Buf; const BufSize: Integer): T160BitDigest; overload;
-function  CalcHMAC_SHA1(const Key: RawByteString; const Buf; const BufSize: Integer): T160BitDigest; overload;
+function  CalcHMAC_SHA1(const Key: Pointer; const KeySize: Int32;
+          const Buf; const BufSize: NativeInt): T160BitDigest; overload;
+function  CalcHMAC_SHA1(const Key: RawByteString; const Buf; const BufSize: NativeInt): T160BitDigest; overload;
 function  CalcHMAC_SHA1(const Key, Buf: RawByteString): T160BitDigest; overload;
 
 
@@ -612,15 +605,15 @@ function  CalcHMAC_SHA1(const Key, Buf: RawByteString): T160BitDigest; overload;
 {                                                                              }
 { HMAC-SHA256 keyed hashing                                                    }
 {                                                                              }
-procedure HMAC_SHA256Init(const Key: Pointer; const KeySize: Integer;
+procedure HMAC_SHA256Init(const Key: Pointer; const KeySize: Int32;
           var Digest: T256BitDigest; var K: T512BitBuf);
-procedure HMAC_SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
 procedure HMAC_SHA256FinalBuf(const K: T512BitBuf; var Digest: T256BitDigest;
-          const Buf; const BufSize: Integer; const TotalSize: Int64);
+          const Buf; const BufSize: Int32; const TotalSize: Int64);
 
-function  CalcHMAC_SHA256(const Key: Pointer; const KeySize: Integer;
-          const Buf; const BufSize: Integer): T256BitDigest; overload;
-function  CalcHMAC_SHA256(const Key: RawByteString; const Buf; const BufSize: Integer): T256BitDigest; overload;
+function  CalcHMAC_SHA256(const Key: Pointer; const KeySize: Int32;
+          const Buf; const BufSize: NativeInt): T256BitDigest; overload;
+function  CalcHMAC_SHA256(const Key: RawByteString; const Buf; const BufSize: NativeInt): T256BitDigest; overload;
 function  CalcHMAC_SHA256(const Key, Buf: RawByteString): T256BitDigest; overload;
 
 
@@ -628,13 +621,14 @@ function  CalcHMAC_SHA256(const Key, Buf: RawByteString): T256BitDigest; overloa
 {                                                                              }
 { HMAC-SHA512 keyed hashing                                                    }
 {                                                                              }
-procedure HMAC_SHA512Init(const Key: Pointer; const KeySize: Integer; var Digest: T512BitDigest; var K: T1024BitBuf);
-procedure HMAC_SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
-procedure HMAC_SHA512FinalBuf(const K: T1024BitBuf; var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure HMAC_SHA512Init(const Key: Pointer; const KeySize: Int32; var Digest: T512BitDigest; var K: T1024BitBuf);
+procedure HMAC_SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
+procedure HMAC_SHA512FinalBuf(const K: T1024BitBuf; var Digest: T512BitDigest;
+          const Buf; const BufSize: Int32; const TotalSize: Int64);
 
-function  CalcHMAC_SHA512(const Key: Pointer; const KeySize: Integer;
-          const Buf; const BufSize: Integer): T512BitDigest; overload;
-function  CalcHMAC_SHA512(const Key: RawByteString; const Buf; const BufSize: Integer): T512BitDigest; overload;
+function  CalcHMAC_SHA512(const Key: Pointer; const KeySize: Int32;
+          const Buf; const BufSize: NativeInt): T512BitDigest; overload;
+function  CalcHMAC_SHA512(const Key: RawByteString; const Buf; const BufSize: NativeInt): T512BitDigest; overload;
 function  CalcHMAC_SHA512(const Key, Buf: RawByteString): T512BitDigest; overload;
 
 
@@ -650,19 +644,19 @@ type
     FDigest    : Pointer;
     FTotalSize : Int64;
 
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); virtual; abstract;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); virtual; abstract;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); virtual;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); virtual; abstract;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); virtual; abstract;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); virtual;
 
   public
-    class function DigestSize: Integer; virtual; abstract;
-    class function BlockSize: Integer; virtual;
+    class function DigestSize: Int32; virtual; abstract;
+    class function BlockSize: Int32; virtual;
 
     procedure Init(const Digest: Pointer; const Key: Pointer = nil;
-              const KeySize: Integer = 0); overload;
+              const KeySize: Int32 = 0); overload;
     procedure Init(const Digest: Pointer; const Key: RawByteString); overload;
 
-    procedure HashBuf(const Buf; const BufSize: Integer; const FinalBuf: Boolean);
+    procedure HashBuf(const Buf; const BufSize: NativeInt; const FinalBuf: Boolean);
     procedure HashFile(const FileName: String; const Offset: Int64 = 0;
               const MaxCount: Int64 = -1);
   end;
@@ -671,141 +665,141 @@ type
   { TChecksum32Hash                                                            }
   TChecksum32Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TXOR8Hash                                                                  }
   TXOR8Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TXOR16Hash                                                                 }
   TXOR16Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TXOR32Hash                                                                 }
   TXOR32Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TCRC16Hash                                                                 }
   TCRC16Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TCRC32Hash                                                                 }
   TCRC32Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TAdler32Hash                                                               }
   TAdler32Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TELFHash                                                                   }
   TELFHash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
 
   public
-    class function DigestSize: Integer; override;
+    class function DigestSize: Int32; override;
   end;
 
   { TMD5Hash                                                                   }
   TMD5Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
   end;
 
   { TSHA1Hash                                                                  }
   TSHA1Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
   end;
 
   { TSHA256Hash                                                                }
   TSHA256Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
   end;
 
   { TSHA512Hash                                                                }
   TSHA512Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
   end;
 
   { TRipeMD160Hash                                                             }
   TRipeMD160Hash = class(AHash)
   protected
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
   end;
 
   { THMAC_MD5Hash                                                              }
@@ -813,13 +807,13 @@ type
   protected
     FKey : T512BitBuf;
 
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
 
     destructor Destroy; override;
   end;
@@ -829,13 +823,13 @@ type
   protected
     FKey : T512BitBuf;
 
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
 
     destructor Destroy; override;
   end;
@@ -845,13 +839,13 @@ type
   protected
     FKey : T512BitBuf;
 
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
 
     destructor Destroy; override;
   end;
@@ -861,13 +855,13 @@ type
   protected
     FKey : T1024BitBuf;
 
-    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer); override;
-    procedure ProcessBuf(const Buf; const BufSize: Integer); override;
-    procedure ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64); override;
+    procedure InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32); override;
+    procedure ProcessBuf(const Buf; const BufSize: NativeInt); override;
+    procedure ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64); override;
 
   public
-    class function DigestSize: Integer; override;
-    class function BlockSize: Integer; override;
+    class function DigestSize: Int32; override;
+    class function BlockSize: Int32; override;
 
     destructor Destroy; override;
   end;
@@ -879,12 +873,24 @@ type
 {                                                                              }
 type
   THashType = (
-      hashChecksum32, hashXOR8, hashXOR16, hashXOR32,
-      hashCRC16, hashCRC32,
-      hashAdler32,
-      hashELF,
-      hashMD5, hashSHA1, hashSHA256, hashSHA512, hashRipeMD160,
-      hashHMAC_MD5, hashHMAC_SHA1, hashHMAC_SHA256, hashHMAC_SHA512);
+    hashChecksum32,
+    hashXOR8,
+    hashXOR16,
+    hashXOR32,
+    hashCRC16,
+    hashCRC32,
+    hashAdler32,
+    hashELF,
+    hashMD5,
+    hashSHA1,
+    hashSHA256,
+    hashSHA512,
+    hashRipeMD160,
+    hashHMAC_MD5,
+    hashHMAC_SHA1,
+    hashHMAC_SHA256,
+    hashHMAC_SHA512
+    );
 
 
 
@@ -948,9 +954,12 @@ uses
   {$IFDEF MSWIN}
   Windows,
   {$ENDIF}
-  {$IFDEF DELPHI}{$IFDEF POSIX}
+
+  {$IFDEF DELPHI}
+  {$IFDEF POSIX}
   Posix.Unistd,
-  {$ENDIF}{$ENDIF}
+  {$ENDIF}
+  {$ENDIF}
 
   { Fundamentals }
   flcSysUtils;
@@ -1105,7 +1114,7 @@ end;
 { Checksum hashing                                                             }
 {                                                                              }
 {$IFDEF ASM386_DELPHI}
-function CalcChecksum32(const Buf; const BufSize: Integer): Word32;
+function CalcChecksum32(const Buf; const BufSize: NativeInt): Word32;
 asm
       or eax, eax              // eax = Buf
       jz @fin
@@ -1129,9 +1138,10 @@ asm
       xor eax, eax
 end;
 {$ELSE}
-function CalcChecksum32(const Buf; const BufSize: Integer): Word32;
-var I : Integer;
-    P : PByte;
+function CalcChecksum32(const Buf; const BufSize: NativeInt): Word32;
+var
+  I : NativeInt;
+  P : PByte;
 begin
   Result := 0;
   P := @Buf;
@@ -1204,10 +1214,11 @@ Asm
       ret
 end;
 {$ELSE}
-function XOR32Buf(const Buf; const BufSize: Integer): Word32;
-var I : Integer;
-    L : Byte;
-    P : PByte;
+function XOR32Buf(const Buf; const BufSize: NativeInt): Word32;
+var
+  I : NativeInt;
+  L : Byte;
+  P : PByte;
 begin
   Result := 0;
   L := 0;
@@ -1223,8 +1234,9 @@ begin
 end;
 {$ENDIF}
 
-function CalcXOR8(const Buf; const BufSize: Integer): Byte;
-var L : Word32;
+function CalcXOR8(const Buf; const BufSize: NativeInt): Byte;
+var
+  L : Word32;
 begin
   L := XOR32Buf(Buf, BufSize);
   Result := Byte(L) xor
@@ -1238,8 +1250,9 @@ begin
   Result := CalcXOR8(Pointer(Buf)^, Length(Buf));
 end;
 
-function CalcXOR16(const Buf; const BufSize: Integer): Word;
-var L : Word32;
+function CalcXOR16(const Buf; const BufSize: NativeInt): Word;
+var
+  L : Word32;
 begin
   L := XOR32Buf(Buf, BufSize);
   Result := Word(L) xor
@@ -1251,7 +1264,7 @@ begin
   Result := CalcXOR16(Pointer(Buf)^, Length(Buf));
 end;
 
-function CalcXOR32(const Buf; const BufSize: Integer): Word32;
+function CalcXOR32(const Buf; const BufSize: NativeInt): Word32;
 begin
   Result := XOR32Buf(Buf, BufSize);
 end;
@@ -1267,7 +1280,7 @@ end;
 { CRC 16 hashing                                                               }
 {                                                                              }
 const
-  CRC16Table : array[Byte] of Word = (
+  CRC16Table : array[Byte] of Word16 = (
     $0000, $1021, $2042, $3063, $4084, $50a5, $60c6, $70e7,
     $8108, $9129, $a14a, $b16b, $c18c, $d1ad, $e1ce, $f1ef,
     $1231, $0210, $3273, $2252, $52b5, $4294, $72f7, $62d6,
@@ -1301,14 +1314,15 @@ const
     $ef1f, $ff3e, $cf5d, $df7c, $af9b, $bfba, $8fd9, $9ff8,
     $6e17, $7e36, $4e55, $5e74, $2e93, $3eb2, $0ed1, $1ef0);
 
-function CRC16Byte(const CRC16: Word; const Octet: Byte): Word;
+function CRC16Byte(const CRC16: Word; const Octet: Byte): Word16;
 begin
   Result := CRC16Table[Byte(Hi(CRC16) xor Octet)] xor Word(CRC16 shl 8);
 end;
 
-function CRC16Buf(const CRC16: Word; const Buf; const BufSize: Integer): Word;
-var I : Integer;
-    P : PByte;
+function CRC16Buf(const CRC16: Word; const Buf; const BufSize: NativeInt): Word16;
+var
+  I : NativeInt;
+  P : PByte;
 begin
   Result := CRC16;
   P := @Buf;
@@ -1324,7 +1338,7 @@ begin
   CRC16 := $FFFF;
 end;
 
-function CalcCRC16(const Buf; const BufSize: Integer): Word;
+function CalcCRC16(const Buf; const BufSize: NativeInt): Word;
 begin
   CRC16Init(Result);
   Result := CRC16Buf(Result, Buf, BufSize);
@@ -1380,8 +1394,9 @@ begin
 end;
 
 function CRC32Buf(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
-var P : PByte;
-    I : NativeInt;
+var
+  P : PByte;
+  I : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
@@ -1395,9 +1410,10 @@ begin
 end;
 
 function CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
-var P : PByte;
-    I : NativeInt;
-    C : Byte;
+var
+  P : PByte;
+  I : NativeInt;
+  C : Byte;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
@@ -1443,7 +1459,8 @@ const
   Adler32Mod = 65521; // largest prime smaller than 65536
 
 function Adler32Byte(const Adler32: Word32; const Octet: Byte): Word32;
-var A, B : Word32;
+var
+  A, B : Word32;
 begin
   A := Adler32 and $0000FFFF;
   B := Adler32 shr 16;
@@ -1456,10 +1473,11 @@ begin
   Result := A or (B shl 16);
 end;
 
-function Adler32Buf(const Adler32: Word32; const Buf; const BufSize: Integer): Word32;
-var A, B : Word32;
-    P    : PByte;
-    I    : Integer;
+function Adler32Buf(const Adler32: Word32; const Buf; const BufSize: NativeInt): Word32;
+var
+  A, B : Word32;
+  P    : PByte;
+  I    : NativeInt;
 begin
   A := Adler32 and $0000FFFF;
   B := Adler32 shr 16;
@@ -1477,7 +1495,7 @@ begin
   Result := A or (B shl 16);
 end;
 
-function CalcAdler32(const Buf; const BufSize: Integer): Word32;
+function CalcAdler32(const Buf; const BufSize: NativeInt): Word32;
 begin
   Adler32Init(Result);
   Result := Adler32Buf(Result, Buf, BufSize);
@@ -1498,10 +1516,11 @@ begin
   Digest := 0;
 end;
 
-function ELFBuf(const Digest: Word32; const Buf; const BufSize: Integer): Word32;
-var I : Integer;
-    P : PByte;
-    X : Word32;
+function ELFBuf(const Digest: Word32; const Buf; const BufSize: NativeInt): Word32;
+var
+  I : NativeInt;
+  P : PByte;
+  X : Word32;
 begin
   Result := Digest;
   P := @Buf;
@@ -1516,7 +1535,7 @@ begin
     end;
 end;
 
-function CalcELF(const Buf; const BufSize: Integer): Word32;
+function CalcELF(const Buf; const BufSize: NativeInt): Word32;
 begin
   Result := ELFBuf(0, Buf, BufSize);
 end;
@@ -1532,8 +1551,9 @@ end;
 { ISBN checksum                                                                }
 {                                                                              }
 function IsValidISBN(const S: RawByteString): Boolean;
-var I, L, M, D, C : Integer;
-    P : PByte;
+var
+  I, L, M, D, C : Integer;
+  P : PByte;
 begin
   L := Length(S);
   if L < 10 then // too few digits
@@ -1834,13 +1854,14 @@ end;
 { Used by MD5, SHA1, SHA256, SHA512.                                           }
 {                                                                              }
 procedure StdFinalBuf512(
-          const Buf; const BufSize: Integer; const TotalSize: Int64;
+          const Buf; const BufSize: Int32; const TotalSize: Int64;
           var Buf1, Buf2: T512BitBuf;
-          var FinalBufs: Integer;
+          var FinalBufs: Int32;
           const SwapEndian: Boolean);
-var P, Q : PByte;
-    I : Integer;
-    L : Int64;
+var
+  P, Q : PByte;
+  I : Int32;
+  L : Int64;
 begin
   Assert(BufSize < 64, 'Final BufSize must be less than 64 bytes');
   Assert(TotalSize >= BufSize, 'TotalSize >= BufSize');
@@ -1885,13 +1906,14 @@ begin
 end;
 
 procedure StdFinalBuf1024(
-          const Buf; const BufSize: Integer; const TotalSize: Int64;
+          const Buf; const BufSize: Int32; const TotalSize: Int64;
           var Buf1, Buf2: T1024BitBuf;
-          var FinalBufs: Integer;
+          var FinalBufs: Int32;
           const SwapEndian: Boolean);
-var P, Q : PByte;
-    I : Integer;
-    L : Int64;
+var
+  P, Q : PByte;
+  I : Int32;
+  L : Int64;
 begin
   Assert(BufSize < 128, 'Final BufSize must be less than 128 bytes');
   Assert(TotalSize >= BufSize, 'TotalSize >= BufSize');
@@ -1963,9 +1985,10 @@ begin
 end;
 {$ENDIF}
 
-procedure SwapEndianBuf(var Buf; const Count: Integer);
-var P : PWord32;
-    I : Integer;
+procedure SwapEndianBuf(var Buf; const Count: NativeInt);
+var
+  P : PWord32;
+  I : NativeInt;
 begin
   P := @Buf;
   for I := 1 to Count do
@@ -2211,11 +2234,12 @@ type
   PMD5Buffer = ^TMD5Buffer;
 
 procedure TransformMD5Buffer(var Digest: T128BitDigest; const Buffer);
-var A, B, C, D : Word32;
-    P          : PWord32;
-    I          : Integer;
-    J          : Byte;
-    Buf        : PMD5Buffer;
+var
+  A, B, C, D : Word32;
+  P          : PWord32;
+  I          : Integer;
+  J          : Byte;
+  Buf        : PMD5Buffer;
 begin
   Buf := @Buffer;
 
@@ -2280,9 +2304,10 @@ begin
   Digest.Word32s[3] := $10325476;
 end;
 
-procedure MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: Integer);
-var P : PByte;
-    I, J : Integer;
+procedure MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: NativeInt);
+var
+  P : PByte;
+  I, J : NativeInt;
 begin
   I := BufSize;
   if I <= 0 then
@@ -2296,9 +2321,10 @@ begin
     end;
 end;
 
-procedure MD5FinalBuf(var Digest: T128BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
-var B1, B2 : T512BitBuf;
-    C : Integer;
+procedure MD5FinalBuf(var Digest: T128BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
+var
+  B1, B2 : T512BitBuf;
+  C : Int32;
 begin
   StdFinalBuf512(Buf, BufSize, TotalSize, B1, B2, C, False);
   TransformMD5Buffer(Digest, B1);
@@ -2309,9 +2335,10 @@ begin
     SecureClear512(B2);
 end;
 
-function CalcMD5(const Buf; const BufSize: Integer): T128BitDigest;
-var I, J : Integer;
-    P    : PByte;
+function CalcMD5(const Buf; const BufSize: NativeInt): T128BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
 begin
   MD5InitDigest(Result);
   P := @Buf;
@@ -2367,11 +2394,12 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 procedure TransformSHABuffer(var Digest: T160BitDigest; const Buffer; const SHA1: Boolean);
-var A, B, C, D, E : Word32;
-    W : array[0..79] of Word32;
-    P, Q : PWord32;
-    I : Integer;
-    J : Word32;
+var
+  A, B, C, D, E : Word32;
+  W : array[0..79] of Word32;
+  P, Q : PWord32;
+  I : Integer;
+  J : Word32;
 begin
   P := @Buffer;
   Q := @W;
@@ -2450,9 +2478,10 @@ end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 {$IFDEF ROn}{$R+}{$ENDIF}
 
-procedure SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
-var P : PByte;
-    I, J : Integer;
+procedure SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
+var
+  P : PByte;
+  I, J : NativeInt;
 begin
   I := BufSize;
   if I <= 0 then
@@ -2466,9 +2495,9 @@ begin
     end;
 end;
 
-procedure SHA1FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure SHA1FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var B1, B2 : T512BitBuf;
-    C : Integer;
+    C : Int32;
 begin
   StdFinalBuf512(Buf, BufSize, TotalSize, B1, B2, C, True);
   TransformSHABuffer(Digest, B1, True);
@@ -2480,9 +2509,10 @@ begin
     SecureClear512(B2);
 end;
 
-function CalcSHA1(const Buf; const BufSize: Integer): T160BitDigest;
-var I, J : Integer;
-    P    : PByte;
+function CalcSHA1(const Buf; const BufSize: NativeInt): T160BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
 begin
   SHA1InitDigest(Result);
   P := @Buf;
@@ -2542,22 +2572,23 @@ begin
   Digest.Word32s[7] := $befa4fa4;
 end;
 
-procedure SHA224Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
+procedure SHA224Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
 begin
   SHA256Buf(Digest, Buf, BufSize);
 end;
 
-procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64;
+procedure SHA224FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64;
           var OutDigest: T224BitDigest);
 begin
   SHA256FinalBuf(Digest, Buf, BufSize, TotalSize);
   Move(Digest.Word32s[0], OutDigest.Word32s[0], SizeOf(T224BitDigest));
 end;
 
-function CalcSHA224(const Buf; const BufSize: Integer): T224BitDigest;
-var D    : T256BitDigest;
-    I, J : Integer;
-    P    : PByte;
+function CalcSHA224(const Buf; const BufSize: NativeInt): T224BitDigest;
+var
+  D    : T256BitDigest;
+  I, J : NativeInt;
+  P    : PByte;
 begin
   SHA224InitDigest(D);
   P := @Buf;
@@ -2692,9 +2723,10 @@ end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 {$IFDEF ROn}{$R+}{$ENDIF}
 
-procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
-var P : PByte;
-    I, J : Integer;
+procedure SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
+var
+  P : PByte;
+  I, J : NativeInt;
 begin
   I := BufSize;
   if I <= 0 then
@@ -2708,9 +2740,9 @@ begin
     end;
 end;
 
-procedure SHA256FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure SHA256FinalBuf(var Digest: T256BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var B1, B2 : T512BitBuf;
-    C : Integer;
+    C : Int32;
 begin
   StdFinalBuf512(Buf, BufSize, TotalSize, B1, B2, C, True);
   TransformSHA256Buffer(Digest, B1);
@@ -2722,9 +2754,10 @@ begin
     SecureClear512(B2);
 end;
 
-function CalcSHA256(const Buf; const BufSize: Integer): T256BitDigest;
-var I, J : Integer;
-    P    : PByte;
+function CalcSHA256(const Buf; const BufSize: NativeInt): T256BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
 begin
   SHA256InitDigest(Result);
   P := @Buf;
@@ -2787,21 +2820,22 @@ begin
   Word64Rec(Digest.Word64s[7]).Word32s[1] := $47b5481d;
 end;
 
-procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
+procedure SHA384Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
 begin
   SHA512Buf(Digest, Buf, BufSize);
 end;
 
-procedure SHA384FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64; var OutDigest: T384BitDigest);
+procedure SHA384FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64; var OutDigest: T384BitDigest);
 begin
   SHA512FinalBuf(Digest, Buf, BufSize, TotalSize);
   Move(Digest, OutDigest, SizeOf(OutDigest));
 end;
 
-function CalcSHA384(const Buf; const BufSize: Integer): T384BitDigest;
-var I, J : Integer;
-    P    : PByte;
-    D    : T512BitDigest;
+function CalcSHA384(const Buf; const BufSize: NativeInt): T384BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
+  D    : T512BitDigest;
 begin
   SHA384InitDigest(D);
   P := @Buf;
@@ -3042,9 +3076,10 @@ end;
 {$IFDEF QOn}{$Q+}{$ENDIF}
 {$IFDEF ROn}{$R+}{$ENDIF}
 
-procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
-var P : PByte;
-    I, J : Integer;
+procedure SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
+var
+  P : PByte;
+  I, J : NativeInt;
 begin
   I := BufSize;
   if I <= 0 then
@@ -3058,9 +3093,10 @@ begin
     end;
 end;
 
-procedure SHA512FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
-var B1, B2 : T1024BitBuf;
-    C : Integer;
+procedure SHA512FinalBuf(var Digest: T512BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
+var
+  B1, B2 : T1024BitBuf;
+  C : Int32;
 begin
   StdFinalBuf1024(Buf, BufSize, TotalSize, B1, B2, C, True);
   TransformSHA512Buffer(Digest, B1);
@@ -3072,9 +3108,10 @@ begin
     SecureClear1024(B2);
 end;
 
-function CalcSHA512(const Buf; const BufSize: Integer): T512BitDigest;
-var I, J : Integer;
-    P    : PByte;
+function CalcSHA512(const Buf; const BufSize: NativeInt): T512BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
 begin
   SHA512InitDigest(Result);
   P := @Buf;
@@ -3359,9 +3396,9 @@ begin
   Digest.Word32s[4] := $C3D2E1F0;
 end;
 
-procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
+procedure RipeMD160Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
 var P : PRipeMD160Block;
-    I, J : Integer;
+    I, J : NativeInt;
 begin
   I := BufSize;
   if I <= 0 then
@@ -3375,9 +3412,9 @@ begin
     end;
 end;
 
-procedure RipeMD160FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure RipeMD160FinalBuf(var Digest: T160BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var B1, B2 : T512BitBuf;
-    C : Integer;
+    C : Int32;
 begin
   StdFinalBuf512(Buf, BufSize, TotalSize, B1, B2, C, False);
   RipeMD160Block(Digest, PRipeMD160Block(@B1)^);
@@ -3388,9 +3425,10 @@ begin
     SecureClear512(B2);
 end;
 
-function CalcRipeMD160(const Buf; const BufSize: Integer): T160BitDigest;
-var I, J : Integer;
-    P    : PByte;
+function CalcRipeMD160(const Buf; const BufSize: NativeInt): T160BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
 begin
   RipeMD160InitDigest(Result);
   P := @Buf;
@@ -3488,7 +3526,7 @@ end;
 {                                                                              }
 { HMAC-MD5 keyed hashing                                                       }
 {                                                                              }
-procedure HMAC_MD5Init(const Key: Pointer; const KeySize: Integer; var Digest: T128BitDigest; var K: T512BitBuf);
+procedure HMAC_MD5Init(const Key: Pointer; const KeySize: Int32; var Digest: T128BitDigest; var K: T512BitBuf);
 var S : T512BitBuf;
     D : T128BitDigest;
 begin
@@ -3507,12 +3545,12 @@ begin
   SecureClear512(S);
 end;
 
-procedure HMAC_MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_MD5Buf(var Digest: T128BitDigest; const Buf; const BufSize: NativeInt);
 begin
   MD5Buf(Digest, Buf, BufSize);
 end;
 
-procedure HMAC_MD5FinalBuf(const K: T512BitBuf; var Digest: T128BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure HMAC_MD5FinalBuf(const K: T512BitBuf; var Digest: T128BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var
   FinBuf : packed record
     K : T512BitBuf;
@@ -3527,10 +3565,11 @@ begin
   SecureClear(FinBuf, SizeOf(FinBuf));
 end;
 
-function CalcHMAC_MD5(const Key: Pointer; const KeySize: Integer; const Buf; const BufSize: Integer): T128BitDigest;
-var I, J : Integer;
-    P    : PByte;
-    K    : T512BitBuf;
+function CalcHMAC_MD5(const Key: Pointer; const KeySize: Int32; const Buf; const BufSize: NativeInt): T128BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
+  K    : T512BitBuf;
 begin
   HMAC_MD5Init(Key, KeySize, Result, K);
   P := @Buf;
@@ -3548,7 +3587,7 @@ begin
   SecureClear512(K);
 end;
 
-function CalcHMAC_MD5(const Key: RawByteString; const Buf; const BufSize: Integer): T128BitDigest;
+function CalcHMAC_MD5(const Key: RawByteString; const Buf; const BufSize: NativeInt): T128BitDigest;
 begin
   Result := CalcHMAC_MD5(Pointer(Key), Length(Key), Buf, BufSize);
 end;
@@ -3563,9 +3602,10 @@ end;
 {                                                                              }
 { HMAC-SHA1 keyed hashing                                                      }
 {                                                                              }
-procedure HMAC_SHA1Init(const Key: Pointer; const KeySize: Integer; var Digest: T160BitDigest; var K: T512BitBuf);
-var D : T160BitDigest;
-    S : T512BitBuf;
+procedure HMAC_SHA1Init(const Key: Pointer; const KeySize: Int32; var Digest: T160BitDigest; var K: T512BitBuf);
+var
+  D : T160BitDigest;
+  S : T512BitBuf;
 begin
   SHA1InitDigest(Digest);
 
@@ -3582,12 +3622,12 @@ begin
   SecureClear512(S);
 end;
 
-procedure HMAC_SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_SHA1Buf(var Digest: T160BitDigest; const Buf; const BufSize: NativeInt);
 begin
   SHA1Buf(Digest, Buf, BufSize);
 end;
 
-procedure HMAC_SHA1FinalBuf(const K: T512BitBuf; var Digest: T160BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure HMAC_SHA1FinalBuf(const K: T512BitBuf; var Digest: T160BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var
   FinBuf : packed record
     K : T512BitBuf;
@@ -3602,10 +3642,11 @@ begin
   SecureClear(FinBuf, SizeOf(FinBuf));
 end;
 
-function CalcHMAC_SHA1(const Key: Pointer; const KeySize: Integer; const Buf; const BufSize: Integer): T160BitDigest;
-var I, J : Integer;
-    P    : PByte;
-    K    : T512BitBuf;
+function CalcHMAC_SHA1(const Key: Pointer; const KeySize: Int32; const Buf; const BufSize: NativeInt): T160BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
+  K    : T512BitBuf;
 begin
   HMAC_SHA1Init(Key, KeySize, Result, K);
   P := @Buf;
@@ -3623,7 +3664,7 @@ begin
   SecureClear512(K);
 end;
 
-function CalcHMAC_SHA1(const Key: RawByteString; const Buf; const BufSize: Integer): T160BitDigest;
+function CalcHMAC_SHA1(const Key: RawByteString; const Buf; const BufSize: NativeInt): T160BitDigest;
 begin
   Result := CalcHMAC_SHA1(Pointer(Key), Length(Key), Buf, BufSize);
 end;
@@ -3638,9 +3679,10 @@ end;
 {                                                                              }
 { HMAC-SHA256 keyed hashing                                                    }
 {                                                                              }
-procedure HMAC_SHA256Init(const Key: Pointer; const KeySize: Integer; var Digest: T256BitDigest; var K: T512BitBuf);
-var D : T256BitDigest;
-    S : T512BitBuf;
+procedure HMAC_SHA256Init(const Key: Pointer; const KeySize: Int32; var Digest: T256BitDigest; var K: T512BitBuf);
+var
+  D : T256BitDigest;
+  S : T512BitBuf;
 begin
   SHA256InitDigest(Digest);
 
@@ -3657,12 +3699,12 @@ begin
   SecureClear512(S);
 end;
 
-procedure HMAC_SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_SHA256Buf(var Digest: T256BitDigest; const Buf; const BufSize: NativeInt);
 begin
   SHA256Buf(Digest, Buf, BufSize);
 end;
 
-procedure HMAC_SHA256FinalBuf(const K: T512BitBuf; var Digest: T256BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure HMAC_SHA256FinalBuf(const K: T512BitBuf; var Digest: T256BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var
   FinBuf : packed record
     K : T512BitBuf;
@@ -3677,10 +3719,11 @@ begin
   SecureClear(FinBuf, SizeOf(FinBuf));
 end;
 
-function CalcHMAC_SHA256(const Key: Pointer; const KeySize: Integer; const Buf; const BufSize: Integer): T256BitDigest;
-var I, J : Integer;
-    P    : PByte;
-    K    : T512BitBuf;
+function CalcHMAC_SHA256(const Key: Pointer; const KeySize: Int32; const Buf; const BufSize: NativeInt): T256BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
+  K    : T512BitBuf;
 begin
   HMAC_SHA256Init(Key, KeySize, Result, K);
   P := @Buf;
@@ -3698,7 +3741,7 @@ begin
   SecureClear512(K);
 end;
 
-function CalcHMAC_SHA256(const Key: RawByteString; const Buf; const BufSize: Integer): T256BitDigest;
+function CalcHMAC_SHA256(const Key: RawByteString; const Buf; const BufSize: NativeInt): T256BitDigest;
 begin
   Result := CalcHMAC_SHA256(Pointer(Key), Length(Key), Buf, BufSize);
 end;
@@ -3713,7 +3756,7 @@ end;
 {                                                                              }
 { HMAC-SHA512 keyed hashing                                                    }
 {                                                                              }
-procedure HMAC_SHA512Init(const Key: Pointer; const KeySize: Integer; var Digest: T512BitDigest; var K: T1024BitBuf);
+procedure HMAC_SHA512Init(const Key: Pointer; const KeySize: Int32; var Digest: T512BitDigest; var K: T1024BitBuf);
 var D : T512BitDigest;
     S : T1024BitBuf;
 begin
@@ -3732,12 +3775,12 @@ begin
   SecureClear1024(S);
 end;
 
-procedure HMAC_SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: Integer);
+procedure HMAC_SHA512Buf(var Digest: T512BitDigest; const Buf; const BufSize: NativeInt);
 begin
   SHA512Buf(Digest, Buf, BufSize);
 end;
 
-procedure HMAC_SHA512FinalBuf(const K: T1024BitBuf; var Digest: T512BitDigest; const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure HMAC_SHA512FinalBuf(const K: T1024BitBuf; var Digest: T512BitDigest; const Buf; const BufSize: Int32; const TotalSize: Int64);
 var
   FinBuf : packed record
     K : T1024BitBuf;
@@ -3752,10 +3795,11 @@ begin
   SecureClear(FinBuf, SizeOf(FinBuf));
 end;
 
-function CalcHMAC_SHA512(const Key: Pointer; const KeySize: Integer; const Buf; const BufSize: Integer): T512BitDigest;
-var I, J : Integer;
-    P    : PByte;
-    K    : T1024BitBuf;
+function CalcHMAC_SHA512(const Key: Pointer; const KeySize: Int32; const Buf; const BufSize: NativeInt): T512BitDigest;
+var
+  I, J : NativeInt;
+  P    : PByte;
+  K    : T1024BitBuf;
 begin
   HMAC_SHA512Init(Key, KeySize, Result, K);
   P := @Buf;
@@ -3773,7 +3817,7 @@ begin
   SecureClear1024(K);
 end;
 
-function CalcHMAC_SHA512(const Key: RawByteString; const Buf; const BufSize: Integer): T512BitDigest;
+function CalcHMAC_SHA512(const Key: RawByteString; const Buf; const BufSize: NativeInt): T512BitDigest;
 begin
   Result := CalcHMAC_SHA512(Pointer(Key), Length(Key), Buf, BufSize);
 end;
@@ -3791,7 +3835,7 @@ end;
 procedure CalculateHash(const HashType: THashType;
           const Buf; const BufSize: Integer;
           const Digest: Pointer;
-          const Key: Pointer; const KeySize: Integer);
+          const Key: Pointer; const KeySize: Int32);
 begin
   if KeySize > 0 then
     case HashType of
@@ -3806,9 +3850,9 @@ begin
     case HashType of
       hashChecksum32  : PWord32(Digest)^       := CalcChecksum32(Buf, BufSize);
       hashXOR8        : PByte(Digest)^         := CalcXOR8(Buf, BufSize);
-      hashXOR16       : PWord(Digest)^         := CalcXOR16(Buf, BufSize);
+      hashXOR16       : PWord16(Digest)^       := CalcXOR16(Buf, BufSize);
       hashXOR32       : PWord32(Digest)^       := CalcXOR32(Buf, BufSize);
-      hashCRC16       : PWord(Digest)^         := CalcCRC16(Buf, BufSize);
+      hashCRC16       : PWord16(Digest)^       := CalcCRC16(Buf, BufSize);
       hashCRC32       : PWord32(Digest)^       := CalcCRC32(Buf, BufSize);
       hashMD5         : P128BitDigest(Digest)^ := CalcMD5(Buf, BufSize);
       hashSHA1        : P160BitDigest(Digest)^ := CalcSHA1(Buf, BufSize);
@@ -3839,17 +3883,17 @@ end;
 {                                                                              }
 { AHash                                                                        }
 {                                                                              }
-class function AHash.BlockSize: Integer;
+class function AHash.BlockSize: Int32;
 begin
   Result := -1;
 end;
 
-procedure AHash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure AHash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   ProcessBuf(Buf, BufSize);
 end;
 
-procedure AHash.Init(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure AHash.Init(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   Assert(Assigned(Digest));
   FDigest := Digest;
@@ -3862,9 +3906,10 @@ begin
   Init(Digest, Pointer(Key), Length(Key));
 end;
 
-procedure AHash.HashBuf(const Buf; const BufSize: Integer; const FinalBuf: Boolean);
-var I, D : Integer;
-    P : PByte;
+procedure AHash.HashBuf(const Buf; const BufSize: NativeInt; const FinalBuf: Boolean);
+var
+  I, D : NativeInt;
+  P : PByte;
 begin
   Inc(FTotalSize, BufSize);
 
@@ -3889,11 +3934,12 @@ end;
 
 procedure AHash.HashFile(const FileName: String; const Offset: Int64; const MaxCount: Int64);
 const ChunkSize = 8192;
-var Handle : THandle;
-    Buf    : Pointer;
-    I, C   : Integer;
-    Left   : Int64;
-    Fin    : Boolean;
+var
+  Handle : THandle;
+  Buf    : Pointer;
+  I, C   : Integer;
+  Left   : Int64;
+  Fin    : Boolean;
 begin
   if FileName = '' then
     raise EHashError.Create(hashInvalidFileName);
@@ -3944,17 +3990,17 @@ end;
 {                                                                              }
 { TChecksum32Hash                                                              }
 {                                                                              }
-procedure TChecksum32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TChecksum32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   PWord32(Digest)^ := 0;
 end;
 
-procedure TChecksum32Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TChecksum32Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PWord32(FDigest)^ := PWord32(FDigest)^ + CalcChecksum32(Buf, BufSize);
 end;
 
-class function TChecksum32Hash.DigestSize: Integer;
+class function TChecksum32Hash.DigestSize: Int32;
 begin
   Result := 4;
 end;
@@ -3964,17 +4010,17 @@ end;
 {                                                                              }
 { TXOR8Hash                                                                    }
 {                                                                              }
-procedure TXOR8Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TXOR8Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   PByte(Digest)^ := 0;
 end;
 
-procedure TXOR8Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TXOR8Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PByte(FDigest)^ := PByte(FDigest)^ xor CalcXOR8(Buf, BufSize);
 end;
 
-class function TXOR8Hash.DigestSize: Integer;
+class function TXOR8Hash.DigestSize: Int32;
 begin
   Result := 1;
 end;
@@ -3984,17 +4030,17 @@ end;
 {                                                                              }
 { TXOR16Hash                                                                   }
 {                                                                              }
-procedure TXOR16Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TXOR16Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
-  PWord(Digest)^ := 0;
+  PWord16(Digest)^ := 0;
 end;
 
-procedure TXOR16Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TXOR16Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
-  PWord(FDigest)^ := PWord(FDigest)^ xor CalcXOR16(Buf, BufSize);
+  PWord16(FDigest)^ := PWord16(FDigest)^ xor CalcXOR16(Buf, BufSize);
 end;
 
-class function TXOR16Hash.DigestSize: Integer;
+class function TXOR16Hash.DigestSize: Int32;
 begin
   Result := 2;
 end;
@@ -4004,17 +4050,17 @@ end;
 {                                                                              }
 { TXOR32Hash                                                                   }
 {                                                                              }
-procedure TXOR32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TXOR32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   PWord32(Digest)^ := 0;
 end;
 
-procedure TXOR32Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TXOR32Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PWord32(FDigest)^ := PWord32(FDigest)^ xor CalcXOR32(Buf, BufSize);
 end;
 
-class function TXOR32Hash.DigestSize: Integer;
+class function TXOR32Hash.DigestSize: Int32;
 begin
   Result := 4;
 end;
@@ -4024,17 +4070,17 @@ end;
 {                                                                              }
 { TCRC16Hash                                                                   }
 {                                                                              }
-procedure TCRC16Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TCRC16Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
-  CRC16Init(PWord(Digest)^);
+  CRC16Init(PWord16(Digest)^);
 end;
 
-procedure TCRC16Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TCRC16Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
-  PWord(FDigest)^ := CRC16Buf(PWord(FDigest)^, Buf, BufSize);
+  PWord16(FDigest)^ := CRC16Buf(PWord16(FDigest)^, Buf, BufSize);
 end;
 
-class function TCRC16Hash.DigestSize: Integer;
+class function TCRC16Hash.DigestSize: Int32;
 begin
   Result := 2;
 end;
@@ -4044,17 +4090,17 @@ end;
 {                                                                              }
 { TCRC32Hash                                                                   }
 {                                                                              }
-procedure TCRC32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TCRC32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   CRC32Init(PWord32(Digest)^);
 end;
 
-procedure TCRC32Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TCRC32Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PWord32(FDigest)^ := CRC32Buf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
-class function TCRC32Hash.DigestSize: Integer;
+class function TCRC32Hash.DigestSize: Int32;
 begin
   Result := 4;
 end;
@@ -4063,17 +4109,17 @@ end;
 {                                                                              }
 { TAdler32Hash                                                                 }
 {                                                                              }
-procedure TAdler32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TAdler32Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   Adler32Init(PWord32(Digest)^);
 end;
 
-procedure TAdler32Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TAdler32Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PWord32(FDigest)^ := Adler32Buf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
-class function TAdler32Hash.DigestSize: Integer;
+class function TAdler32Hash.DigestSize: Int32;
 begin
   Result := 4;
 end;
@@ -4083,17 +4129,17 @@ end;
 {                                                                              }
 { TELFHash                                                                     }
 {                                                                              }
-procedure TELFHash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TELFHash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   ELFInit(PWord32(Digest)^);
 end;
 
-procedure TELFHash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TELFHash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   PWord32(FDigest)^ := ELFBuf(PWord32(FDigest)^, Buf, BufSize);
 end;
 
-class function TELFHash.DigestSize: Integer;
+class function TELFHash.DigestSize: Int32;
 begin
   Result := 4;
 end;
@@ -4103,27 +4149,27 @@ end;
 {                                                                              }
 { TMD5Hash                                                                     }
 {                                                                              }
-procedure TMD5Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TMD5Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   MD5InitDigest(P128BitDigest(FDigest)^);
 end;
 
-procedure TMD5Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TMD5Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   MD5Buf(P128BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure TMD5Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure TMD5Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   MD5FinalBuf(P128BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function TMD5Hash.DigestSize: Integer;
+class function TMD5Hash.DigestSize: Int32;
 begin
   Result := 16;
 end;
 
-class function TMD5Hash.BlockSize: Integer;
+class function TMD5Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4133,27 +4179,27 @@ end;
 {                                                                              }
 { TSHA1Hash                                                                    }
 {                                                                              }
-procedure TSHA1Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TSHA1Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   SHA1InitDigest(P160BitDigest(FDigest)^);
 end;
 
-procedure TSHA1Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TSHA1Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   SHA1Buf(P160BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure TSHA1Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure TSHA1Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   SHA1FinalBuf(P160BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function TSHA1Hash.DigestSize: Integer;
+class function TSHA1Hash.DigestSize: Int32;
 begin
   Result := 20;
 end;
 
-class function TSHA1Hash.BlockSize: Integer;
+class function TSHA1Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4163,27 +4209,27 @@ end;
 {                                                                              }
 { TSHA256Hash                                                                  }
 {                                                                              }
-procedure TSHA256Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TSHA256Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   SHA256InitDigest(P256BitDigest(FDigest)^);
 end;
 
-procedure TSHA256Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TSHA256Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   SHA256Buf(P256BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure TSHA256Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure TSHA256Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   SHA256FinalBuf(P256BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function TSHA256Hash.DigestSize: Integer;
+class function TSHA256Hash.DigestSize: Int32;
 begin
   Result := 32;
 end;
 
-class function TSHA256Hash.BlockSize: Integer;
+class function TSHA256Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4193,27 +4239,27 @@ end;
 {                                                                              }
 { TSHA512Hash                                                                  }
 {                                                                              }
-procedure TSHA512Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TSHA512Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   SHA512InitDigest(P512BitDigest(FDigest)^);
 end;
 
-procedure TSHA512Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TSHA512Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   SHA512Buf(P512BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure TSHA512Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure TSHA512Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   SHA512FinalBuf(P512BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function TSHA512Hash.DigestSize: Integer;
+class function TSHA512Hash.DigestSize: Int32;
 begin
   Result := 64;
 end;
 
-class function TSHA512Hash.BlockSize: Integer;
+class function TSHA512Hash.BlockSize: Int32;
 begin
   Result := 128;
 end;
@@ -4223,27 +4269,27 @@ end;
 {                                                                              }
 { TRipeMD160Hash                                                               }
 {                                                                              }
-procedure TRipeMD160Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure TRipeMD160Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   RipeMD160InitDigest(P160BitDigest(FDigest)^);
 end;
 
-procedure TRipeMD160Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure TRipeMD160Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   RipeMD160Buf(P160BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure TRipeMD160Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure TRipeMD160Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   RipeMD160FinalBuf(P160BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function TRipeMD160Hash.DigestSize: Integer;
+class function TRipeMD160Hash.DigestSize: Int32;
 begin
   Result := 20;
 end;
 
-class function TRipeMD160Hash.BlockSize: Integer;
+class function TRipeMD160Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4259,27 +4305,27 @@ begin
   inherited Destroy;
 end;
 
-procedure THMAC_MD5Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure THMAC_MD5Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   HMAC_MD5Init(Key, KeySize, P128BitDigest(FDigest)^, FKey);
 end;
 
-procedure THMAC_MD5Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure THMAC_MD5Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   HMAC_MD5Buf(P128BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure THMAC_MD5Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure THMAC_MD5Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   HMAC_MD5FinalBuf(FKey, P128BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function THMAC_MD5Hash.DigestSize: Integer;
+class function THMAC_MD5Hash.DigestSize: Int32;
 begin
   Result := 16;
 end;
 
-class function THMAC_MD5Hash.BlockSize: Integer;
+class function THMAC_MD5Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4295,27 +4341,27 @@ begin
   inherited Destroy;
 end;
 
-procedure THMAC_SHA1Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure THMAC_SHA1Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   HMAC_SHA1Init(Key, KeySize, P160BitDigest(FDigest)^, FKey);
 end;
 
-procedure THMAC_SHA1Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure THMAC_SHA1Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   HMAC_SHA1Buf(P160BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure THMAC_SHA1Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure THMAC_SHA1Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   HMAC_SHA1FinalBuf(FKey, P160BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function THMAC_SHA1Hash.DigestSize: Integer;
+class function THMAC_SHA1Hash.DigestSize: Int32;
 begin
   Result := 20;
 end;
 
-class function THMAC_SHA1Hash.BlockSize: Integer;
+class function THMAC_SHA1Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4331,27 +4377,27 @@ begin
   inherited Destroy;
 end;
 
-procedure THMAC_SHA256Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure THMAC_SHA256Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   HMAC_SHA256Init(Key, KeySize, P256BitDigest(FDigest)^, FKey);
 end;
 
-procedure THMAC_SHA256Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure THMAC_SHA256Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   HMAC_SHA256Buf(P256BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure THMAC_SHA256Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure THMAC_SHA256Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   HMAC_SHA256FinalBuf(FKey, P256BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function THMAC_SHA256Hash.DigestSize: Integer;
+class function THMAC_SHA256Hash.DigestSize: Int32;
 begin
   Result := 32;
 end;
 
-class function THMAC_SHA256Hash.BlockSize: Integer;
+class function THMAC_SHA256Hash.BlockSize: Int32;
 begin
   Result := 64;
 end;
@@ -4367,27 +4413,27 @@ begin
   inherited Destroy;
 end;
 
-procedure THMAC_SHA512Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Integer);
+procedure THMAC_SHA512Hash.InitHash(const Digest: Pointer; const Key: Pointer; const KeySize: Int32);
 begin
   HMAC_SHA512Init(Key, KeySize, P512BitDigest(FDigest)^, FKey);
 end;
 
-procedure THMAC_SHA512Hash.ProcessBuf(const Buf; const BufSize: Integer);
+procedure THMAC_SHA512Hash.ProcessBuf(const Buf; const BufSize: NativeInt);
 begin
   HMAC_SHA512Buf(P512BitDigest(FDigest)^, Buf, BufSize);
 end;
 
-procedure THMAC_SHA512Hash.ProcessFinalBuf(const Buf; const BufSize: Integer; const TotalSize: Int64);
+procedure THMAC_SHA512Hash.ProcessFinalBuf(const Buf; const BufSize: Int32; const TotalSize: Int64);
 begin
   HMAC_SHA512FinalBuf(FKey, P512BitDigest(FDigest)^, Buf, BufSize, TotalSize);
 end;
 
-class function THMAC_SHA512Hash.DigestSize: Integer;
+class function THMAC_SHA512Hash.DigestSize: Int32;
 begin
   Result := 64;
 end;
 
-class function THMAC_SHA512Hash.BlockSize: Integer;
+class function THMAC_SHA512Hash.BlockSize: Int32;
 begin
   Result := 128;
 end;
