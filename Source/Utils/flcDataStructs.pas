@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructs.pas                                       }
-{   File version:     5.42                                                     }
+{   File version:     5.44                                                     }
 {   Description:      Data structures                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -169,16 +169,14 @@
 {   2019/04/02  5.40  Integer/Cardinal array changes.                          }
 {   2020/03/22  5.41  Rename parameters to avoid conflict with properties.     }
 {   2020/03/22  5.42  Remove dependency on flcBits32.                          }
+{   2020/03/31  5.43  LongWord changes in bit array. Integer array changes.    }
+{   2020/06/02  5.44  UInt64 changes.                                          }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.39  2019/02/24                       }
-{   Delphi XE2 Win32                    5.39  2019/03/02                       }
-{   Delphi XE2 Win64                    5.39  2019/03/02                       }
-{   Delphi XE3 Win32                    5.39  2019/03/02                       }
-{   Delphi XE3 Win64                    5.39  2019/03/02                       }
-{   Delphi XE7 Win32                    5.39  2019/03/02                       }
-{   Delphi XE7 Win64                    5.39  2019/03/02                       }
+{   Delphi 2010-10.4 Win32/Win64        5.44  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.44  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.44  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -273,7 +271,7 @@ type
     function  IsEmpty: Boolean; virtual;
     function  IsEqual(const V: TObject): Boolean; virtual;
     function  Compare(const V: TObject): TCompareResult; virtual;
-    function  HashValue: LongWord; virtual;
+    function  HashValue: Word32; virtual;
 
     property  AsString: String read GetAsString write SetAsString;
     property  AsUTF8String: RawByteString read GetAsUTF8String write SetAsUTF8String;
@@ -293,7 +291,7 @@ procedure TypeAssign(const A, B: TObject);
 procedure TypeClear(const V: TObject);
 function  TypeIsEqual(const A, B: TObject): Boolean;
 function  TypeCompare(const A, B: TObject): TCompareResult;
-function  TypeHashValue(const A: TObject): LongWord;
+function  TypeHashValue(const A: TObject): Word32;
 function  TypeGetAsString(const V: TObject): String;
 procedure TypeSetAsString(const V: TObject; const S: String);
 function  TypeGetAsUTF8String(const V: TObject): RawByteString;
@@ -394,6 +392,48 @@ type
 
 
 {                                                                              }
+{ AInt64Array                                                                  }
+{   Base class for an array of Int64s.                                         }
+{                                                                              }
+type
+  AInt64Array = class(AArray)
+  protected
+    function  GetItem(const Idx: Integer): Int64; virtual; abstract;
+    procedure SetItem(const Idx: Integer; const Value: Int64); virtual; abstract;
+
+    function  GetItemAsString(const Idx: Integer): String; override;
+    procedure SetItemAsString(const Idx: Integer; const Value: String); override;
+
+    function  GetRange(const LoIdx, HiIdx: Integer): Int64Array; virtual;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array); virtual;
+
+  public
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); override;
+    function  IsEqual(const V: TObject): Boolean; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
+    function  AppendArray(const V: AArray): Integer; overload; override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
+
+    { AInt64Array interface                                                        }
+    property  Item[const Idx: Integer]: Int64 read GetItem write SetItem; default;
+    property  Range[const LoIdx, HiIdx: Integer]: Int64Array read GetRange write SetRange;
+    procedure Fill(const Idx, ACount: Integer; const Value: Int64); virtual;
+    function  AppendItem(const Value: Int64): Integer; virtual;
+    function  AppendArray(const V: Int64Array): Integer; overload; virtual;
+    function  PosNext(const Find: Int64; const PrevPos: Integer = -1;
+              const IsSortedAscending: Boolean = False): Integer;
+  end;
+  EInt64Array = class(EArray);
+
+
+
+{                                                                              }
 { ALongIntArray                                                                }
 {   Base class for an array of LongInts.                                       }
 {                                                                              }
@@ -487,6 +527,48 @@ type
 
 
 {                                                                              }
+{ AWord64Array                                                                 }
+{   Base class for an array of Word64s.                                        }
+{                                                                              }
+type
+  AWord64Array = class(AArray)
+  protected
+    function  GetItem(const Idx: Integer): Word64; virtual; abstract;
+    procedure SetItem(const Idx: Integer; const Value: Word64); virtual; abstract;
+
+    function  GetItemAsString(const Idx: Integer): String; override;
+    procedure SetItemAsString(const Idx: Integer; const Value: String); override;
+
+    function  GetRange(const LoIdx, HiIdx: Integer): Word64Array; virtual;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Word64Array); virtual;
+
+  public
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); override;
+    function  IsEqual(const V: TObject): Boolean; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
+    function  AppendArray(const V: AArray): Integer; overload; override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
+
+    { AWord64Array interface                                                       }
+    property  Item[const Idx: Integer]: Word64 read GetItem write SetItem; default;
+    property  Range[const LoIdx, HiIdx: Integer]: Word64Array read GetRange write SetRange;
+    procedure Fill(const Idx, ACount: Integer; const Value: Word64); virtual;
+    function  AppendItem(const Value: Word64): Integer; virtual;
+    function  AppendArray(const V: Word64Array): Integer; overload; virtual;
+    function  PosNext(const Find: Word64; const PrevPos: Integer = -1;
+              const IsSortedAscending: Boolean = False): Integer;
+  end;
+  EWord64Array = class(EArray);
+
+
+
+{                                                                              }
 { ALongWordArray                                                               }
 {   Base class for an array of LongWords.                                      }
 {                                                                              }
@@ -534,48 +616,6 @@ type
 type
   ACardinalArray = AWord32Array;
   ECardinalArray = EWord32Array;
-
-
-
-{                                                                              }
-{ AInt64Array                                                                  }
-{   Base class for an array of Int64s.                                         }
-{                                                                              }
-type
-  AInt64Array = class(AArray)
-  protected
-    function  GetItem(const Idx: Integer): Int64; virtual; abstract;
-    procedure SetItem(const Idx: Integer; const Value: Int64); virtual; abstract;
-
-    function  GetItemAsString(const Idx: Integer): String; override;
-    procedure SetItemAsString(const Idx: Integer; const Value: String); override;
-
-    function  GetRange(const LoIdx, HiIdx: Integer): Int64Array; virtual;
-    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array); virtual;
-
-  public
-    { AType                                                                    }
-    procedure Assign(const Source: TObject); override;
-    function  IsEqual(const V: TObject): Boolean; override;
-
-    { AArray                                                                   }
-    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    function  CompareItems(const Idx1, Idx2: Integer): TCompareResult; override;
-    function  AppendArray(const V: AArray): Integer; overload; override;
-    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
-
-    { AInt64Array interface                                                        }
-    property  Item[const Idx: Integer]: Int64 read GetItem write SetItem; default;
-    property  Range[const LoIdx, HiIdx: Integer]: Int64Array read GetRange write SetRange;
-    procedure Fill(const Idx, ACount: Integer; const Value: Int64); virtual;
-    function  AppendItem(const Value: Int64): Integer; virtual;
-    function  AppendArray(const V: Int64Array): Integer; overload; virtual;
-    function  PosNext(const Find: Int64; const PrevPos: Integer = -1;
-              const IsSortedAscending: Boolean = False): Integer;
-  end;
-  EInt64Array = class(EArray);
 
 
 
@@ -1030,8 +1070,8 @@ type
   protected
     function  GetBit(const Idx: Integer): Boolean; virtual; abstract;
     procedure SetBit(const Idx: Integer; const Value: Boolean); virtual; abstract;
-    function  GetRangeL(const Idx: Integer): LongWord; virtual;
-    procedure SetRangeL(const Idx: Integer; const Value: LongWord); virtual;
+    function  GetRangeL(const Idx: Integer): Word32; virtual;
+    procedure SetRangeL(const Idx: Integer; const Value: Word32); virtual;
 
   public
     { AType                                                                    }
@@ -1048,7 +1088,7 @@ type
 
     { ABitArray interface                                                      }
     property  Bit[const Idx: Integer]: Boolean read GetBit write SetBit; default;
-    property  RangeL[const Idx: Integer]: LongWord read GetRangeL write SetRangeL;
+    property  RangeL[const Idx: Integer]: Word32 read GetRangeL write SetRangeL;
     function  IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean; virtual;
     procedure Fill(const Idx, ACount: Integer; const Value: Boolean); virtual;
     function  AppendItem(const Value: Boolean): Integer; virtual;
@@ -1116,6 +1156,52 @@ type
 
 
 {                                                                              }
+{ TInt64Array                                                                  }
+{   AInt64Array implemented using a dynamic array.                             }
+{                                                                              }
+type
+  TInt64Array = class(AInt64Array)
+  protected
+    FData     : Int64Array;
+    FCapacity : Integer;
+    FCount    : Integer;
+
+    { ACollection                                                              }
+    function  GetCount: Integer; override;
+    procedure SetCount(const NewCount: Integer); override;
+
+    { AInt64Array                                                            }
+    function  GetItem(const Idx: Integer): Int64; override;
+    procedure SetItem(const Idx: Integer; const Value: Int64); override;
+    function  GetRange(const LoIdx, HiIdx: Integer): Int64Array; override;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array); override;
+    procedure SetData(const AData: Int64Array); virtual;
+
+  public
+    constructor Create(const V: Int64Array = nil); overload;
+
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); overload; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
+
+    { AInt64Array                                                            }
+    procedure Assign(const V: Int64Array); overload;
+    procedure Assign(const V: Array of Int64); overload;
+    function  AppendItem(const Value: Int64): Integer; override;
+
+    { TInt64Array                                                            }
+    property  Data: Int64Array read FData write SetData;
+    property  Count: Integer read FCount write SetCount;
+  end;
+
+
+
+{                                                                              }
 { TLongIntArray                                                                }
 {   ALongIntArray implemented using a dynamic array.                           }
 {                                                                              }
@@ -1170,6 +1256,27 @@ type
 
 
 {                                                                              }
+{ TNativeIntArray                                                              }
+{                                                                              }
+{$IFDEF CPU_32}
+type
+  TNativeIntArray = TInt32Array;
+{$ELSE}{$IFDEF CPU_64}
+type
+  TNativeIntArray = TInt64Array;
+{$ENDIF}{$ENDIF}
+
+
+
+{                                                                              }
+{ TIntArray                                                                    }
+{                                                                              }
+type
+  TIntArray = TInt64Array;
+
+
+
+{                                                                              }
 { TWord32Array                                                                 }
 {   AWord32Array implemented using a dynamic array.                            }
 {                                                                              }
@@ -1210,6 +1317,52 @@ type
 
     { TWord32Array                                                            }
     property  Data: Word32Array read FData write SetData;
+    property  Count: Integer read FCount write SetCount;
+  end;
+
+
+
+{                                                                              }
+{ TWord64Array                                                                 }
+{   AWord64Array implemented using a dynamic array.                            }
+{                                                                              }
+type
+  TWord64Array = class(AWord64Array)
+  protected
+    FData     : Word64Array;
+    FCapacity : Integer;
+    FCount    : Integer;
+
+    { ACollection                                                              }
+    function  GetCount: Integer; override;
+    procedure SetCount(const NewCount: Integer); override;
+
+    { AWord64Array                                                            }
+    function  GetItem(const Idx: Integer): Word64; override;
+    procedure SetItem(const Idx: Integer; const Value: Word64); override;
+    function  GetRange(const LoIdx, HiIdx: Integer): Word64Array; override;
+    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Word64Array); override;
+    procedure SetData(const AData: Word64Array); virtual;
+
+  public
+    constructor Create(const V: Word64Array = nil); overload;
+
+    { AType                                                                    }
+    procedure Assign(const Source: TObject); overload; override;
+
+    { AArray                                                                   }
+    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
+    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
+    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
+    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
+
+    { AWord64Array                                                            }
+    procedure Assign(const V: Word64Array); overload;
+    procedure Assign(const V: Array of Word64); overload;
+    function  AppendItem(const Value: Word64): Integer; override;
+
+    { TWord64Array                                                            }
+    property  Data: Word64Array read FData write SetData;
     property  Count: Integer read FCount write SetCount;
   end;
 
@@ -1270,48 +1423,47 @@ type
 
 
 {                                                                              }
-{ TInt64Array                                                                  }
-{   AInt64Array implemented using a dynamic array.                             }
+{ TUInt32Array                                                                 }
 {                                                                              }
 type
-  TInt64Array = class(AInt64Array)
-  protected
-    FData     : Int64Array;
-    FCapacity : Integer;
-    FCount    : Integer;
+  TUInt32Array = Word32Array;
 
-    { ACollection                                                              }
-    function  GetCount: Integer; override;
-    procedure SetCount(const NewCount: Integer); override;
 
-    { AInt64Array                                                            }
-    function  GetItem(const Idx: Integer): Int64; override;
-    procedure SetItem(const Idx: Integer; const Value: Int64); override;
-    function  GetRange(const LoIdx, HiIdx: Integer): Int64Array; override;
-    procedure SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array); override;
-    procedure SetData(const AData: Int64Array); virtual;
 
-  public
-    constructor Create(const V: Int64Array = nil); overload;
+{                                                                              }
+{ TUInt64Array                                                                 }
+{                                                                              }
+type
+  TUInt64Array = Word64Array;
 
-    { AType                                                                    }
-    procedure Assign(const Source: TObject); overload; override;
 
-    { AArray                                                                   }
-    procedure ExchangeItems(const Idx1, Idx2: Integer); override;
-    function  DuplicateRange(const LoIdx, HiIdx: Integer): AArray; override;
-    procedure Delete(const Idx: Integer; const ACount: Integer = 1); override;
-    procedure Insert(const Idx: Integer; const ACount: Integer = 1); override;
 
-    { AInt64Array                                                            }
-    procedure Assign(const V: Int64Array); overload;
-    procedure Assign(const V: Array of Int64); overload;
-    function  AppendItem(const Value: Int64): Integer; override;
+{                                                                              }
+{ TNativeUIntArray                                                             }
+{                                                                              }
+{$IFDEF CPU_32}
+type
+  TNativeUIntArray = TUInt32Array;
+{$ELSE}{$IFDEF CPU_64}
+type
+  TNativeUIntArray = TUInt64Array;
+{$ENDIF}{$ENDIF}
 
-    { TInt64Array                                                            }
-    property  Data: Int64Array read FData write SetData;
-    property  Count: Integer read FCount write SetCount;
-  end;
+
+
+{                                                                              }
+{ TNativeWordArray                                                             }
+{                                                                              }
+type
+  TNativeWordArray = TNativeUIntArray;
+
+
+
+{                                                                              }
+{ TUIntArray                                                                   }
+{                                                                              }
+type
+  TUIntArray = TUInt64Array;
 
 
 
@@ -1796,7 +1948,7 @@ type
 type
   TBitArray = class(ABitArray)
   protected
-    FData  : LongWordArray;
+    FData  : Word32Array;
     FCount : Integer;
 
     { AArray                                                                   }
@@ -1806,8 +1958,8 @@ type
     { ABitArray                                                                }
     function  GetBit(const Idx: Integer): Boolean; override;
     procedure SetBit(const Idx: Integer; const Value: Boolean); override;
-    function  GetRangeL(const Idx: Integer): LongWord; override;
-    procedure SetRangeL(const Idx: Integer; const Value: LongWord); override;
+    function  GetRangeL(const Idx: Integer): Word32; override;
+    procedure SetRangeL(const Idx: Integer; const Value: Word32); override;
 
   public
     { ABitArray                                                                }
@@ -3692,8 +3844,8 @@ type
 type
   TGeneralLongIntDictionaryA = class(ALongIntDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : ALongIntArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TLongIntArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -3720,15 +3872,16 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: ALongIntArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: ALongIntArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TLongIntArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -3758,7 +3911,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -3778,8 +3932,8 @@ type
 type
   TGeneralLongIntDictionaryB = class(ALongIntDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : ALongIntArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TLongIntArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -3806,15 +3960,16 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: ALongIntArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: ALongIntArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TLongIntArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -3844,7 +3999,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -3863,8 +4019,8 @@ type
 type
   TGeneralLongIntDictionaryU = class(ALongIntDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : ALongIntArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TLongIntArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -3891,15 +4047,16 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: ALongIntArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: ALongIntArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TLongIntArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -3929,7 +4086,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -3948,8 +4106,8 @@ type
 type
   TGeneralLongIntDictionary = class(ALongIntDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : ALongIntArray;
+    FKeys             : TStringArray;
+    FValues           : TLongIntArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -3976,15 +4134,16 @@ type
   public
     { TGeneralLongIntDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: ALongIntArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: ALongIntArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TLongIntArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4014,7 +4173,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TLongIntArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4049,8 +4209,8 @@ type
 type
   TGeneralLongWordDictionaryA = class(ALongWordDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : ALongWordArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TLongWordArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4077,15 +4237,16 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: ALongWordArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: ALongWordArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TLongWordArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4115,7 +4276,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4135,8 +4297,8 @@ type
 type
   TGeneralLongWordDictionaryB = class(ALongWordDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : ALongWordArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TLongWordArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4163,15 +4325,16 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: ALongWordArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: ALongWordArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TLongWordArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4201,7 +4364,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4220,8 +4384,8 @@ type
 type
   TGeneralLongWordDictionaryU = class(ALongWordDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : ALongWordArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TLongWordArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4248,15 +4412,16 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: ALongWordArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: ALongWordArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TLongWordArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4286,7 +4451,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4305,8 +4471,8 @@ type
 type
   TGeneralLongWordDictionary = class(ALongWordDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : ALongWordArray;
+    FKeys             : TStringArray;
+    FValues           : TLongWordArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4333,15 +4499,16 @@ type
   public
     { TGeneralLongWordDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: ALongWordArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: ALongWordArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TLongWordArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4371,7 +4538,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TLongWordArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4408,8 +4576,8 @@ type
 type
   TGeneralInt64DictionaryA = class(AInt64DictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AInt64Array;
+    FKeys             : TAnsiStringArray;
+    FValues           : TInt64Array;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4436,15 +4604,16 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AInt64Array = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AInt64Array read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TInt64Array read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4474,7 +4643,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4494,8 +4664,8 @@ type
 type
   TGeneralInt64DictionaryB = class(AInt64DictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : AInt64Array;
+    FKeys             : TRawByteStringArray;
+    FValues           : TInt64Array;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4522,15 +4692,16 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: AInt64Array = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: AInt64Array read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TInt64Array read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4560,7 +4731,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4579,8 +4751,8 @@ type
 type
   TGeneralInt64DictionaryU = class(AInt64DictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AInt64Array;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TInt64Array;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4607,15 +4779,16 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AInt64Array = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AInt64Array read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TInt64Array read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4645,7 +4818,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4664,8 +4838,8 @@ type
 type
   TGeneralInt64Dictionary = class(AInt64Dictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AInt64Array;
+    FKeys             : TStringArray;
+    FValues           : TInt64Array;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4692,15 +4866,16 @@ type
   public
     { TGeneralInt64Dictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AInt64Array = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AInt64Array read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TInt64Array read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4730,7 +4905,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TInt64Array = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4750,8 +4926,8 @@ type
 type
   TGeneralSingleDictionaryA = class(ASingleDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : ASingleArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TSingleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4778,15 +4954,16 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: ASingleArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: ASingleArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TSingleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4816,7 +4993,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4836,8 +5014,8 @@ type
 type
   TGeneralSingleDictionaryB = class(ASingleDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : ASingleArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TSingleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4864,15 +5042,16 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: ASingleArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: ASingleArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TSingleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4902,7 +5081,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -4921,8 +5101,8 @@ type
 type
   TGeneralSingleDictionaryU = class(ASingleDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : ASingleArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TSingleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -4949,15 +5129,16 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: ASingleArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: ASingleArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TSingleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -4987,7 +5168,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5006,8 +5188,8 @@ type
 type
   TGeneralSingleDictionary = class(ASingleDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : ASingleArray;
+    FKeys             : TStringArray;
+    FValues           : TSingleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5034,15 +5216,16 @@ type
   public
     { TGeneralSingleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: ASingleArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: ASingleArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TSingleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5072,7 +5255,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TSingleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5092,8 +5276,8 @@ type
 type
   TGeneralDoubleDictionaryA = class(ADoubleDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : ADoubleArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TDoubleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5120,15 +5304,16 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: ADoubleArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: ADoubleArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TDoubleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5158,7 +5343,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5178,8 +5364,8 @@ type
 type
   TGeneralDoubleDictionaryB = class(ADoubleDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : ADoubleArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TDoubleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5206,15 +5392,16 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: ADoubleArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: ADoubleArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TDoubleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5244,7 +5431,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5263,8 +5451,8 @@ type
 type
   TGeneralDoubleDictionaryU = class(ADoubleDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : ADoubleArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TDoubleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5291,15 +5479,16 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: ADoubleArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: ADoubleArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TDoubleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5329,7 +5518,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5348,8 +5538,8 @@ type
 type
   TGeneralDoubleDictionary = class(ADoubleDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : ADoubleArray;
+    FKeys             : TStringArray;
+    FValues           : TDoubleArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5376,15 +5566,16 @@ type
   public
     { TGeneralDoubleDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: ADoubleArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: ADoubleArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TDoubleArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5414,7 +5605,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TDoubleArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5434,8 +5626,8 @@ type
 type
   TGeneralExtendedDictionaryA = class(AExtendedDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AExtendedArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TExtendedArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5462,15 +5654,16 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AExtendedArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AExtendedArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TExtendedArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5500,7 +5693,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5520,8 +5714,8 @@ type
 type
   TGeneralExtendedDictionaryB = class(AExtendedDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : AExtendedArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TExtendedArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5548,15 +5742,16 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: AExtendedArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: AExtendedArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TExtendedArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5586,7 +5781,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5605,8 +5801,8 @@ type
 type
   TGeneralExtendedDictionaryU = class(AExtendedDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AExtendedArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TExtendedArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5633,15 +5829,16 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AExtendedArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AExtendedArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TExtendedArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5671,7 +5868,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5690,8 +5888,8 @@ type
 type
   TGeneralExtendedDictionary = class(AExtendedDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AExtendedArray;
+    FKeys             : TStringArray;
+    FValues           : TExtendedArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5718,15 +5916,16 @@ type
   public
     { TGeneralExtendedDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AExtendedArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AExtendedArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TExtendedArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5756,7 +5955,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TExtendedArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5776,8 +5976,8 @@ type
 type
   TGeneralAnsiStringDictionaryA = class(AAnsiStringDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AAnsiStringArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TAnsiStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5804,15 +6004,16 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AAnsiStringArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TAnsiStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5842,7 +6043,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5861,8 +6063,8 @@ type
 type
   TGeneralAnsiStringDictionaryU = class(AAnsiStringDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AAnsiStringArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TAnsiStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5889,15 +6091,16 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AAnsiStringArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TAnsiStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -5927,7 +6130,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -5946,8 +6150,8 @@ type
 type
   TGeneralAnsiStringDictionary = class(AAnsiStringDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AAnsiStringArray;
+    FKeys             : TStringArray;
+    FValues           : TAnsiStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -5974,15 +6178,16 @@ type
   public
     { TGeneralAnsiStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AAnsiStringArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TAnsiStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6012,7 +6217,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TAnsiStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6033,8 +6239,8 @@ type
 type
   TGeneralRawByteStringDictionaryA = class(ARawByteStringDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : ARawByteStringArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TRawByteStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6061,15 +6267,16 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: ARawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: ARawByteStringArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TRawByteStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6099,7 +6306,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6119,8 +6327,8 @@ type
 type
   TGeneralRawByteStringDictionaryB = class(ARawByteStringDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : ARawByteStringArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TRawByteStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6147,15 +6355,16 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: ARawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: ARawByteStringArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TRawByteStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6185,7 +6394,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6204,8 +6414,8 @@ type
 type
   TGeneralRawByteStringDictionaryU = class(ARawByteStringDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : ARawByteStringArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TRawByteStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6232,15 +6442,16 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: ARawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: ARawByteStringArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TRawByteStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6270,7 +6481,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6289,8 +6501,8 @@ type
 type
   TGeneralRawByteStringDictionary = class(ARawByteStringDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : ARawByteStringArray;
+    FKeys             : TStringArray;
+    FValues           : TRawByteStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6317,15 +6529,16 @@ type
   public
     { TGeneralRawByteStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: ARawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: ARawByteStringArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TRawByteStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6355,7 +6568,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TRawByteStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6375,8 +6589,8 @@ type
 type
   TGeneralUnicodeStringDictionaryA = class(AUnicodeStringDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AUnicodeStringArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TUnicodeStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6403,15 +6617,16 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AUnicodeStringArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TUnicodeStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6441,7 +6656,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6461,8 +6677,8 @@ type
 type
   TGeneralUnicodeStringDictionaryU = class(AUnicodeStringDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AUnicodeStringArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TUnicodeStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6489,15 +6705,16 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AUnicodeStringArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TUnicodeStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6527,7 +6744,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6546,8 +6764,8 @@ type
 type
   TGeneralUnicodeStringDictionary = class(AUnicodeStringDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AUnicodeStringArray;
+    FKeys             : TStringArray;
+    FValues           : TUnicodeStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6574,15 +6792,16 @@ type
   public
     { TGeneralUnicodeStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AUnicodeStringArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TUnicodeStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6612,7 +6831,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TUnicodeStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6632,8 +6852,8 @@ type
 type
   TGeneralStringDictionaryA = class(AStringDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AStringArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6660,15 +6880,16 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AStringArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6698,7 +6919,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6718,8 +6940,8 @@ type
 type
   TGeneralStringDictionaryU = class(AStringDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AStringArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6746,15 +6968,16 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AStringArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6784,7 +7007,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6803,8 +7027,8 @@ type
 type
   TGeneralStringDictionary = class(AStringDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AStringArray;
+    FKeys             : TStringArray;
+    FValues           : TStringArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6831,15 +7055,16 @@ type
   public
     { TGeneralStringDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AStringArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TStringArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6869,7 +7094,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TStringArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6889,8 +7115,8 @@ type
 type
   TGeneralPointerDictionaryA = class(APointerDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : APointerArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TPointerArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -6917,15 +7143,16 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: APointerArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: APointerArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TPointerArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -6955,7 +7182,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -6975,8 +7203,8 @@ type
 type
   TGeneralPointerDictionaryB = class(APointerDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : APointerArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TPointerArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7003,15 +7231,16 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: APointerArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: APointerArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TPointerArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7041,7 +7270,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7060,8 +7290,8 @@ type
 type
   TGeneralPointerDictionaryU = class(APointerDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : APointerArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TPointerArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7088,15 +7318,16 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: APointerArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: APointerArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TPointerArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7126,7 +7357,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7145,8 +7377,8 @@ type
 type
   TGeneralPointerDictionary = class(APointerDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : APointerArray;
+    FKeys             : TStringArray;
+    FValues           : TPointerArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7173,15 +7405,16 @@ type
   public
     { TGeneralPointerDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: APointerArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: APointerArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TPointerArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7211,7 +7444,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TPointerArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7231,8 +7465,8 @@ type
 type
   TGeneralInterfaceDictionaryA = class(AInterfaceDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AInterfaceArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TInterfaceArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7259,15 +7493,16 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AInterfaceArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AInterfaceArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TInterfaceArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7297,7 +7532,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7317,8 +7553,8 @@ type
 type
   TGeneralInterfaceDictionaryU = class(AInterfaceDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AInterfaceArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TInterfaceArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7345,15 +7581,16 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AInterfaceArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AInterfaceArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TInterfaceArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7383,7 +7620,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7402,8 +7640,8 @@ type
 type
   TGeneralInterfaceDictionary = class(AInterfaceDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AInterfaceArray;
+    FKeys             : TStringArray;
+    FValues           : TInterfaceArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7430,15 +7668,16 @@ type
   public
     { TGeneralInterfaceDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AInterfaceArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AInterfaceArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TInterfaceArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7468,7 +7707,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TInterfaceArray = nil;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
@@ -7488,8 +7728,8 @@ type
 type
   TGeneralObjectDictionaryA = class(AObjectDictionaryA)
   protected
-    FKeys             : AAnsiStringArray;
-    FValues           : AObjectArray;
+    FKeys             : TAnsiStringArray;
+    FValues           : TObjectArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7519,16 +7759,17 @@ type
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AAnsiStringArray = nil;
-                const AValues: AObjectArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
+                const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AAnsiStringArray read FKeys;
-    property  Values: AObjectArray read FValues;
+    property  Keys: TAnsiStringArray read FKeys;
+    property  Values: TObjectArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7562,7 +7803,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TAnsiStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TAnsiStringArray = nil;
                 const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
@@ -7583,8 +7825,8 @@ type
 type
   TGeneralObjectDictionaryB = class(AObjectDictionaryB)
   protected
-    FKeys             : ARawByteStringArray;
-    FValues           : AObjectArray;
+    FKeys             : TRawByteStringArray;
+    FValues           : TObjectArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7614,16 +7856,17 @@ type
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: ARawByteStringArray = nil;
-                const AValues: AObjectArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
+                const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: ARawByteStringArray read FKeys;
-    property  Values: AObjectArray read FValues;
+    property  Keys: TRawByteStringArray read FKeys;
+    property  Values: TObjectArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7657,7 +7900,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TRawByteStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TRawByteStringArray = nil;
                 const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
@@ -7677,8 +7921,8 @@ type
 type
   TGeneralObjectDictionaryU = class(AObjectDictionaryU)
   protected
-    FKeys             : AUnicodeStringArray;
-    FValues           : AObjectArray;
+    FKeys             : TUnicodeStringArray;
+    FValues           : TObjectArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7708,16 +7952,17 @@ type
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AUnicodeStringArray = nil;
-                const AValues: AObjectArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
+                const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AUnicodeStringArray read FKeys;
-    property  Values: AObjectArray read FValues;
+    property  Keys: TUnicodeStringArray read FKeys;
+    property  Values: TObjectArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7751,7 +7996,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TUnicodeStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TUnicodeStringArray = nil;
                 const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
@@ -7771,8 +8017,8 @@ type
 type
   TGeneralObjectDictionary = class(AObjectDictionary)
   protected
-    FKeys             : AStringArray;
-    FValues           : AObjectArray;
+    FKeys             : TStringArray;
+    FValues           : TObjectArray;
     FLookup           : Array of IntegerArray;
     FHashSize         : Integer;
     FCaseSensitive    : Boolean;
@@ -7802,16 +8048,17 @@ type
   public
     { TGeneralObjectDictionary                                               }
     constructor Create;
-    constructor CreateEx(const AKeys: AStringArray = nil;
-                const AValues: AObjectArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
+                const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
                 const AAddOnSet: Boolean = True;
                 const ADuplicatesAction: TDictionaryDuplicatesAction = ddAccept);
     destructor Destroy; override;
 
-    property  Keys: AStringArray read FKeys;
-    property  Values: AObjectArray read FValues;
+    property  Keys: TStringArray read FKeys;
+    property  Values: TObjectArray read FValues;
     property  HashTableSize: Integer read GetHashTableSize;
 
     { AType                                                                    }
@@ -7845,7 +8092,8 @@ type
               const ErrorIfNotFound: Boolean): Integer; override;
 
   public
-    constructor CreateEx(const AKeys: TStringArray = nil;
+    constructor CreateEx(
+                const AKeys: TStringArray = nil;
                 const AValues: TObjectArray = nil;
                 const AIsItemOwner: Boolean = False;
                 const AKeysCaseSensitive: Boolean = True;
@@ -8340,7 +8588,7 @@ begin
   raise EType.CreateFmt('%s cannot compare with %s', [ClassName, ObjectClassName(V)]);
 end;
 
-function AType.HashValue: LongWord;
+function AType.HashValue: Word32;
 begin
   try
     Result := HashStr(GetAsString, 1, -1, True);
@@ -8499,7 +8747,7 @@ begin
         [ObjectClassName(A), ObjectClassName(B)]);
 end;
 
-function TypeHashValue(const A: TObject): LongWord;
+function TypeHashValue(const A: TObject): Word32;
 begin
   if not Assigned(A) then
     Result := 0 else
@@ -8866,6 +9114,219 @@ begin
 end;
 
 procedure AInt32Array.Insert(const Idx: Integer; const ACount: Integer);
+var I, C, J, L : Integer;
+begin
+  if ACount <= 0 then
+    exit;
+  C := GetCount;
+  SetCount(C + ACount);
+  J := MinInt(MaxInt(Idx, 0), C);
+  L := C - J;
+  for I := C - 1 downto C - L do
+    SetItem(I + ACount, GetItem(I));
+end;
+
+
+{                                                                              }
+{ AInt64Array                                                                  }
+{                                                                              }
+procedure AInt64Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Int64;
+begin
+  I := Item[Idx1];
+  Item[Idx1] := Item[Idx2];
+  Item[Idx2] := I;
+end;
+
+function AInt64Array.AppendItem(const Value: Int64): Integer;
+begin
+  Result := Count;
+  Count := Result + 1;
+  Item[Result] := Value;
+end;
+
+function AInt64Array.GetRange(const LoIdx, HiIdx: Integer): Int64Array;
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  SetLength(Result, C);
+  for I := 0 to C - 1 do
+    Result[I] := Item[L + I];
+end;
+
+function AInt64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var I, L, H, C : Integer;
+begin
+  Result := AInt64Array(CreateInstance);
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  AInt64Array(Result).Count := C;
+  for I := 0 to C - 1 do
+    AInt64Array(Result)[I] := Item[L + I];
+end;
+
+procedure AInt64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array);
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := MinInt(Length(V), H - L + 1);
+  for I := 0 to C - 1 do
+    Item[L + I] := V[I];
+end;
+
+procedure AInt64Array.Fill(const Idx, ACount: Integer; const Value: Int64);
+var I : Integer;
+begin
+  for I := Idx to Idx + ACount - 1 do
+    Item[I] := Value;
+end;
+
+function AInt64Array.AppendArray(const V: Int64Array): Integer;
+begin
+  Result := Count;
+  Count := Result + Length(V);
+  Range[Result, Count - 1] := V;
+end;
+
+function AInt64Array.CompareItems(const Idx1, Idx2: Integer): TCompareResult;
+var I, J : Int64;
+begin
+  I := Item[Idx1];
+  J := Item[Idx2];
+  if I < J then
+    Result := crLess else
+  if I > J then
+    Result := crGreater else
+    Result := crEqual;
+end;
+
+function AInt64Array.PosNext(const Find: Int64;
+    const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Int64;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Count - 1;
+          repeat
+            I := (L + H) div 2;
+            D := Item[I];
+            if D = Find then
+              begin
+                while (I > 0) and (Item[I - 1] = Find) do
+                  Dec(I);
+                Result := I;
+                exit;
+              end else
+            if D > Find then
+              H := I - 1 else
+              L := I + 1;
+          until L > H;
+          Result := -1;
+        end else // find next
+        if PrevPos >= Count - 1 then
+          Result := -1 else
+          if Item[PrevPos + 1] = Find then
+            Result := PrevPos + 1 else
+            Result := -1;
+    end else // linear search
+    begin
+      for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
+        if Item[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
+function AInt64Array.GetItemAsString(const Idx: Integer): String;
+begin
+  Result := IntToStr(GetItem(Idx));
+end;
+
+procedure AInt64Array.SetItemAsString(const Idx: Integer; const Value: String);
+begin
+  SetItem(Idx, StrToInt64(Value));
+end;
+
+procedure AInt64Array.Assign(const Source: TObject);
+var I, L : Integer;
+begin
+  if Source is AInt64Array then
+    begin
+      L := AInt64Array(Source).Count;
+      Count := L;
+      for I := 0 to L - 1 do
+        Item[I] := AInt64Array(Source).Item[I];
+    end else
+  if Source is ALongIntArray then
+    begin
+      L := ALongIntArray(Source).Count;
+      Count := L;
+      for I := 0 to L - 1 do
+        Item[I] := ALongIntArray(Source).Item[I];
+    end else
+    inherited Assign(Source);
+end;
+
+function AInt64Array.IsEqual(const V: TObject): Boolean;
+var I, L : Integer;
+begin
+  if V is AInt64Array then
+    begin
+      L := AInt64Array(V).Count;
+      Result := L = Count;
+      if not Result then
+        exit;
+      for I := 0 to L - 1 do
+        if Item[I] <> AInt64Array(V).Item[I] then
+          begin
+            Result := False;
+            exit;
+          end;
+    end else
+    Result := inherited IsEqual(V);
+end;
+
+function AInt64Array.AppendArray(const V: AArray): Integer;
+var I, L : Integer;
+begin
+  Result := Count;
+  if V is AInt64Array then
+    begin
+      L := V.Count;
+      Count := Result + L;
+      for I := 0 to L - 1 do
+        Item[Result + I] := AInt64Array(V)[I];
+    end
+  else
+    raise EInt64Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
+end;
+
+procedure AInt64Array.Delete(const Idx: Integer; const ACount: Integer);
+var I, C, J, L : Integer;
+begin
+  J := MaxInt(Idx, 0);
+  C := GetCount;
+  L := MinInt(ACount, C - J);
+  if L > 0 then
+    begin
+      for I := J to J + C - 1 do
+        SetItem(I, GetItem(I + ACount));
+      SetCount(C - L);
+    end;
+end;
+
+procedure AInt64Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   if ACount <= 0 then
@@ -9292,6 +9753,212 @@ end;
 
 
 {                                                                              }
+{ AWord64Array                                                                 }
+{                                                                              }
+procedure AWord64Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Word64;
+begin
+  I := Item[Idx1];
+  Item[Idx1] := Item[Idx2];
+  Item[Idx2] := I;
+end;
+
+function AWord64Array.AppendItem(const Value: Word64): Integer;
+begin
+  Result := Count;
+  Count := Result + 1;
+  Item[Result] := Value;
+end;
+
+function AWord64Array.GetRange(const LoIdx, HiIdx: Integer): Word64Array;
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  SetLength(Result, C);
+  for I := 0 to C - 1 do
+    Result[I] := Item[L + I];
+end;
+
+function AWord64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var I, L, H, C : Integer;
+begin
+  Result := AWord64Array(CreateInstance);
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := H - L + 1;
+  AWord64Array(Result).Count := C;
+  for I := 0 to C - 1 do
+    AWord64Array(Result)[I] := Item[L + I];
+end;
+
+procedure AWord64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Word64Array);
+var I, L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(Count - 1, HiIdx);
+  C := MinInt(Length(V), H - L + 1);
+  for I := 0 to C - 1 do
+    Item[L + I] := V[I];
+end;
+
+procedure AWord64Array.Fill(const Idx, ACount: Integer; const Value: Word64);
+var I : Integer;
+begin
+  for I := Idx to Idx + ACount - 1 do
+    Item[I] := Value;
+end;
+
+function AWord64Array.AppendArray(const V: Word64Array): Integer;
+begin
+  Result := Count;
+  Count := Result + Length(V);
+  Range[Result, Count - 1] := V;
+end;
+
+function AWord64Array.CompareItems(const Idx1, Idx2: Integer): TCompareResult;
+var I, J : Word64;
+begin
+  I := Item[Idx1];
+  J := Item[Idx2];
+  if I < J then
+    Result := crLess else
+  if I > J then
+    Result := crGreater else
+    Result := crEqual;
+end;
+
+function AWord64Array.PosNext(const Find: Word64;
+    const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
+var I, L, H : Integer;
+    D       : Word64;
+begin
+  if IsSortedAscending then // binary search
+    begin
+      if MaxInt(PrevPos + 1, 0) = 0 then // find first
+        begin
+          L := 0;
+          H := Count - 1;
+          repeat
+            I := (L + H) div 2;
+            D := Item[I];
+            if D = Find then
+              begin
+                while (I > 0) and (Item[I - 1] = Find) do
+                  Dec(I);
+                Result := I;
+                exit;
+              end else
+            if D > Find then
+              H := I - 1 else
+              L := I + 1;
+          until L > H;
+          Result := -1;
+        end else // find next
+        if PrevPos >= Count - 1 then
+          Result := -1 else
+          if Item[PrevPos + 1] = Find then
+            Result := PrevPos + 1 else
+            Result := -1;
+    end else // linear search
+    begin
+      for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
+        if Item[I] = Find then
+          begin
+            Result := I;
+            exit;
+          end;
+      Result := -1;
+    end;
+end;
+
+function AWord64Array.GetItemAsString(const Idx: Integer): String;
+begin
+  Result := UIntToString(GetItem(Idx));
+end;
+
+procedure AWord64Array.SetItemAsString(const Idx: Integer; const Value: String);
+begin
+  SetItem(Idx, StringToUInt64(Value));
+end;
+
+procedure AWord64Array.Assign(const Source: TObject);
+var I, L : Integer;
+begin
+  if Source is AWord64Array then
+    begin
+      L := AWord64Array(Source).Count;
+      Count := L;
+      for I := 0 to L - 1 do
+        Item[I] := AWord64Array(Source).Item[I];
+    end else
+    inherited Assign(Source);
+end;
+
+function AWord64Array.IsEqual(const V: TObject): Boolean;
+var I, L : Integer;
+begin
+  if V is AWord64Array then
+    begin
+      L := AWord64Array(V).Count;
+      Result := L = Count;
+      if not Result then
+        exit;
+      for I := 0 to L - 1 do
+        if Item[I] <> AWord64Array(V).Item[I] then
+          begin
+            Result := False;
+            exit;
+          end;
+    end else
+    Result := inherited IsEqual(V);
+end;
+
+function AWord64Array.AppendArray(const V: AArray): Integer;
+var I, L : Integer;
+begin
+  Result := Count;
+  if V is AWord64Array then
+    begin
+      L := V.Count;
+      Count := Result + L;
+      for I := 0 to L - 1 do
+        Item[Result + I] := AWord64Array(V)[I];
+    end
+  else
+    raise EWord64Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
+end;
+
+procedure AWord64Array.Delete(const Idx: Integer; const ACount: Integer);
+var I, C, J, L : Integer;
+begin
+  J := MaxInt(Idx, 0);
+  C := GetCount;
+  L := MinInt(ACount, C - J);
+  if L > 0 then
+    begin
+      for I := J to J + C - 1 do
+        SetItem(I, GetItem(I + ACount));
+      SetCount(C - L);
+    end;
+end;
+
+procedure AWord64Array.Insert(const Idx: Integer; const ACount: Integer);
+var I, C, J, L : Integer;
+begin
+  if ACount <= 0 then
+    exit;
+  C := GetCount;
+  SetCount(C + ACount);
+  J := MinInt(MaxInt(Idx, 0), C);
+  L := C - J;
+  for I := C - 1 downto C - L do
+    SetItem(I + ACount, GetItem(I));
+end;
+
+
+{                                                                              }
 { ALongWordArray                                                               }
 {                                                                              }
 procedure ALongWordArray.ExchangeItems(const Idx1, Idx2: Integer);
@@ -9484,219 +10151,6 @@ begin
 end;
 
 procedure ALongWordArray.Insert(const Idx: Integer; const ACount: Integer);
-var I, C, J, L : Integer;
-begin
-  if ACount <= 0 then
-    exit;
-  C := GetCount;
-  SetCount(C + ACount);
-  J := MinInt(MaxInt(Idx, 0), C);
-  L := C - J;
-  for I := C - 1 downto C - L do
-    SetItem(I + ACount, GetItem(I));
-end;
-
-
-{                                                                              }
-{ AInt64Array                                                                  }
-{                                                                              }
-procedure AInt64Array.ExchangeItems(const Idx1, Idx2: Integer);
-var I : Int64;
-begin
-  I := Item[Idx1];
-  Item[Idx1] := Item[Idx2];
-  Item[Idx2] := I;
-end;
-
-function AInt64Array.AppendItem(const Value: Int64): Integer;
-begin
-  Result := Count;
-  Count := Result + 1;
-  Item[Result] := Value;
-end;
-
-function AInt64Array.GetRange(const LoIdx, HiIdx: Integer): Int64Array;
-var I, L, H, C : Integer;
-begin
-  L := MaxInt(0, LoIdx);
-  H := MinInt(Count - 1, HiIdx);
-  C := H - L + 1;
-  SetLength(Result, C);
-  for I := 0 to C - 1 do
-    Result[I] := Item[L + I];
-end;
-
-function AInt64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
-var I, L, H, C : Integer;
-begin
-  Result := AInt64Array(CreateInstance);
-  L := MaxInt(0, LoIdx);
-  H := MinInt(Count - 1, HiIdx);
-  C := H - L + 1;
-  AInt64Array(Result).Count := C;
-  for I := 0 to C - 1 do
-    AInt64Array(Result)[I] := Item[L + I];
-end;
-
-procedure AInt64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array);
-var I, L, H, C : Integer;
-begin
-  L := MaxInt(0, LoIdx);
-  H := MinInt(Count - 1, HiIdx);
-  C := MinInt(Length(V), H - L + 1);
-  for I := 0 to C - 1 do
-    Item[L + I] := V[I];
-end;
-
-procedure AInt64Array.Fill(const Idx, ACount: Integer; const Value: Int64);
-var I : Integer;
-begin
-  for I := Idx to Idx + ACount - 1 do
-    Item[I] := Value;
-end;
-
-function AInt64Array.AppendArray(const V: Int64Array): Integer;
-begin
-  Result := Count;
-  Count := Result + Length(V);
-  Range[Result, Count - 1] := V;
-end;
-
-function AInt64Array.CompareItems(const Idx1, Idx2: Integer): TCompareResult;
-var I, J : Int64;
-begin
-  I := Item[Idx1];
-  J := Item[Idx2];
-  if I < J then
-    Result := crLess else
-  if I > J then
-    Result := crGreater else
-    Result := crEqual;
-end;
-
-function AInt64Array.PosNext(const Find: Int64;
-    const PrevPos: Integer; const IsSortedAscending: Boolean): Integer;
-var I, L, H : Integer;
-    D       : Int64;
-begin
-  if IsSortedAscending then // binary search
-    begin
-      if MaxInt(PrevPos + 1, 0) = 0 then // find first
-        begin
-          L := 0;
-          H := Count - 1;
-          repeat
-            I := (L + H) div 2;
-            D := Item[I];
-            if D = Find then
-              begin
-                while (I > 0) and (Item[I - 1] = Find) do
-                  Dec(I);
-                Result := I;
-                exit;
-              end else
-            if D > Find then
-              H := I - 1 else
-              L := I + 1;
-          until L > H;
-          Result := -1;
-        end else // find next
-        if PrevPos >= Count - 1 then
-          Result := -1 else
-          if Item[PrevPos + 1] = Find then
-            Result := PrevPos + 1 else
-            Result := -1;
-    end else // linear search
-    begin
-      for I := MaxInt(PrevPos + 1, 0) to Count - 1 do
-        if Item[I] = Find then
-          begin
-            Result := I;
-            exit;
-          end;
-      Result := -1;
-    end;
-end;
-
-function AInt64Array.GetItemAsString(const Idx: Integer): String;
-begin
-  Result := IntToStr(GetItem(Idx));
-end;
-
-procedure AInt64Array.SetItemAsString(const Idx: Integer; const Value: String);
-begin
-  SetItem(Idx, StrToInt64(Value));
-end;
-
-procedure AInt64Array.Assign(const Source: TObject);
-var I, L : Integer;
-begin
-  if Source is AInt64Array then
-    begin
-      L := AInt64Array(Source).Count;
-      Count := L;
-      for I := 0 to L - 1 do
-        Item[I] := AInt64Array(Source).Item[I];
-    end else
-  if Source is ALongIntArray then
-    begin
-      L := ALongIntArray(Source).Count;
-      Count := L;
-      for I := 0 to L - 1 do
-        Item[I] := ALongIntArray(Source).Item[I];
-    end else
-    inherited Assign(Source);
-end;
-
-function AInt64Array.IsEqual(const V: TObject): Boolean;
-var I, L : Integer;
-begin
-  if V is AInt64Array then
-    begin
-      L := AInt64Array(V).Count;
-      Result := L = Count;
-      if not Result then
-        exit;
-      for I := 0 to L - 1 do
-        if Item[I] <> AInt64Array(V).Item[I] then
-          begin
-            Result := False;
-            exit;
-          end;
-    end else
-    Result := inherited IsEqual(V);
-end;
-
-function AInt64Array.AppendArray(const V: AArray): Integer;
-var I, L : Integer;
-begin
-  Result := Count;
-  if V is AInt64Array then
-    begin
-      L := V.Count;
-      Count := Result + L;
-      for I := 0 to L - 1 do
-        Item[Result + I] := AInt64Array(V)[I];
-    end
-  else
-    raise EInt64Array.CreateFmt('%s can not append %s', [ClassName, ObjectClassName(V)]);
-end;
-
-procedure AInt64Array.Delete(const Idx: Integer; const ACount: Integer);
-var I, C, J, L : Integer;
-begin
-  J := MaxInt(Idx, 0);
-  C := GetCount;
-  L := MinInt(ACount, C - J);
-  if L > 0 then
-    begin
-      for I := J to J + C - 1 do
-        SetItem(I, GetItem(I + ACount));
-      SetCount(C - L);
-    end;
-end;
-
-procedure AInt64Array.Insert(const Idx: Integer; const ACount: Integer);
 var I, C, J, L : Integer;
 begin
   if ACount <= 0 then
@@ -11940,21 +12394,22 @@ const
      $01000000, $02000000, $04000000, $08000000,
      $10000000, $20000000, $40000000, $80000000);
 
-function ABitArray.GetRangeL(const Idx: Integer): LongWord;
+function ABitArray.GetRangeL(const Idx: Integer): Word32;
 var I : Integer;
 begin
   Result := 0;
-  for I := 0 to BitsPerLongWord - 1 do
+  for I := 0 to 31 do
     if Bit[Idx + I] then
       Result := Result or BitMaskTable32[I];
 end;
 
-procedure ABitArray.SetRangeL(const Idx: Integer; const Value: LongWord);
-var I : Integer;
-    C : LongWord;
+procedure ABitArray.SetRangeL(const Idx: Integer; const Value: Word32);
+var
+  I : Integer;
+  C : Word32;
 begin
   C := 1;
-  for I := Idx to Idx + BitsPerLongWord - 1 do
+  for I := Idx to Idx + 31 do
     begin
       Bit[I] := Value and C <> 0;
       C := C shl 1;
@@ -11962,14 +12417,16 @@ begin
 end;
 
 procedure ABitArray.Fill(const Idx, ACount: Integer; const Value: Boolean);
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := Idx to Idx + ACount - 1 do
     Bit[I] := Value;
 end;
 
 function ABitArray.IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean;
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := LoIdx to HiIdx do
     if Bit[I] <> Value then
@@ -11981,7 +12438,8 @@ begin
 end;
 
 procedure ABitArray.Assign(const Source: TObject);
-var I, L : Integer;
+var
+  I, L : Integer;
 begin
   if Source is ABitArray then
     begin
@@ -11995,7 +12453,8 @@ begin
 end;
 
 function ABitArray.IsEqual(const V: TObject): Boolean;
-var I, L : Integer;
+var
+  I, L : Integer;
 begin
   if V is ABitArray then
     begin
@@ -12018,7 +12477,8 @@ begin
 end;
 
 procedure ABitArray.ExchangeItems(const Idx1, Idx2: Integer);
-var I : Boolean;
+var
+  I : Boolean;
 begin
   I := Bit[Idx1];
   Bit[Idx1] := Bit[Idx2];
@@ -12038,14 +12498,16 @@ begin
 end;
 
 procedure ABitArray.Invert;
-var I : Integer;
+var
+  I : Integer;
 begin
   for I := 0 to Count - 1 do
     Bit[I] := not Bit[I];
 end;
 
 function ABitArray.Find(const Value: Boolean; const Start: Integer): Integer;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   if Start < 0 then
     I := 0
@@ -12065,7 +12527,8 @@ end;
 
 function ABitArray.FindRange(const Value: Boolean; const Start: Integer;
     const ACount: Integer): Integer;
-var I, C, F : Integer;
+var
+  I, C, F : Integer;
 begin
   if ACount <= 0 then
     begin
@@ -12097,7 +12560,8 @@ begin
 end;
 
 procedure ABitArray.Delete(const Idx: Integer; const ACount: Integer);
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -12110,7 +12574,8 @@ begin
 end;
 
 procedure ABitArray.Insert(const Idx: Integer; const ACount: Integer);
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -12124,7 +12589,8 @@ begin
 end;
 
 function ABitArray.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   C := GetCount;
   {$IFOPT R+}
@@ -12139,7 +12605,8 @@ begin
 end;
 
 function ABitArray.AppendArray(const V: AArray): Integer;
-var I, C : Integer;
+var
+  I, C : Integer;
 begin
   if V is ABitArray then
     begin
@@ -12324,6 +12791,175 @@ begin
     begin
       FCount := TInt32Array(Source).FCount;
       FData := Copy(TInt32Array(Source).FData, 0, FCount);
+    end
+  else
+    inherited Assign(Source);
+end;
+
+
+
+{                                                                              }
+{ TInt64Array                                                                  }
+{                                                                              }
+function TInt64Array.GetItem(const Idx: Integer): Int64;
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  Result := FData[Idx];
+end;
+
+procedure TInt64Array.SetItem(const Idx: Integer; const Value: Int64);
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  FData[Idx] := Value;
+end;
+
+procedure TInt64Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Int64;
+begin
+  {$IFOPT R+}
+  if (Idx1 < 0) or (Idx1 >= FCount) then
+    RaiseIndexError(Idx1);
+  if (Idx2 < 0) or (Idx2 >= FCount) then
+    RaiseIndexError(Idx2);
+  {$ENDIF}
+  I := FData[Idx1];
+  FData[Idx1] := FData[Idx2];
+  FData[Idx2] := I;
+end;
+
+function TInt64Array.GetCount: Integer;
+begin
+  Result := FCount;
+end;
+
+{ Memory allocation strategy to reduce memory copies:                          }
+{   * For first allocation: allocate the exact size.                           }
+{   * For change to < 16: allocate 16 entries.                                 }
+{   * For growing to >= 16: pre-allocate 1/8th of NewCount.                    }
+{   * For shrinking blocks: shrink actual allocation when Count is less        }
+{     than half of the allocated size.                                         }
+procedure TInt64Array.SetCount(const NewCount: Integer);
+var L, N : Integer;
+begin
+  N := NewCount;
+  if FCount = N then
+    exit;
+  FCount := N;
+  L := FCapacity;
+  if L > 0 then
+    if N < 16 then // pre-allocate first 16 entries
+      N := 16 else
+    if N > L then
+      N := N + N shr 3 else // pre-allocate 1/8th extra if growing
+    if N > L shr 1 then // only reduce capacity if size is at least half
+      exit;
+  if N <> L then
+    begin
+      SetLengthAndZero(FData, N);
+      FCapacity := N;
+    end;
+end;
+
+function TInt64Array.AppendItem(const Value: Int64): Integer;
+begin
+  Result := FCount;
+  if Result >= FCapacity then
+    SetCount(Result + 1)
+  else
+    FCount := Result + 1;
+  FData[Result] := Value;
+end;
+
+procedure TInt64Array.Delete(const Idx: Integer; const ACount: Integer = 1);
+var N : Integer;
+begin
+  N := DynArrayRemove(FData, Idx, ACount);
+  Dec(FCapacity, N);
+  Dec(FCount, N);
+end;
+
+procedure TInt64Array.Insert(const Idx: Integer; const ACount: Integer = 1);
+var I : Integer;
+begin
+  I := DynArrayInsert(FData, Idx, ACount);
+  if I >= 0 then
+    begin
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
+    end;
+end;
+
+function TInt64Array.GetRange(const LoIdx, HiIdx: Integer): Int64Array;
+var L, H : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  if H >= L then
+    Result := Copy(FData, L, H - L + 1) else
+    Result := nil;
+end;
+
+procedure TInt64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array);
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(MinInt(Length(V), H - L + 1), 0);
+  if C > 0 then
+    Move(V[0], FData[L], C * Sizeof(Int64));
+end;
+
+constructor TInt64Array.Create(const V: Int64Array);
+begin
+  inherited Create;
+  SetData(V);
+end;
+
+procedure TInt64Array.SetData(const AData: Int64Array);
+begin
+  FData := AData;
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+function TInt64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(0, H - L + 1);
+  Result := CreateInstance as TInt64Array;
+  TInt64Array(Result).FCount := C;
+  if C > 0 then
+    TInt64Array(Result).FData := Copy(FData, L, C);
+end;
+
+procedure TInt64Array.Assign(const V: Int64Array);
+begin
+  FData := Copy(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TInt64Array.Assign(const V: Array of Int64);
+begin
+  FData := AsInt64Array(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TInt64Array.Assign(const Source: TObject);
+begin
+  if Source is TInt64Array then
+    begin
+      FCount := TInt64Array(Source).FCount;
+      FData := Copy(TInt64Array(Source).FData, 0, FCount);
     end
   else
     inherited Assign(Source);
@@ -12670,6 +13306,175 @@ end;
 
 
 {                                                                              }
+{ TWord64Array                                                                 }
+{                                                                              }
+function TWord64Array.GetItem(const Idx: Integer): Word64;
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  Result := FData[Idx];
+end;
+
+procedure TWord64Array.SetItem(const Idx: Integer; const Value: Word64);
+begin
+  {$IFOPT R+}
+  if (Idx < 0) or (Idx >= FCount) then
+    RaiseIndexError(Idx);
+  {$ENDIF}
+  FData[Idx] := Value;
+end;
+
+procedure TWord64Array.ExchangeItems(const Idx1, Idx2: Integer);
+var I : Word64;
+begin
+  {$IFOPT R+}
+  if (Idx1 < 0) or (Idx1 >= FCount) then
+    RaiseIndexError(Idx1);
+  if (Idx2 < 0) or (Idx2 >= FCount) then
+    RaiseIndexError(Idx2);
+  {$ENDIF}
+  I := FData[Idx1];
+  FData[Idx1] := FData[Idx2];
+  FData[Idx2] := I;
+end;
+
+function TWord64Array.GetCount: Integer;
+begin
+  Result := FCount;
+end;
+
+{ Memory allocation strategy to reduce memory copies:                          }
+{   * For first allocation: allocate the exact size.                           }
+{   * For change to < 16: allocate 16 entries.                                 }
+{   * For growing to >= 16: pre-allocate 1/8th of NewCount.                    }
+{   * For shrinking blocks: shrink actual allocation when Count is less        }
+{     than half of the allocated size.                                         }
+procedure TWord64Array.SetCount(const NewCount: Integer);
+var L, N : Integer;
+begin
+  N := NewCount;
+  if FCount = N then
+    exit;
+  FCount := N;
+  L := FCapacity;
+  if L > 0 then
+    if N < 16 then // pre-allocate first 16 entries
+      N := 16 else
+    if N > L then
+      N := N + N shr 3 else // pre-allocate 1/8th extra if growing
+    if N > L shr 1 then // only reduce capacity if size is at least half
+      exit;
+  if N <> L then
+    begin
+      SetLengthAndZero(FData, N);
+      FCapacity := N;
+    end;
+end;
+
+function TWord64Array.AppendItem(const Value: Word64): Integer;
+begin
+  Result := FCount;
+  if Result >= FCapacity then
+    SetCount(Result + 1)
+  else
+    FCount := Result + 1;
+  FData[Result] := Value;
+end;
+
+procedure TWord64Array.Delete(const Idx: Integer; const ACount: Integer = 1);
+var N : Integer;
+begin
+  N := DynArrayRemove(FData, Idx, ACount);
+  Dec(FCapacity, N);
+  Dec(FCount, N);
+end;
+
+procedure TWord64Array.Insert(const Idx: Integer; const ACount: Integer = 1);
+var I : Integer;
+begin
+  I := DynArrayInsert(FData, Idx, ACount);
+  if I >= 0 then
+    begin
+      Inc(FCapacity, ACount);
+      Inc(FCount, ACount);
+    end;
+end;
+
+function TWord64Array.GetRange(const LoIdx, HiIdx: Integer): Word64Array;
+var L, H : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  if H >= L then
+    Result := Copy(FData, L, H - L + 1) else
+    Result := nil;
+end;
+
+procedure TWord64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Word64Array);
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(MinInt(Length(V), H - L + 1), 0);
+  if C > 0 then
+    Move(V[0], FData[L], C * Sizeof(Word64));
+end;
+
+constructor TWord64Array.Create(const V: Word64Array);
+begin
+  inherited Create;
+  SetData(V);
+end;
+
+procedure TWord64Array.SetData(const AData: Word64Array);
+begin
+  FData := AData;
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+function TWord64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
+var L, H, C : Integer;
+begin
+  L := MaxInt(0, LoIdx);
+  H := MinInt(HiIdx, FCount);
+  C := MaxInt(0, H - L + 1);
+  Result := CreateInstance as TWord64Array;
+  TWord64Array(Result).FCount := C;
+  if C > 0 then
+    TWord64Array(Result).FData := Copy(FData, L, C);
+end;
+
+procedure TWord64Array.Assign(const V: Word64Array);
+begin
+  FData := Copy(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TWord64Array.Assign(const V: Array of Word64);
+begin
+  FData := AsWord64Array(V);
+  FCount := Length(FData);
+  FCapacity := FCount;
+end;
+
+procedure TWord64Array.Assign(const Source: TObject);
+begin
+  if Source is TWord64Array then
+    begin
+      FCount := TWord64Array(Source).FCount;
+      FData := Copy(TWord64Array(Source).FData, 0, FCount);
+    end
+  else
+    inherited Assign(Source);
+end;
+
+
+
+{                                                                              }
 { TLongWordArray                                                               }
 {                                                                              }
 function TLongWordArray.GetItem(const Idx: Integer): LongWord;
@@ -12831,175 +13636,6 @@ begin
     begin
       FCount := TLongWordArray(Source).FCount;
       FData := Copy(TLongWordArray(Source).FData, 0, FCount);
-    end
-  else
-    inherited Assign(Source);
-end;
-
-
-
-{                                                                              }
-{ TInt64Array                                                                  }
-{                                                                              }
-function TInt64Array.GetItem(const Idx: Integer): Int64;
-begin
-  {$IFOPT R+}
-  if (Idx < 0) or (Idx >= FCount) then
-    RaiseIndexError(Idx);
-  {$ENDIF}
-  Result := FData[Idx];
-end;
-
-procedure TInt64Array.SetItem(const Idx: Integer; const Value: Int64);
-begin
-  {$IFOPT R+}
-  if (Idx < 0) or (Idx >= FCount) then
-    RaiseIndexError(Idx);
-  {$ENDIF}
-  FData[Idx] := Value;
-end;
-
-procedure TInt64Array.ExchangeItems(const Idx1, Idx2: Integer);
-var I : Int64;
-begin
-  {$IFOPT R+}
-  if (Idx1 < 0) or (Idx1 >= FCount) then
-    RaiseIndexError(Idx1);
-  if (Idx2 < 0) or (Idx2 >= FCount) then
-    RaiseIndexError(Idx2);
-  {$ENDIF}
-  I := FData[Idx1];
-  FData[Idx1] := FData[Idx2];
-  FData[Idx2] := I;
-end;
-
-function TInt64Array.GetCount: Integer;
-begin
-  Result := FCount;
-end;
-
-{ Memory allocation strategy to reduce memory copies:                          }
-{   * For first allocation: allocate the exact size.                           }
-{   * For change to < 16: allocate 16 entries.                                 }
-{   * For growing to >= 16: pre-allocate 1/8th of NewCount.                    }
-{   * For shrinking blocks: shrink actual allocation when Count is less        }
-{     than half of the allocated size.                                         }
-procedure TInt64Array.SetCount(const NewCount: Integer);
-var L, N : Integer;
-begin
-  N := NewCount;
-  if FCount = N then
-    exit;
-  FCount := N;
-  L := FCapacity;
-  if L > 0 then
-    if N < 16 then // pre-allocate first 16 entries
-      N := 16 else
-    if N > L then
-      N := N + N shr 3 else // pre-allocate 1/8th extra if growing
-    if N > L shr 1 then // only reduce capacity if size is at least half
-      exit;
-  if N <> L then
-    begin
-      SetLengthAndZero(FData, N);
-      FCapacity := N;
-    end;
-end;
-
-function TInt64Array.AppendItem(const Value: Int64): Integer;
-begin
-  Result := FCount;
-  if Result >= FCapacity then
-    SetCount(Result + 1)
-  else
-    FCount := Result + 1;
-  FData[Result] := Value;
-end;
-
-procedure TInt64Array.Delete(const Idx: Integer; const ACount: Integer = 1);
-var N : Integer;
-begin
-  N := DynArrayRemove(FData, Idx, ACount);
-  Dec(FCapacity, N);
-  Dec(FCount, N);
-end;
-
-procedure TInt64Array.Insert(const Idx: Integer; const ACount: Integer = 1);
-var I : Integer;
-begin
-  I := DynArrayInsert(FData, Idx, ACount);
-  if I >= 0 then
-    begin
-      Inc(FCapacity, ACount);
-      Inc(FCount, ACount);
-    end;
-end;
-
-function TInt64Array.GetRange(const LoIdx, HiIdx: Integer): Int64Array;
-var L, H : Integer;
-begin
-  L := MaxInt(0, LoIdx);
-  H := MinInt(HiIdx, FCount);
-  if H >= L then
-    Result := Copy(FData, L, H - L + 1) else
-    Result := nil;
-end;
-
-procedure TInt64Array.SetRange(const LoIdx, HiIdx: Integer; const V: Int64Array);
-var L, H, C : Integer;
-begin
-  L := MaxInt(0, LoIdx);
-  H := MinInt(HiIdx, FCount);
-  C := MaxInt(MinInt(Length(V), H - L + 1), 0);
-  if C > 0 then
-    Move(V[0], FData[L], C * Sizeof(Int64));
-end;
-
-constructor TInt64Array.Create(const V: Int64Array);
-begin
-  inherited Create;
-  SetData(V);
-end;
-
-procedure TInt64Array.SetData(const AData: Int64Array);
-begin
-  FData := AData;
-  FCount := Length(FData);
-  FCapacity := FCount;
-end;
-
-function TInt64Array.DuplicateRange(const LoIdx, HiIdx: Integer): AArray;
-var L, H, C : Integer;
-begin
-  L := MaxInt(0, LoIdx);
-  H := MinInt(HiIdx, FCount);
-  C := MaxInt(0, H - L + 1);
-  Result := CreateInstance as TInt64Array;
-  TInt64Array(Result).FCount := C;
-  if C > 0 then
-    TInt64Array(Result).FData := Copy(FData, L, C);
-end;
-
-procedure TInt64Array.Assign(const V: Int64Array);
-begin
-  FData := Copy(V);
-  FCount := Length(FData);
-  FCapacity := FCount;
-end;
-
-procedure TInt64Array.Assign(const V: Array of Int64);
-begin
-  FData := AsInt64Array(V);
-  FCount := Length(FData);
-  FCapacity := FCount;
-end;
-
-procedure TInt64Array.Assign(const Source: TObject);
-begin
-  if Source is TInt64Array then
-    begin
-      FCount := TInt64Array(Source).FCount;
-      FData := Copy(TInt64Array(Source).FData, 0, FCount);
     end
   else
     inherited Assign(Source);
@@ -14766,8 +15402,8 @@ begin
 end;
 
 const
-  TrueLongWord  : LongWord = $FFFFFFFF;
-  FalseLongWord : LongWord = $00000000;
+  TrueWord32  : Word32 = $FFFFFFFF;
+  FalseWord32 : Word32 = $00000000;
 
 function TBitArray.GetBit(const Idx: Integer): Boolean;
 begin
@@ -14779,7 +15415,8 @@ begin
 end;
 
 procedure TBitArray.SetBit(const Idx: Integer; const Value: Boolean);
-var L : ^LongWord;
+var
+  L : PWord32;
 begin
   {$IFOPT R+}
   if (Idx < 0) or (Idx >= FCount) then
@@ -14801,12 +15438,13 @@ procedure TBitArray.SetCount(const NewCount: Integer);
 begin
   if NewCount = FCount then
     exit;
-  SetLengthAndZero(FData, (NewCount + BitsPerLongWord - 1) div BitsPerLongWord);
+  SetLengthAndZero(FData, (NewCount + 31) div 32);
   FCount := NewCount;
 end;
 
-function TBitArray.GetRangeL(const Idx: Integer): LongWord;
-var F : Byte;
+function TBitArray.GetRangeL(const Idx: Integer): Word32;
+var
+  F : Byte;
   I : Integer;
 begin
   {$IFOPT R+}
@@ -14821,13 +15459,14 @@ begin
     begin
       Result := FData[I] shr F;
       if I + 1 < Length(FData) then
-        Result := Result or (FData[I + 1] shl (BitsPerLongWord - F));
+        Result := Result or (FData[I + 1] shl (32 - F));
     end;
 end;
 
-procedure TBitArray.SetRangeL(const Idx: Integer; const Value: LongWord);
-var F : Byte;
-    I : Integer;
+procedure TBitArray.SetRangeL(const Idx: Integer; const Value: Word32);
+var
+  F : Byte;
+  I : Integer;
 begin
   {$IFOPT R+}
   if (Idx < 0) or (Idx >= FCount) then
@@ -14843,12 +15482,12 @@ begin
                or (Value shl F);
       if I + 1 < Length(FData) then
         FData[I + 1] := (FData[I + 1] and HighBitMask32(F))
-                     or (Value shr (BitsPerLongWord - F));
+                     or (Value shr (32 - F));
     end;
 end;
 
 function TBitArray.IsRange(const LoIdx, HiIdx: Integer; const Value: Boolean): Boolean;
-var B, I   : LongWord;
+var B, I   : Word32;
     IL, IH : Integer;
 begin
   {$IFOPT R+}
@@ -14861,7 +15500,8 @@ begin
   B := HighBitMask32(LoIdx and 31);
   I := FData[IL];
   if Value then
-    Result := I or B = I else
+    Result := I or B = I
+  else
     Result := I and not B = I;
   if not Result or (IL = IH) then
     exit;
@@ -14869,14 +15509,15 @@ begin
   B := LowBitMask32(HiIdx and 31);
   I := FData[IH];
   if Value then
-    Result := I or B = I else
+    Result := I or B = I
+  else
     Result := I and not B = I;
   if not Result or (IH = IL + 1) then
     exit;
   // Check bits in FStore[IL + 1..IR - 1]
   for I := IL + 1 to IH - 1 do
-    if (Value and (FData[I] <> TrueLongWord)) or
-       (not Value and (FData[I] <> FalseLongWord)) then
+    if (Value and (FData[I] <> TrueWord32)) or
+       (not Value and (FData[I] <> FalseWord32)) then
       begin
         Result := False;
         exit;
@@ -14885,8 +15526,9 @@ begin
 end;
 
 procedure TBitArray.Fill(const LoIdx, HiIdx: Integer; const Value: Boolean);
-var B, I   : LongWord;
-    IL, IH : Integer;
+var
+  B, I   : Word32;
+  IL, IH : Integer;
 begin
   {$IFOPT R+}
   if (LoIdx < 0) or (LoIdx > HiIdx) or (HiIdx >= FCount) then
@@ -14900,7 +15542,8 @@ begin
     B := HighBitMask32(LoIdx and 31);
   I := FData[IL];
   if Value then
-    FData[IL] := I or B else
+    FData[IL] := I or B
+  else
     FData[IL] := I and not B;
   if IH = IL then
     exit;
@@ -14908,15 +15551,17 @@ begin
   B := LowBitMask32(HiIdx and 31);
   I := FData[IH];
   if Value then
-    FData[IH] := I or B else
+    FData[IH] := I or B
+  else
     FData[IH] := I and not B;
   if IH = IL + 1 then
     exit;
   // Set bits in FData[IL + 1..IR - 1]
   for I := IL + 1 to IH - 1 do
     if Value then
-      FData[I] := TrueLongWord else
-      FData[I] := FalseLongWord;
+      FData[I] := TrueWord32
+    else
+      FData[I] := FalseWord32;
 end;
 
 
@@ -17814,8 +18459,8 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -18174,8 +18819,8 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -18533,8 +19178,8 @@ begin
 end;
 
 constructor TGeneralLongIntDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -18892,8 +19537,8 @@ begin
 end;
 
 constructor TGeneralLongIntDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: ALongIntArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TLongIntArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -19252,8 +19897,8 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -19612,8 +20257,8 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -19971,8 +20616,8 @@ begin
 end;
 
 constructor TGeneralLongWordDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -20330,8 +20975,8 @@ begin
 end;
 
 constructor TGeneralLongWordDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: ALongWordArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TLongWordArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -20690,8 +21335,8 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -21050,8 +21695,8 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -21409,8 +22054,8 @@ begin
 end;
 
 constructor TGeneralInt64DictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -21768,8 +22413,8 @@ begin
 end;
 
 constructor TGeneralInt64Dictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AInt64Array; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TInt64Array; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -22128,8 +22773,8 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -22488,8 +23133,8 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -22847,8 +23492,8 @@ begin
 end;
 
 constructor TGeneralSingleDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -23206,8 +23851,8 @@ begin
 end;
 
 constructor TGeneralSingleDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: ASingleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TSingleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -23566,8 +24211,8 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -23926,8 +24571,8 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -24285,8 +24930,8 @@ begin
 end;
 
 constructor TGeneralDoubleDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -24644,8 +25289,8 @@ begin
 end;
 
 constructor TGeneralDoubleDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: ADoubleArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TDoubleArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -25004,8 +25649,8 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -25364,8 +26009,8 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -25723,8 +26368,8 @@ begin
 end;
 
 constructor TGeneralExtendedDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -26082,8 +26727,8 @@ begin
 end;
 
 constructor TGeneralExtendedDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AExtendedArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TExtendedArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -26442,8 +27087,8 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -26801,8 +27446,8 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -27160,8 +27805,8 @@ begin
 end;
 
 constructor TGeneralAnsiStringDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AAnsiStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TAnsiStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -27521,8 +28166,8 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -27881,8 +28526,8 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -28240,8 +28885,8 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -28599,8 +29244,8 @@ begin
 end;
 
 constructor TGeneralRawByteStringDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: ARawByteStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TRawByteStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -28959,8 +29604,8 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -29319,8 +29964,8 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -29678,8 +30323,8 @@ begin
 end;
 
 constructor TGeneralUnicodeStringDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AUnicodeStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TUnicodeStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -30038,8 +30683,8 @@ begin
 end;
 
 constructor TGeneralStringDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -30398,8 +31043,8 @@ begin
 end;
 
 constructor TGeneralStringDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -30757,8 +31402,8 @@ begin
 end;
 
 constructor TGeneralStringDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AStringArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TStringArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -31117,8 +31762,8 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -31477,8 +32122,8 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -31836,8 +32481,8 @@ begin
 end;
 
 constructor TGeneralPointerDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -32195,8 +32840,8 @@ begin
 end;
 
 constructor TGeneralPointerDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: APointerArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TPointerArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -32555,8 +33200,8 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -32915,8 +33560,8 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -33274,8 +33919,8 @@ begin
 end;
 
 constructor TGeneralInterfaceDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AInterfaceArray; const AKeysCaseSensitive: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TInterfaceArray; const AKeysCaseSensitive: Boolean;
     const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -33634,8 +34279,8 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryA.CreateEx(
-    const AKeys: AAnsiStringArray;
-    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeys: TAnsiStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
     const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -34029,8 +34674,8 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryB.CreateEx(
-    const AKeys: ARawByteStringArray;
-    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeys: TRawByteStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
     const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -34423,8 +35068,8 @@ begin
 end;
 
 constructor TGeneralObjectDictionaryU.CreateEx(
-    const AKeys: AUnicodeStringArray;
-    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeys: TUnicodeStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
     const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
@@ -34817,8 +35462,8 @@ begin
 end;
 
 constructor TGeneralObjectDictionary.CreateEx(
-    const AKeys: AStringArray;
-    const AValues: AObjectArray; const AIsItemOwner: Boolean;
+    const AKeys: TStringArray;
+    const AValues: TObjectArray; const AIsItemOwner: Boolean;
     const AKeysCaseSensitive: Boolean; const AAddOnSet: Boolean;
     const ADuplicatesAction: TDictionaryDuplicatesAction);
 var L : Integer;
