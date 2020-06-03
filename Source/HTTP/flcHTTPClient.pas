@@ -574,10 +574,11 @@ uses
   flcBase64,
   flcStringBuilder,
   flcDateTime,
-  flcSocketLib
-  {$IFDEF HTTP_TLS},
-  flcTLSClient
-  {$ENDIF};
+  flcSocketLib,
+  {$IFDEF HTTP_TLS}
+  flcTLSTransportClient,
+  {$ENDIF}
+  flcTCPUtils;
 
 
 
@@ -1353,7 +1354,7 @@ begin
         {$IFDEF StringIsUnicode}
         FResponseCookies.Add(B.AsString);
         {$ELSE}
-        FResponseCookies.Add(B.AsRawByteString);
+        FResponseCookies.Add(String(B.AsRawByteString));
         {$ENDIF}
       end;
     FResponseRequireClose :=
@@ -1439,6 +1440,8 @@ begin
     {$IFDEF HTTP_TLS}
     FTCPClient.TLSEnabled := FUseHTTPS;
     TLSOpt := [];
+    /////
+    (*
     if csoDontUseSSL3 in FHTTPSOptions then
       Include(TLSOpt, ctoDisableSSL3);
     if csoDontUseTLS10 in FHTTPSOptions then
@@ -1447,6 +1450,7 @@ begin
       Include(TLSOpt, ctoDisableTLS11);
     if csoDontUseTLS12 in FHTTPSOptions then
       Include(TLSOpt, ctoDisableTLS12);
+    *)
     FTCPClient.TLSOptions := TLSOpt;
     {$ENDIF}
     InitTCPClientHost;
@@ -1713,11 +1717,14 @@ end;
 
 procedure TF5HTTPClient.ReadResponse;
 begin
+  if FState = hcsStarting then
+    exit;
   Assert(FTCPClient.State in [csReady, csClosed]);
   Assert(FState in [
       hcsAwaitingResponse, hcsReceivedResponse, hcsReceivingContent,
       hcsResponseComplete, hcsResponseCompleteAndClosing, hcsResponseCompleteAndClosed,
       hcsRequestInterruptedAndClosed]);
+
   try
     if FState = hcsAwaitingResponse then
       ReadResponseHeader;
@@ -1860,7 +1867,7 @@ begin
     else
       FRequest.Header.CommonHeaders.Connection.Value := C;
 
-  FRequest.Header.FixedHeaders[hntHost] := FHost;
+  FRequest.Header.FixedHeaders[hntHost] := UTF8Encode(FHost);
   FRequest.Header.FixedHeaders[hntUserAgent] := FUserAgent;
   FRequest.Header.FixedHeaders[hntReferer] := FReferer;
   FRequest.Header.FixedHeaders[hntAuthorization] := FAuthorization;
@@ -1900,7 +1907,7 @@ begin
   Assert(Assigned(FTCPClient));
   Assert(FState in [hcsSendingRequest, hcsSendingContent]);
   //
-  FTCPClient.Connection.WriteStrB(S);
+  FTCPClient.Connection.WriteByteString(S);
 end;
 
 procedure TF5HTTPClient.SendRequest;

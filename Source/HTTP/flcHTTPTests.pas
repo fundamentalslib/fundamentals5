@@ -6,7 +6,7 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.03  2016/01/09                       }
+{   Delphi 7 Win32                      5.03  2019/02/24                       }
 {   Delphi XE7 Win32                    5.03  2016/01/09                       }
 {   Delphi XE7 Win64                    5.03  2016/01/09                       }
 {                                                                              }
@@ -52,8 +52,10 @@ uses
   SysUtils,
   SyncObjs,
   flcUtils,
+  flcBase64,
   flcSocketLib
   {$IFDEF HTTP_TLS},
+  flcTLSCertificate,
   flcTLSHandshake
   {$ENDIF};
 
@@ -71,7 +73,7 @@ type
     Lock : TCriticalSection;
     constructor Create;
     destructor Destroy; override;
-    procedure HTTPServerLog(Server: TF5HTTPServer; LogType: THTTPServerLogType; Msg: String; LogLevel: Integer);
+    procedure HTTPServerLog(const Server: TF5HTTPServer; const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
   end;
 
 constructor THTTPServerTestObj.Create;
@@ -86,7 +88,7 @@ begin
   inherited Destroy;
 end;
 
-procedure THTTPServerTestObj.HTTPServerLog(Server: TF5HTTPServer; LogType: THTTPServerLogType; Msg: String; LogLevel: Integer);
+procedure THTTPServerTestObj.HTTPServerLog(const Server: TF5HTTPServer; const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
 begin
   {$IFDEF HTTP_TEST_LOG_TO_CONSOLE}
   Lock.Acquire;
@@ -252,9 +254,9 @@ type
     procedure HTTPClientLog(Client: TF5HTTPClient; LogType: THTTPClientLogType; Msg: String; Level: Integer);
     procedure HTTPClientResponseHeader(Client: TF5HTTPClient);
     procedure HTTPClientResponseComplete(Client: TF5HTTPClient);
-    procedure HTTPServerLog(Server: TF5HTTPServer; LogType: THTTPServerLogType; Msg: String; LogLevel: Integer);
-    procedure HTTPServerPrepareResponse(Server: TF5HTTPServer; Client: THTTPServerClient);
-    procedure HTTPServerRequestComplete(Server: TF5HTTPServer; Client: THTTPServerClient);
+    procedure HTTPServerLog(const Server: TF5HTTPServer; const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
+    procedure HTTPServerPrepareResponse(const Server: TF5HTTPServer; const Client: THTTPServerClient);
+    procedure HTTPServerRequestComplete(const Server: TF5HTTPServer; const Client: THTTPServerClient);
   end;
 
 constructor THTTPClientServerTestObj.Create;
@@ -297,12 +299,12 @@ begin
   Assert(Client.ResponseContentStr = '<HTML>Test</HTML>');
 end;
 
-procedure THTTPClientServerTestObj.HTTPServerLog(Server: TF5HTTPServer; LogType: THTTPServerLogType; Msg: String; LogLevel: Integer);
+procedure THTTPClientServerTestObj.HTTPServerLog(const Server: TF5HTTPServer; const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
 begin
   Log('S:' + IntToStr(LogLevel) + ':' + Msg);
 end;
 
-procedure THTTPClientServerTestObj.HTTPServerPrepareResponse(Server: TF5HTTPServer; Client: THTTPServerClient);
+procedure THTTPClientServerTestObj.HTTPServerPrepareResponse(const Server: TF5HTTPServer; const Client: THTTPServerClient);
 begin
   Client.ResponseCode := 200;
   Client.ResponseMsg := 'OK';
@@ -312,7 +314,7 @@ begin
   Client.ResponseReady := True;
 end;
 
-procedure THTTPClientServerTestObj.HTTPServerRequestComplete(Server: TF5HTTPServer; Client: THTTPServerClient);
+procedure THTTPClientServerTestObj.HTTPServerRequestComplete(const Server: TF5HTTPServer; const Client: THTTPServerClient);
 begin
 end;
 
@@ -392,12 +394,14 @@ begin
     T := 0;
     repeat
       Sleep(1);
+      Inc(T);
     until (T > 2000) or (Srv.ClientCount = 1);
     Assert(Srv.ClientCount = 1);
 
     T := 0;
     repeat
       Sleep(1);
+      Inc(T);
     until (T > 2000) or (Cln.State in [hcsResponseComplete, hcsResponseCompleteAndClosed]);
     Assert(Cln.State in [hcsResponseComplete, hcsResponseCompleteAndClosed]);
 
@@ -407,6 +411,7 @@ begin
     T := 0;
     repeat
       Sleep(1);
+      Inc(T);
     until (T > 2000) or (Srv.ClientCount = 0);
     Assert(Srv.ClientCount = 0);
 

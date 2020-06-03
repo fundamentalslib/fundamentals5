@@ -5,7 +5,7 @@
 {   File version:     5.12                                                     }
 {   Description:      HTTP utilities.                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2011-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2011-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -50,6 +50,7 @@
 {   2019/07/29  5.12  SendContent fix.                                         }
 {                                                                              }
 { References:                                                                  }
+{                                                                              }
 { * HTTP/1.1 : http://www.w3.org/Protocols/rfc2616/rfc2616.html                }
 { * Chunked encoding : http://tools.ietf.org/html/rfc2616#section-3.6.1        }
 { * Origin header : https://wiki.mozilla.org/Security/Origin                   }
@@ -66,10 +67,12 @@ interface
 
 uses
   { System }
+
   SysUtils,
   Classes,
 
   { Fundamentals }
+
   flcStdTypes,
   flcUtils,
   flcStrings,
@@ -1042,7 +1045,8 @@ type
       hctmEvent,
       hctmString,
       hctmStream,
-      hctmFile);
+      hctmFile
+    );
 
   THTTPContentWriter = class;
 
@@ -1098,7 +1102,7 @@ type
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Tests                                                                        }
 {                                                                              }
 {$IFDEF HTTP_TEST}
 procedure Test;
@@ -4073,7 +4077,7 @@ end;
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Tests                                                                        }
 {                                                                              }
 {$IFDEF HTTP_TEST}
 {$ASSERTIONS ON}

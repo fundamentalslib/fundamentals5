@@ -5,7 +5,7 @@
 {   File version:     5.06                                                     }
 {   Description:      HTTP server.                                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2011-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2011-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -53,44 +53,61 @@ interface
 
 uses
   { System }
+
   SysUtils,
   Classes,
   SyncObjs,
+
   { Fundamentals }
+
   flcStdTypes,
   flcStrings,
   flcSocketLib,
+
   { TCP }
+
   flcTCPConnection,
   flcTCPServer,
+
   { HTTP }
+
   flcHTTPUtils;
 
 
 
 {                                                                              }
-{ THTTP4Server                                                                 }
+{ TF5HTTPServer                                                                }
 {                                                                              }
 const
-  HTTP_SERVER_DEFAULT_MaxBacklog = 8;
-  HTTP_SERVER_DEFAULT_MaxClients = -1;
+  HTTPSERVER_DefaultPort       = 80;
+  HTTPSERVER_DefaultPortStr    = '80';
+  HTTPSERVER_DefaultMaxBacklog = 8;
+  HTTPSERVER_DefaultMaxClients = -1;
 
 type
   THTTPServerLogType = (
+    // sltTrace
     sltDebug,
+    // sltParameter
     sltInfo,
-    sltError);
+    // sltWarning,
+    sltError
+    // sltAlert
+    // sltCritical
+    );
 
   THTTPServerAddressFamily = (
     safIP4,
-    safIP6);
+    safIP6
+    );
 
   {$IFDEF HTTP_TLS}
   THTTPSServerOption = (
     ssoDontUseSSL3,
     ssoDontUseTLS10,
     ssoDontUseTLS11,
-    ssoDontUseTLS12);
+    ssoDontUseTLS12
+    );
 
   THTTPSServerOptions = set of THTTPSServerOption;
   {$ENDIF}
@@ -110,21 +127,20 @@ type
     hscsResponseComplete,
     hscsResponseCompleteAndClosing,
     hscsResponseCompleteAndClosed,
-    hscsRequestInterruptedAndClosed);
+    hscsRequestInterruptedAndClosed
+    );
 
   THTTPServerClient = class
   private
-    // parameters
-    FHTTPServer : TF5HTTPServer;
-    FTCPClient  : TTCPServerClient;
+    FHTTPServer            : TF5HTTPServer;
+    FTCPClient             : TTCPServerClient;
 
-    // state
-    FLock       : TCriticalSection;
-    FState      : THTTPServerClientState;
-    FHTTPParser : THTTPParser;
+    FLock                  : TCriticalSection;
+    FState                 : THTTPServerClientState;
+    FHTTPParser            : THTTPParser;
 
-    FRequest              : THTTPRequest;
-    FRequestContentReader : THTTPContentReader;
+    FRequest               : THTTPRequest;
+    FRequestContentReader  : THTTPContentReader;
 
     FResponse              : THTTPResponse;
     FResponseContentWriter : THTTPContentWriter;
@@ -139,11 +155,12 @@ type
     procedure Unlock;
 
     function  GetState: THTTPServerClientState;
-    function  GetStateStr: RawByteString;
+    function  GetStateStr: String;
+
     procedure SetState(const State: THTTPServerClientState);
 
     function  GetRemoteAddr: TSocketAddr;
-    function  GetRemoteAddrStr: RawByteString;
+    function  GetRemoteAddrStr: String;
 
     procedure TriggerStateChanged;
     procedure TriggerRequestHeader;
@@ -198,43 +215,43 @@ type
     function  GetRequestRecordPtr: PHTTPRequest;
 
     function  GetResponseCode: Integer;
-    procedure SetResponseCode(const ResponseCode: Integer);
+    procedure SetResponseCode(const AResponseCode: Integer);
     function  GetResponseMsg: RawByteString;
-    procedure SetResponseMsg(const ResponseMsg: RawByteString);
+    procedure SetResponseMsg(const AResponseMsg: RawByteString);
     function  GetResponseContentType: RawByteString;
-    procedure SetResponseContentType(const ResponseContentType: RawByteString);
+    procedure SetResponseContentType(const AResponseContentType: RawByteString);
 
     function  GetResponseRecordPtr: PHTTPResponse;
 
     function  GetRequestContentStream: TStream;
-    procedure SetRequestContentStream(const RequestContentStream: TStream);
+    procedure SetRequestContentStream(const ARequestContentStream: TStream);
     function  GetRequestContentFileName: String;
-    procedure SetRequestContentFileName(const RequestContentFileName: String);
+    procedure SetRequestContentFileName(const ARequestContentFileName: String);
     function  GetRequestContentStr: RawByteString;
     function  GetRequestContentReceivedSize: Int64;
 
     function  GetResponseContentMechanism: THTTPContentWriterMechanism;
-    procedure SetResponseContentMechanism(const ResponseContentMechanism: THTTPContentWriterMechanism);
+    procedure SetResponseContentMechanism(const AResponseContentMechanism: THTTPContentWriterMechanism);
     function  GetResponseContentStr: RawByteString;
-    procedure SetResponseContentStr(const ResponseContentStr: RawByteString);
+    procedure SetResponseContentStr(const AResponseContentStr: RawByteString);
     function  GetResponseContentStream: TStream;
-    procedure SetResponseContentStream(const ResponseContentStream: TStream);
+    procedure SetResponseContentStream(const AResponseContentStream: TStream);
     function  GetResponseContentFileName: String;
-    procedure SetResponseContentFileName(const ResponseContentFileName: String);
-    procedure SetResponseReady(const ResponseReady: Boolean);
+    procedure SetResponseContentFileName(const AResponseContentFileName: String);
+    procedure SetResponseReady(const AResponseReady: Boolean);
 
   public
     constructor Create(
-                const HTTPServer: TF5HTTPServer;
-                const TCPClient: TTCPServerClient);
+                const AHTTPServer: TF5HTTPServer;
+                const ATCPClient: TTCPServerClient);
     destructor Destroy; override;
     procedure Finalise;
 
     property  State: THTTPServerClientState read GetState;
-    property  StateStr: RawByteString read GetStateStr;
+    property  StateStr: String read GetStateStr;
 
     property  RemoteAddr: TSocketAddr read GetRemoteAddr;
-    property  RemoteAddrStr: RawByteString read GetRemoteAddrStr;
+    property  RemoteAddrStr: String read GetRemoteAddrStr;
 
     property  RequestRecord: THTTPRequest read FRequest;
     property  RequestRecordPtr: PHTTPRequest read GetRequestRecordPtr;
@@ -263,23 +280,37 @@ type
     property  ResponseContentFileName: String read GetResponseContentFileName write SetResponseContentFileName;
     property  ResponseReady: Boolean read FResponseReady write SetResponseReady;
 
-    procedure SetResponseOKHtmlStr(const HtmlStr: RawByteString);
-    procedure SetResponseOKFile(const ContentType: THTTPContentTypeEnum;
-              const FileName: String);
+    procedure SetResponseOKHtmlStr(const AHtmlStr: RawByteString);
+    procedure SetResponseOKFile(
+              const AContentType: THTTPContentTypeEnum;
+              const AFileName: String);
     procedure SetResponseNotFound;
-    procedure SetResponseRedirect(const Location: RawByteString);
+    procedure SetResponseRedirect(const ALocation: RawByteString);
 
     procedure Disconnect;
   end;
 
-  THTTPServerEvent = procedure (Server: TF5HTTPServer) of object;
-  THTTPServerLogEvent = procedure (Server: TF5HTTPServer; LogType: THTTPServerLogType; Msg: String; LogLevel: Integer) of object;
-  THTTPServerClientEvent = procedure (Server: TF5HTTPServer; Client: THTTPServerClient) of object;
-  THTTPServerClientContentEvent = procedure (Server: TF5HTTPServer; Client: THTTPServerClient; const Buf; const Size: Integer) of object;
+
+
+  THTTPServerEvent = procedure (const AServer: TF5HTTPServer) of object;
+
+  THTTPServerLogEvent = procedure (
+      const AServer: TF5HTTPServer;
+      const ALogType: THTTPServerLogType;
+      const AMsg: String;
+      const ALogLevel: Integer) of object;
+
+  THTTPServerClientEvent = procedure (
+      const AServer: TF5HTTPServer;
+      const AClient: THTTPServerClient) of object;
+
+  THTTPServerClientContentEvent = procedure (
+      const AServer: TF5HTTPServer;
+      const AClient: THTTPServerClient;
+      const Buf; const Size: Integer) of object;
 
   TF5HTTPServer = class(TComponent)
   protected
-    // events
     FOnLog              : THTTPServerLogEvent;
     FOnStart            : THTTPServerEvent;
     FOnStop             : THTTPServerEvent;
@@ -291,7 +322,6 @@ type
     FOnPrepareResponse  : THTTPServerClientEvent;
     FOnResponseComplete : THTTPServerClientEvent;
 
-    // parameters
     FAddressFamily  : THTTPServerAddressFamily;
     FBindAddressStr : String;
     FServerPort     : Integer;
@@ -311,9 +341,9 @@ type
     FUserData   : Pointer;
     FUserTag    : NativeInt;
 
-    // state
     FLock             : TCriticalSection;
     FActive           : Boolean;
+    FStopping         : Boolean;
     FActivateOnLoaded : Boolean;
     FTCPServer        : TF5TCPServer;
 
@@ -380,13 +410,15 @@ type
 
     procedure DoStart;
     procedure DoStop;
-    procedure SetActive(const Active: Boolean);
+
+    procedure SetActive(const AActive: Boolean);
 
     function  GetClientCount: Integer;
 
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    procedure Finalise;
 
     property  OnLog: THTTPServerLogEvent read FOnLog write FOnLog;
 
@@ -404,8 +436,8 @@ type
     property  AddressFamily: THTTPServerAddressFamily read FAddressFamily write SetAddressFamily default safIP4;
     property  BindAddress: String read FBindAddressStr write SetBindAddress;
     property  ServerPort: Integer read FServerPort write SetServerPort;
-    property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default HTTP_SERVER_DEFAULT_MaxBacklog;
-    property  MaxClients: Integer read FMaxClients write SetMaxClients default HTTP_SERVER_DEFAULT_MaxClients;
+    property  MaxBacklog: Integer read FMaxBacklog write SetMaxBacklog default HTTPSERVER_DefaultMaxBacklog;
+    property  MaxClients: Integer read FMaxClients write SetMaxClients default HTTPSERVER_DefaultMaxClients;
 
     property  ServerName: RawByteString read FServerName write SetServerName;
     
@@ -419,11 +451,10 @@ type
     property  Active: Boolean read FActive write SetActive default False;
 
     property  TCPServer: TF5TCPServer read FTCPServer;
-    
+
     property  ClientCount: Integer read GetClientCount;
 
     property  UserObject: TObject read FUserObject write FUserObject;
-    property  UserData: Pointer read FUserData write FUserData;
     property  UserTag: NativeInt read FUserTag write FUserTag;
   end;
 
@@ -468,20 +499,13 @@ type
     property  Active;
   end;
 
-{$IFDEF HTTPSERVER_CUSTOM}
-  {$INCLUDE cHTTPServerIntf.inc}
-{$ENDIF}
-
 
 
 implementation
 
 {$IFDEF HTTP_TLS}
 uses
-  {$IFDEF HTTPSERVER_CUSTOM}
-    {$INCLUDE cHTTPServerUses.inc}
-  {$ENDIF}
-  flcTLSServer;
+  flcTLSTransportServer;
 {$ENDIF}
 
 
@@ -490,9 +514,6 @@ uses
 { HTTP Server constants                                                        }
 {                                                                              }
 const
-  HTTPSERVER_PORT     = 80;
-  HTTPSERVER_PORT_STR = '80';
-
   HTTPSERVER_RequestHeader_MaxSize  = 16384;
   HTTPSERVER_RequestHeader_Delim    = #13#10#13#10;
   HTTPSERVER_RequestHeader_DelimLen = Length(HTTPSERVER_RequestHeader_Delim);
@@ -506,7 +527,7 @@ const
   SError_NotAllowedWhileActive = 'Operation not allowed while active';
 
 const
-  SClientState : array[THTTPServerClientState] of RawByteString = (
+  SClientState : array[THTTPServerClientState] of String = (
       'Initialise',
       'AwaitingRequest',
       'ReceivedRequestHeader',
@@ -519,25 +540,26 @@ const
       'ResponseComplete',
       'ResponseCompleteAndClosing',
       'ResponseCompleteAndClosed',
-      'RequestInterruptedAndClosed');
+      'RequestInterruptedAndClosed'
+    );
 
 
 
 {                                                                              }
 { THTTPServerClient                                                            }
 {                                                                              }
-constructor THTTPServerClient.Create(const HTTPServer: TF5HTTPServer; const TCPClient: TTCPServerClient);
+constructor THTTPServerClient.Create(
+            const AHTTPServer: TF5HTTPServer;
+            const ATCPClient: TTCPServerClient);
 begin
-  Assert(Assigned(HTTPServer));
-  Assert(Assigned(TCPClient));
-  //
+  Assert(Assigned(AHTTPServer));
+  Assert(Assigned(ATCPClient));
+
   inherited Create;
-  FHTTPServer := HTTPServer;
-  FTCPClient := TCPClient;
+
+  FHTTPServer := AHTTPServer;
+  FTCPClient := ATCPClient;
   Init;
-  {$IFDEF HTTP_DEBUG}
-  Log(sltDebug, 'Initialised');
-  {$ENDIF}
 end;
 
 procedure THTTPServerClient.Init;
@@ -564,7 +586,10 @@ end;
 
 destructor THTTPServerClient.Destroy;
 begin
-  Finalise;
+  FreeAndNil(FResponseContentWriter);
+  FreeAndNil(FRequestContentReader);
+  FreeAndNil(FHTTPParser);
+  FreeAndNil(FLock);
   inherited Destroy;
 end;
 
@@ -572,10 +597,6 @@ procedure THTTPServerClient.Finalise;
 begin
   FHTTPServer := nil;
   FTCPClient := nil;
-  FreeAndNil(FResponseContentWriter);
-  FreeAndNil(FRequestContentReader);
-  FreeAndNil(FHTTPParser);
-  FreeAndNil(FLock);
 end;
 
 procedure THTTPServerClient.Log(const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
@@ -591,14 +612,12 @@ end;
 
 procedure THTTPServerClient.Lock;
 begin
-  if Assigned(FLock) then
-    FLock.Acquire;
+  FLock.Acquire;
 end;
 
 procedure THTTPServerClient.Unlock;
 begin
-  if Assigned(FLock) then
-    FLock.Release;
+  FLock.Release;
 end;
 
 function THTTPServerClient.GetState: THTTPServerClientState;
@@ -611,7 +630,7 @@ begin
   end;
 end;
 
-function THTTPServerClient.GetStateStr: RawByteString;
+function THTTPServerClient.GetStateStr: String;
 begin
   Result := SClientState[GetState];
 end;
@@ -633,7 +652,7 @@ begin
   Result := FTCPClient.RemoteAddr;
 end;
 
-function THTTPServerClient.GetRemoteAddrStr: RawByteString;
+function THTTPServerClient.GetRemoteAddrStr: String;
 begin
   Result := FTCPClient.RemoteAddrStr;
 end;
@@ -643,6 +662,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'State:%s', [GetStateStr]);
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientStateChanged(self);
 end;
@@ -653,6 +673,7 @@ begin
   Log(sltDebug, 'RequestHeader:');
   Log(sltDebug, String(HTTPRequestToStr(FRequest)));
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientRequestHeader(self);
 end;
@@ -662,6 +683,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'RequestContentBuffer');
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientRequestContentBuffer(self, Buf, Size);
 end;
@@ -671,6 +693,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'RequestContentComplete');
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientRequestContentComplete(self);
 end;
@@ -680,6 +703,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'PrepareResponse');
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientPrepareResponse(self);
 end;
@@ -689,6 +713,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ResponseComplete');
   {$ENDIF}
+
   Assert(Assigned(FHTTPServer));
   FHTTPServer.ClientResponseComplete(self);
 end;
@@ -699,13 +724,13 @@ end;
 
 procedure THTTPServerClient.TCPClientRead;
 begin
-  Assert(FState in [
-      hscsInit,                            // ??
+{  Assert(FState in [
+      hscsInit,
       hscsAwaitingRequest,
       hscsReceivingContent,
       hscsResponseComplete,
-      hscsResponseCompleteAndClosing,      // ??
-      hscsResponseCompleteAndClosed]);     // ??
+      hscsResponseCompleteAndClosing,
+      hscsResponseCompleteAndClosed]); }  //// 2020/05/01  OnRead can be called when closed in TCP connection
   if FState = hscsResponseComplete then
     SetState(hscsAwaitingRequest);
   if FState = hscsAwaitingRequest then
@@ -731,6 +756,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPClient_Close');
   {$ENDIF}
+
   if FState in [hscsInit,
                 hscsResponseCompleteAndClosed,
                 hscsRequestInterruptedAndClosed] then
@@ -760,10 +786,11 @@ function THTTPServerClient.ContentReaderReadProc(const Sender: THTTPContentReade
 begin
   Assert(Assigned(FTCPClient));
   Assert(FState in [hscsReceivingContent]);
-  //
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ContentReader_Read');
   {$ENDIF}
+
   Result := FTCPClient.Connection.Read(Buf, Size);
 end;
 
@@ -773,6 +800,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ContentReader_Content');
   {$ENDIF}
+
   TriggerRequestContentBuffer(Buf, Size);
 end;
 
@@ -781,6 +809,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ContentReader_ContentComplete');
   {$ENDIF}
+
   FinaliseRequestContent;
   SetRequestComplete;
 end;
@@ -799,13 +828,14 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ContentWriter_Write');
   {$ENDIF}
+
   Result := FTCPClient.Connection.Write(Buf, Size);
 end;
 
 procedure THTTPServerClient.SendStr(const S: RawByteString);
 begin
   Assert(Assigned(FTCPClient));
-  FTCPClient.Connection.WriteStrB(S);
+  FTCPClient.Connection.WriteByteString(S);
 end;
 
 procedure THTTPServerClient.Start;
@@ -831,16 +861,18 @@ var
 begin
   Assert(Assigned(FTCPClient));
   Assert(FState in [hscsAwaitingRequest]);
-  //
+
   HdrLen := FTCPClient.Connection.PeekDelimited(
       HdrBuf[0], HdrBufSize,
       HTTPSERVER_RequestHeader_Delim,
       HTTPSERVER_RequestHeader_MaxSize);
   if HdrLen < 0 then
     exit;
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'RequestHeader:%db', [HdrLen]);
   {$ENDIF}
+
   ClearHTTPRequest(FRequest);
   FHTTPParser.SetTextBuf(HdrBuf[0], HdrLen);
   FHTTPParser.ParseRequest(FRequest);
@@ -849,10 +881,12 @@ begin
       {$IFDEF HTTP_DEBUG}
       Log(sltDebug, 'RequestHeader:BadFormat:ClosingConnection');
       {$ENDIF}
+
       FTCPClient.Close;
       exit;
     end;
   FTCPClient.Connection.Discard(HdrLen);
+
   ClearResponse;
   ProcessRequestHeader;
   SetState(hscsReceivedRequestHeader);
@@ -903,14 +937,17 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'InitResponse');
   {$ENDIF}
+
   FResponse.StartLine.Version := FRequest.StartLine.Version;
   if FRequest.StartLine.Version.Version = hvHTTP11 then
     case FRequest.Header.CommonHeaders.Connection.Value of
       hcfClose     : FResponse.Header.CommonHeaders.Connection.Value := hcfClose;
       hcfKeepAlive : FResponse.Header.CommonHeaders.Connection.Value := hcfKeepAlive;
     end;
+
   FResponse.Header.CommonHeaders.Date.Value := hdDateTime;
   FResponse.Header.CommonHeaders.Date.DateTime := Now;
+
   if FHTTPServer.FServerName <> '' then
     FResponse.Header.FixedHeaders[hntServer] := FHTTPServer.FServerName;
 end;
@@ -920,6 +957,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'PrepareResponse');
   {$ENDIF}
+
   TriggerPrepareResponse;
   if FResponse.StartLine.Msg = hslmNone then
     FResponse.StartLine.Msg := HTTPResponseCodeToStartLineMessage(FResponse.StartLine.Code);
@@ -937,6 +975,7 @@ begin
     B := ContentLen;
   FResponse.Header.CommonHeaders.ContentLength.Value := hcltByteCount;
   FResponse.Header.CommonHeaders.ContentLength.ByteCount := B;
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, Format('InitResponseContent:%d:%db:%db', [Ord(HasContent), ContentLen, B]));
   {$ENDIF}
@@ -947,6 +986,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'SendResponseContent');
   {$ENDIF}
+
   FResponseContentWriter.SendContent;
 end;
 
@@ -955,6 +995,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ResponsePrepared');
   {$ENDIF}
+
   SendResponse;
 end;
 
@@ -962,17 +1003,21 @@ procedure THTTPServerClient.SendResponse;
 var ResponseHdr : RawByteString;
 begin
   InitResponseContent;
+
   SetState(hscsSendingResponseHeader);
   ResponseHdr := HTTPResponseToStr(FResponse);
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ResponseHeader:');
   Log(sltDebug, String(ResponseHdr));
   {$ENDIF}
+
   SendStr(HTTPResponseToStr(FResponse));
   SetState(hscsSendingContent);
   SendResponseContent;
   if not FResponseContentWriter.ContentComplete then
     exit;
+
   SetResponseComplete;
 end;
 
@@ -980,7 +1025,9 @@ procedure THTTPServerClient.SetResponseComplete;
 begin
   Assert(FState = hscsSendingContent);
   SetState(hscsResponseComplete);
+
   TriggerResponseComplete;
+
   if (FRequest.StartLine.Version.Version = hvHTTP10) or
      (FRequest.Header.CommonHeaders.Connection.Value = hcfClose) or
      (FResponse.Header.CommonHeaders.Connection.Value = hcfClose) then
@@ -988,6 +1035,7 @@ begin
       {$IFDEF HTTP_DEBUG}
       Log(sltDebug, 'SetResponseComplete:ConnectionClose');
       {$ENDIF}
+
       FTCPClient.Connection.Shutdown;
       SetState(hscsResponseCompleteAndClosing);
     end;
@@ -1033,9 +1081,9 @@ begin
   Result := FResponse.StartLine.Code;
 end;
 
-procedure THTTPServerClient.SetResponseCode(const ResponseCode: Integer);
+procedure THTTPServerClient.SetResponseCode(const AResponseCode: Integer);
 begin
-  FResponse.StartLine.Code := ResponseCode;
+  FResponse.StartLine.Code := AResponseCode;
 end;
 
 function THTTPServerClient.GetResponseMsg: RawByteString;
@@ -1043,10 +1091,10 @@ begin
   Result := FResponse.StartLine.CustomMsg;
 end;
 
-procedure THTTPServerClient.SetResponseMsg(const ResponseMsg: RawByteString);
+procedure THTTPServerClient.SetResponseMsg(const AResponseMsg: RawByteString);
 begin
   FResponse.StartLine.Msg := hslmCustom;
-  FResponse.StartLine.CustomMsg := ResponseMsg;
+  FResponse.StartLine.CustomMsg := AResponseMsg;
 end;
 
 function THTTPServerClient.GetResponseContentType: RawByteString;
@@ -1054,10 +1102,11 @@ begin
   Result := HTTPContentTypeValueToStr(FResponse.Header.CommonHeaders.ContentType);
 end;
 
-procedure THTTPServerClient.SetResponseContentType(const ResponseContentType: RawByteString);
+procedure THTTPServerClient.SetResponseContentType(
+          const AResponseContentType: RawByteString);
 begin
   FResponse.Header.CommonHeaders.ContentType.Value := hctCustomString;
-  FResponse.Header.CommonHeaders.ContentType.CustomStr := ResponseContentType;
+  FResponse.Header.CommonHeaders.ContentType.CustomStr := AResponseContentType;
 end;
 
 function THTTPServerClient.GetResponseRecordPtr: PHTTPResponse;
@@ -1070,9 +1119,9 @@ begin
   Result := FRequestContentReader.ContentStream;
 end;
 
-procedure THTTPServerClient.SetRequestContentStream(const RequestContentStream: TStream);
+procedure THTTPServerClient.SetRequestContentStream(const ARequestContentStream: TStream);
 begin
-  FRequestContentReader.ContentStream := RequestContentStream;
+  FRequestContentReader.ContentStream := ARequestContentStream;
 end;
 
 function THTTPServerClient.GetRequestContentFileName: String;
@@ -1080,9 +1129,9 @@ begin
   Result := FRequestContentReader.ContentFileName;
 end;
 
-procedure THTTPServerClient.SetRequestContentFileName(const RequestContentFileName: String);
+procedure THTTPServerClient.SetRequestContentFileName(const ARequestContentFileName: String);
 begin
-  FRequestContentReader.ContentFileName := RequestContentFileName;
+  FRequestContentReader.ContentFileName := ARequestContentFileName;
 end;
 
 function THTTPServerClient.GetRequestContentStr: RawByteString;
@@ -1100,9 +1149,10 @@ begin
   Result := FResponseContentWriter.Mechanism;
 end;
 
-procedure THTTPServerClient.SetResponseContentMechanism(const ResponseContentMechanism: THTTPContentWriterMechanism);
+procedure THTTPServerClient.SetResponseContentMechanism(
+          const AResponseContentMechanism: THTTPContentWriterMechanism);
 begin
-  FResponseContentWriter.Mechanism := ResponseContentMechanism;
+  FResponseContentWriter.Mechanism := AResponseContentMechanism;
 end;
 
 function THTTPServerClient.GetResponseContentStr: RawByteString;
@@ -1110,10 +1160,10 @@ begin
   Result := FResponseContentWriter.ContentString;
 end;
 
-procedure THTTPServerClient.SetResponseContentStr(const ResponseContentStr: RawByteString);
+procedure THTTPServerClient.SetResponseContentStr(const AResponseContentStr: RawByteString);
 begin
   FResponseContentWriter.Mechanism := hctmString;
-  FResponseContentWriter.ContentString := ResponseContentStr;
+  FResponseContentWriter.ContentString := AResponseContentStr;
 end;
 
 function THTTPServerClient.GetResponseContentStream: TStream;
@@ -1121,10 +1171,10 @@ begin
   Result := FResponseContentWriter.ContentStream;
 end;
 
-procedure THTTPServerClient.SetResponseContentStream(const ResponseContentStream: TStream);
+procedure THTTPServerClient.SetResponseContentStream(const AResponseContentStream: TStream);
 begin
   FResponseContentWriter.Mechanism := hctmStream;
-  FResponseContentWriter.ContentStream := ResponseContentStream;
+  FResponseContentWriter.ContentStream := AResponseContentStream;
 end;
 
 function THTTPServerClient.GetResponseContentFileName: String;
@@ -1132,45 +1182,48 @@ begin
   Result := FResponseContentWriter.ContentFileName;
 end;
 
-procedure THTTPServerClient.SetResponseContentFileName(const ResponseContentFileName: String);
+procedure THTTPServerClient.SetResponseContentFileName(const AResponseContentFileName: String);
 begin
   FResponseContentWriter.Mechanism := hctmFile;
-  FResponseContentWriter.ContentFileName := ResponseContentFileName;
+  FResponseContentWriter.ContentFileName := AResponseContentFileName;
 end;
 
-procedure THTTPServerClient.SetResponseReady(const ResponseReady: Boolean);
+procedure THTTPServerClient.SetResponseReady(const AResponseReady: Boolean);
 begin
-  if not ResponseReady then
+  if not AResponseReady then
     exit;
   Assert(FState in [hscsInit, hscsAwaitingRequest, hscsReceivedRequestHeader,
                     hscsReceivingContent, hscsRequestComplete, hscsPreparingResponse,
                     hscsAwaitingPreparedResponse]);
-  FResponseReady := ResponseReady;
+
+  FResponseReady := AResponseReady;
   if FState = hscsAwaitingPreparedResponse then
     ResponsePrepared;
 end;
 
-procedure THTTPServerClient.SetResponseOKHtmlStr(const HtmlStr: RawByteString);
+procedure THTTPServerClient.SetResponseOKHtmlStr(const AHtmlStr: RawByteString);
 var ContentType : THTTPContentTypeEnum;
 begin
   ResponseCode := HTTP_ResponseCode_OK;
-  if Length(HtmlStr) > 0 then
+  if Length(AHtmlStr) > 0 then
     ContentType := hctTextHtml
   else
     ContentType := hctNone;
   ResponseRecordPtr^.Header.CommonHeaders.ContentType.Value := ContentType;
+
   ResponseContentMechanism := hctmString;
-  ResponseContentStr := HtmlStr;
+  ResponseContentStr := AHtmlStr;
   ResponseReady := True;
 end;
 
-procedure THTTPServerClient.SetResponseOKFile(const ContentType: THTTPContentTypeEnum;
-          const FileName: String);
+procedure THTTPServerClient.SetResponseOKFile(
+          const AContentType: THTTPContentTypeEnum;
+          const AFileName: String);
 begin
   ResponseCode := HTTP_ResponseCode_OK;
-  ResponseRecordPtr^.Header.CommonHeaders.ContentType.Value := ContentType;
+  ResponseRecordPtr^.Header.CommonHeaders.ContentType.Value := AContentType;
   ResponseContentMechanism := hctmFile;
-  ResponseContentFileName := FileName;
+  ResponseContentFileName := AFileName;
   ResponseReady := True;
 end;
 
@@ -1181,10 +1234,10 @@ begin
   ResponseReady := True;
 end;
 
-procedure THTTPServerClient.SetResponseRedirect(const Location: RawByteString);
+procedure THTTPServerClient.SetResponseRedirect(const ALocation: RawByteString);
 begin
   ResponseCode := HTTP_ResponseCode_SeeOther;
-  ResponseRecordPtr^.Header.FixedHeaders[hntLocation] := Location;
+  ResponseRecordPtr^.Header.FixedHeaders[hntLocation] := ALocation;
   ResponseReady := True;
 end;
 
@@ -1214,9 +1267,7 @@ end;
 
 procedure TF5HTTPServer.InitTCPServer;
 begin
-  Assert(not Assigned(FTCPServer));
   FTCPServer := TF5TCPServer.Create(nil);
-  
   FTCPServer.OnLog               := TCPServerLog;
   FTCPServer.OnStateChanged      := TCPServerStateChanged;
   FTCPServer.OnClientAccept      := TCPServerClientAccept;
@@ -1233,9 +1284,9 @@ procedure TF5HTTPServer.InitDefaults;
 begin
   FAddressFamily  := safIP4;
   FBindAddressStr := '0.0.0.0';
-  FServerPort     := HTTPSERVER_PORT;
-  FMaxBacklog     := HTTP_SERVER_DEFAULT_MaxBacklog;
-  FMaxClients     := HTTP_SERVER_DEFAULT_MaxClients;
+  FServerPort     := HTTPSERVER_DefaultPort;
+  FMaxBacklog     := HTTPSERVER_DefaultMaxBacklog;
+  FMaxClients     := HTTPSERVER_DefaultMaxClients;
   {$IFDEF HTTP_TLS}
   FHTTPSEnabled   := False;
   {$ENDIF}
@@ -1245,13 +1296,16 @@ end;
 
 destructor TF5HTTPServer.Destroy;
 begin
-  if Assigned(FTCPServer) then
-    begin
-      FTCPServer.Finalise;
-      FreeAndNil(FTCPServer);
-    end;
+  FreeAndNil(FTCPServer);
   FreeAndNil(FLock);
   inherited Destroy;
+end;
+
+procedure TF5HTTPServer.Finalise;
+begin
+  FUserObject := nil;
+  if Assigned(FTCPServer) then
+    FTCPServer.Finalise;
 end;
 
 procedure TF5HTTPServer.Loaded;
@@ -1261,27 +1315,32 @@ begin
     DoStart;
 end;
 
-procedure TF5HTTPServer.Log(const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
+procedure TF5HTTPServer.Log(
+          const LogType: THTTPServerLogType;
+          const Msg: String;
+          const LogLevel: Integer);
 begin
   if Assigned(FOnLog) then
     FOnLog(self, LogType, Msg, LogLevel);
 end;
 
-procedure TF5HTTPServer.Log(const LogType: THTTPServerLogType; const Msg: String; const Args: array of const; const LogLevel: Integer);
+procedure TF5HTTPServer.Log(
+          const LogType: THTTPServerLogType;
+          const Msg: String;
+          const Args: array of const;
+          const LogLevel: Integer);
 begin
   Log(LogType, Format(Msg, Args), LogLevel);
 end;
 
 procedure TF5HTTPServer.Lock;
 begin
-  if Assigned(FLock) then
-    FLock.Acquire;
+  FLock.Acquire;
 end;
 
 procedure TF5HTTPServer.Unlock;
 begin
-  if Assigned(FLock) then
-    FLock.Release;
+  FLock.Release;
 end;
 
 procedure TF5HTTPServer.CheckNotActive;
@@ -1311,8 +1370,10 @@ procedure TF5HTTPServer.SetServerPort(const ServerPort: Integer);
 begin
   if ServerPort = FServerPort then
     exit;
+
   CheckNotActive;
   FServerPort := ServerPort;
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ServerPort:%d', [ServerPort]);
   {$ENDIF}
@@ -1332,8 +1393,10 @@ procedure TF5HTTPServer.SetServerName(const ServerName: RawByteString);
 begin
   if ServerName = FServerName then
     exit;
+
   CheckNotActive;
   FServerName := ServerName;
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ServerName:%s', [ServerName]);
   {$ENDIF}
@@ -1344,8 +1407,10 @@ procedure TF5HTTPServer.SetHTTPSEnabled(const HTTPSEnabled: Boolean);
 begin
   if HTTPSEnabled = FHTTPSEnabled then
     exit;
+
   CheckNotActive;
   FHTTPSEnabled := HTTPSEnabled;
+
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'HTTPSEnabled:%d', [Ord(HTTPSEnabled)]);
   {$ENDIF}
@@ -1355,15 +1420,18 @@ procedure TF5HTTPServer.SetHTTPSOptions(const HTTPSOptions: THTTPSServerOptions)
 begin
   if HTTPSOptions = FHTTPSOptions then
     exit;
+
   CheckNotActive;
   FHTTPSOptions := HTTPSOptions;
 end;
 {$ENDIF}
 
-procedure TF5HTTPServer.SetRequestContentMechanism(const RequestContentMechanism: THTTPContentReaderMechanism);
+procedure TF5HTTPServer.SetRequestContentMechanism(
+          const RequestContentMechanism: THTTPContentReaderMechanism);
 begin
   if RequestContentMechanism = FRequestContentMechanism then
     exit;
+
   CheckNotActive;
   FRequestContentMechanism := RequestContentMechanism;
 end;
@@ -1398,7 +1466,9 @@ begin
     FOnRequestHeader(self, Client);
 end;
 
-procedure TF5HTTPServer.TriggerRequestContent(const Client: THTTPServerClient; const Buf; const Size: Integer);
+procedure TF5HTTPServer.TriggerRequestContent(
+          const Client: THTTPServerClient;
+          const Buf; const Size: Integer);
 begin
   if Assigned(FOnRequestContent) then
     FOnRequestContent(self, Client, Buf, Size);
@@ -1422,7 +1492,11 @@ begin
     FOnResponseComplete(self, Client);
 end;
 
-procedure TF5HTTPServer.TCPServerLog(Sender: TF5TCPServer; LogType: TTCPLogType; Msg: String; LogLevel: Integer);
+procedure TF5HTTPServer.TCPServerLog(
+          Sender: TF5TCPServer;
+          LogType: TTCPLogType;
+          Msg: String;
+          LogLevel: Integer);
 begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer:%s', [Msg], LogLevel + 1);
@@ -1450,6 +1524,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientCreate');
   {$ENDIF}
+
   C := THTTPServerClient.Create(self, Sender);
   Sender.UserObject := C;
 end;
@@ -1460,6 +1535,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientAdd');
   {$ENDIF}
+
   Assert(Sender.UserObject is THTTPServerClient);
   C := THTTPServerClient(Sender.UserObject);
   C.Start;
@@ -1470,6 +1546,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientRemove');
   {$ENDIF}
+
   Assert(not Assigned(Sender.UserObject) or (Sender.UserObject is THTTPServerClient));
   if Assigned(Sender.UserObject) then
     begin
@@ -1487,6 +1564,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientStateChange:%s', [Sender.StateStr]);
   {$ENDIF}
+
   C := Sender.UserObject as THTTPServerClient;
   C.TCPClientStateChange;
 end;
@@ -1497,6 +1575,8 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientRead');
   {$ENDIF}
+
+  Assert(Sender.UserObject is THTTPServerClient);
   C := Sender.UserObject as THTTPServerClient;
   C.TCPClientRead;
 end;
@@ -1507,6 +1587,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientWrite');
   {$ENDIF}
+
   Assert(Sender.UserObject is THTTPServerClient);
   C := THTTPServerClient(Sender.UserObject);
   C.TCPClientWrite;
@@ -1518,12 +1599,17 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'TCPServer_ClientClose');
   {$ENDIF}
+
   Assert(Sender.UserObject is THTTPServerClient);
   C := THTTPServerClient(Sender.UserObject);
   C.TCPClientClose;
 end;
 
-procedure TF5HTTPServer.ClientLog(const Client: THTTPServerClient; const LogType: THTTPServerLogType; const Msg: String; const LogLevel: Integer);
+procedure TF5HTTPServer.ClientLog(
+          const Client: THTTPServerClient;
+          const LogType: THTTPServerLogType;
+          const Msg: String;
+          const LogLevel: Integer);
 begin
   {$IFDEF HTTP_DEBUG}
   Log(LogType, 'Client:%s', [Msg], LogLevel + 1);
@@ -1542,14 +1628,18 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'Client_RequestHeader');
   {$ENDIF}
+
   TriggerRequestHeader(Client);
 end;
 
-procedure TF5HTTPServer.ClientRequestContentBuffer(const Client: THTTPServerClient; const Buf; const Size: Integer);
+procedure TF5HTTPServer.ClientRequestContentBuffer(
+          const Client: THTTPServerClient;
+          const Buf; const Size: Integer);
 begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'Client_RequestContentBuffer');
   {$ENDIF}
+
   TriggerRequestContent(Client, Buf, Size);
 end;
 
@@ -1558,6 +1648,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'Client_RequestContentComplete');
   {$ENDIF}
+
   TriggerRequestComplete(Client);
 end;
 
@@ -1566,6 +1657,7 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'Client_PrepareResponse');
   {$ENDIF}
+
   TriggerPrepareResponse(Client);
 end;
 
@@ -1574,14 +1666,16 @@ begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'Client_ResponseComplete');
   {$ENDIF}
+
   TriggerResponseComplete(Client);
 end;
 
 procedure TF5HTTPServer.SetupTCPServer;
-var AF : TIPAddressFamily;
-    {$IFDEF HTTP_TLS}
-    TLSOpt : TTLSServerOptions;
-    {$ENDIF}
+var
+  AF : TIPAddressFamily;
+  {$IFDEF HTTP_TLS}
+  //TLSOpt : TTLSServerOptions;
+  {$ENDIF}
 begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'SetupTCPServer');
@@ -1598,8 +1692,10 @@ begin
   FTCPServer.AddressFamily := AF;
   FTCPServer.BindAddress   := FBindAddressStr;
   FTCPServer.ServerPort    := FServerPort;
+
   {$IFDEF HTTP_TLS}
   FTCPServer.TLSEnabled := FHTTPSEnabled;
+  {
   TLSOpt := [];
   if ssoDontUseSSL3 in FHTTPSOptions then
     Include(TLSOpt, tlssoDontUseSSL3);
@@ -1610,42 +1706,66 @@ begin
   if ssoDontUseTLS12 in FHTTPSOptions then
     Include(TLSOpt, tlssoDontUseTLS12);
   FTCPServer.TLSServer.Options := TLSOpt;
+  }
+  ////
   {$ENDIF}
 end;
 
 procedure TF5HTTPServer.DoStart;
 begin
-  Assert(not FActive);
+  Lock;
+  try
+    if FActive then
+      exit;
+    FActive := True;
+  finally
+    Unlock;
+  end;
+
+  Log(sltInfo, 'Active');
+  TriggerActive;
 
   Log(sltInfo, 'Start');
   TriggerStart;
+
   SetupTCPServer;
   FTCPServer.Start;
-
-  FActive := True;
-  Log(sltInfo, 'Active');
-  TriggerActive;
 end;
 
 procedure TF5HTTPServer.DoStop;
 begin
-  Assert(FActive);
-  Assert(Assigned(FTCPServer));
+  Lock;
+  try
+    if not FActive or FStopping then
+      exit;
+    FStopping := True;
+  finally
+    Unlock;
+  end;
 
-  Log(sltInfo, 'Stop');
-  TriggerStop;
-  FTCPServer.Stop;
+  try
+    Log(sltInfo, 'Stop');
+    TriggerStop;
 
-  FActive := False;
+    Assert(Assigned(FTCPServer));
+    FTCPServer.Stop;
+  finally
+    Lock;
+    try
+      FActive := False;
+      FStopping := False;
+    finally
+      Unlock;
+    end;
+  end;
+
   Log(sltInfo, 'Inactive');
   TriggerInactive;
 end;
 
-procedure TF5HTTPServer.SetActive(const Active: Boolean);
+procedure TF5HTTPServer.SetActive(const AActive: Boolean);
 begin
-  if Active = FActive then
-    exit;
-  if Active then
+  if AActive then
     DoStart
   else
     DoStop;
@@ -1658,12 +1778,5 @@ end;
 
 
 
-{$IFDEF HTTPSERVER_CUSTOM}
-  {$INCLUDE cHTTPServerImpl.inc}
-{$ENDIF}
-
-
-
 end.
-
 
