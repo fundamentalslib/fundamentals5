@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTimers.pas                                            }
-{   File version:     5.18                                                     }
+{   File version:     5.20                                                     }
 {   Description:      Timer functions                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -52,18 +52,20 @@
 {   2020/01/28  5.16  MilliTick and MicroDateTime functions.                   }
 {   2020/01/31  5.17  Use DateTime implementations on iOS.                     }
 {   2020/03/10  5.18  Use MachAbsoluteTime on OSX.                             }
+{   2020/03/22  5.19  Use maximum resolution on OSX and Delphi Posix.          }
+{                     Add high resolution tick functions.                      }
+{   2020/05/20  5.20  Use MachAbsoluteTime on iOS.                             }
+{                     Remove legacy tick timer, use MilliTick timer for same   }
+{                     functionality.                                           }
+{                     Remote legacy HPTimer, use HighResolutionTick for same   }
+{                     functionality.                                           }
+{                     Add GetMicroDateTimeNowUT and GetMicroDateTimeNowUTC.    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 5/6/2005/2006/2007 Win32                                            }
-{   Delphi 2009 .NET                                                           }
-{   Delphi 7 Win32                      5.11  2019/02/24                       }
-{   Delphi XE7 Win32                    5.10  2016/01/17                       }
-{   Delphi XE7 Win64                    5.10  2016/01/17                       }
-{   Delphi 10.2 Linux64                 5.12  2019/04/02                       }
-{   FreePascal 3.0.4 Win32              5.11  2019/02/24                       }
-{   FreePascal 2.6.2 Linux i386                                                }
-{   FreePascal 2.4.0 OSX x86-64                                                }
+{   Delphi 2010-10.4 Win32/Win64        5.20  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.20  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.20  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -89,115 +91,87 @@ uses
 
 
 {                                                                              }
-{ Errors                                                                       }
+{ Error                                                                        }
 {                                                                              }
 type
-  ETimers = class(Exception);
+  ETimerError = class(Exception);
 
 
 
 {                                                                              }
-{ Tick timer                                                                   }
+{ High resolution tick                                                         }
+{   GetHighResolutionFrequency returns the resolution of the high resolution   }
+{   timer in units per second.                                                 }
 {                                                                              }
-{   The tick timer returns millisecond units.                                  }
-{   On some systems the tick is only accurate to 10-20ms.                      }
-{   TickDelta calculates the elapsed ticks between D1 to D2.                   }
-{   EstimateTickAccuracy estimates the tick accuracy.                          }
-{                                                                              }
-const
-  TickFrequency = 1000;
-
-function  GetTick: Word32;
-function  GetTick64: Word64;
-
-function  TickDelta(const D1, D2: Word32): Int32;
-function  TickDeltaW(const D1, D2: Word32): Word32;
-
-function  TickDelta64(const D1, D2: Word64): Int64;
-function  TickDelta64W(const D1, D2: Word64): Word64;
-
-function  EstimateTickAccuracy(const ReTest: Boolean = False): Word32;
-
-
-
-{                                                                              }
-{ High-precision timer                                                         }
-{                                                                              }
-{   StartTimer returns an encoded time (running timer).                        }
-{   StopTimer returns an encoded elapsed time (stopped timer).                 }
-{   ResumeTimer returns an encoded time (running timer), given an encoded      }
-{     elapsed time (stopped timer).                                            }
-{   StoppedTimer returns an encoded elapsed time of zero, ie a stopped timer   }
-{     with no time elapsed.                                                    }
-{   MillisecondsElapsed returns elapsed time for a timer in milliseconds.      }
-{   MicrosecondsElapsed returns elapsed time for a timer in microseconds.      }
-{   DelayMicroSeconds goes into a tight loop for the specified duration. It    }
-{     should be used where short and accurate delays are required.             }
-{   GetHighPrecisionFrequency returns the resolution of the high-precision     }
-{     timer in units per second.                                               }
-{   GetHighPrecisionTimerOverhead calculates the overhead associated with      }
-{     calling both StartTimer and StopTimer. Use this value as Overhead when   }
-{     calling AdjustTimerForOverhead.                                          }
-{                                                                              }
-type
-  THPTimer = Int64;
-
-function  GetHighPrecisionTimer: Int64;
-function  GetHighPrecisionFrequency: Int64;
-
-procedure StartTimer(out Timer: THPTimer);
-procedure StopTimer(var Timer: THPTimer);
-procedure ResumeTimer(var StoppedTimer: THPTimer);
-
-procedure InitStoppedTimer(var Timer: THPTimer);
-procedure InitElapsedTimer(var Timer: THPTimer; const Milliseconds: Integer);
-
-function  MillisecondsElapsed(const Timer: THPTimer;
-          const TimerRunning: Boolean = True): Integer;
-function  MicrosecondsElapsed(const Timer: THPTimer;
-          const TimerRunning: Boolean = True): Int64;
-
-procedure WaitMicroseconds(const MicroSeconds: Integer);
-
-function  EstimateHighPrecisionTimerOverhead: Int64;
-procedure AdjustTimerForOverhead(var StoppedTimer: THPTimer;
-          const Overhead: Int64 = 0);
+function  GetHighResolutionTick: Word64;
+function  GetHighResolutionFrequency: Word64;
+function  HighResolutionTickDelta(const T1, T2: Word64): Int64;
+function  HighResolutionTickDeltaU(const T1, T2: Word64): Word64;
 
 
 
 {                                                                              }
 { MicroTick                                                                    }
-{  Timer in microsecond units, based on HighPrecisionTimer.                    }
+{  Timer in microsecond units, based on high resolution timer if available.    }
 {                                                                              }
+const
+  MicroTickFrequency = 1000000;
+
 function  GetMicroTick: Word64;
-function  GetMicroTick32: Word32;
 function  MicroTickDelta(const T1, T2: Word64): Int64;
-function  MicroTickDeltaW(const T1, T2: Word64): Word64;
-function  MicroTick32Delta(const T1, T2: Word32): Int32;
-function  MicroTick32DeltaW(const T1, T2: Word32): Word32;
+function  MicroTickDeltaU(const T1, T2: Word64): Word64;
 
 
 
 {                                                                              }
 { MilliTick                                                                    }
-{  Timer in millisecond units, based on HighPrecisionTimer.                    }
+{  Timer in millisecond units, based on high resolution timer if available.    }
 {                                                                              }
+const
+  MilliTickFrequency = 1000;
+
 function  GetMilliTick: Word64;
-function  GetMilliTick32: Word32;
 function  MilliTickDelta(const T1, T2: Word64): Int64;
-function  MilliTickDeltaW(const T1, T2: Word64): Word64;
-function  MilliTick32Delta(const T1, T2: Word32): Int32;
-function  MilliTick32DeltaW(const T1, T2: Word32): Word32;
+function  MilliTickDeltaU(const T1, T2: Word64): Word64;
 
 
 
 {                                                                              }
 { MicroDateTime                                                                }
-{   Represents DateTime as microseconds.                                       }
+{   Represents a TDateTime in microsecond units.                               }
 {                                                                              }
 function  DateTimeToMicroDateTime(const DT: TDateTime): Word64;
-function  GetMicroNow: Word64;
-function  GetMicroNowUT: Word64;
+function  MicroDateTimeToDateTime(const DT: Word64): TDateTime;
+
+
+
+{                                                                              }
+{ GetMicroDateTimeNow                                                          }
+{   Returns current system date/time as a MicroDateTime.                       }
+{                                                                              }
+function  GetMicroDateTimeNow: Word64;
+
+
+
+{                                                                              }
+{ GetMicroDateTimeNowUT                                                        }
+{   Returns current UT date/time as a MicroDateTime.                           }
+{                                                                              }
+function  GetNowUT: TDateTime;
+function  GetMicroDateTimeNowUT: Word64;
+
+
+
+{                                                                              }
+{ GetMicroDateTimeNowUTC                                                       }
+{   Returns current UT date/time as a MicroDateTime using a cached start       }
+{   time to speed up calculation and ensure monotonic values.                  }
+{   The UTC version may drift from the uncached UT version.                    }
+{   If ReInit is True, the cache start time is resynchronised with UT time     }
+{   from the system clock.                                                     }
+{                                                                              }
+function  GetNowUTC(const ReInit: Boolean = False): TDateTime;
+function  GetMicroDateTimeNowUTC(const ReInit: Boolean = False): Word64;
 
 
 
@@ -214,25 +188,31 @@ implementation
 
 {$IFDEF WindowsPlatform}
 uses
+  { System }
   Windows,
   DateUtils;
 {$ENDIF}
 
-{$IFDEF UNIX}
 {$IFDEF FREEPASCAL}
+{$IFDEF POSIX}
 uses
+  { System }
   BaseUnix,
   Unix,
   System.DateUtils;
 {$ENDIF}
 {$ENDIF}
 
-{$IFDEF POSIX}
 {$IFDEF DELPHI}
+{$IFDEF POSIX}
 uses
+  { System }
   Posix.Time,
   {$IFDEF MACOS}
   Macapi.CoreServices,
+  {$ENDIF}
+  {$IFDEF IOS}
+  Macapi.Mach,
   {$ENDIF}
   System.DateUtils;
 {$ENDIF}
@@ -240,58 +220,87 @@ uses
 
 
 
+// Turn off overflow checking.
+// Most functions rely on overflow checking off to correctly handle counters that wrap around.
+{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
+
+
+
 {                                                                              }
-{ Tick timer                                                                   }
+{ High resolution counters                                                     }
 {                                                                              }
+
+{ Windows }
 
 {$IFDEF WindowsPlatform}
-  {$DEFINE WinGetTick}
-  {$IFDEF DELPHI}
-  {$IFNDEF DELPHIXE2_UP}
-    {$UNDEF WinGetTick}
-  {$ENDIF}
-  {$ENDIF}
-{$ENDIF}
+{$DEFINE Defined_GetHighResolutionCounter}
+const
+  SHighResCounterError = 'High resolution counter error';
 
-{$IFDEF WinGetTick}
-{$DEFINE Defined_GetTick}
-function GetTick: Word32;
+var
+  HighResolutionCounterInit       : Boolean = False;
+  HighResolutionFrequency         : Word64 = 0;
+  HighResolutionMillisecondFactor : Word64 = 0;
+  HighResolutionMicrosecondFactor : Word64 = 0;
+
+function CPUClockFrequency: Word64;
+var
+  Freq : Windows.TLargeInteger;
 begin
-  Result := Word32(GetTickCount);
+  Freq := 0;
+  if not QueryPerformanceFrequency(Freq) then
+    raise ETimerError.Create(SHighResCounterError);
+  if Freq = 0 then
+    raise ETimerError.Create(SHighResCounterError);
+  Result := Word64(Freq);
 end;
 
-function GetTick64: Word64;
+procedure InitHighResolutionCounter;
+var
+  Freq : Word64;
 begin
-  Result := Word64(GetTickCount64);
+  Freq := CPUClockFrequency;
+  HighResolutionFrequency := Freq;
+  HighResolutionMillisecondFactor := Freq div 1000;
+  HighResolutionMicrosecondFactor := Freq div 1000000;
+  if HighResolutionMicrosecondFactor = 0 then
+    raise ETimerError.Create(SHighResCounterError);
+  HighResolutionCounterInit := True;
+end;
+
+function GetHighResolutionCounter: Word64;
+var
+  Ctr : Windows.TLargeInteger;
+begin
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  Ctr := 0;
+  if not QueryPerformanceCounter(Ctr) then
+    raise ETimerError.Create(SHighResCounterError);
+  Result := Word64(Ctr);
 end;
 {$ENDIF}
 
-{$IFDEF POSIX}
+{ Delphi Posix; excluding IOS and OSX }
+
 {$IFDEF DELPHI}
+{$IFDEF POSIX}
 {$IFNDEF IOS}
 {$IFNDEF MACOS}
-{$DEFINE Defined_GetTick}
-function GetTick: Word32;
-var
-  TimeVal : timespec;
-  Ticks64 : Word64;
-  Ticks32 : Word32;
-begin
-  clock_gettime(CLOCK_MONOTONIC, @TimeVal);
-  Ticks64 := Word64(Word64(TimeVal.tv_sec) * 1000);
-  Ticks64 := Word64(Ticks64 + Word64(TimeVal.tv_nsec) div 1000000);
-  Ticks32 := Word32(Ticks64 and $FFFFFFFF);
-  Result := Ticks32;
-end;
+{$DEFINE Defined_GetHighResolutionCounter}
+const
+  HighResolutionFrequency         = Word64(1000000000);
+  HighResolutionMillisecondFactor = 1000000;
+  HighResolutionMicrosecondFactor = 1000;
 
-function GetTick64: Word64;
+function GetHighResolutionCounter: Word64;
 var
   TimeVal : timespec;
   Ticks64 : Word64;
 begin
   clock_gettime(CLOCK_MONOTONIC, @TimeVal);
-  Ticks64 := Word64(Word64(TimeVal.tv_sec) * 1000);
-  Ticks64 := Word64(Ticks64 + Word64(TimeVal.tv_nsec) div 1000000);
+  Ticks64 := Word64(Word64(TimeVal.tv_sec) * Word64(1000000000));
+  Ticks64 := Word64(Ticks64 + Word64(TimeVal.tv_nsec));
   Result := Ticks64;
 end;
 {$ENDIF}
@@ -299,9 +308,11 @@ end;
 {$ENDIF}
 {$ENDIF}
 
+{ Delphi OSX/iOS }
+
+// Apple recommends to use the equivalent clock_gettime_nsec_np(CLOCK_UPTIME_RAW) in nanoseconds.
 
 {$IFDEF DELPHI}
-{$IFNDEF IOS}
 {$IFDEF MACOS}
 const
 {$IFDEF UNDERSCOREIMPORTNAME}
@@ -314,553 +325,176 @@ const
   LibcLib = '/usr/lib/libc.dylib';
 
 function MachAbsoluteTime: UInt64; cdecl external LibcLib name _PU + 'mach_absolute_time';
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
 
-{$IFDEF DELPHI}
-{$IFNDEF IOS}
-{$IFDEF MACOS}
-{$DEFINE Defined_GetTick}
-function GetTick: Word32;
-var
-  Ticks64 : Word64;
-  Ticks32 : Word32;
-begin
-  Ticks64 := Word64(AbsoluteToNanoseconds(MachAbsoluteTime));
-  Ticks64 := Word64(Ticks64 div 1000000);
-  Ticks32 := Word32(Ticks64 and $FFFFFFFF);
-  Result := Ticks32;
-end;
+{$DEFINE Defined_GetHighResolutionCounter}
+const
+  HighResolutionFrequency         = Word64(1000000000);
+  HighResolutionMillisecondFactor = 1000000;
+  HighResolutionMicrosecondFactor = 1000;
 
-function GetTick64: Word64;
+function GetHighResolutionCounter: Word64;
 var
   Ticks64 : Word64;
 begin
   Ticks64 := Word64(AbsoluteToNanoseconds(MachAbsoluteTime));
-  Ticks64 := Word64(Ticks64 div 1000000);
   Result := Ticks64;
 end;
 {$ENDIF}
 {$ENDIF}
+
+{ FreePascal Posix }
+
+{$IFDEF FREEPASCAL}
+{$IFDEF POSIX}
+{$DEFINE Defined_GetHighResolutionCounter}
+const
+  HighResolutionFrequency         = 1000000;
+  HighResolutionMillisecondFactor = 1000;
+  HighResolutionMicrosecondFactor = 1;
+
+function GetHighResolutionCounter: Word64;
+var
+  TV : TTimeVal;
+  TZ : PTimeZone;
+  Ticks64 : Word64;
+begin
+  TZ := nil;
+  fpGetTimeOfDay(@TV, TZ);
+  Ticks64 := Word64(Word64(TV.tv_sec) * 1000000);
+  Ticks64 := Word64(Ticks64 + Word64(TV.tv_usec));
+  Result := Ticks64;
+end;
+{$ENDIF}
 {$ENDIF}
 
+{ Default implementation using system time }
 
-
-{$IFNDEF Defined_GetTick}
-function GetTick: Word32;
+{$IFNDEF Defined_GetHighResolutionCounter}
+{$DEFINE Defined_GetHighResolutionCounter}
 const
-  MilliSecPerDay = 24 * 60 * 60 * 1000;
-var
-  N : Double;
-  T : Int64;
-begin
-  N := Now;
-  N := N * MilliSecPerDay;
-  T := Trunc(N);
-  Result := Word32(T and $FFFFFFFF);
-end;
+  HighResolutionFrequency         = 1000000;
+  HighResolutionMillisecondFactor = 1000;
+  HighResolutionMicrosecondFactor = 1;
 
-function GetTick64: Word64;
+function GetHighResolutionCounter: Word64;
 const
-  MilliSecPerDay = 24 * 60 * 60 * 1000;
+  MicroSecPerDay = Word64(24) * 60 * 60 * 1000 * 1000;
 var
   N : Double;
   T : Word64;
 begin
   N := Now;
-  N := N * MilliSecPerDay;
+  N := N * MicroSecPerDay;
   T := Word64(Trunc(N));
   Result := T;
 end;
 {$ENDIF}
 
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
+
+
+{                                                                              }
+{ High resolution tick                                                         }
+{                                                                              }
+function GetHighResolutionTick: Word64;
+begin
+  Result := GetHighResolutionCounter;
+end;
+
+function GetHighResolutionFrequency: Word64;
+begin
+  {$IFDEF WindowsPlatform}
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  {$ENDIF}
+  Result := HighResolutionFrequency;
+end;
+
 // Overflow checking needs to be off here to correctly handle tick values that
 // wrap around the maximum value.
-function TickDelta(const D1, D2: Word32): Int32;
+function HighResolutionTickDelta(const T1, T2: Word64): Int64;
 begin
-  Result := Int32(D2 - D1);
+  Result := Int64(Word64(T2 - T1));
 end;
 
-function TickDeltaW(const D1, D2: Word32): Word32;
+function HighResolutionTickDeltaU(const T1, T2: Word64): Word64;
 begin
-  Result := Word32(D2 - D1)
+  Result := Word64(T2 - T1);
 end;
-
-function TickDelta64(const D1, D2: Word64): Int64;
-begin
-  Result := Int64(D2 - D1);
-end;
-
-function TickDelta64W(const D1, D2: Word64): Word64;
-begin
-  Result := Word64(D2 - D1);
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-
-var
-  TickAccuracyCached : Boolean = False;
-  TickAccuracy       : Word32 = 0;
-
-function EstimateTickAccuracy(const ReTest: Boolean): Word32;
-const
-  SecondAsDateTime = 1.0 / (24.0 * 60.0 * 60.0);
-  MaxLoopCount = 1000000000;
-  MaxWaitSeconds = 2;
-var
-  TickStart, TickStop : Word32;
-  TimeStart, TimeStop : TDateTime;
-  LoopCount           : Word32;
-  Accuracy            : Word32;
-begin
-  // return cached test result
-  if not ReTest and TickAccuracyCached then
-    begin
-      Result := TickAccuracy;
-      exit;
-    end;
-
-  // wait for tick to change
-  LoopCount := 1;
-  TickStart := GetTick;
-  TimeStart := Now;
-  repeat
-    Inc(LoopCount);
-    TickStop := GetTick;
-    TimeStop := Now;
-  until (LoopCount = MaxLoopCount) or
-        (TickStop <> TickStart) or
-        (TimeStop >= TimeStart + MaxWaitSeconds * SecondAsDateTime);
-  if TickStop = TickStart then
-    raise ETimers.Create('Tick accuracy test failed');
-
-  // wait for tick to change
-  LoopCount := 1;
-  TickStart := GetTick;
-  TimeStart := Now;
-  repeat
-    Inc(LoopCount);
-    TickStop := GetTick;
-    TimeStop := Now;
-  until (LoopCount = MaxLoopCount) or
-        (TickStop <> TickStart) or
-        (TimeStop >= TimeStart + MaxWaitSeconds * SecondAsDateTime);
-  if TickStop = TickStart then
-    raise ETimers.Create('Tick accuracy test failed');
-
-  // calculate accuracy
-  Accuracy := TickDelta(TickStart, TickStop);
-  if (Accuracy <= 0) or (Accuracy > MaxWaitSeconds * TickFrequency * 2) then
-    raise ETimers.Create('Tick accuracy test failed');
-
-  // cache result
-  TickAccuracyCached := True;
-  TickAccuracy := Accuracy;
-
-  Result := Accuracy;
-end;
-
-
-
-{                                                                              }
-{ High-precision timing                                                        }
-{                                                                              }
-{$IFDEF WindowsPlatform}
-{$DEFINE Defined_GetHighPrecisionCounter}
-const
-  SHighResTimerError = 'High resolution timer error';
-
-var
-  HighPrecisionTimerInit         : Boolean = False;
-  HighPrecisionMillisecondFactor : Int64;
-  HighPrecisionMicrosecondFactor : Int64;
-
-function CPUClockFrequency: Int64;
-var
-  Freq : Windows.TLargeInteger;
-begin
-  Freq := 0;
-  if not QueryPerformanceFrequency(Freq) then
-    raise ETimers.Create(SHighResTimerError);
-  if Freq = 0 then
-    raise ETimers.Create(SHighResTimerError);
-  Result := Int64(Freq);
-end;
-
-procedure InitHighPrecisionTimer;
-var F : Int64;
-begin
-  F := CPUClockFrequency;
-  HighPrecisionMillisecondFactor := F div 1000;
-  HighPrecisionMicrosecondFactor := F div 1000000;
-  HighPrecisionTimerInit := True;
-end;
-
-function GetHighPrecisionCounter: Int64;
-var
-  Ctr : Windows.TLargeInteger;
-begin
-  if not HighPrecisionTimerInit then
-    InitHighPrecisionTimer;
-  QueryPerformanceCounter(Ctr);
-  Result := Int64(Ctr);
-end;
-{$ENDIF}
-
-{$IFDEF POSIX}
-{$IFDEF DELPHI}
-{$IFNDEF IOS}
-{$IFNDEF MACOS}
-{$DEFINE Defined_GetHighPrecisionCounter}
-const
-  HighPrecisionMillisecondFactor = 1000;
-  HighPrecisionMicrosecondFactor = 1;
-
-function GetHighPrecisionCounter: Int64;
-var
-  TimeVal : timespec;
-  Ticks64 : Int64;
-begin
-  clock_gettime(CLOCK_MONOTONIC, @TimeVal);
-  Ticks64 := Int64(Int64(TimeVal.tv_sec) * 1000000);
-  Ticks64 := Int64(Ticks64 + Int64(TimeVal.tv_nsec) div 1000);
-  Result := Ticks64;
-end;
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI}
-{$IFNDEF IOS}
-{$IFDEF MACOS}
-{$DEFINE Defined_GetHighPrecisionCounter}
-const
-  HighPrecisionMillisecondFactor = 1000;
-  HighPrecisionMicrosecondFactor = 1;
-
-function GetHighPrecisionCounter: Int64;
-var
-  Ticks64 : Word64;
-begin
-  Ticks64 := Word64(AbsoluteToNanoseconds(MachAbsoluteTime));
-  Ticks64 := Word64(Ticks64 div 1000);
-  Result := Ticks64;
-end;
-{$ENDIF}
-{$ENDIF}
-{$ENDIF}
-
-{$IFDEF UNIX}
-{$IFDEF FREEPASCAL}
-{$DEFINE Defined_GetHighPrecisionCounter}
-const
-  HighPrecisionMillisecondFactor = 1000;
-  HighPrecisionMicrosecondFactor = 1;
-
-function GetHighPrecisionCounter: Int64;
-var
-  TV : TTimeVal;
-  TZ : PTimeZone;
-  Ticks64 : Int64;
-begin
-  TZ := nil;
-  fpGetTimeOfDay(@TV, TZ);
-  Ticks64 := Int64(Int64(TV.tv_sec) * 1000000);
-  Ticks64 := Int64(Ticks64 + Int64(TV.tv_usec));
-  Result := Ticks64;
-end;
-{$ENDIF}
-{$ENDIF}
-
-{$IFNDEF Defined_GetHighPrecisionCounter}
-{$DEFINE Defined_GetHighPrecisionCounter}
-const
-  HighPrecisionMillisecondFactor = 1000;
-  HighPrecisionMicrosecondFactor = 1;
-
-function GetHighPrecisionCounter: Int64;
-const
-  MicroSecPerDay = Int64(24) * 60 * 60 * 1000 * 1000;
-var
-  N : Double;
-  T : Int64;
-begin
-  N := Now;
-  N := N * MicroSecPerDay;
-  T := Trunc(N);
-  Result := T;
-end;
-{$ENDIF}
-
-function GetHighPrecisionTimer: Int64;
-begin
-  Result := GetHighPrecisionCounter;
-end;
-
-{$IFDEF WindowsPlatform}
-function GetHighPrecisionFrequency: Int64;
-begin
-  Result := CPUClockFrequency;
-end;
-{$ELSE}
-function GetHighPrecisionFrequency: Int64;
-begin
-  Result := 1000000;
-end;
-{$ENDIF}
-
-procedure StartTimer(out Timer: THPTimer);
-begin
-  Timer := GetHighPrecisionCounter;
-end;
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-procedure StopTimer(var Timer: THPTimer);
-begin
-  Timer := Int64(GetHighPrecisionCounter - Timer);
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-procedure ResumeTimer(var StoppedTimer: THPTimer);
-var
-  T : THPTimer;
-begin
-  StartTimer(T);
-  {$IFDEF DELPHI5}
-  StoppedTimer := T - StoppedTimer;
-  {$ELSE}
-  StoppedTimer := Int64(T - StoppedTimer);
-  {$ENDIF}
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-
-procedure InitStoppedTimer(var Timer: THPTimer);
-begin
-  Timer := 0;
-end;
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-procedure InitElapsedTimer(var Timer: THPTimer; const Milliseconds: Integer);
-begin
-  {$IFDEF DELPHI5}
-  Timer := GetHighPrecisionCounter - (Milliseconds * HighPrecisionMillisecondFactor);
-  {$ELSE}
-  Timer := Int64(GetHighPrecisionCounter - (Milliseconds * HighPrecisionMillisecondFactor));
-  {$ENDIF}
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-function MillisecondsElapsed(const Timer: THPTimer; const TimerRunning: Boolean = True): Integer;
-begin
-  if not TimerRunning then
-    Result := Timer div HighPrecisionMillisecondFactor
-  else
-    {$IFDEF DELPHI5}
-    Result := Integer((GetHighPrecisionCounter - Timer) div HighPrecisionMillisecondFactor);
-    {$ELSE}
-    Result := Integer(Int64(GetHighPrecisionCounter - Timer) div HighPrecisionMillisecondFactor);
-    {$ENDIF}
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-
-{$IFDEF WindowsPlatform}
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-function MicrosecondsElapsed(const Timer: THPTimer; const TimerRunning: Boolean = True): Int64;
-begin
-  if not TimerRunning then
-    Result := Timer div HighPrecisionMicrosecondFactor
-  else
-    {$IFDEF DELPHI5}
-    Result := Int64((GetHighPrecisionCounter - Timer) div HighPrecisionMicrosecondFactor);
-    {$ELSE}
-    Result := Int64(Int64(GetHighPrecisionCounter - Timer) div HighPrecisionMicrosecondFactor);
-    {$ENDIF}
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-{$ELSE}
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-function MicrosecondsElapsed(const Timer: THPTimer; const TimerRunning: Boolean = True): Int64;
-begin
-  if not TimerRunning then
-    Result := Timer
-  else
-    Result := Int64(GetHighPrecisionCounter - Timer);
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-{$ENDIF}
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-{$IFDEF DELPHI5}{$IFOPT O+}{$DEFINE OOn}{$ELSE}{$UNDEF OOn}{$ENDIF}{$OPTIMIZATION OFF}{$ENDIF}
-procedure WaitMicroseconds(const Microseconds: Integer);
-var
-  I : Int64;
-  N : Integer;
-  F : Int64;
-  J : Int64;
-begin
-  if Microseconds <= 0 then
-    exit;
-  // start high precision timer as early as possible in procedure for minimal
-  // overhead
-  I := GetHighPrecisionCounter;
-  // sleep milliseconds
-  N := (MicroSeconds - 100) div 1000; // number of ms with at least 900us
-  N := N - 2; // last 2ms in tight loop
-  if N > 0 then
-    Sleep(N);
-  // tight loop remaining time
-  {$IFDEF DELPHI5}
-  F := Microseconds * HighPrecisionMicrosecondFactor;
-  {$ELSE}
-  F := Int64(Microseconds * HighPrecisionMicrosecondFactor);
-  {$ENDIF}
-  repeat
-    J := GetHighPrecisionCounter;
-  {$IFDEF DELPHI5}
-  until J - I >= F;
-  {$ELSE}
-  until Int64(J - I) >= F;
-  {$ENDIF}
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-{$IFDEF DELPHI5}{$IFDEF OOn}{$OPTIMIZATION ON}{$ENDIF}{$ENDIF}
-
-function EstimateHighPrecisionTimerOverhead: Int64;
-var T : THPTimer;
-    I : Integer;
-    H : Int64;
-begin
-  // start and stop timer a thousand times and find smallest overhead
-  StartTimer(T);
-  StopTimer(T);
-  H := T;
-  for I := 1 to 1000 do
-    begin
-      StartTimer(T);
-      StopTimer(T);
-      if T < H then
-        H := T;
-    end;
-  Result := H;
-end;
-
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-{$IFDEF DELPHI5}{$IFOPT O+}{$DEFINE OOn}{$ELSE}{$UNDEF OOn}{$ENDIF}{$OPTIMIZATION OFF}{$ENDIF}
-procedure AdjustTimerForOverhead(var StoppedTimer: THPTimer;
-          const Overhead: Int64);
-begin
-  if Overhead <= 0 then
-    {$IFDEF DELPHI5}
-    StoppedTimer := StoppedTimer - GetHighPrecisionTimerOverhead
-    {$ELSE}
-    StoppedTimer := Int64(StoppedTimer - EstimateHighPrecisionTimerOverhead)
-    {$ENDIF}
-  else
-    {$IFDEF DELPHI5}
-    StoppedTimer := StoppedTimer - Overhead;
-    {$ELSE}
-    StoppedTimer := Int64(StoppedTimer - Overhead);
-    {$ENDIF}
-  if StoppedTimer < 0 then
-    StoppedTimer :=0;
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
-{$IFDEF DELPHI5}{$IFDEF OOn}{$OPTIMIZATION ON}{$ENDIF}{$ENDIF}
-
 
 
 {                                                                              }
 { MicroTick                                                                    }
 {                                                                              }
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
-// 64 bits = 45964 year interval
 function GetMicroTick: Word64;
 var
   T : Word64;
 begin
-  T := Word64(GetHighPrecisionCounter);
-  T := T div Word64(HighPrecisionMicrosecondFactor);
+  T := GetHighResolutionCounter;
+  T := T div HighResolutionMicrosecondFactor;
   Result := T;
 end;
 
-function GetMicroTick32: Word32;
-var
-  T : Word64;
-begin
-  T := Word64(GetHighPrecisionCounter);
-  T := T div Word64(HighPrecisionMicrosecondFactor);
-  Result := Word32(T);
-end;
-
+// Overflow checking needs to be off here to correctly handle tick values that
+// wrap around the maximum value.
 function MicroTickDelta(const T1, T2: Word64): Int64;
 begin
-  Result := Int64(T2 - T1);
+  {$IFDEF WindowsPlatform}
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  {$ENDIF}
+  Result := Int64(Word64(
+      Word64(T2 * HighResolutionMicrosecondFactor) -
+      Word64(T1 * HighResolutionMicrosecondFactor))) div Int64(HighResolutionMicrosecondFactor);
 end;
 
-function MicroTickDeltaW(const T1, T2: Word64): Word64;
+function MicroTickDeltaU(const T1, T2: Word64): Word64;
 begin
-  Result := Word64(T2 - T1);
+  {$IFDEF WindowsPlatform}
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  {$ENDIF}
+  Result := Word64(
+      Word64(T2 * HighResolutionMicrosecondFactor) -
+      Word64(T1 * HighResolutionMicrosecondFactor)) div HighResolutionMicrosecondFactor;
 end;
-
-function MicroTick32Delta(const T1, T2: Word32): Int32;
-begin
-  Result := Int32(T2 - T1);
-end;
-
-function MicroTick32DeltaW(const T1, T2: Word32): Word32;
-begin
-  Result := Word32(T2 - T1);
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
 
 
 
 {                                                                              }
 { MilliTick                                                                    }
 {                                                                              }
-{$IFOPT Q+}{$DEFINE QOn}{$ELSE}{$UNDEF QOn}{$ENDIF}{$Q-}
 function GetMilliTick: Word64;
 var
   T : Word64;
 begin
-  T := Word64(GetHighPrecisionCounter);
-  T := T div Word64(HighPrecisionMillisecondFactor);
+  T := GetHighResolutionCounter;
+  T := T div Word64(HighResolutionMillisecondFactor);
   Result := T;
 end;
 
-function GetMilliTick32: Word32;
-var
-  T : Word64;
-begin
-  T := Word64(GetHighPrecisionCounter);
-  T := T div Word64(HighPrecisionMillisecondFactor);
-  Result := Word32(T);
-end;
-
+// Overflow checking needs to be off here to correctly handle tick values that
+// wrap around the maximum value.
 function MilliTickDelta(const T1, T2: Word64): Int64;
 begin
-  Result := Int64(T2 - T1);
+  {$IFDEF WindowsPlatform}
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  {$ENDIF}
+  Result := Int64(Word64(
+      Word64(T2 * HighResolutionMillisecondFactor) -
+      Word64(T1 * HighResolutionMillisecondFactor))) div Int64(HighResolutionMillisecondFactor);
 end;
 
-function MilliTickDeltaW(const T1, T2: Word64): Word64;
+function MilliTickDeltaU(const T1, T2: Word64): Word64;
 begin
-  Result := Word64(T2 - T1);
+  {$IFDEF WindowsPlatform}
+  if not HighResolutionCounterInit then
+    InitHighResolutionCounter;
+  {$ENDIF}
+  Result := Word64(
+      Word64(T2 * HighResolutionMillisecondFactor) -
+      Word64(T1 * HighResolutionMillisecondFactor)) div HighResolutionMillisecondFactor;
 end;
-
-function MilliTick32Delta(const T1, T2: Word32): Int32;
-begin
-  Result := Int32(T2 - T1);
-end;
-
-function MilliTick32DeltaW(const T1, T2: Word32): Word32;
-begin
-  Result := Word32(T2 - T1);
-end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
 
 
 
@@ -868,46 +502,176 @@ end;
 { MicroDateTime                                                                }
 {                                                                              }
 const
-  MicroDateTimeFactor = Word64(86400000000); // Microseconds per day: 24 * 60 * 60 * 1000 * 1000;
+  // Microseconds per day
+  // = 24 * 60 * 60 * 1000 * 1000
+  // = 86400000000
+  // = $141DD76000
+  MicroDateTimeFactor = Word64(86400000000);
 
 function DateTimeToMicroDateTime(const DT: TDateTime): Word64;
 var
-  F : Double;
-  D : Word64;
+  Fl : Double;
+  Da : Word64;
   FT : Double;
-  T : Word64;
+  Ti : Word64;
 begin
-  F := DT;
-  if (F < -1.0e-12) or (F >= 106751990.0) then
-    raise ETimers.Create('Invalid date');
-  D := Trunc(F);
-  D := D * MicroDateTimeFactor;
-  FT := Frac(F);
+  Fl := DT;
+  if (Fl < -1.0e-12) or (Fl >= 106751990.0) then
+    raise ETimerError.Create('Invalid date/time');
+  Da := Word64(Trunc(Fl));
+  Da := Word64(Da * MicroDateTimeFactor);
+  FT := Frac(Fl);
   FT := FT * MicroDateTimeFactor;
-  T := Trunc(FT);
-  Result := D + T;
+  Ti := Word64(Trunc(FT));
+  Result := Word64(Da + Ti);
 end;
 
-function GetMicroNow: Word64;
+function MicroDateTimeToDateTime(const DT: Word64): TDateTime;
+var
+  Da : Word64;
+  Ti : Word64;
+  Fl : Double;
+begin
+  Da := DT div MicroDateTimeFactor;
+  Ti := DT;
+  Dec(Ti, Da * MicroDateTimeFactor);
+  Fl := Ti;
+  Fl := Fl / MicroDateTimeFactor;
+  Fl := Fl + Da;
+  Result := Fl;
+end;
+
+function GetMicroDateTimeNow: Word64;
 begin
   Result := DateTimeToMicroDateTime(Now);
 end;
 
+
+
+{                                                                              }
+{ GetNowUT                                                                     }
+{                                                                              }
 {$IFDEF DELPHIXE2_UP}
-  {$DEFINE SupportTimeZone}
+{$DEFINE SupportUniversalTime}
+function GetNowUT: TDateTime;
+begin
+  Result := System.DateUtils.TTimeZone.Local.ToUniversalTime(Now);
+end;
 {$ENDIF}
 
-function GetMicroNowUT: Word64;
+{$IFDEF FREEPASCAL}
+{$IFDEF WindowsPlatform}
+{$DEFINE SupportUniversalTime}
+function GetUTBias: TDateTime;
+var
+  TZI : TTimeZoneInformation;
+  BiasMin : Integer;
+begin
+  case GetTimeZoneInformation(TZI) of
+    TIME_ZONE_ID_STANDARD : BiasMin := TZI.StandardBias;
+    TIME_ZONE_ID_DAYLIGHT : BiasMin := TZI.DaylightBias
+  else
+    BiasMin := 0;
+  end;
+  Inc(BiasMin, TZI.Bias);
+  Result := BiasMin / (24 * 60);
+end;
+
+function GetNowUT: TDateTime;
+begin
+  Result := Now + GetUTBias;
+end;
+{$ENDIF}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL}
+{$IFDEF POSIX}
+{$DEFINE SupportUniversalTime}
+function GetUTBias: TDateTime;
+var
+  TV : TTimeVal;
+  TZ : PTimeZone;
+  BiasMin : Integer;
+begin
+  TZ := nil;
+  fpGetTimeOfDay(@TV, TZ);
+  if Assigned(TZ) then
+    BiasMin := TZ^.tz_minuteswest div 60
+  else
+    BiasMin := 0;
+  Result := BiasMin / (24 * 60);
+end;
+
+function GetNowUT: TDateTime;
+begin
+  Result := Now + GetUTBias;
+end;
+{$ENDIF}
+{$ENDIF}
+
+{$IFNDEF SupportUniversalTime}
+function GetNowUT: TDateTime;
+begin
+  Result := Now;
+end;
+{$ENDIF}
+
+
+
+{                                                                              }
+{ GetMicroDateTimeNowUT                                                        }
+{                                                                              }
+function GetMicroDateTimeNowUT: Word64;
+begin
+  Result := DateTimeToMicroDateTime(GetNowUT);
+end;
+
+
+
+{                                                                              }
+{ GetMicroDateTimeNowUT(C)ached                                                }
+{                                                                              }
+var
+  NowUTStartInit      : Boolean = False;
+  NowUTStartDT        : TDateTime = 0.0;
+  NowUTStartMicroTick : Word64 = 0;
+  NowUTStartMicroDT   : Word64 = 0;
+
+procedure InitNowUTStart;
 var
   DT : TDateTime;
+  MT : Word64;
 begin
-  {$IFDEF SupportTimeZone}
-  DT := System.DateUtils.TTimeZone.Local.ToUniversalTime(Now);
-  {$ELSE}
-  DT := Now;
-  {$ENDIF}
-  Result := DateTimeToMicroDateTime(DT);
+  DT := GetNowUT;
+  MT := GetMicroTick;
+  NowUTStartDT := DT;
+  NowUTStartMicroTick := MT;
+  NowUTStartMicroDT := DateTimeToMicroDateTime(DT);
+  NowUTStartInit := True;
 end;
+
+function GetNowUTC(const ReInit: Boolean): TDateTime;
+var
+  MT : Word64;
+begin
+  if ReInit or not NowUTStartInit then
+    InitNowUTStart;
+  MT := GetMicroTick;
+  Result := MicroDateTimeToDateTime(NowUTStartMicroDT + (MT - NowUTStartMicroTick));
+end;
+
+function GetMicroDateTimeNowUTC(const ReInit: Boolean): Word64;
+var
+  MT : Word64;
+begin
+  if ReInit or not NowUTStartInit then
+    InitNowUTStart;
+  MT := GetMicroTick;
+  Result := NowUTStartMicroDT + (MT - NowUTStartMicroTick);
+end;
+
+
+{$IFDEF QOn}{$Q+}{$ENDIF}
 
 
 
@@ -916,131 +680,162 @@ end;
 {                                                                              }
 {$IFDEF TIMERS_TEST}
 {$ASSERTIONS ON}
-{$WARNINGS OFF}
-procedure Test_TickDelta;
+procedure Test_MilliTickDelta;
 begin
-  Assert(TickDelta(0, 10) = 10);
-  Assert(TickDelta($FFFFFFFF, 10) = 11);
-  Assert(TickDelta(10, 0) = -10);
-  Assert(TickDelta($FFFFFFF6, 0) = 10);
-  Assert(TickDeltaW(0, 10) = 10);
-  Assert(TickDeltaW($FFFFFFFF, 10) = 11);
-  Assert(TickDeltaW(10, 0) = $FFFFFFF6);
-  Assert(TickDeltaW($FFFFFFF6, 0) = 10);
-
-  Assert(TickDelta64(0, 10) = 10);
-  Assert(TickDelta64($FFFFFFFFFFFFFFFF, 10) = 11);
-  Assert(TickDelta64(10, 0) = -10);
-  Assert(TickDelta64($FFFFFFFFFFFFFFF6, 0) = 10);
-  Assert(TickDelta64W(0, 10) = 10);
-  Assert(TickDelta64W($FFFFFFFFFFFFFFFF, 10) = 11);
-  Assert(TickDelta64W(10, 0) = $FFFFFFFFFFFFFFF6);
-  Assert(TickDelta64W($FFFFFFFFFFFFFFF6, 0) = 10);
+  Assert(MilliTickDelta(0, 10) = 10);
+  Assert(MilliTickDelta(Word64($FFFFFFFFFFFFFFFF), 10) = 11);
+  Assert(MilliTickDelta(10, 0) = -10);
+  Assert(MilliTickDelta(Word64($FFFFFFFFFFFFFFF6), 0) = 10);
+  Assert(MilliTickDeltaU(0, 10) = 10);
+  Assert(MilliTickDeltaU(Word64($FFFFFFFFFFFFFFFF), 10) = 11);
 end;
 
-procedure Test_TickTimer;
-var A, B : Word32;
-    I : Integer;
+procedure Test_MilliTickTimer1;
+var
+  A, B : Word64;
+  I : Integer;
 begin
-  // estimate tick accuracy
-  A := EstimateTickAccuracy;
-  Assert(A > 0);
-  Assert(A < 500);
-
   // test tick timer using sleep
-  A := GetTick;
+  A := GetMilliTick;
   I := 1;
   repeat
     Sleep(1);
     Inc(I);
-    B := GetTick;
+    B := GetMilliTick;
   until (I = 2000) or (B <> A);
   Assert(B <> A);
-  Assert(I < 500);
-  Assert(TickDelta(A, B) > 0);
-  Assert(TickDelta(A, B) < 100);
+  Assert(I < 100);
+  Assert(MilliTickDelta(A, B) > 0);
+  Assert(MilliTickDelta(A, B) < 100);
 end;
 
-procedure Test_TickTimer2;
-var A, B : Word32;
-    P, Q : TDateTime;
-    I : Integer;
+procedure Test_MicroTickTimer1;
+var
+  A, B : Word64;
+  I : Integer;
+begin
+  // test tick timer using sleep
+  A := GetMicroTick;
+  I := 1;
+  repeat
+    Sleep(1);
+    Inc(I);
+    B := GetMicroTick;
+  until (I = 2000) or (B <> A);
+  Assert(B <> A);
+  Assert(I < 100);
+  Assert(MicroTickDelta(A, B) > 0);
+  Assert(MicroTickDelta(A, B) < 100000);
+end;
+
+procedure Test_MilliTickTimer2;
+var
+  A, B : Word64;
+  P, Q : TDateTime;
+  I : Integer;
 begin
   // test tick timer using clock
-  A := GetTick;
+  A := GetMilliTick;
   I := 1;
   P := Now;
   repeat
     Inc(I);
     Q := Now;
-    B := GetTick;
+    B := GetMilliTick;
   until (I = 100000000) or (B <> A) or
         (Q >= P + 2.0 / (24.0 * 60.0 * 60.0)); // two seconds
   Assert(B <> A);
-  Assert(TickDelta(A, B) > 0);
-  Assert(TickDelta(A, B) < 5000);
+  Assert(MilliTickDelta(A, B) > 0);
+  Assert(MilliTickDelta(A, B) < 100);
 end;
 
-procedure Test_TickTimer3;
-var A, B : Word32;
-    T : THPTimer;
+procedure Test_MicroTickTimer2;
+var
+  A, B : Word64;
+  P, Q : TDateTime;
+  I : Integer;
 begin
-  // test timer using WaitMicroseconds
-  StartTimer(T);
-  A := GetTick;
-  WaitMicroseconds(50000); // 50ms wait, sometimes fails for less than 20ms wait under Windows
-  B := GetTick;
-  StopTimer(T);
-  Assert(TickDelta(A, B) > 0);
-  Assert(TickDeltaW(A, B) > 0);
-  Assert(TickDelta(A, B) = TickDeltaW(A, B));
-  Assert(MillisecondsElapsed(T, False) >= 45);
-  Assert(TickDelta(A, B) >= 15);
+  // test tick timer using clock
+  A := GetMicroTick;
+  I := 1;
+  P := Now;
+  repeat
+    Inc(I);
+    Q := Now;
+    B := GetMicroTick;
+  until (I = 100000000) or (B <> A) or
+        (Q >= P + 2.0 / (24.0 * 60.0 * 60.0)); // two seconds
+  Assert(B <> A);
+  Assert(MicroTickDelta(A, B) > 0);
+  Assert(MicroTickDelta(A, B) < 100000);
 end;
 
-procedure Test_HighPrecisionTimer;
-var T : THPTimer;
-    E : Integer;
+procedure Test_MicroDateTime1;
+var
+  DT1 : TDateTime;
+  DT2 : TDateTime;
+  MD1 : Word64;
+  MD2 : Word64;
 begin
-  Assert(GetHighPrecisionFrequency > 0);
+  // Specific TDateTime
+  DT1 := 43971.5231084028;
+  MD1 := DateTimeToMicroDateTime(DT1);
+  Assert(MD1 = 3799139596566001);
+  Assert(MD1 < $00FFFFFFFFFFFFFF);
+  DT2 := MicroDateTimeToDateTime(MD1);
+  Assert(Abs(DT1 - DT2) < 1.0e-11);
+  MD2 := DateTimeToMicroDateTime(DT2);
+  Assert(MD2 = 3799139596566001);
 
-  // test timer using Sleep
-  StartTimer(T);
-  Sleep(20);
-  StopTimer(T);
-  E := MillisecondsElapsed(T, False);
-  Assert(E >= 18);
-  Assert(E < 2000);
+  // Zero TDatetime
+  DT1 := 0.0;
+  MD1 := DateTimeToMicroDateTime(DT1);
+  Assert(MD1 = 0);
+  DT2 := MicroDateTimeToDateTime(MD1);
+  Assert(Abs(DT2) < 1.0e-11);
 end;
 
-procedure Test_HighPrecisionTimer2;
-var T : THPTimer;
-    A, B : Word32;
-    I : Integer;
+procedure Test_MicroDateTime2;
+var
+  MD1 : Word64;
+  MD2 : Word64;
+  D : Int64;
 begin
-  // test timer using TickTimer
-  StartTimer(T);
-  for I := 1 to 4 do
-    begin
-      A := GetTick;
-      repeat
-        B := GetTick;
-      until B <> A;
-    end;
-  StopTimer(T);
-  Assert(TickDelta(A, B) > 0);
-  Assert(TickDelta(A, B) = TickDeltaW(A, B));
-  Assert(MillisecondsElapsed(T, False) >= 2);
+  // NowUT
+  MD1 := GetMicroDateTimeNowUT;
+  Sleep(5);
+  MD2 := GetMicroDateTimeNowUT - MD1;
+  Assert(MD2 > 2000);   // 2ms
+  Assert(MD2 < 100000); // 100 ms
+
+  // NowUTC
+  MD1 := GetMicroDateTimeNowUTC(True);
+  Sleep(5);
+  MD2 := GetMicroDateTimeNowUTC(False) - MD1;
+  Assert(MD2 > 2000);   // 2ms
+  Assert(MD2 < 100000); // 100 ms
+
+  // NowUT / NowUTC drift
+  Sleep(10);
+  MD1 := GetMicroDateTimeNowUT;
+  MD2 := GetMicroDateTimeNowUTC(False);
+  if MD2 >= MD1 then
+    D := MD2 - MD1
+  else
+    D := MD1 - MD2;
+  Assert(D >= 0);
+  Assert(D < 100000); // 100ms
 end;
 
 procedure Test;
 begin
-  Test_TickDelta;
-  Test_TickTimer;
-  Test_TickTimer2;
-  Test_TickTimer3;
-  Test_HighPrecisionTimer;
-  Test_HighPrecisionTimer2;
+  Test_MilliTickDelta;
+  Test_MilliTickTimer1;
+  Test_MicroTickTimer1;
+  Test_MilliTickTimer2;
+  Test_MicroTickTimer2;
+  Test_MicroDateTime1;
+  Test_MicroDateTime2;
 end;
 {$ENDIF}
 
