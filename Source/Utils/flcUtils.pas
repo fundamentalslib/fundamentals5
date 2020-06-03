@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.67                                                     }
+{   File version:     5.69                                                     }
 {   Description:      Utility functions.                                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -115,34 +115,14 @@
 {   2018/08/14  5.65  ByteChar changes.                                        }
 {   2019/04/02  5.66  Swap changes.                                            }
 {   2020/03/13  5.67  NativeInt changes.                                       }
+{   2020/03/30  5.68  EqualMem optimisations and tests.                        }
+{   2020/06/02  5.69  String to/from UInt64 conversion functions.              }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 5 Win32                      4.55  2015/03/14                       }
-{   Delphi 6 Win32                      4.55  2015/03/14                       }
-{   Delphi 7 Win32                      5.65  2019/02/24                       }
-{   Delphi 2007 Win32                   4.50  2012/08/26                       }
-{   Delphi 2009 Win32                   4.46  2011/09/27                       }
-{   Delphi 2009 .NET                    4.45  2009/10/09                       }
-{   Delphi XE                           4.52  2013/03/22                       }
-{   Delphi XE2 Win32                    5.65  2019/03/02                       }
-{   Delphi XE2 Win64                    5.65  2019/03/02                       }
-{   Delphi XE3 Win32                    5.65  2019/03/02                       }
-{   Delphi XE3 Win64                    5.65  2019/03/02                       }
-{   Delphi XE6 Win32                    5.65  2019/03/02                       }
-{   Delphi XE6 Win64                    5.65  2019/03/02                       }
-{   Delphi XE7 Win32                    5.65  2019/03/02                       }
-{   Delphi XE7 Win64                    5.65  2019/03/02                       }
-{   Delphi XE8 Win32                    5.58  2016/01/10                       }
-{   Delphi XE8 Win64                    5.58  2016/01/10                       }
-{   Delphi 10 Win32                     5.58  2016/01/09                       }
-{   Delphi 10 Win64                     5.58  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.63  2018/07/17                       }
-{   Delphi 10.2 Win64                   5.63  2018/07/17                       }
-{   Delphi 10.2 Linux64                 5.63  2018/07/17                       }
-{   FreePascal 2.4.0 OSX x86-64         4.46  2010/06/27                       }
-{   FreePascal 2.6.2 Linux x64          4.55  2015/04/01                       }
-{   FreePascal 3.0.4 Win32              5.65  2019/02/24                       }
+{   Delphi 2010-10.4 Win32/Win64        5.69  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.69  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.69  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -379,12 +359,12 @@ function  iif(const Expr: Boolean; const TrueValue: Extended;
           const FalseValue: Extended = 0.0): Extended; overload;          {$IFDEF UseInline}inline;{$ENDIF}
 {$IFDEF SupportAnsiString}
 function  iifA(const Expr: Boolean; const TrueValue: AnsiString;
-          const FalseValue: AnsiString = ''): AnsiString; overload;       {$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: AnsiString = ''): AnsiString;                 {$IFDEF UseInline}inline;{$ENDIF}
 {$ENDIF}
 function  iifB(const Expr: Boolean; const TrueValue: RawByteString;
-          const FalseValue: RawByteString = ''): RawByteString; overload; {$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: RawByteString = ''): RawByteString;           {$IFDEF UseInline}inline;{$ENDIF}
 function  iifU(const Expr: Boolean; const TrueValue: UnicodeString;
-          const FalseValue: UnicodeString = ''): UnicodeString; overload; {$IFDEF UseInline}inline;{$ENDIF}
+          const FalseValue: UnicodeString = ''): UnicodeString;           {$IFDEF UseInline}inline;{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: String;
           const FalseValue: String = ''): String; overload;               {$IFDEF UseInline}inline;{$ENDIF}
 function  iif(const Expr: Boolean; const TrueValue: TObject;
@@ -434,29 +414,29 @@ const
   StrHexDigitsUpper : String = '0123456789ABCDEF';
   StrHexDigitsLower : String = '0123456789abcdef';
 
-function  ByteCharToInt(const A: ByteChar): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
-function  WideCharToInt(const A: WideChar): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
-function  CharToInt(const A: Char): Integer;                                    {$IFDEF UseInline}inline;{$ENDIF}
+function  ByteCharDigitToInt(const A: ByteChar): Integer;                       {$IFDEF UseInline}inline;{$ENDIF}
+function  WideCharDigitToInt(const A: WideChar): Integer;                       {$IFDEF UseInline}inline;{$ENDIF}
+function  CharDigitToInt(const A: Char): Integer;                               {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToByteChar(const A: Integer): ByteChar;                            {$IFDEF UseInline}inline;{$ENDIF}
-function  IntToWideChar(const A: Integer): WideChar;                            {$IFDEF UseInline}inline;{$ENDIF}
-function  IntToChar(const A: Integer): Char;                                    {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToByteCharDigit(const A: Integer): ByteChar;                       {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToWideCharDigit(const A: Integer): WideChar;                       {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToCharDigit(const A: Integer): Char;                               {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IsHexByteChar(const Ch: ByteChar): Boolean;
-function  IsHexWideChar(const Ch: WideChar): Boolean;
-function  IsHexChar(const Ch: Char): Boolean;                                   {$IFDEF UseInline}inline;{$ENDIF}
+function  IsHexByteCharDigit(const Ch: ByteChar): Boolean;
+function  IsHexWideCharDigit(const Ch: WideChar): Boolean;
+function  IsHexCharDigit(const Ch: Char): Boolean;                              {$IFDEF UseInline}inline;{$ENDIF}
 
-function  HexByteCharToInt(const A: ByteChar): Integer;
-function  HexWideCharToInt(const A: WideChar): Integer;
-function  HexCharToInt(const A: Char): Integer;                                 {$IFDEF UseInline}inline;{$ENDIF}
+function  HexByteCharDigitToInt(const A: ByteChar): Integer;
+function  HexWideCharDigitToInt(const A: WideChar): Integer;
+function  HexCharDigitToInt(const A: Char): Integer;                            {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToUpperHexByteChar(const A: Integer): ByteChar;
-function  IntToUpperHexWideChar(const A: Integer): WideChar;
-function  IntToUpperHexChar(const A: Integer): Char;                            {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToUpperHexByteCharDigit(const A: Integer): ByteChar;
+function  IntToUpperHexWideCharDigit(const A: Integer): WideChar;
+function  IntToUpperHexCharDigit(const A: Integer): Char;                       {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IntToLowerHexByteChar(const A: Integer): ByteChar;
-function  IntToLowerHexWideChar(const A: Integer): WideChar;
-function  IntToLowerHexChar(const A: Integer): Char;                            {$IFDEF UseInline}inline;{$ENDIF}
+function  IntToLowerHexByteCharDigit(const A: Integer): ByteChar;
+function  IntToLowerHexWideCharDigit(const A: Integer): WideChar;
+function  IntToLowerHexCharDigit(const A: Integer): Char;                       {$IFDEF UseInline}inline;{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  IntToStringA(const A: Int64): AnsiString;
@@ -466,11 +446,11 @@ function  IntToStringU(const A: Int64): UnicodeString;
 function  IntToString(const A: Int64): String;
 
 {$IFDEF SupportAnsiString}
-function  UIntToStringA(const A: NativeUInt): AnsiString;
+function  UIntToStringA(const A: UInt64): AnsiString;
 {$ENDIF}
-function  UIntToStringB(const A: NativeUInt): RawByteString;
-function  UIntToStringU(const A: NativeUInt): UnicodeString;
-function  UIntToString(const A: NativeUInt): String;
+function  UIntToStringB(const A: UInt64): RawByteString;
+function  UIntToStringU(const A: UInt64): UnicodeString;
+function  UIntToString(const A: UInt64): String;
 
 {$IFDEF SupportAnsiString}
 function  Word32ToStrA(const A: Word32; const Digits: Integer = 0): AnsiString;
@@ -512,6 +492,13 @@ function  TryStringToInt64U(const S: UnicodeString; out A: Int64): Boolean;
 function  TryStringToInt64(const S: String; out A: Int64): Boolean;
 
 {$IFDEF SupportAnsiString}
+function  TryStringToUInt64A(const S: AnsiString; out A: UInt64): Boolean;
+{$ENDIF}
+function  TryStringToUInt64B(const S: RawByteString; out A: UInt64): Boolean;
+function  TryStringToUInt64U(const S: UnicodeString; out A: UInt64): Boolean;
+function  TryStringToUInt64(const S: String; out A: UInt64): Boolean;
+
+{$IFDEF SupportAnsiString}
 function  StringToInt64DefA(const S: AnsiString; const Default: Int64): Int64;
 {$ENDIF}
 function  StringToInt64DefB(const S: RawByteString; const Default: Int64): Int64;
@@ -519,11 +506,25 @@ function  StringToInt64DefU(const S: UnicodeString; const Default: Int64): Int64
 function  StringToInt64Def(const S: String; const Default: Int64): Int64;
 
 {$IFDEF SupportAnsiString}
+function  StringToUInt64DefA(const S: AnsiString; const Default: UInt64): UInt64;
+{$ENDIF}
+function  StringToUInt64DefB(const S: RawByteString; const Default: UInt64): UInt64;
+function  StringToUInt64DefU(const S: UnicodeString; const Default: UInt64): UInt64;
+function  StringToUInt64Def(const S: String; const Default: UInt64): UInt64;
+
+{$IFDEF SupportAnsiString}
 function  StringToInt64A(const S: AnsiString): Int64;
 {$ENDIF}
 function  StringToInt64B(const S: RawByteString): Int64;
 function  StringToInt64U(const S: UnicodeString): Int64;
 function  StringToInt64(const S: String): Int64;
+
+{$IFDEF SupportAnsiString}
+function  StringToUInt64A(const S: AnsiString): UInt64;
+{$ENDIF}
+function  StringToUInt64B(const S: RawByteString): UInt64;
+function  StringToUInt64U(const S: UnicodeString): UInt64;
+function  StringToUInt64(const S: String): UInt64;
 
 {$IFDEF SupportAnsiString}
 function  TryStringToIntA(const S: AnsiString; out A: Integer): Boolean;
@@ -561,11 +562,11 @@ function  StringToWord32U(const S: UnicodeString): Word32;
 function  StringToWord32(const S: String): Word32;
 
 {$IFDEF SupportAnsiString}
-function  HexToUIntA(const S: AnsiString): NativeUInt;
+function  HexToUIntA(const S: AnsiString): UInt64;
 {$ENDIF}
-function  HexToUIntB(const S: RawByteString): NativeUInt;
-function  HexToUIntU(const S: UnicodeString): NativeUInt;
-function  HexToUInt(const S: String): NativeUInt;
+function  HexToUIntB(const S: RawByteString): UInt64;
+function  HexToUIntU(const S: UnicodeString): UInt64;
+function  HexToUInt(const S: String): UInt64;
 
 {$IFDEF SupportAnsiString}
 function  TryHexToWord32A(const S: AnsiString; out A: Word32): Boolean;
@@ -2065,7 +2066,7 @@ end;
 { Ascii char conversion lookup                                                 }
 {                                                                              }
 const
-  HexLookup: array[Byte] of Byte = (
+  AsciiHexLookup: array[Byte] of Byte = (
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
       $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF,
@@ -2088,7 +2089,7 @@ const
 {                                                                              }
 { Integer-String conversions                                                   }
 {                                                                              }
-function ByteCharToInt(const A: ByteChar): Integer;
+function ByteCharDigitToInt(const A: ByteChar): Integer;
 begin
   if A in [ByteChar(Ord('0'))..ByteChar(Ord('9'))] then
     Result := Ord(A) - Ord('0')
@@ -2096,7 +2097,7 @@ begin
     Result := -1;
 end;
 
-function WideCharToInt(const A: WideChar): Integer;
+function WideCharDigitToInt(const A: WideChar): Integer;
 begin
   if (Ord(A) >= Ord('0')) and (Ord(A) <= Ord('9')) then
     Result := Ord(A) - Ord('0')
@@ -2104,16 +2105,16 @@ begin
     Result := -1;
 end;
 
-function CharToInt(const A: Char): Integer;
+function CharDigitToInt(const A: Char): Integer;
 begin
   {$IFDEF CharIsWide}
-  Result := WideCharToInt(A);
+  Result := WideCharDigitToInt(A);
   {$ELSE}
   Result := ByteCharToInt(A);
   {$ENDIF}
 end;
 
-function IntToByteChar(const A: Integer): ByteChar;
+function IntToByteCharDigit(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 9) then
     Result := ByteChar($00)
@@ -2121,7 +2122,7 @@ begin
     Result := ByteChar(48 + A);
 end;
 
-function IntToWideChar(const A: Integer): WideChar;
+function IntToWideCharDigit(const A: Integer): WideChar;
 begin
   if (A < 0) or (A > 9) then
     Result := WideChar($00)
@@ -2129,55 +2130,55 @@ begin
     Result := WideChar(48 + A);
 end;
 
-function IntToChar(const A: Integer): Char;
+function IntToCharDigit(const A: Integer): Char;
 begin
   {$IFDEF CharIsWide}
-  Result := IntToWideChar(A);
+  Result := IntToWideCharDigit(A);
   {$ELSE}
   Result := IntToByteChar(A);
   {$ENDIF}
 end;
 
-function IsHexByteChar(const Ch: ByteChar): Boolean;
+function IsHexByteCharDigit(const Ch: ByteChar): Boolean;
 begin
-  Result := HexLookup[Ord(Ch)] <= 15;
+  Result := AsciiHexLookup[Ord(Ch)] <= 15;
 end;
 
-function IsHexWideChar(const Ch: WideChar): Boolean;
+function IsHexWideCharDigit(const Ch: WideChar): Boolean;
 begin
   if Ord(Ch) <= $FF then
-    Result := HexLookup[Ord(Ch)] <= 15
+    Result := AsciiHexLookup[Ord(Ch)] <= 15
   else
     Result := False;
 end;
 
-function IsHexChar(const Ch: Char): Boolean;
+function IsHexCharDigit(const Ch: Char): Boolean;
 begin
   {$IFDEF CharIsWide}
-  Result := IsHexWideChar(Ch);
+  Result := IsHexWideCharDigit(Ch);
   {$ELSE}
   Result := IsHexByteChar(Ch);
   {$ENDIF}
 end;
 
-function HexByteCharToInt(const A: ByteChar): Integer;
+function HexByteCharDigitToInt(const A: ByteChar): Integer;
 var B : Byte;
 begin
-  B := HexLookup[Ord(A)];
+  B := AsciiHexLookup[Ord(A)];
   if B = $FF then
     Result := -1
   else
     Result := B;
 end;
 
-function HexWideCharToInt(const A: WideChar): Integer;
+function HexWideCharDigitToInt(const A: WideChar): Integer;
 var B : Byte;
 begin
   if Ord(A) > $FF then
     Result := -1
   else
     begin
-      B := HexLookup[Ord(A)];
+      B := AsciiHexLookup[Ord(A)];
       if B = $FF then
         Result := -1
       else
@@ -2185,16 +2186,16 @@ begin
     end;
 end;
 
-function HexCharToInt(const A: Char): Integer;
+function HexCharDigitToInt(const A: Char): Integer;
 begin
   {$IFDEF CharIsWide}
-  Result := HexWideCharToInt(A);
+  Result := HexWideCharDigitToInt(A);
   {$ELSE}
   Result := HexByteCharToInt(A);
   {$ENDIF}
 end;
 
-function IntToUpperHexByteChar(const A: Integer): ByteChar;
+function IntToUpperHexByteCharDigit(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 15) then
     Result := ByteChar($00)
@@ -2205,7 +2206,7 @@ begin
     Result := ByteChar(55 + A);
 end;
 
-function IntToUpperHexWideChar(const A: Integer): WideChar;
+function IntToUpperHexWideCharDigit(const A: Integer): WideChar;
 begin
   if (A < 0) or (A > 15) then
     Result := #$00
@@ -2216,16 +2217,16 @@ begin
     Result := WideChar(55 + A);
 end;
 
-function IntToUpperHexChar(const A: Integer): Char;
+function IntToUpperHexCharDigit(const A: Integer): Char;
 begin
   {$IFDEF CharIsWide}
-  Result := IntToUpperHexWideChar(A);
+  Result := IntToUpperHexWideCharDigit(A);
   {$ELSE}
   Result := IntToUpperHexByteChar(A);
   {$ENDIF}
 end;
 
-function IntToLowerHexByteChar(const A: Integer): ByteChar;
+function IntToLowerHexByteCharDigit(const A: Integer): ByteChar;
 begin
   if (A < 0) or (A > 15) then
     Result := ByteChar($00)
@@ -2236,7 +2237,7 @@ begin
     Result := ByteChar(87 + A);
 end;
 
-function IntToLowerHexWideChar(const A: Integer): WideChar;
+function IntToLowerHexWideCharDigit(const A: Integer): WideChar;
 begin
   if (A < 0) or (A > 15) then
     Result := #$00
@@ -2247,10 +2248,10 @@ begin
     Result := WideChar(87 + A);
 end;
 
-function IntToLowerHexChar(const A: Integer): Char;
+function IntToLowerHexCharDigit(const A: Integer): Char;
 begin
   {$IFDEF CharIsWide}
-  Result := IntToLowerHexWideChar(A);
+  Result := IntToLowerHexWideCharDigit(A);
   {$ELSE}
   Result := IntToLowerHexByteChar(A);
   {$ENDIF}
@@ -2258,8 +2259,10 @@ end;
 
 {$IFDEF SupportAnsiString}
 function IntToStringA(const A: Int64): AnsiString;
-var T : Int64;
-    L, I : Integer;
+var
+  T : Int64;
+  L : Integer;
+  I : Integer;
 begin
   // special cases
   if A = 0 then
@@ -2294,7 +2297,7 @@ begin
     end;
   while T > 0 do
     begin
-      Result[L - I] := IntToByteChar(T mod 10);
+      Result[L - I] := IntToByteCharDigit(T mod 10);
       T := T div 10;
       Inc(I);
     end;
@@ -2302,8 +2305,10 @@ end;
 {$ENDIF}
 
 function IntToStringB(const A: Int64): RawByteString;
-var T : Int64;
-    L, I : Integer;
+var
+  T : Int64;
+  L : Integer;
+  I : Integer;
 begin
   // special cases
   if A = 0 then
@@ -2338,14 +2343,17 @@ begin
     end;
   while T > 0 do
     begin
-      Result[L - I] := UTF8Char(IntToByteChar(T mod 10));
+      Result[L - I] := UTF8Char(IntToByteCharDigit(T mod 10));
       T := T div 10;
       Inc(I);
     end;
 end;
 
 function IntToStringU(const A: Int64): UnicodeString;
-var L, T, I : Integer;
+var
+  T : Int64;
+  L : Integer;
+  I : Integer;
 begin
   // special cases
   if A = 0 then
@@ -2380,15 +2388,17 @@ begin
     end;
   while T > 0 do
     begin
-      Result[L - I] := IntToWideChar(T mod 10);
+      Result[L - I] := IntToWideCharDigit(T mod 10);
       T := T div 10;
       Inc(I);
     end;
 end;
 
 function IntToString(const A: Int64): String;
-var T : Int64;
-    L, I : Integer;
+var
+  T : Int64;
+  L : Integer;
+  I : Integer;
 begin
   // special cases
   if A = 0 then
@@ -2423,19 +2433,19 @@ begin
     end;
   while T > 0 do
     begin
-      Result[L - I] := IntToChar(T mod 10);
+      Result[L - I] := IntToCharDigit(T mod 10);
       T := T div 10;
       Inc(I);
     end;
 end;
 
 {$IFDEF SupportAnsiString}
-function NativeUIntToBaseA(
-         const Value: NativeUInt;
+function UIntToBaseA(
+         const Value: UInt64;
          const Digits: Integer;
          const Base: Byte;
          const UpperCase: Boolean = True): AnsiString;
-var D : NativeUInt;
+var D : UInt64;
     L : Integer;
     V : Byte;
 begin
@@ -2482,12 +2492,12 @@ begin
 end;
 {$ENDIF}
 
-function NativeUIntToBaseB(
-         const Value: NativeUInt;
+function UIntToBaseB(
+         const Value: UInt64;
          const Digits: Integer;
          const Base: Byte;
          const UpperCase: Boolean = True): RawByteString;
-var D : NativeUInt;
+var D : UInt64;
     L : Integer;
     V : Byte;
 begin
@@ -2533,12 +2543,12 @@ begin
     end;
 end;
 
-function NativeUIntToBaseU(
-         const Value: NativeUInt;
+function UIntToBaseU(
+         const Value: UInt64;
          const Digits: Integer;
          const Base: Byte;
          const UpperCase: Boolean = True): UnicodeString;
-var D : NativeUInt;
+var D : UInt64;
     L : Integer;
     V : Byte;
 begin
@@ -2584,12 +2594,12 @@ begin
     end;
 end;
 
-function NativeUIntToBase(
-         const Value: NativeUInt;
+function UIntToBase(
+         const Value: UInt64;
          const Digits: Integer;
          const Base: Byte;
          const UpperCase: Boolean = True): String;
-var D : NativeUInt;
+var D : UInt64;
     L : Integer;
     V : Byte;
 begin
@@ -2636,116 +2646,267 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function UIntToStringA(const A: NativeUInt): AnsiString;
+function UIntToStringA(const A: UInt64): AnsiString;
 begin
-  Result := NativeUIntToBaseA(A, 0, 10);
+  Result := UIntToBaseA(A, 0, 10);
 end;
 {$ENDIF}
 
-function UIntToStringB(const A: NativeUInt): RawByteString;
+function UIntToStringB(const A: UInt64): RawByteString;
 begin
-  Result := NativeUIntToBaseB(A, 0, 10);
+  Result := UIntToBaseB(A, 0, 10);
 end;
 
-function UIntToStringU(const A: NativeUInt): UnicodeString;
+function UIntToStringU(const A: UInt64): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(A, 0, 10);
+  Result := UIntToBaseU(A, 0, 10);
 end;
 
-function UIntToString(const A: NativeUInt): String;
+function UIntToString(const A: UInt64): String;
 begin
-  Result := NativeUIntToBase(A, 0, 10);
+  Result := UIntToBase(A, 0, 10);
 end;
 
 {$IFDEF SupportAnsiString}
 function Word32ToStrA(const A: Word32; const Digits: Integer): AnsiString;
 begin
-  Result := NativeUIntToBaseA(A, Digits, 10);
+  Result := UIntToBaseA(A, Digits, 10);
 end;
 {$ENDIF}
 
 function Word32ToStrB(const A: Word32; const Digits: Integer): RawByteString;
 begin
-  Result := NativeUIntToBaseB(A, Digits, 10);
+  Result := UIntToBaseB(A, Digits, 10);
 end;
 
 function Word32ToStrU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(A, Digits, 10);
+  Result := UIntToBaseU(A, Digits, 10);
 end;
 
 function Word32ToStr(const A: Word32; const Digits: Integer): String;
 begin
-  Result := NativeUIntToBase(A, Digits, 10);
+  Result := UIntToBase(A, Digits, 10);
 end;
 
 {$IFDEF SupportAnsiString}
 function Word32ToHexA(const A: Word32; const Digits: Integer; const UpperCase: Boolean): AnsiString;
 begin
-  Result := NativeUIntToBaseA(A, Digits, 16, UpperCase);
+  Result := UIntToBaseA(A, Digits, 16, UpperCase);
 end;
 {$ENDIF}
 
 function Word32ToHexB(const A: Word32; const Digits: Integer; const UpperCase: Boolean): RawByteString;
 begin
-  Result := NativeUIntToBaseB(A, Digits, 16, UpperCase);
+  Result := UIntToBaseB(A, Digits, 16, UpperCase);
 end;
 
 function Word32ToHexU(const A: Word32; const Digits: Integer; const UpperCase: Boolean): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(A, Digits, 16, UpperCase);
+  Result := UIntToBaseU(A, Digits, 16, UpperCase);
 end;
 
 function Word32ToHex(const A: Word32; const Digits: Integer; const UpperCase: Boolean): String;
 begin
-  Result := NativeUIntToBase(A, Digits, 16, UpperCase);
+  Result := UIntToBase(A, Digits, 16, UpperCase);
 end;
 
 {$IFDEF SupportAnsiString}
 function Word32ToOctA(const A: Word32; const Digits: Integer): AnsiString;
 begin
-  Result := NativeUIntToBaseA(A, Digits, 8);
+  Result := UIntToBaseA(A, Digits, 8);
 end;
 {$ENDIF}
 
 function Word32ToOctB(const A: Word32; const Digits: Integer): RawByteString;
 begin
-  Result := NativeUIntToBaseB(A, Digits, 8);
+  Result := UIntToBaseB(A, Digits, 8);
 end;
 
 function Word32ToOctU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(A, Digits, 8);
+  Result := UIntToBaseU(A, Digits, 8);
 end;
 
 function Word32ToOct(const A: Word32; const Digits: Integer): String;
 begin
-  Result := NativeUIntToBase(A, Digits, 8);
+  Result := UIntToBase(A, Digits, 8);
 end;
 
 {$IFDEF SupportAnsiString}
 function Word32ToBinA(const A: Word32; const Digits: Integer): AnsiString;
 begin
-  Result := NativeUIntToBaseA(A, Digits, 2);
+  Result := UIntToBaseA(A, Digits, 2);
 end;
 {$ENDIF}
 
 function Word32ToBinB(const A: Word32; const Digits: Integer): RawByteString;
 begin
-  Result := NativeUIntToBaseB(A, Digits, 2);
+  Result := UIntToBaseB(A, Digits, 2);
 end;
 
 function Word32ToBinU(const A: Word32; const Digits: Integer): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(A, Digits, 2);
+  Result := UIntToBaseU(A, Digits, 2);
 end;
 
 function Word32ToBin(const A: Word32; const Digits: Integer): String;
 begin
-  Result := NativeUIntToBase(A, Digits, 2);
+  Result := UIntToBase(A, Digits, 2);
 end;
 
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF} // Delphi 7 incorrectly overflowing for -922337203685477580 * 10
+function TryStringToUInt64PB(const BufP: Pointer; const BufLen: Integer; out Value: UInt64; out StrLen: Integer): TConvertResult;
+var
+  ChP    : PByte;
+  Len    : Integer;
+  HasDig : Boolean;
+  Res    : UInt64;
+  Ch     : Byte;
+  DigVal : Integer;
+begin
+  if BufLen <= 0 then
+    begin
+      Value := 0;
+      StrLen := 0;
+      Result := convertFormatError;
+      exit;
+    end;
+  Assert(Assigned(BufP));
+  ChP := BufP;
+  Len := 0;
+  HasDig := False;
+  // skip leading zeros
+  while (Len < BufLen) and (ChP^ = Ord('0')) do
+    begin
+      Inc(Len);
+      Inc(ChP);
+      HasDig := True;
+    end;
+  // convert digits
+  Res := 0;
+  while Len < BufLen do
+    begin
+      Ch := ChP^;
+      if Ch in [Ord('0')..Ord('9')] then
+        begin
+          HasDig := True;
+          if (Res > 1844674407370955161) then
+            begin
+              Value := 0;
+              StrLen := Len;
+              Result := convertOverflow;
+              exit;
+            end;
+          Res := Res * 10;
+          DigVal := ByteCharDigitToInt(ByteChar(Ch));
+          if (Res = 18446744073709551610) and (DigVal > 5) then
+            begin
+              Value := 0;
+              StrLen := Len;
+              Result := convertOverflow;
+              exit;
+            end;
+          Inc(Res, DigVal);
+          Inc(Len);
+          Inc(ChP);
+        end
+      else
+        break;
+    end;
+  StrLen := Len;
+  if not HasDig then
+    begin
+      Value := 0;
+      Result := convertFormatError;
+    end
+  else
+    begin
+      Value := Res;
+      Result := convertOK;
+    end;
+end;
+
+function TryStringToUInt64PW(const BufP: Pointer; const BufLen: Integer; out Value: UInt64; out StrLen: Integer): TConvertResult;
+var
+  ChP    : PWideChar;
+  Len    : Integer;
+  HasDig : Boolean;
+  Res    : UInt64;
+  Ch     : WideChar;
+  DigVal : Integer;
+begin
+  if BufLen <= 0 then
+    begin
+      Value := 0;
+      StrLen := 0;
+      Result := convertFormatError;
+      exit;
+    end;
+  Assert(Assigned(BufP));
+  ChP := BufP;
+  Len := 0;
+  HasDig := False;
+  // skip leading zeros
+  while (Len < BufLen) and (ChP^ = '0') do
+    begin
+      Inc(Len);
+      Inc(ChP);
+      HasDig := True;
+    end;
+  // convert digits
+  Res := 0;
+  while Len < BufLen do
+    begin
+      Ch := ChP^;
+      if (Ch >= '0') and (Ch <= '9') then
+        begin
+          HasDig := True;
+          if (Res > 1844674407370955161) then
+            begin
+              Value := 0;
+              StrLen := Len;
+              Result := convertOverflow;
+              exit;
+            end;
+          Res := Res * 10;
+          DigVal := WideCharDigitToInt(Ch);
+          if (Res = 18446744073709551610) and (DigVal > 5) then
+            begin
+              Value := 0;
+              StrLen := Len;
+              Result := convertOverflow;
+              exit;
+            end;
+          Inc(Res, DigVal);
+          Inc(Len);
+          Inc(ChP);
+        end
+      else
+        break;
+    end;
+  StrLen := Len;
+  if not HasDig then
+    begin
+      Value := 0;
+      Result := convertFormatError;
+    end
+  else
+    begin
+      Value := Res;
+      Result := convertOK;
+    end;
+end;
+
+function TryStringToUInt64P(const BufP: Pointer; const BufLen: Integer; out Value: UInt64; out StrLen: Integer): TConvertResult; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  {$IFDEF StringIsUnicode}
+  Result := TryStringToUInt64PW(BufP, BufLen, Value, StrLen);
+  {$ELSE}
+  Result := TryStringToUInt64PB(BufP, BufLen, Value, StrLen);
+  {$ENDIF}
+end;
+
 function TryStringToInt64PB(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
@@ -2799,7 +2960,7 @@ begin
               exit;
             end;
           Res := Res * 10;
-          DigVal := ByteCharToInt(ByteChar(Ch));
+          DigVal := ByteCharDigitToInt(ByteChar(Ch));
           if ((Res = 9223372036854775800) and (DigVal > 7)) or
              ((Res = -9223372036854775800) and (DigVal > 8)) then
             begin
@@ -2830,9 +2991,7 @@ begin
       Result := convertOK;
     end;
 end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
 
-{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF} // Delphi 7 incorrectly overflowing for -922337203685477580 * 10
 function TryStringToInt64PW(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
@@ -2886,7 +3045,7 @@ begin
               exit;
             end;
           Res := Res * 10;
-          DigVal := WideCharToInt(Ch);
+          DigVal := WideCharDigitToInt(Ch);
           if ((Res = 9223372036854775800) and (DigVal > 7)) or
              ((Res = -9223372036854775800) and (DigVal > 8)) then
             begin
@@ -2917,9 +3076,7 @@ begin
       Result := convertOK;
     end;
 end;
-{$IFDEF QOn}{$Q+}{$ENDIF}
 
-{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF} // Delphi 7 incorrectly overflowing for -922337203685477580 * 10
 function TryStringToInt64P(const BufP: Pointer; const BufLen: Integer; out Value: Int64; out StrLen: Integer): TConvertResult;
 var Len : Integer;
     DigVal : Integer;
@@ -2973,7 +3130,7 @@ begin
               exit;
             end;
           Res := Res * 10;
-          DigVal := CharToInt(Ch);
+          DigVal := CharDigitToInt(Ch);
           if ((Res = 9223372036854775800) and (DigVal > 7)) or
              ((Res = -9223372036854775800) and (DigVal > 8)) then
             begin
@@ -3049,6 +3206,48 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
+function TryStringToUInt64A(const S: AnsiString; out A: UInt64): Boolean;
+var L, N : Integer;
+begin
+  L := Length(S);
+  Result := TryStringToUInt64PB(PAnsiChar(S), L, A, N) = convertOK;
+  if Result then
+    if N < L then
+      Result := False;
+end;
+{$ENDIF}
+
+function TryStringToUInt64B(const S: RawByteString; out A: UInt64): Boolean;
+var L, N : Integer;
+begin
+  L := Length(S);
+  Result := TryStringToUInt64PB(Pointer(S), L, A, N) = convertOK;
+  if Result then
+    if N < L then
+      Result := False;
+end;
+
+function TryStringToUInt64U(const S: UnicodeString; out A: UInt64): Boolean;
+var L, N : Integer;
+begin
+  L := Length(S);
+  Result := TryStringToUInt64PW(PWideChar(S), L, A, N) = convertOK;
+  if Result then
+    if N < L then
+      Result := False;
+end;
+
+function TryStringToUInt64(const S: String; out A: UInt64): Boolean;
+var L, N : Integer;
+begin
+  L := Length(S);
+  Result := TryStringToUInt64P(PChar(S), L, A, N) = convertOK;
+  if Result then
+    if N < L then
+      Result := False;
+end;
+
+{$IFDEF SupportAnsiString}
 function StringToInt64DefA(const S: AnsiString; const Default: Int64): Int64;
 begin
   if not TryStringToInt64A(S, Result) then
@@ -3075,6 +3274,32 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
+function StringToUInt64DefA(const S: AnsiString; const Default: UInt64): UInt64;
+begin
+  if not TryStringToUInt64A(S, Result) then
+    Result := Default;
+end;
+{$ENDIF}
+
+function StringToUInt64DefB(const S: RawByteString; const Default: UInt64): UInt64;
+begin
+  if not TryStringToUInt64B(S, Result) then
+    Result := Default;
+end;
+
+function StringToUInt64DefU(const S: UnicodeString; const Default: UInt64): UInt64;
+begin
+  if not TryStringToUInt64U(S, Result) then
+    Result := Default;
+end;
+
+function StringToUInt64Def(const S: String; const Default: UInt64): UInt64;
+begin
+  if not TryStringToUInt64(S, Result) then
+    Result := Default;
+end;
+
+{$IFDEF SupportAnsiString}
 function StringToInt64A(const S: AnsiString): Int64;
 begin
   if not TryStringToInt64A(S, Result) then
@@ -3097,6 +3322,32 @@ end;
 function StringToInt64(const S: String): Int64;
 begin
   if not TryStringToInt64(S, Result) then
+    raise ERangeCheckError.Create;
+end;
+
+{$IFDEF SupportAnsiString}
+function StringToUInt64A(const S: AnsiString): UInt64;
+begin
+  if not TryStringToUInt64A(S, Result) then
+    raise ERangeCheckError.Create;
+end;
+{$ENDIF}
+
+function StringToUInt64B(const S: RawByteString): UInt64;
+begin
+  if not TryStringToUInt64B(S, Result) then
+    raise ERangeCheckError.Create;
+end;
+
+function StringToUInt64U(const S: UnicodeString): UInt64;
+begin
+  if not TryStringToUInt64U(S, Result) then
+    raise ERangeCheckError.Create;
+end;
+
+function StringToUInt64(const S: String): UInt64;
+begin
+  if not TryStringToUInt64(S, Result) then
     raise ERangeCheckError.Create;
 end;
 
@@ -3335,8 +3586,8 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function BaseStrToNativeUIntA(const S: AnsiString; const BaseLog2: Byte;
-    var Valid: Boolean): NativeUInt;
+function BaseStrToUIntA(const S: AnsiString; const BaseLog2: Byte;
+    var Valid: Boolean): UInt64;
 var N : Byte;
     L : Integer;
     M : Byte;
@@ -3354,7 +3605,7 @@ begin
   N := 0;
   Result := 0;
   repeat
-    C := HexLookup[Ord(S[L])];
+    C := AsciiHexLookup[Ord(S[L])];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3362,12 +3613,12 @@ begin
         exit;
       end;
     {$IFDEF FPC}
-    Result := Result + NativeUInt(C) shl N;
+    Result := Result + UInt64(C) shl N;
     {$ELSE}
-    Inc(Result, NativeUInt(C) shl N);
+    Inc(Result, UInt64(C) shl N);
     {$ENDIF}
     Inc(N, BaseLog2);
-    if N > BitsPerNativeWord then // overflow
+    if N > 64 then // overflow
       begin
         Valid := False;
         Result := 0;
@@ -3379,8 +3630,8 @@ begin
 end;
 {$ENDIF}
 
-function BaseStrToNativeUIntB(const S: RawByteString; const BaseLog2: Byte;
-    var Valid: Boolean): NativeUInt;
+function BaseStrToUIntB(const S: RawByteString; const BaseLog2: Byte;
+    var Valid: Boolean): UInt64;
 var N : Byte;
     L : Integer;
     M : Byte;
@@ -3398,7 +3649,7 @@ begin
   N := 0;
   Result := 0;
   repeat
-    C := HexLookup[Ord(S[L])];
+    C := AsciiHexLookup[Ord(S[L])];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3406,12 +3657,12 @@ begin
         exit;
       end;
     {$IFDEF FPC}
-    Result := Result + NativeUInt(C) shl N;
+    Result := Result + UInt64(C) shl N;
     {$ELSE}
-    Inc(Result, NativeUInt(C) shl N);
+    Inc(Result, UInt64(C) shl N);
     {$ENDIF}
     Inc(N, BaseLog2);
-    if N > BitsPerNativeWord then // overflow
+    if N > 64 then // overflow
       begin
         Valid := False;
         Result := 0;
@@ -3422,8 +3673,8 @@ begin
   Valid := True;
 end;
 
-function BaseStrToNativeUIntU(const S: UnicodeString; const BaseLog2: Byte;
-    var Valid: Boolean): NativeUInt;
+function BaseStrToUIntU(const S: UnicodeString; const BaseLog2: Byte;
+    var Valid: Boolean): UInt64;
 var N : Byte;
     L : Integer;
     M : Byte;
@@ -3446,7 +3697,7 @@ begin
     if Ord(D) > $FF then
       C := $FF
     else
-      C := HexLookup[Ord(D)];
+      C := AsciiHexLookup[Ord(D)];
     if C > M then // invalid digit
       begin
         Valid := False;
@@ -3454,12 +3705,12 @@ begin
         exit;
       end;
     {$IFDEF FPC}
-    Result := Result + NativeUInt(C) shl N;
+    Result := Result + UInt64(C) shl N;
     {$ELSE}
-    Inc(Result, NativeUInt(C) shl N);
+    Inc(Result, UInt64(C) shl N);
     {$ENDIF}
     Inc(N, BaseLog2);
-    if N > BitsPerNativeWord then // overflow
+    if N > 64 then // overflow
       begin
         Valid := False;
         Result := 0;
@@ -3470,8 +3721,8 @@ begin
   Valid := True;
 end;
 
-function BaseStrToNativeUInt(const S: String; const BaseLog2: Byte;
-    var Valid: Boolean): NativeUInt;
+function BaseStrToUInt(const S: String; const BaseLog2: Byte;
+    var Valid: Boolean): UInt64;
 var N : Byte;
     L : Integer;
     M : Byte;
@@ -3495,7 +3746,7 @@ begin
     if Ord(D) > $FF then
       C := $FF
     else
-      C := HexLookup[Ord(D)];
+      C := AsciiHexLookup[Ord(D)];
     {$ELSE}
     C := HexLookup[Ord(D)];
     {$ENDIF}
@@ -3506,12 +3757,12 @@ begin
         exit;
       end;
     {$IFDEF FPC}
-    Result := Result + NativeUInt(C) shl N;
+    Result := Result + UInt64(C) shl N;
     {$ELSE}
-    Inc(Result, NativeUInt(C) shl N);
+    Inc(Result, UInt64(C) shl N);
     {$ENDIF}
     Inc(N, BaseLog2);
-    if N > BitsPerNativeWord then // overflow
+    if N > 64 then // overflow
       begin
         Valid := False;
         Result := 0;
@@ -3523,35 +3774,35 @@ begin
 end;
 
 {$IFDEF SupportAnsiString}
-function HexToUIntA(const S: AnsiString): NativeUInt;
+function HexToUIntA(const S: AnsiString): UInt64;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntA(S, 4, R);
+  Result := BaseStrToUIntA(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
 {$ENDIF}
 
-function HexToUIntB(const S: RawByteString): NativeUInt;
+function HexToUIntB(const S: RawByteString): UInt64;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntB(S, 4, R);
+  Result := BaseStrToUIntB(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
 
-function HexToUIntU(const S: UnicodeString): NativeUInt;
+function HexToUIntU(const S: UnicodeString): UInt64;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntU(S, 4, R);
+  Result := BaseStrToUIntU(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
 
-function HexToUInt(const S: String): NativeUInt;
+function HexToUInt(const S: String): UInt64;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUInt(S, 4, R);
+  Result := BaseStrToUInt(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3559,30 +3810,30 @@ end;
 {$IFDEF SupportAnsiString}
 function TryHexToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntA(S, 4, Result);
+  A := BaseStrToUIntA(S, 4, Result);
 end;
 {$ENDIF}
 
 function TryHexToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntB(S, 4, Result);
+  A := BaseStrToUIntB(S, 4, Result);
 end;
 
 function TryHexToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntU(S, 4, Result);
+  A := BaseStrToUIntU(S, 4, Result);
 end;
 
 function TryHexToWord32(const S: String; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUInt(S, 4, Result);
+  A := BaseStrToUInt(S, 4, Result);
 end;
 
 {$IFDEF SupportAnsiString}
 function HexToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntA(S, 4, R);
+  Result := BaseStrToUIntA(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3591,7 +3842,7 @@ end;
 function HexToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntB(S, 4, R);
+  Result := BaseStrToUIntB(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3599,7 +3850,7 @@ end;
 function HexToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntU(S, 4, R);
+  Result := BaseStrToUIntU(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3607,7 +3858,7 @@ end;
 function HexToWord32(const S: String): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUInt(S, 4, R);
+  Result := BaseStrToUInt(S, 4, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3615,30 +3866,30 @@ end;
 {$IFDEF SupportAnsiString}
 function TryOctToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntA(S, 3, Result);
+  A := BaseStrToUIntA(S, 3, Result);
 end;
 {$ENDIF}
 
 function TryOctToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntB(S, 3, Result);
+  A := BaseStrToUIntB(S, 3, Result);
 end;
 
 function TryOctToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntU(S, 3, Result);
+  A := BaseStrToUIntU(S, 3, Result);
 end;
 
 function TryOctToWord32(const S: String; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUInt(S, 3, Result);
+  A := BaseStrToUInt(S, 3, Result);
 end;
 
 {$IFDEF SupportAnsiString}
 function OctToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntA(S, 3, R);
+  Result := BaseStrToUIntA(S, 3, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3647,7 +3898,7 @@ end;
 function OctToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntB(S, 3, R);
+  Result := BaseStrToUIntB(S, 3, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3655,7 +3906,7 @@ end;
 function OctToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntU(S, 3, R);
+  Result := BaseStrToUIntU(S, 3, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3663,7 +3914,7 @@ end;
 function OctToWord32(const S: String): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUInt(S, 3, R);
+  Result := BaseStrToUInt(S, 3, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3671,30 +3922,30 @@ end;
 {$IFDEF SupportAnsiString}
 function TryBinToWord32A(const S: AnsiString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntA(S, 1, Result);
+  A := BaseStrToUIntA(S, 1, Result);
 end;
 {$ENDIF}
 
 function TryBinToWord32B(const S: RawByteString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntB(S, 1, Result);
+  A := BaseStrToUIntB(S, 1, Result);
 end;
 
 function TryBinToWord32U(const S: UnicodeString; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUIntU(S, 1, Result);
+  A := BaseStrToUIntU(S, 1, Result);
 end;
 
 function TryBinToWord32(const S: String; out A: Word32): Boolean;
 begin
-  A := BaseStrToNativeUInt(S, 1, Result);
+  A := BaseStrToUInt(S, 1, Result);
 end;
 
 {$IFDEF SupportAnsiString}
 function BinToWord32A(const S: AnsiString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntA(S, 1, R);
+  Result := BaseStrToUIntA(S, 1, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3703,7 +3954,7 @@ end;
 function BinToWord32B(const S: RawByteString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntB(S, 1, R);
+  Result := BaseStrToUIntB(S, 1, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3711,7 +3962,7 @@ end;
 function BinToWord32U(const S: UnicodeString): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUIntU(S, 1, R);
+  Result := BaseStrToUIntU(S, 1, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3719,7 +3970,7 @@ end;
 function BinToWord32(const S: String): Word32;
 var R : Boolean;
 begin
-  Result := BaseStrToNativeUInt(S, 1, R);
+  Result := BaseStrToUInt(S, 1, R);
   if not R then
     raise ERangeCheckError.Create;
 end;
@@ -3842,72 +4093,72 @@ end;
 {$IFDEF SupportAnsiString}
 function PointerToStrA(const P: Pointer): AnsiString;
 begin
-  Result := NativeUIntToBaseA(NativeUInt(P), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseA(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 {$ENDIF}
 
 function PointerToStrB(const P: Pointer): RawByteString;
 begin
-  Result := NativeUIntToBaseB(NativeUInt(P), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseB(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 
 function PointerToStrU(const P: Pointer): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(NativeUInt(P), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseU(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 
 function PointerToStr(const P: Pointer): String;
 begin
-  Result := NativeUIntToBase(NativeUInt(P), NativeWordSize * 2, 16, True);
+  Result := UIntToBase(NativeUInt(P), NativeWordSize * 2, 16, True);
 end;
 
 {$IFDEF SupportAnsiString}
 function StrToPointerA(const S: AnsiString): Pointer;
 var V : Boolean;
 begin
-  Result := Pointer(BaseStrToNativeUIntA(S, 4, V));
+  Result := Pointer(BaseStrToUIntA(S, 4, V));
 end;
 {$ENDIF}
 
 function StrToPointerB(const S: RawByteString): Pointer;
 var V : Boolean;
 begin
-  Result := Pointer(BaseStrToNativeUIntB(S, 4, V));
+  Result := Pointer(BaseStrToUIntB(S, 4, V));
 end;
 
 function StrToPointerU(const S: UnicodeString): Pointer;
 var V : Boolean;
 begin
-  Result := Pointer(BaseStrToNativeUIntU(S, 4, V));
+  Result := Pointer(BaseStrToUIntU(S, 4, V));
 end;
 
 function StrToPointer(const S: String): Pointer;
 var V : Boolean;
 begin
-  Result := Pointer(BaseStrToNativeUInt(S, 4, V));
+  Result := Pointer(BaseStrToUInt(S, 4, V));
 end;
 
 {$IFDEF SupportInterface}
 {$IFDEF SupportAnsiString}
 function InterfaceToStrA(const I: IInterface): AnsiString;
 begin
-  Result := NativeUIntToBaseA(NativeUInt(I), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseA(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
 {$ENDIF}
 
 function InterfaceToStrB(const I: IInterface): RawByteString;
 begin
-  Result := NativeUIntToBaseB(NativeUInt(I), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseB(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
 
 function InterfaceToStrU(const I: IInterface): UnicodeString;
 begin
-  Result := NativeUIntToBaseU(NativeUInt(I), NativeWordSize * 2, 16, True);
+  Result := UIntToBaseU(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
 
 function InterfaceToStr(const I: IInterface): String;
 begin
-  Result := NativeUIntToBase(NativeUInt(I), NativeWordSize * 2, 16, True);
+  Result := UIntToBase(NativeUInt(I), NativeWordSize * 2, 16, True);
 end;
 {$ENDIF}
 
@@ -4256,43 +4507,115 @@ begin
   Move(Source, Dest, Count);
 end;
 
-function EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+function EqualMem64(const Buf1; const Buf2; const Count: NativeInt): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 var
-  P, Q : Pointer;
-  D, I : NativeInt;
+  P : Pointer;
+  Q : Pointer;
 begin
   P := @Buf1;
   Q := @Buf2;
-  if (Count <= 0) or (P = Q) then
+  case Count of
+    1 : Result := PByte(P)^ = PByte(Q)^;
+    2 : Result := PWord16(P)^ = PWord16(Q)^;
+    3 : begin
+          Result := PWord16(P)^ = PWord16(Q)^;
+          if Result then
+            begin
+              Inc(PWord16(P));
+              Inc(PWord16(Q));
+              Result := PByte(P)^ = PByte(Q)^;
+            end;
+        end;
+    4 : Result := PWord32(P)^ = PWord32(Q)^;
+    5 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := PByte(P)^ = PByte(Q)^;
+            end;
+        end;
+    6 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := PWord16(P)^ = PWord16(Q)^;
+            end;
+        end;
+    7 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := PWord16(P)^ = PWord16(Q)^;
+              if Result then
+                begin
+                  Inc(PWord16(P));
+                  Inc(PWord16(Q));
+                  Result := PByte(P)^ = PByte(Q)^;
+                end;
+            end;
+        end;
+    8 : Result := PWord64(P)^ = PWord64(Q)^;
+  else
+    Result := True;
+  end;
+end;
+
+function EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P : PNativeUInt;
+  Q : PNativeUInt;
+  D : NativeInt;
+begin
+  if Count <= 0 then
     begin
       Result := True;
       exit;
     end;
-  D := Word32(Count) div 4;
-  for I := 1 to D do
-    if PWord32(P)^ = PWord32(Q)^ then
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
+  if Count <= 8 then
+    begin
+      Result := EqualMem64(P^, Q^, Count);
+      exit;
+    end;
+  {$IFDEF CPU_64}
+  D := Count shr 3;
+  {$ELSE}{$IFDEF CPU_32}
+  D := Count shr 2;
+  {$ELSE}
+  D := Count div SizeOf(NativeInt);
+  {$ENDIF}{$ENDIF}
+  while D > 0 do
+    if P^ = Q^ then
       begin
-        Inc(PWord32(P));
-        Inc(PWord32(Q));
+        Inc(P);
+        Inc(Q);
+        Dec(D);
       end
     else
       begin
         Result := False;
         exit;
       end;
-  D := Word32(Count) and 3;
-  for I := 1 to D do
-    if PByte(P)^ = PByte(Q)^ then
-      begin
-        Inc(PByte(P));
-        Inc(PByte(Q));
-      end
-    else
-      begin
-        Result := False;
-        exit;
-      end;
-  Result := True;
+  D := Count and (SizeOf(NativeInt) - 1);
+  if D > 0 then
+    begin
+      Assert(D < SizeOf(NativeInt));
+      Result := EqualMem64(P^, Q^, D);
+    end
+  else
+    Result := True;
 end;
 
 function EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Boolean;
@@ -4308,6 +4631,11 @@ begin
     end;
   P := @Buf1;
   Q := @Buf2;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
   for I := 1 to Count do
     begin
       C := PByte(P)^;
@@ -4343,6 +4671,11 @@ begin
     end;
   P := @Buf1;
   Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
   for I := 1 to Count do
     begin
       C := PByte(P)^;
@@ -4376,6 +4709,11 @@ begin
     end;
   P := @Buf1;
   Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
   for I := 1 to Count do
     begin
       C := PByte(P)^;
@@ -4741,18 +5079,19 @@ end;
 
 procedure Test_IntStr;
 var I : Int64;
+    U : UInt64;
     W : Word32;
     L : Integer;
     {$IFDEF SupportAnsiString}
     A : AnsiString;
     {$ENDIF}
 begin
-  Assert(HexCharToInt('A') = 10,   'HexCharToInt');
-  Assert(HexCharToInt('a') = 10,   'HexCharToInt');
-  Assert(HexCharToInt('1') = 1,    'HexCharToInt');
-  Assert(HexCharToInt('0') = 0,    'HexCharToInt');
-  Assert(HexCharToInt('F') = 15,   'HexCharToInt');
-  Assert(HexCharToInt('G') = -1,   'HexCharToInt');
+  Assert(HexCharDigitToInt('A') = 10,   'HexCharDigitToInt');
+  Assert(HexCharDigitToInt('a') = 10,   'HexCharDigitToInt');
+  Assert(HexCharDigitToInt('1') = 1,    'HexCharDigitToInt');
+  Assert(HexCharDigitToInt('0') = 0,    'HexCharDigitToInt');
+  Assert(HexCharDigitToInt('F') = 15,   'HexCharDigitToInt');
+  Assert(HexCharDigitToInt('G') = -1,   'HexCharDigitToInt');
 
   {$IFDEF SupportAnsiString}
   Assert(IntToStringA(0) = ToAnsiString('0'),                           'IntToStringA');
@@ -4825,6 +5164,25 @@ begin
   Assert(Word32ToStr(1, 1) = '1',                   'Word32ToStr');
   Assert(Word32ToStr(1, 3) = '001',                 'Word32ToStr');
   Assert(Word32ToStr(1234, 3) = '1234',             'Word32ToStr');
+
+  {$IFDEF SupportAnsiString}
+  Assert(UIntToStringA(0) = ToAnsiString('0'),                     'UIntToString');
+  Assert(UIntToStringA($FFFFFFFF) = ToAnsiString('4294967295'),    'UIntToString');
+  {$ENDIF}
+  Assert(UIntToStringB(0) = ToRawByteString('0'),                  'UIntToString');
+  Assert(UIntToStringB($FFFFFFFF) = ToRawByteString('4294967295'), 'UIntToString');
+  Assert(UIntToStringU(0) = '0',                                   'UIntToString');
+  Assert(UIntToStringU($FFFFFFFF) = '4294967295',                  'UIntToString');
+  Assert(UIntToString(0) = '0',                                    'UIntToString');
+  Assert(UIntToString($FFFFFFFF) = '4294967295',                   'UIntToString');
+  Assert(UIntToString(123) = '123',                                'UIntToString');
+  Assert(UIntToString(10000) = '10000',                            'UIntToString');
+  Assert(UIntToString(99999) = '99999',                            'UIntToString');
+  Assert(UIntToString(1) = '1',                                    'UIntToString');
+  Assert(UIntToString(1234) = '1234',                              'UIntToString');
+  Assert(UIntToString($100000000) = '4294967296',                  'UIntToString');
+  Assert(UIntToString(MaxUInt64) = '18446744073709551615',         'UIntToString');
+  Assert(UIntToString(MaxUInt64 - 5) = '18446744073709551610',     'UIntToString');
 
   {$IFDEF SupportAnsiString}
   Assert(Word32ToHexA(0, 8) = ToAnsiString('00000000'),         'Word32ToHex');
@@ -4913,6 +5271,32 @@ begin
   {$IFNDEF DELPHI7_DOWN}
   Assert(not TryStringToInt64A(ToAnsiString('-9223372036854775809'), I), 'StringToInt');
   {$ENDIF}
+  {$ENDIF}
+
+  {$IFDEF SupportAnsiString}
+  Assert(TryStringToUInt64A(ToAnsiString('0'), U),                        'StringToInt');
+  Assert(U = 0,                                            'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('1234'), U),                     'StringToInt');
+  Assert(U = 1234,                                         'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('000099999'), U),                'StringToInt');
+  Assert(U = 99999,                                        'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('999999999999999999'), U),       'StringToInt');
+  Assert(U = 999999999999999999,                           'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('4294967295'), U),               'StringToInt');
+  Assert(U = $FFFFFFFF,                                    'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('4294967296'), U),               'StringToInt');
+  Assert(U = $100000000,                                   'StringToInt');
+  Assert(TryStringToUInt64A(ToAnsiString('18446744073709551615'), U),      'StringToInt');
+  Assert(U = 18446744073709551615,                          'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString(''), U),                      'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('-'), U),                     'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('+'), U),                     'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('+-0'), U),                   'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('0A'), U),                    'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('1A'), U),                    'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString(' 0'), U),                    'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('0 '), U),                    'StringToInt');
+  Assert(not TryStringToUInt64A(ToAnsiString('18446744073709551616'), U),  'StringToInt');
   {$ENDIF}
 
   Assert(TryStringToInt64U('9223372036854775807', I),      'StringToInt');
@@ -5045,18 +5429,72 @@ var I, J : Integer;
     {$ENDIF}
 begin
   {$IFDEF SupportAnsiString}
+  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToAnsiString('0123456789ABC                       ');
+  Assert(EqualMem(A[1], B[1], 0));
+  Assert(EqualMem(A[1], B[1], 1));
+  Assert(EqualMem(A[1], B[1], 13));
+  Assert(EqualMem(A[13], B[13], 1));
+  Assert(not EqualMem(A[1], B[1], 14));
+  Assert(not EqualMem(A[13], B[13], 2));
+  Assert(not EqualMem(A[14], B[14], 1));
+  Assert(EqualMem(A[14], B[14], 0));
+  for I := 1 to 13 do
+    Assert(EqualMem(A[1], B[1], I));
+  for I := 1 to 13 do
+    Assert(EqualMem(A[I], B[I], 14 - I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMem(A[1], B[1], I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMem(A[I], B[I], Length(A) - I + 1));
+
+  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToAnsiString('0123456789ABC                       ');
+  Assert(CompareMem(A[1], B[1], 0) = 0);
+  Assert(CompareMem(A[1], B[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMem(A[1], B[1], I) = 0);
+  Assert(CompareMem(A[1], B[1], 14) > 0);
+  Assert(CompareMem(A[1], B[1], Length(A)) > 0);
+
+  for I := 1 to 13 do
+    Assert(CompareMem(B[1], A[1], I) = 0);
+  Assert(CompareMem(B[1], A[1], 14) < 0);
+  Assert(CompareMem(B[1], A[1], Length(A)) < 0);
+
+  Assert(CompareMem(A[1], A[1], 0) = 0);
+  Assert(CompareMem(A[1], A[1], 1) = 0);
+  Assert(CompareMem(A[1], A[1], Length(A)) = 0);
+  Assert(CompareMem(A[1], A[2], 1) < 0);
+  Assert(CompareMem(A[2], A[1], 1) > 0);
+  Assert(CompareMem(A[1], A[2], 0) = 0);
+  Assert(CompareMem(A[1], A[2], -1) = 0);
+  Assert(CompareMem(Pointer(A), Pointer(A), 1) = 0);
+  Assert(CompareMem(Pointer(A), Pointer(A), Length(A)) = 0);
+
+  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToAnsiString('0123456789ABCDE                     ');
+  for I := 1 to 15 do
+    Assert(EqualMem(A[1], B[1], I));
+  Assert(not EqualMem(A[1], B[1], 16));
+  for I := 1 to 15 do
+    Assert(CompareMem(A[1], B[1], I) = 0);
+  Assert(CompareMem(A[1], B[1], 16) > 0);
+
   for I := -1 to 33 do
     begin
       A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
       B := ToAnsiString('                                    ');
+      if I > 0 then
+        Assert(not EqualMem(A[1], B[1], I),  'EqualMem');
       MoveMem(A[1], B[1], I);
       for J := 1 to MinInt(I, 10) do
-        Assert(B[J] = AnsiChar(48 + J - 1),     'MoveMem');
+        Assert(B[J] = AnsiChar(48 + J - 1),  'MoveMem');
       for J := 11 to MinInt(I, 36) do
-        Assert(B[J] = AnsiChar(65 + J - 11),    'MoveMem');
+        Assert(B[J] = AnsiChar(65 + J - 11), 'MoveMem');
       for J := MaxInt(I + 1, 1) to 36 do
-        Assert(B[J] = AnsiChar(Ord(' ')),                  'MoveMem');
-      Assert(EqualMem(A[1], B[1], I),     'CompareMem');
+        Assert(B[J] = AnsiChar(Ord(' ')),    'MoveMem');
+      Assert(EqualMem(A[1], B[1], I),        'EqualMem');
     end;
 
   for J := 1000 to 1500 do
@@ -5067,12 +5505,13 @@ begin
       SetLength(B, 4096);
       for I := 1 to 4096 do
         B[I] := AnsiChar(Ord('B'));
+      Assert(not EqualMem(A[1], B[1], J),    'EqualMem');
       MoveMem(A[1], B[1], J);
       for I := 1 to J do
-        Assert(B[I] = AnsiChar(Ord('A')), 'MoveMem');
+        Assert(B[I] = AnsiChar(Ord('A')),    'MoveMem');
       for I := J + 1 to 4096 do
-        Assert(B[I] = AnsiChar(Ord('B')), 'MoveMem');
-      Assert(EqualMem(A[1], B[1], J),     'CompareMem');
+        Assert(B[I] = AnsiChar(Ord('B')),    'MoveMem');
+      Assert(EqualMem(A[1], B[1], J),        'EqualMem');
     end;
 
   B := ToAnsiString('1234567890');
@@ -5092,7 +5531,7 @@ begin
       A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
       ZeroMem(A[1], I);
       for J := 1 to I do
-        Assert(A[J] = AnsiChar(0),                       'ZeroMem');
+        Assert(A[J] = AnsiChar(0),              'ZeroMem');
       for J := MaxInt(I + 1, 1) to 10 do
         Assert(A[J] = AnsiChar(48 + J - 1),     'ZeroMem');
       for J := MaxInt(I + 1, 11) to 36 do
@@ -5104,7 +5543,7 @@ begin
       A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
       FillMem(A[1], I, Ord('!'));
       for J := 1 to I do
-        Assert(A[J] = AnsiChar(Ord('!')),                      'FillMem');
+        Assert(A[J] = AnsiChar(Ord('!')),       'FillMem');
       for J := MaxInt(I + 1, 1) to 10 do
         Assert(A[J] = AnsiChar(48 + J - 1),     'FillMem');
       for J := MaxInt(I + 1, 11) to 36 do
@@ -5163,5 +5602,6 @@ end;
 
 
 end.
+
 
 
