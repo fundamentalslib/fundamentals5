@@ -5,7 +5,7 @@
 {   File version:     5.04                                                     }
 {   Description:      HTML Style Sheet properties                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }

@@ -5,7 +5,7 @@
 {   File version:     5.10                                                     }
 {   Description:      HTML properties                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -1437,7 +1437,7 @@ begin
       L := 0;
       for J := Length(S) downto 2 do
         begin
-          V := HexWideCharToInt(S[J]);
+          V := HexWideCharDigitToInt(S[J]);
           if V <= $F then
             begin
               C := C or (V shl L);
@@ -1480,7 +1480,7 @@ begin
       L := 0;
       for J := Length(S) downto 2 do
         begin
-          V := HexWideCharToInt(S[J]);
+          V := HexWideCharDigitToInt(S[J]);
           if V <= $F then
             begin
               C := C or (V shl L);
