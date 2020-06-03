@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStdTypes.pas                                          }
-{   File version:     5.04                                                     }
+{   File version:     5.06                                                     }
 {   Description:      Standard type definitions.                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -38,12 +38,14 @@
 {   2018/07/11  5.02  Move to flcStdTypes unit from flcUtils.                  }
 {   2018/08/12  5.03  String type changes.                                     }
 {   2019/04/02  5.04  LongInt/LongWord changes.                                }
+{   2020/03/30  5.05  Add NativeWord.                                          }
+{   2020/06/02  5.06  UInt arrays.                                             }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.04  2019/04/02                       }
-{   Delphi 10.2 Win64                   5.04  2019/04/02                       }
-{   Delphi 10.2 Linux64                 5.04  2019/04/02                       }
+{   Delphi 2010-10.4 Win32/Win64        5.06  2020/06/02                       }
+{   Delphi 10.2 Linux64                 5.06  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.06  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -124,6 +126,9 @@ type
   PNativeUInt = ^NativeUInt;
   {$ENDIF}
 
+  NativeWord = NativeUInt;
+  PNativeWord = ^NativeWord;
+
   {$IFDEF DELPHI5_DOWN}
   PByte       = ^Byte;
   PWord       = ^Word;
@@ -142,6 +147,7 @@ type
   PWord8    = ^Word8;
   PWord16   = ^Word16;
   PWord32   = ^Word32;
+  PWord64   = ^Word64;
 
   PUInt8    = ^UInt8;
   PUInt16   = ^UInt16;
@@ -171,6 +177,16 @@ const
   MaxWord16     = High(Word16);
   MinWord32     = Low(Word32);
   MaxWord32     = High(Word32);
+  MinWord64     = Low(Word64);
+  MaxWord64     = High(Word64);
+  MinUInt8      = Low(UInt8);
+  MaxUInt8      = High(UInt8);
+  MinUInt16     = Low(UInt16);
+  MaxUInt16     = High(UInt16);
+  MinUInt32     = Low(UInt32);
+  MaxUInt32     = High(UInt32);
+  MinUInt64     = UInt64(Low(UInt64));
+  MaxUInt64     = UInt64(High(UInt64));
   MinShortInt   = Low(ShortInt);
   MaxShortInt   = High(ShortInt);
   MinSmallInt   = Low(SmallInt);
@@ -195,12 +211,16 @@ const
   MaxNativeUInt = NativeUInt(High(NativeUInt));
   MinNativeInt  = NativeInt(Low(NativeInt));
   MaxNativeInt  = NativeInt(High(NativeInt));
+  MinNativeWord = NativeWord(Low(NativeWord));
+  MaxNativeWord = NativeWord(High(NativeWord));
 
 const
-  BitsPerByte       = 8;
-  BitsPerLongWord   = SizeOf(LongWord) * 8;
-  NativeWordSize    = SizeOf(NativeInt);
-  BitsPerNativeWord = NativeWordSize * 8;
+  LongIntSize    = SizeOf(LongInt);
+  LongIntBits    = SizeOf(LongInt) * 8;
+  LongWordSize   = SizeOf(LongWord);
+  LongWordBits   = SizeOf(LongWord) * 8;
+  NativeWordSize = SizeOf(NativeInt);
+  NativeWordBits = NativeWordSize * 8;
 
 
 
@@ -460,20 +480,31 @@ type
 type
   ByteArray = array of Byte;
   WordArray = array of Word;
-  Word32Array = array of Word32;
   LongWordArray = array of LongWord;
   CardinalArray = array of Cardinal;
+  Word8Array = ByteArray;
+  Word16Array = array of Word16;
+  Word32Array = array of Word32;
+  Word64Array = array of Word64;
+  UInt8Array = ByteArray;
+  UInt16Array = array of UInt16;
+  UInt32Array = array of UInt32;
+  UInt64Array = array of UInt64;
   NativeUIntArray = array of NativeUInt;
+  NativeWordArray = NativeUIntArray;
   ShortIntArray = array of ShortInt;
   SmallIntArray = array of SmallInt;
   LongIntArray = array of LongInt;
   IntegerArray = array of Integer;
-  NativeIntArray = array of NativeInt;
+  Int8Array = array of Int8;
+  Int16Array = array of Int16;
   Int32Array = array of Int32;
   Int64Array = array of Int64;
+  NativeIntArray = array of NativeInt;
   SingleArray = array of Single;
   DoubleArray = array of Double;
   ExtendedArray = array of Extended;
+  FloatArray = array of Float;
   CurrencyArray = array of Currency;
   BooleanArray = array of Boolean;
   {$IFDEF SupportAnsiString}
@@ -496,7 +527,7 @@ type
 {                                                                              }
 {$IFNDEF TBytesDeclared}
 type
-  TBytes = array of Byte;
+  TBytes = ByteArray;
 {$ENDIF}
 
 
@@ -509,11 +540,13 @@ type
 const
   MaxArraySize = $7FFFFFFF; // 2 Gigabytes
   MaxByteArrayElements = MaxArraySize div Sizeof(Byte);
-  MaxWordArrayElements = MaxArraySize div Sizeof(Word);
+  MaxWord16ArrayElements = MaxArraySize div Sizeof(Word16);
   MaxWord32ArrayElements = MaxArraySize div Sizeof(Word32);
+  MaxWord64ArrayElements = MaxArraySize div Sizeof(Word64);
   MaxLongWordArrayElements = MaxArraySize div Sizeof(LongWord);
   MaxCardinalArrayElements = MaxArraySize div Sizeof(Cardinal);
   MaxNativeUIntArrayElements = MaxArraySize div Sizeof(NativeUInt);
+  MaxNativeWordArrayElements = MaxArraySize div Sizeof(NativeWord);
   MaxShortIntArrayElements = MaxArraySize div Sizeof(ShortInt);
   MaxSmallIntArrayElements = MaxArraySize div Sizeof(SmallInt);
   MaxLongIntArrayElements = MaxArraySize div Sizeof(LongInt);
@@ -543,11 +576,13 @@ const
 { Static array types                                                           }
 type
   TStaticByteArray = array[0..MaxByteArrayElements - 1] of Byte;
-  TStaticWordArray = array[0..MaxWordArrayElements - 1] of Word;
+  TStaticWord16Array = array[0..MaxWord16ArrayElements - 1] of Word16;
   TStaticWord32Array = array[0..MaxWord32ArrayElements - 1] of Word32;
+  TStaticWord64Array = array[0..MaxWord64ArrayElements - 1] of Word64;
   TStaticLongWordArray = array[0..MaxLongWordArrayElements - 1] of LongWord;
   TStaticCardinalArray = array[0..MaxCardinalArrayElements - 1] of Cardinal;
   TStaticNativeUIntArray = array[0..MaxNativeUIntArrayElements - 1] of NativeUInt;
+  TStaticNativeWordArray = array[0..MaxNativeWordArrayElements - 1] of NativeWord;
   TStaticShortIntArray = array[0..MaxShortIntArrayElements - 1] of ShortInt;
   TStaticSmallIntArray = array[0..MaxSmallIntArrayElements - 1] of SmallInt;
   TStaticLongIntArray = array[0..MaxLongIntArrayElements - 1] of LongInt;
@@ -581,11 +616,13 @@ type
 { Static array pointers                                                        }
 type
   PStaticByteArray = ^TStaticByteArray;
-  PStaticWordArray = ^TStaticWordArray;
+  PStaticWord16Array = ^TStaticWord16Array;
   PStaticWord32Array = ^TStaticWord32Array;
+  PStaticWord64Array = ^TStaticWord64Array;
   PStaticLongWordArray = ^TStaticLongWordArray;
   PStaticCardinalArray = ^TStaticCardinalArray;
   PStaticNativeUIntArray = ^TStaticNativeUIntArray;
+  PStaticNativeWordArray = ^TStaticNativeWordArray;
   PStaticShortIntArray = ^TStaticShortIntArray;
   PStaticSmallIntArray = ^TStaticSmallIntArray;
   PStaticLongIntArray = ^TStaticLongIntArray;
@@ -614,7 +651,54 @@ type
 
 
 
+{$IFDEF STDTYPES_TEST}
+procedure Test;
+{$ENDIF}
+
+
+
 implementation
+
+
+
+{$IFDEF STDTYPES_TEST}
+{$ASSERTIONS ON}
+procedure Test;
+begin
+  Assert(SizeOf(Int8) = 1);
+  Assert(SizeOf(Int16) = 2);
+  Assert(SizeOf(Int32) = 4);
+  Assert(SizeOf(Int64) = 8);
+
+  Assert(SizeOf(UInt8) = 1);
+  Assert(SizeOf(UInt16) = 2);
+  Assert(SizeOf(UInt32) = 4);
+  Assert(SizeOf(UInt64) = 8);
+
+  Assert(SizeOf(UInt8) = SizeOf(Word8));
+  Assert(SizeOf(UInt16) = SizeOf(Word16));
+  Assert(SizeOf(UInt32) = SizeOf(Word32));
+  Assert(SizeOf(UInt64) = SizeOf(Word64));
+
+  Assert(SizeOf(ByteChar) = 1);
+
+  Assert(SizeOf(Double) = 8);
+
+  {$IFDEF ExtendedIsDouble}
+  Assert(SizeOf(Extended) = SizeOf(Double));
+  {$ENDIF}
+  {$IFDEF ExtendedIs16Bytes}
+  Assert(SizeOf(Extended) = 16);
+  {$ENDIF}
+
+  {$IFDEF FloatIsDouble}
+  Assert(SizeOf(Float) = SizeOf(Double));
+  {$ENDIF}
+  {$IFDEF FloatIsExtended}
+  Assert(SizeOf(Float) = SizeOf(Extended));
+  {$ENDIF}
+end;
+{$ENDIF}
 
 
 
