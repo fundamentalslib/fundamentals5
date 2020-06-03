@@ -48,17 +48,10 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.11  2019/02/24                       }
-{   Delphi XE2 Win32                    5.11  2019/03/02                       }
-{   Delphi XE2 Win64                    5.11  2019/03/02                       }
-{   Delphi XE3 Win32                    5.11  2019/03/02                       }
-{   Delphi XE3 Win64                    5.11  2019/03/02                       }
-{   Delphi XE7 Win32                    5.08  2016/01/10                       }
-{   Delphi XE7 Win64                    5.08  2016/01/10                       }
+{   Delphi 2010-10.4 Win32/Win64        5.12  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.12  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.12  2020/06/02                       }
 {                                                                              }
-{ TODO                                                                         }
-{ - decimal32,etc. div does not round, truncs for operations like mul          }
-{ - improve StrToDecimal32, 64, 128                                            }
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
@@ -76,6 +69,7 @@ interface
 uses
   { System }
   SysUtils,
+
   { Fundamentals }
   flcStdTypes,
   flcInteger;
@@ -932,6 +926,7 @@ implementation
 uses
   { System }
   Math,
+
   { Fundamentals }
   flcUtils,
   flcStrings;
@@ -1459,7 +1454,7 @@ begin
             Inc(I);
             break;
           end;
-      Digit := CharToInt(C);
+      Digit := CharDigitToInt(C);
       if Digit < 0 then
         begin
           Result := dceConvertError;
@@ -1480,7 +1475,7 @@ begin
   while I <= L do
     begin
       C := A[I];
-      Digit := CharToInt(C);
+      Digit := CharDigitToInt(C);
       Inc(I);
       if Digit < 0 then
         begin
@@ -1496,7 +1491,7 @@ begin
   if I <= L then
     begin
       C := A[I];
-      RoundingDigit := CharToInt(C);
+      RoundingDigit := CharDigitToInt(C);
       Inc(I);
       if RoundingDigit < 0 then
         begin
@@ -1507,7 +1502,7 @@ begin
         while I <= L do
           begin
             C := A[I];
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -1527,7 +1522,7 @@ begin
   while I <= L do
     begin
       C := A[I];
-      Digit := CharToInt(C);
+      Digit := CharDigitToInt(C);
       Inc(I);
       if Digit < 0 then
         begin
@@ -1582,7 +1577,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := CharToInt(C);
+    Digit := CharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -1623,7 +1618,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -1645,7 +1640,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := CharToInt(C);
+              ResFracRoundDigit := CharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -1658,7 +1653,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := CharToInt(C);
+                    Digit := CharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -1677,7 +1672,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := CharToInt(C);
+                  Digit := CharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -1718,7 +1713,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -1814,7 +1809,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := CharToInt(C);
+    Digit := CharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -1855,7 +1850,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -1877,7 +1872,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := CharToInt(C);
+              ResFracRoundDigit := CharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -1890,7 +1885,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := CharToInt(C);
+                    Digit := CharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -1909,7 +1904,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := CharToInt(C);
+                  Digit := CharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -1950,7 +1945,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -2041,7 +2036,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := CharToInt(C);
+    Digit := CharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -2082,7 +2077,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -2106,7 +2101,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := CharToInt(C);
+              ResFracRoundDigit := CharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -2119,7 +2114,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := CharToInt(C);
+                    Digit := CharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -2138,7 +2133,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := CharToInt(C);
+                  Digit := CharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -2179,7 +2174,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -2277,7 +2272,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := ByteCharToInt(C);
+    Digit := ByteCharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -2318,7 +2313,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := ByteCharToInt(C);
+            Digit := ByteCharDigitToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -2340,7 +2335,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := ByteCharToInt(C);
+              ResFracRoundDigit := ByteCharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -2353,7 +2348,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := ByteCharToInt(C);
+                    Digit := ByteCharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -2372,7 +2367,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := ByteCharToInt(C);
+                  Digit := ByteCharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -2413,7 +2408,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := ByteCharToInt(C);
+            Digit := ByteCharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -3122,7 +3117,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := CharToInt(C);
+    Digit := CharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -3164,7 +3159,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -3188,7 +3183,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := CharToInt(C);
+              ResFracRoundDigit := CharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -3201,7 +3196,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := CharToInt(C);
+                    Digit := CharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -3220,7 +3215,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := CharToInt(C);
+                  Digit := CharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -3261,7 +3256,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := CharToInt(C);
+            Digit := CharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -3360,7 +3355,7 @@ begin
     C := A[I];
     if (C = '.') or (C = 'E') then
       break;
-    Digit := ByteCharToInt(C);
+    Digit := ByteCharDigitToInt(C);
     if Digit < 0 then
       begin
         Result := dceConvertError;
@@ -3402,7 +3397,7 @@ begin
             C := A[I];
             if C = 'E' then
               break;
-            Digit := ByteCharToInt(C);
+            Digit := ByteCharDigitToInt(C);
             Inc(I);
             if Digit < 0 then
               begin
@@ -3426,7 +3421,7 @@ begin
           if (I <= L) and (A[I] <> 'E') then
             begin
               C := A[I];
-              ResFracRoundDigit := ByteCharToInt(C);
+              ResFracRoundDigit := ByteCharDigitToInt(C);
               Inc(I);
               if ResFracRoundDigit < 0 then
                 begin
@@ -3439,7 +3434,7 @@ begin
                     C := A[I];
                     if C = 'E' then
                       break;
-                    Digit := ByteCharToInt(C);
+                    Digit := ByteCharDigitToInt(C);
                     if Digit < 0 then
                       begin
                         Result := dceConvertError;
@@ -3458,7 +3453,7 @@ begin
                   C := A[I];
                   if C = 'E' then
                     break;
-                  Digit := ByteCharToInt(C);
+                  Digit := ByteCharDigitToInt(C);
                   if Digit < 0 then
                     begin
                       Result := dceConvertError;
@@ -3499,7 +3494,7 @@ begin
             end;
           repeat
             C := A[I];
-            Digit := ByteCharToInt(C);
+            Digit := ByteCharDigitToInt(C);
             if Digit < 0 then
               begin
                 Result := dceConvertError;
@@ -4275,7 +4270,7 @@ begin
             Inc(I);
             break;
           end;
-      Digit := CharToInt(Ch);
+      Digit := CharDigitToInt(Ch);
       if Digit < 0 then
         begin
           Result := dceConvertError;
@@ -4295,7 +4290,7 @@ begin
   Word64DivideWord8(Decimal128Scale, 10, C, E);
   while I <= L do
     begin
-      Digit := CharToInt(A[I]);
+      Digit := CharDigitToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin
@@ -4313,7 +4308,7 @@ begin
   // rounding
   if I <= L then
     begin
-      RoundingDigit := CharToInt(A[I]);
+      RoundingDigit := CharDigitToInt(A[I]);
       Inc(I);
       if RoundingDigit < 0 then
         begin
@@ -4323,7 +4318,7 @@ begin
       if RoundingDigit = 5 then
         while I <= L do
           begin
-            Digit := CharToInt(A[I]);
+            Digit := CharDigitToInt(A[I]);
             Inc(I);
             if Digit < 0 then
               begin
@@ -4342,7 +4337,7 @@ begin
   // validate remaining digits
   while I <= L do
     begin
-      Digit := CharToInt(A[I]);
+      Digit := CharDigitToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin
@@ -4411,7 +4406,7 @@ begin
             Inc(I);
             break;
           end;
-      Digit := ByteCharToInt(Ch);
+      Digit := ByteCharDigitToInt(Ch);
       if Digit < 0 then
         begin
           Result := dceConvertError;
@@ -4431,7 +4426,7 @@ begin
   Word64DivideWord8(Decimal128Scale, 10, C, E);
   while I <= L do
     begin
-      Digit := ByteCharToInt(A[I]);
+      Digit := ByteCharDigitToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin
@@ -4449,7 +4444,7 @@ begin
   // rounding
   if I <= L then
     begin
-      RoundingDigit := ByteCharToInt(A[I]);
+      RoundingDigit := ByteCharDigitToInt(A[I]);
       Inc(I);
       if RoundingDigit < 0 then
         begin
@@ -4459,7 +4454,7 @@ begin
       if RoundingDigit = 5 then
         while I <= L do
           begin
-            Digit := ByteCharToInt(A[I]);
+            Digit := ByteCharDigitToInt(A[I]);
             Inc(I);
             if Digit < 0 then
               begin
@@ -4478,7 +4473,7 @@ begin
   // validate remaining digits
   while I <= L do
     begin
-      Digit := ByteCharToInt(A[I]);
+      Digit := ByteCharDigitToInt(A[I]);
       Inc(I);
       if Digit < 0 then
         begin
@@ -6011,7 +6006,7 @@ begin
           end
         else
           break;
-      DigitI := CharToInt(DigitC);
+      DigitI := CharDigitToInt(DigitC);
       if DigitI < 0 then
         begin
           Result := dceConvertError;
@@ -6034,7 +6029,7 @@ begin
       while IdxS <= LenS do
         begin
           DigitC := S[IdxS];
-          DigitI := CharToInt(DigitC);
+          DigitI := CharDigitToInt(DigitC);
           if DigitI < 0 then
             begin
               Result := dceConvertError;
@@ -6115,7 +6110,7 @@ begin
   for DigitIdx := 0 to DigitsLen - 1 do
     begin
       Digit := A.Digits[DigitsLen - DigitIdx - 1];
-      ResStr[ResPos] := IntToChar(Digit);
+      ResStr[ResPos] := IntToCharDigit(Digit);
       Inc(ResPos);
       if ResPos = DecimalPos then
         begin
