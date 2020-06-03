@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2020/03/10                                               }
+{   File updated:     2020/06/02                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Github:           https://github.com/fundamentalslib                       }
@@ -45,6 +45,7 @@
 {     DELPHI10_1      - Delphi 10.1.                                           }
 {     DELPHI10_2      - Delphi 10.2.                                           }
 {     DELPHI10_3      - Delphi 10.3.                                           }
+{     DELPHI10_4      - Delphi 10.4.                                           }
 {                                                                              }
 {     DELPHI2_UP      - Delphi 2 or later.                                     }
 {     DELPHI3_UP      - Delphi 3 or later.                                     }
@@ -70,6 +71,7 @@
 {     DELPHI10_1_UP   - Delphi 10.1 or later.                                  }
 {     DELPHI10_2_UP   - Delphi 10.2 or later.                                  }
 {     DELPHI10_3_UP   - Delphi 10.3 or later.                                  }
+{     DELPHI10_4_UP   - Delphi 10.4 or later.                                  }
 {                                                                              }
 {     DELPHI3_DOWN    - Delphi 3 or earlier.                                   }
 {     DELPHI4_DOWN    - Delphi 4 or earlier.                                   }
@@ -136,13 +138,14 @@
 {   CharIsWide          - Default Char type is WideChar (2 bytes).             }
 {   StringIsAnsi        - Default String type is AnsiString.                   }
 {   StringIsUnicode     - Default String type is UnicodeString.                }
+{   ExtendedIs80Bits    - Extended type has 80 bit (10 byte) precision.        }
 {   ExtendedIsDouble    - Extended type is Double.                             }
+{   ExtendedIs16Bytes   - Extended type is 16 bytes.                           }
 {   TBytesDeclared      - System defines TBytes type.                          }
 {   ObjectARC           - Objects has Automatic Reference Countinging (ARC).   }
 {                                                                              }
 {   UseInline         - SupportInline and not PurePascal.                      }
 {                                                                              }
-{   OS_UNIX           - Unix type operating system.                            }
 {   OS_POSIX          - Posix type operating system.                           }
 {     OS_BSD          - BSD type operating system.                             }
 {       OS_FREEBSD    - FreeBSD operating system.                              }
@@ -193,6 +196,7 @@
 {   ASM386_FREEPASCAL - Compiler supports 386 assembler (FreePascal style)     }
 {   ASM386            - Compiler supports 386 assembler (Generic)              }
 {   ASMX86_64         - Compiler supports x86-64 assembler (Generic)           }
+{   ASMX86_64_DELPHI  - Compiler supports x86-64 assembler (Delphie style)     }
 {                                                                              }
 {   IsConsoleApp      - Console application.                                   }
 {                                                                              }
@@ -538,11 +542,19 @@
 
 
 {                                                                              }
-{ Future Delphi versions                                                       }
+{ Delphi 10.4 Sydney                                                           }
 {                                                                              }
 {$IFDEF VER340}
-  {$DEFINE DELPHI_Future}
+  {$DEFINE DELPHI}
+  {$DEFINE DELPHI10_4}
+  {$DEFINE DELPHI10_4_UP}
 {$ENDIF}
+
+
+
+{                                                                              }
+{ Future Delphi versions                                                       }
+{                                                                              }
 {$IFDEF VER350}
   {$DEFINE DELPHI_Future}
 {$ENDIF}
@@ -564,13 +576,16 @@
 
 {$IFDEF DELPHI_Future}
   {$DEFINE DELPHI}
-  {$DEFINE DELPHI10_3_UP}
+  {$DEFINE DELPHI10_4_UP}
 {$ENDIF}
 
 
 {                                                                              }
 { DELPHI_xx_UP defines                                                         }
 {                                                                              }
+{$IFDEF DELPHI10_4_UP}
+  {$DEFINE DELPHI10_3_UP}
+{$ENDIF}
 {$IFDEF DELPHI10_3_UP}
   {$DEFINE DELPHI10_2_UP}
 {$ENDIF}
@@ -712,9 +727,6 @@
     {$IFDEF MACOS32}
       {$DEFINE OS_MACOSX32}
     {$ENDIF}
-    {$IFDEF MACOS64}
-      {$DEFINE OS_MACOSX64}
-    {$ENDIF}
     {$IFDEF WIN64}
       {$DEFINE OS_WIN64}
     {$ENDIF}
@@ -752,7 +764,7 @@
       {$ENDIF}
     {$ENDIF}
     // Delphi 10.2+
-    {$IFDEF DELPHIXE10_2_UP}
+    {$IFDEF DELPHI10_2_UP}
       {$IFDEF LINUX}
         {$DEFINE OS_LINUX}
       {$ENDIF}
@@ -761,6 +773,15 @@
       {$ENDIF}
       {$IFDEF LINUX64}
         {$DEFINE OS_LINUX64}
+      {$ENDIF}
+      {$IFDEF MACOS64}
+        {$DEFINE OS_MACOSX64}
+      {$ENDIF}
+    {$ENDIF}
+    // Delphi 10.4+
+    {$IFDEF DELPHI10_4_UP}
+      {$IFDEF ANDROID64}
+        {$DEFINE OS_ANDROID64}
       {$ENDIF}
     {$ENDIF}
   {$ENDIF}
@@ -785,6 +806,7 @@
   {$DEFINE SupportCardinal}
   {$DEFINE SupportCurrency}
   {$DEFINE SupportVariant}
+  {$DEFINE ExtendedIs80Bits}
 {$ENDIF}
 
 {$IFDEF DELPHI4_UP}
@@ -853,13 +875,17 @@
 
 {$IFDEF DELPHIXE2_UP}
   {$IFNDEF WIN32}
-  {$IFNDEF WIN64}
+    {$UNDEF ExtendedIs80Bits}
     {$DEFINE ExtendedIsDouble}
-  {$ENDIF}
   {$ENDIF}
 {$ENDIF}
 
 {$IFDEF DELPHIXE4_UP}
+  {$IFDEF LINUX}
+    {$UNDEF ExtendedIs80Bits}
+    {$UNDEF ExtendedIsDouble}
+    {$DEFINE ExtendedIs16Bytes}
+  {$ENDIF}
   {$IFDEF IOS}
     {$UNDEF SupportAnsiChar}
     {$UNDEF SupportAnsiString}
@@ -871,6 +897,12 @@
     {$UNDEF SupportAnsiString}
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF AUTOREFCOUNT}
+    {$DEFINE ObjectARC}
   {$ENDIF}
 {$ENDIF}
 
@@ -887,6 +919,11 @@
 
 {$IFDEF DELPHI10_UP}
   {$DEFINE SupportUTF8Char}
+  {$IFDEF MACOS32}
+    {$UNDEF ExtendedIs80Bits}
+    {$UNDEF ExtendedIsDouble}
+    {$DEFINE ExtendedIs16Bytes}
+  {$ENDIF}
 {$ENDIF}
 
 {$IFDEF DELPHI10_3_UP}
@@ -896,10 +933,9 @@
   {$ENDIF}
 {$ENDIF}
 
-{$IFDEF DELPHIXE4_UP}
-  {$IFDEF AUTOREFCOUNT}
-    {$DEFINE ObjectARC}
-  {$ENDIF}
+{$IFDEF DELPHI10_4_UP}
+  {$DEFINE SupportAnsiChar}
+  {$DEFINE SupportAnsiString}
 {$ENDIF}
 
 
@@ -1146,9 +1182,6 @@
 {$IFDEF POSIX64}
   {$DEFINE OS_POSIX64}
 {$ENDIF}
-{$IFDEF UNIX}
-  {$DEFINE OS_UNIX}
-{$ENDIF}
 
 { OS_BSD, OS_POSIX }
 
@@ -1177,12 +1210,6 @@
 
 {$IFDEF OS_POSIX}
   {$DEFINE POSIX}
-  {$DEFINE OS_UNIX}
-{$ENDIF}
-
-{$IFDEF OS_UNIX}
-  {$DEFINE POSIX}
-  {$DEFINE OS_POSIX}
 {$ENDIF}
 
 { OS_MOBILE }
@@ -1266,9 +1293,11 @@
 {$ENDIF}
 {$IFDEF OS_WIN32}
   {$DEFINE WindowsPlatform}
+  {$DEFINE WIN32}
 {$ENDIF}
 {$IFDEF OS_WIN64}
   {$DEFINE WindowsPlatform}
+  {$DEFINE WIN64}
 {$ENDIF}
 
 
@@ -1316,7 +1345,7 @@
 {$IFDEF CPU32BITS}
   {$DEFINE CPU_32}
 {$ENDIF}
-{$IFDEF CPU32BITS}
+{$IFDEF CPU64BITS}
   {$DEFINE CPU_64}
 {$ENDIF}
 {$IFDEF CPU_INTEL386}
@@ -1330,6 +1359,23 @@
 {$ENDIF}
 {$IFDEF CPU_PPC32}
   {$DEFINE CPU_32}
+{$ENDIF}
+{$IFDEF CPU_ARM32}
+  {$DEFINE CPU_32}
+{$ENDIF}
+{$IFDEF CPU_ARM64}
+  {$DEFINE CPU_64}
+{$ENDIF}
+
+{$IFNDEF CPU_32}
+{$IFNDEF CPU_64}
+  {$IFDEF OS_64}
+    {$DEFINE CPU_64}
+  {$ENDIF}
+  {$IFDEF OS_32}
+    {$DEFINE CPU_32}
+  {$ENDIF}
+{$ENDIF}
 {$ENDIF}
 
 
@@ -1454,6 +1500,7 @@
     {$WARN UNIT_PLATFORM OFF}
     {$WARN UNIT_DEPRECATED OFF}
   {$ENDIF}
+
 {$ENDIF}
 
 {$IFDEF FREEPASCAL}
