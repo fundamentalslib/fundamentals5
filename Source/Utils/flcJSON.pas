@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcJSON.pas                                              }
-{   File version:     5.13                                                     }
+{   File version:     5.14                                                     }
 {   Description:      JSON                                                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2011-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2011-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -47,6 +47,7 @@
 {   2016/01/09  5.11  Revised for Fundamentals 5.                              }
 {   2018/07/23  5.12  Delphi type changes.                                     }
 {   2018/08/12  5.13  String type changes.                                     }
+{   2020/06/02  5.14  Locale independent float conversion.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -58,8 +59,6 @@
 {                                                                              }
 {   JSON Schemas - http://tools.ietf.org/html/draft-zyp-json-schema-03         }
 {                                                                              }
-{ Todo:                                                                        }
-{ - Effecient internal implementations for arrays and dictionaries             }
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
@@ -538,6 +537,7 @@ uses
 
   { Fundamentals }
   flcUtils,
+  flcFloats,
   flcASCII,
   flcUTF;
 
@@ -898,7 +898,7 @@ end;
 
 function TJSONString.GetValueFloat: JSONFloat;
 begin
-  Result := StrToFloat(FValue);
+  Result := StringToFloatU(FValue);
 end;
 
 function TJSONString.GetValueBoolean: Boolean;
@@ -934,7 +934,7 @@ end;
 
 procedure TJSONString.SetValueFloat(const AValue: JSONFloat);
 begin
-  FValue := FloatToStr(AValue);
+  FValue := FloatToStringU(AValue);
 end;
 
 procedure TJSONString.SetValueBoolean(const AValue: Boolean);
@@ -1113,7 +1113,7 @@ end;
 
 procedure TJSONFloat.BuildJSONString(const A: TUnicodeStringBuilder; const AOptions: TJSONStringOptions; const ALevel: Integer);
 begin
-  A.Append(FloatToStr(FValue));
+  A.Append(FloatToStringU(FValue));
 end;
 
 function TJSONFloat.GetValueType: TJSONValueType;
@@ -1143,7 +1143,7 @@ end;
 
 procedure TJSONFloat.SetValueStr(const AValue: UnicodeString);
 begin
-  FValue := StrToFloat(AValue);
+  FValue := StringToFloatU(AValue);
 end;
 
 procedure TJSONFloat.SetValueInt(const AValue: Int64);
