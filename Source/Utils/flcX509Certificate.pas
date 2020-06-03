@@ -5,7 +5,7 @@
 {   File version:     5.07                                                     }
 {   Description:      X.509 certificate                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -52,16 +52,24 @@
 
 {$INCLUDE ..\flcInclude.inc}
 
+{$IFDEF DEBUG}
+{$IFDEF TEST}
+  {$DEFINE X509_TEST}
+{$ENDIF}
+{$ENDIF}
+
 unit flcX509Certificate;
 
 interface
 
 uses
   { System }
+
   SysUtils,
+
   { Fundamentals }
+
   flcStdTypes,
-  flcUtils,
   flcASN1;
 
 
@@ -484,12 +492,10 @@ procedure ParseX509RSAPrivateKeyPEM(const BufStr: RawByteString; var A: TX509RSA
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF X509_TEST}
 procedure Test;
-{$ENDIF}
 {$ENDIF}
 
 
@@ -498,6 +504,7 @@ implementation
 
 uses
   { Fundamentals }
+
   flcBase64;
 
 
@@ -1767,11 +1774,11 @@ end;
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}
-{$IFDEF TEST}
-procedure SelfTestRFC2459;
+{$IFDEF X509_TEST}
+{$ASSERTIONS ON}
+procedure TestRFC2459;
 var A, B : TX509Certificate;
     C : RawByteString;
     F : TX509AttributeTypeAndValue;
@@ -2005,7 +2012,7 @@ begin
       #$bf#$29#$11#$24#$80#$28#$a6#$5a#$8e#$73#$b6#$76#$02#$68);
 end;
 
-procedure SelfTestSTunnelOrg;
+procedure TestSTunnelOrg;
 var A, B : TX509Certificate;
     C, D : RawByteString;
     L : Integer;
@@ -2106,10 +2113,10 @@ end;
 
 procedure Test;
 begin
-  SelfTestRFC2459;
-  SelfTestSTunnelOrg;
+  TestRFC2459;
+  TestSTunnelOrg;
 end;
-{$ENDIF}{$ENDIF}
+{$ENDIF}
 
 
 

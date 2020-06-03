@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      Zero terminated string utility functions                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -2223,5 +2223,6 @@ end;
 
 
 end.
+
 
 

@@ -5,7 +5,7 @@
 {   File version:     5.02                                                     }
 {   Description:      Unicode string utility functions                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -39,8 +39,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.01  2018/08/11                       }
-{   Delphi 10.2 Win64                   5.01  2018/08/11                       }
+{   Delphi 2010-10.4 Win32/Win64        5.02  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.02  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.02  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 

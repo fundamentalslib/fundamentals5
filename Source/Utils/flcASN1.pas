@@ -6,7 +6,7 @@
 {   Description:      Abstract Syntax Notation One (ASN.1)                     }
 {                     BER (Basic Encoding Routines)                            }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -54,10 +54,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.05  2019/02/24                       }
-{   Delphi XE7 Win64                    0.03  2016/01/10                       }
-{   Delphi XE8 Win32                    0.03  2016/01/10                       }
-{   Delphi XE8 Win64                    0.03  2016/01/10                       }
+{   Delphi 2010-10.4 Win32/Win64        5.05  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.05  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.05  2020/06/02                       }
 {                                                                              }
 { Todo:                                                                        }
 { - Parser to str repr                                                         }
@@ -65,6 +64,12 @@
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
+
+{$IFDEF DEBUG}
+{$IFDEF TEST}
+  {$DEFINE ASN1_TEST}
+{$ENDIF}
+{$ENDIF}
 
 unit flcASN1;
 
@@ -290,11 +295,11 @@ function ASN1Parse(
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}{$IFDEF TEST}
+{$IFDEF ASN1_TEST}
 procedure Test;
-{$ENDIF}{$ENDIF}
+{$ENDIF}
 
 
 
@@ -1309,10 +1314,9 @@ end;
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF ASN1_TEST}
 {$ASSERTIONS ON}
 procedure TestParseProc(
           const TypeID: Byte; const DataBuf; const DataSize: Integer;
@@ -1406,7 +1410,6 @@ begin
   Assert(L > 0);
   Assert(ASN1Parse(S[1], L, @TestParseProc, 0) = L);
 end;
-{$ENDIF}
 {$ENDIF}
 
 

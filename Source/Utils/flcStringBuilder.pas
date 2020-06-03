@@ -5,7 +5,7 @@
 {   File version:     5.04                                                     }
 {   Description:      String builder classes                                   }
 {                                                                              }
-{   Copyright:        Copyright (c) 2005-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2005-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -41,8 +41,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10.2 Win32                   5.04  2019/03/15                       }
-{   Delphi 10.2 Win64                   5.04  2019/03/15                       }
+{   Delphi 2010-10.4 Win32/Win64        5.04  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.04  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.04  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -147,6 +148,7 @@ type
     procedure Pack;
   end;
 
+  {$IFDEF SupportUnicodeString}
   TUnicodeStringBuilder = class
   protected
     FString : UnicodeString;
@@ -176,6 +178,7 @@ type
 
     procedure Pack;
   end;
+  {$ENDIF}
 
   TStringBuilder = class
   protected
@@ -620,6 +623,7 @@ end;
 
 
 
+{$IFDEF SupportUnicodeString}
 {                                                                              }
 { TUnicodeStringBuilder                                                        }
 {                                                                              }
@@ -696,7 +700,7 @@ const
 
 procedure TUnicodeStringBuilder.AppendCRLF;
 begin
-  Append(UnicodeStringCRLF);
+  Append(WideChar(#13) + WideChar(#10));
 end;
 
 procedure TUnicodeStringBuilder.AppendLn(const S: UnicodeString);
@@ -787,6 +791,7 @@ begin
     exit;
   SetLength(FString, L);
 end;
+{$ENDIF}
 
 
 
@@ -1019,6 +1024,7 @@ begin
   end;
 end;
 
+{$IFDEF SupportUnicodeString}
 procedure Test_UnicodeStringBuilder;
 var A : TUnicodeStringBuilder;
 begin
@@ -1045,6 +1051,7 @@ begin
     A.Free;
   end;
 end;
+{$ENDIF}
 
 procedure Test_StringBuilder;
 var A : TStringBuilder;
@@ -1084,7 +1091,9 @@ begin
   Test_AnsiStringBuilder;
   {$ENDIF}
   Test_RawByteStringBuilder;
+  {$IFDEF SupportUnicodeString}
   Test_UnicodeStringBuilder;
+  {$ENDIF}
   Test_StringBuilder;
 end;
 

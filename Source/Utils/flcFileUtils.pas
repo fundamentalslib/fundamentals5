@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcFileUtils.pas                                         }
-{   File version:     5.17                                                     }
+{   File version:     5.18                                                     }
 {   Description:      File name and file system functions                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2002-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2002-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -681,7 +681,6 @@ uses
   {$ENDIF}{$ENDIF}
 
   { Fundamentals }
-  flcBits32,
   flcDynArrays,
   flcUtils,
   flcStrings,
@@ -3635,6 +3634,14 @@ end;
 {                                                                              }
 { Logical Drive functions                                                      }
 {                                                                              }
+function Word32IsBitSet(const A: Word32; const B: Integer): Boolean;
+begin
+  if (B < 0) or (B > 31) then
+    Result := False
+  else
+    Result := (A and (1 shl B) <> 0);
+end;
+
 function DriveIsValidA(const Drive: ByteChar): Boolean;
 var D : ByteChar;
 begin
@@ -3642,7 +3649,7 @@ begin
   Result := D in ['A'..'Z'];
   if not Result then
     exit;
-  Result := IsBitSet32(GetLogicalDrives, Ord(D) - Ord('A'));
+  Result := Word32IsBitSet(GetLogicalDrives, Ord(D) - Ord('A'));
 end;
 
 function DriveIsValidW(const Drive: WideChar): Boolean;

@@ -1,11 +1,11 @@
 {******************************************************************************}
 {                                                                              }
-{   Library:          Fundamentals 4.00                                        }
+{   Library:          Fundamentals 5.00                                        }
 {   File name:        flcPEM.pas                                               }
 {   File version:     5.03                                                     }
 {   Description:      PEM file parsing                                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -42,19 +42,27 @@
 
 {$INCLUDE ..\flcInclude.inc}
 
+{$IFDEF DEBUG}
+{$IFDEF TEST}
+  {$DEFINE PEM_TEST}
+{$ENDIF}
+{$ENDIF}
+
 unit flcPEM;
 
 interface
 
 uses
   { System }
+
   SysUtils,
 
   { Fundamentals }
+
   flcStdTypes;
 
 
-  
+
 { TPEMFile }
 
 type
@@ -75,19 +83,17 @@ type
     procedure LoadFromText(const Txt: RawByteString);
     procedure LoadFromFile(const FileName: String);
 
-    property CertificateCount: Integer read GetCertificateCount;
-    property Certificate[const Idx: Integer]: RawByteString read GetCertificate;
-    property RSAPrivateKey: RawByteString read FRSAPrivateKey;
+    property  CertificateCount: Integer read GetCertificateCount;
+    property  Certificate[const Idx: Integer]: RawByteString read GetCertificate;
+    property  RSAPrivateKey: RawByteString read FRSAPrivateKey;
   end;
 
   EPEMFile = class(Exception);
 
 
 
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF PEM_TEST}
 procedure Test;
-{$ENDIF}
 {$ENDIF}
 
 
@@ -96,8 +102,11 @@ implementation
 
 uses
   { System }
+
   Classes,
+
   { Fundamentals }
+
   flcStrings,
   flcBase64;
 
@@ -215,8 +224,8 @@ end;
 
 
 
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF PEM_TEST}
+{$ASSERTIONS ON}
 const
   TestPEMText1 = // stunnel.pem
     '-----BEGIN RSA PRIVATE KEY-----'#13#10 +
@@ -309,7 +318,6 @@ begin
     P.Free;
   end;
 end;
-{$ENDIF}
 {$ENDIF}
 
 

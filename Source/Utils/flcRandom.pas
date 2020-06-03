@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcRandom.pas                                            }
-{   File version:     5.19                                                     }
+{   File version:     5.20                                                     }
 {   Description:      Random number functions                                  }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -53,17 +53,17 @@
 {   2016/01/09  5.17  Revised for Fundamentals 5.                              }
 {   2018/08/12  5.18  String type changes.                                     }
 {   2019/03/22  5.19  FreePascal 3.04 Win64 changes.                           }
+{   2019/06/06  5.20  Add RandomBytes.                                         }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.17  2016/01/09                       }
-{   Delphi XE7 Win32                    5.17  2016/01/09                       }
-{   Delphi XE7 Win64                    5.17  2016/01/09                       }
-{   Delphi 10 Win32                     5.17  2016/01/09                       }
-{   Delphi 10 Win64                     5.17  2016/01/09                       }
-{   Delphi 10.2 Linux64                 5.19  2019/04/02                       }
+{   Delphi 2010-10.4 Win32/Win64        5.20  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.20  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.20  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
+
+// See http://www.romu-random.org/code.c
 
 {$INCLUDE ..\flcInclude.inc}
 
@@ -76,6 +76,9 @@ unit flcRandom;
 interface
 
 uses
+  { System }
+  SysUtils,
+
   { Fundamentals }
   flcStdTypes;
 
@@ -106,6 +109,7 @@ function  RandomSeed32: Word32;
 procedure SetRandomSeed(const Seed: Word32);
 
 function  RandomUniform32: Word32;
+function  RandomUniform64: Word64;
 function  RandomUniform(const N: Integer): Integer;
 function  RandomUniform16: Word;
 function  RandomByte: Byte;
@@ -113,6 +117,8 @@ function  RandomByteNonZero: Byte;
 function  RandomBoolean: Boolean;
 function  RandomInt64: Int64; overload;
 function  RandomInt64(const N: Int64): Int64; overload;
+
+function  RandomBytes(const N: Integer): TBytes;
 
 function  RandomHex(const Digits: Integer; const UpperCase: Boolean = True): String;
 function  RandomHexB(const Digits: Integer; const UpperCase: Boolean = True): UTF8String;
@@ -163,23 +169,22 @@ implementation
 uses
   { System }
   {$IFDEF MSWIN}
-  Windows,
+  Windows
   {$ENDIF}
 
   {$IFDEF UNIX}
   {$IFDEF FREEPASCAL}
   BaseUnix,
-  Unix,
+  Unix
   {$ENDIF}
   {$ENDIF}
 
   {$IFDEF POSIX}
   {$IFDEF DELPHI}
-  Posix.SysTime,
+  Posix.SysTime
   {$ENDIF}
   {$ENDIF}
-
-  SysUtils;
+  ;
 
 
 
@@ -887,6 +892,13 @@ begin
   Result := moaRandom32;
 end;
 
+function RandomUniform64: Word64;
+begin
+  Result :=
+      Word64(moaRandom32) or
+      Word64(Word64(moaRandom32) shl 32);
+end;
+
 function RandomUniform(const N: Integer): Integer;
 begin
   if N <= 1 then
@@ -932,7 +944,7 @@ function RandomInt64: Int64;
 begin
   Result :=
      Int64(RandomUniform32) or
-    (Int64(RandomUniform32) shl 32);
+     Int64(Int64(RandomUniform32) shl 32);
 end;
 
 function RandomInt64(const N: Int64): Int64;
@@ -946,6 +958,41 @@ begin
         Result := -Result;
       Result := Result mod N;
     end;
+end;
+
+function RandomBytes(const N: Integer): TBytes;
+var
+  B : TBytes;
+  P, Q : PByte;
+  I, L : Integer;
+  R : Word32;
+begin
+  if N <= 0 then
+    begin
+      Result := nil;
+      exit;
+    end;
+  SetLength(B, N);
+  P := Pointer(B);
+  L := N div 4;
+  for I := 0 to L - 1 do
+    begin
+      PWord32(P)^ := RandomUniform32;
+      Inc(P, SizeOf(Word32));
+    end;
+  L := N mod 4;
+  if L > 0 then
+    begin
+      R := RandomUniform32;
+      Q := @R;
+      for I := 0 to L - 1 do
+        begin
+          P^ := Q^;
+          Inc(P);
+          Inc(Q);
+        end;
+    end;
+  Result := B;
 end;
 
 const

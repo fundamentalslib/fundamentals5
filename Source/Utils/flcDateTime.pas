@@ -5,7 +5,7 @@
 {   File version:     5.24                                                     }
 {   Description:      DateTime functions                                       }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -62,14 +62,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.24  2019/02/24                       }
-{   Delphi XE7 Win32                    5.22  2016/01/09                       }
-{   Delphi XE7 Win64                    5.22  2016/01/09                       }
-{   Delphi 10 Win32                     5.22  2016/01/09                       }
-{   Delphi 10 Win64                     5.22  2016/01/09                       }
-{   FreePascal 2.0.1 Win32 i386                                                }
-{   FreePascal 2.0.1 Linux i386                                                }
-{   FreePascal 2.4.0 OSX x86-64                                                }
+{   Delphi 2010-10.4 Win32/Win64        5.24  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.24  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.24  2020/06/02                       }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }
@@ -83,6 +78,12 @@
 {$IFDEF FREEPASCAL}
   {$WARNINGS OFF}
   {$HINTS OFF}
+{$ENDIF}
+
+{$IFDEF DEBUG}
+{$IFDEF TEST}
+  {$DEFINE DATETIME_TEST}
+{$ENDIF}
 {$ENDIF}
 
 unit flcDateTime;
@@ -503,12 +504,10 @@ function  TimePeriodStr(const D: TDateTime): RawByteString;
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF DATETIME_TEST}
 procedure Test;
-{$ENDIF}
 {$ENDIF}
 
 
@@ -540,9 +539,9 @@ uses
 
   { Fundamentals }
   flcUtils,
-  {$IFDEF DEBUG}{$IFDEF SELFTEST}
+  {$IFDEF DATETIME_TEST}
   flcTimers,
-  {$ENDIF}{$ENDIF}
+  {$ENDIF}
   flcStrings;
 
 
@@ -2150,10 +2149,9 @@ end;
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
-{$IFDEF DEBUG}
-{$IFDEF TEST}
+{$IFDEF DATETIME_TEST}
 {$ASSERTIONS ON}
 procedure Test;
 var Ye, Mo, Da         : Word;
@@ -2258,7 +2256,6 @@ begin
   Assert(NextWorkDay(EncodeDate(2006, 1, 13)) = EncodeDate(2006, 1, 16), 'NextWorkDay');
   Assert(NextWorkDay(EncodeDate(2006, 1, 16)) = EncodeDate(2006, 1, 17), 'NextWorkDay');
 end;
-{$ENDIF}
 {$ENDIF}
 
 

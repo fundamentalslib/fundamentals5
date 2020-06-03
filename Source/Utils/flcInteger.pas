@@ -83,11 +83,9 @@ interface
 
 uses
   { System }
-
   SysUtils,
 
   { Fundamentals }
-
   flcStdTypes;
 
 

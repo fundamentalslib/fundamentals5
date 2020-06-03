@@ -5,7 +5,7 @@
 {   File version:     5.26                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2002-2019                                  }
+{   Copyright:        Copyright (c) 2002-2020                                  }
 {                     David J Butler and Dieter Köhler                         }
 {                     All rights reserved.                                     }
 {                     See license below.                                       }
@@ -95,15 +95,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.24  2019/02/24                       }
-{   Delphi XE2 Win32                    5.24  2019/03/02                       }
-{   Delphi XE2 Win64                    5.24  2019/03/02                       }
-{   Delphi XE3 Win32                    5.24  2019/03/02                       }
-{   Delphi XE3 Win64                    5.24  2019/03/02                       }
-{   Delphi XE7 Win32                    5.22  2016/01/09                       }
-{   Delphi XE7 Win64                    5.22  2016/01/09                       }
-{   FreePascal 3.0.4 Win32              5.24  2019/02/24                       }
-{   FreePascal 2 Linux i386                                                    }
+{   Delphi 2010-10.4 Win32/Win64        5.26  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.26  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.26  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 

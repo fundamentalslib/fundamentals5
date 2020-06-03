@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      Base64 encoding/decoding                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 2002-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2002-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -41,8 +41,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.03  2016/01/09                       }
-{   Delphi 10 Win64                     5.03  2016/01/09                       }
+{   Delphi 2010-10.4 Win32/Win64        5.03  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.03  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.03  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -55,7 +56,7 @@
 
 {$IFDEF DEBUG}
 {$IFDEF TEST}
-  {$DEFINE UTILS_TEST}
+  {$DEFINE BASE64_TEST}
 {$ENDIF}
 {$ENDIF}
 
@@ -64,6 +65,7 @@ unit flcBase64;
 interface
 
 uses
+  { Fundamentals }
   flcStdTypes;
 
 
@@ -87,9 +89,9 @@ function  DecodeBase64(const S, Alphabet: RawByteString;
           const PadSet: ByteCharSet = []): RawByteString;
 
 const
-  b64_MIMEBase64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-  b64_UUEncode   = ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_';
-  b64_XXEncode   = '+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  b64_MIMEBase64 : RawByteString = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  b64_UUEncode   : RawByteString = ' !"#$%&''()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_';
+  b64_XXEncode   : RawByteString = '+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 function  MIMEBase64Decode(const S: RawByteString): RawByteString;
 function  MIMEBase64Encode(const S: RawByteString): RawByteString;
@@ -100,9 +102,6 @@ function  XXDecode(const S: RawByteString): RawByteString;
 
 implementation
 
-uses
-  flcUtils;
-
 
 
 {                                                                              }
@@ -110,10 +109,11 @@ uses
 {                                                                              }
 function EncodeBase64(const S, Alphabet: RawByteString; const Pad: Boolean;
     const PadMultiple: Integer; const PadChar: AnsiChar): RawByteString;
-var R, C : Byte;
-    F, L, M, N, U : Integer;
-    P : PByteChar;
-    T : Boolean;
+var
+  R, C : Byte;
+  F, L, M, N, U : Integer;
+  P : PByteChar;
+  T : Boolean;
 begin
   Assert(Length(Alphabet) = 64);
   {$IFOPT R+}
@@ -182,11 +182,12 @@ begin
 end;
 
 function DecodeBase64(const S, Alphabet: RawByteString; const PadSet: ByteCharSet): RawByteString;
-var F, L, M, P : Integer;
-    B, OutPos  : Byte;
-    OutB       : array[1..3] of Byte;
-    Lookup     : array[AnsiChar] of Byte;
-    R          : PByteChar;
+var
+  F, L, M, P : Integer;
+  B, OutPos  : Byte;
+  OutB       : array[1..3] of Byte;
+  Lookup     : array[AnsiChar] of Byte;
+  R          : PByteChar;
 begin
   Assert(Length(Alphabet) = 64);
   {$IFOPT R+}
@@ -245,23 +246,23 @@ end;
 
 function MIMEBase64Encode(const S: RawByteString): RawByteString;
 begin
-  Result := EncodeBase64(S, ToRawByteString(b64_MIMEBase64), True, 4, AnsiChar(Ord('=')));
+  Result := EncodeBase64(S, b64_MIMEBase64, True, 4, AnsiChar(Ord('=')));
 end;
 
 function UUDecode(const S: RawByteString): RawByteString;
 begin
   // Line without size indicator (first byte = length + 32)
-  Result := DecodeBase64(S, ToRawByteString(b64_UUEncode), [AnsiChar(Ord('`'))]);
+  Result := DecodeBase64(S, b64_UUEncode, [AnsiChar(Ord('`'))]);
 end;
 
 function MIMEBase64Decode(const S: RawByteString): RawByteString;
 begin
-  Result := DecodeBase64(S, ToRawByteString(b64_MIMEBase64), [AnsiChar(Ord('='))]);
+  Result := DecodeBase64(S, b64_MIMEBase64, [AnsiChar(Ord('='))]);
 end;
 
 function XXDecode(const S: RawByteString): RawByteString;
 begin
-  Result := DecodeBase64(S, ToRawByteString(b64_XXEncode), []);
+  Result := DecodeBase64(S, b64_XXEncode, []);
 end;
 
 

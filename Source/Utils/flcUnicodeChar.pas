@@ -5,7 +5,7 @@
 {   File version:     5.06                                                     }
 {   Description:      Unicode character functions                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -44,15 +44,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi XE2 Win32                    5.04  2019/03/02                       }
-{   Delphi XE2 Win64                    5.04  2019/03/02                       }
-{   Delphi XE3 Win32                    5.04  2019/03/02                       }
-{   Delphi XE3 Win64                    5.04  2019/03/02                       }
-{   Delphi XE6 Win32                    5.04  2019/03/02                       }
-{   Delphi XE6 Win64                    5.04  2019/03/02                       }
-{   Delphi XE7 Win32                    5.04  2019/03/02                       }
-{   Delphi XE7 Win64                    5.04  2019/03/02                       }
-{   Delphi 10 Win32                     5.02  2017/10/24                       }
+{   Delphi 2010-10.4 Win32/Win64        5.06  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.06  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.06  2020/06/02                       }
 {                                                                              }
 { Notes:                                                                       }
 {   Unicode functions in this unit work from data in source code form.         }
@@ -110,6 +104,20 @@ const
   WideLowSurrogateLast          = WideChar(#$DFFF);
   WidePrivateHighSurrogateFirst = WideChar(#$DB80);
   WidePrivateHighSurrogateLast  = WideChar(#$DBFF);
+
+  WideNULL = WideChar(#0);
+  WideBS   = WideChar(#8);
+  WideHT   = WideChar(#9);
+  WideLF   = WideChar(#10);
+  WideVT   = WideChar(#11);
+  WideFF   = WideChar(#12);
+  WideCR   = WideChar(#13);
+  WideEOF  = WideChar(#26);
+  WideSP   = WideChar(#32);
+
+  {$IFDEF SupportUnicodeString}
+  WideCRLF = WideCR + WideLF;
+  {$ENDIF}
 
 
 

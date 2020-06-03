@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      Bit function: 32 bit.                                    }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
