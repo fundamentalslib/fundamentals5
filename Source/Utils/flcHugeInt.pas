@@ -72,20 +72,9 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 7 Win32                      5.26  2019/02/24                       }
-{   Delphi XE2 Win32                    5.26  2019/03/02                       }
-{   Delphi XE2 Win64                    5.26  2019/03/02                       }
-{   Delphi XE3 Win32                    5.26  2019/03/02                       }
-{   Delphi XE3 Win64                    5.26  2019/03/02                       }
-{   Delphi XE7 Win32                    5.26  2019/03/02                       }
-{   Delphi XE7 Win64                    5.26  2019/03/02                       }
-{   Delphi 10 Win32                     5.24  2016/01/09                       }
-{   Delphi 10 Win64                     5.24  2016/01/09                       }
-{   Delphi 10.2 Win32                   5.29  2019/09/24                       }
-{   Delphi 10.2 Win64                   5.29  2018/09/24                       }
-{   Delphi 10.2 Linux64                 5.25  2018/07/17                       }
-{   FreePascal 2.6.2 Linux x64          4.21  2015/04/01                       }
-{   FreePascal 3.0.4 Win32              5.26  2019/02/24                       }
+{   Delphi 2010-10.4 Win32/Win64        5.33  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.33  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.33  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -162,7 +151,7 @@ type
   THugeWordCallbackProc = function (const Data: NativeInt): Boolean;
 
 type
-  HugeInt = packed record
+  HugeInt = record
     Sign  : Int8; // -1, 0 or 1
     Value : HugeWord;
   end;
@@ -175,6 +164,7 @@ type
 {                                                                              }
 procedure HugeWordInit(out A: HugeWord);
 procedure HugeWordFinalise(var A: HugeWord);
+procedure HugeWordClearAndFinalise(var A: HugeWord);
 
 function  HugeWordGetSize(const A: HugeWord): Integer; {$IFDEF UseInline}inline;{$ENDIF}
 function  HugeWordGetSizeInBits(const A: HugeWord): Integer; {$IFDEF UseInline}inline;{$ENDIF}
@@ -344,6 +334,7 @@ procedure HugeWordNextPotentialPrime(var A: HugeWord;
 {                                                                              }
 procedure HugeIntInit(out A: HugeInt); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeIntFinalise(var A: HugeInt); {$IFDEF UseInline}inline;{$ENDIF}
+procedure HugeIntClearAndFinalise(var A: HugeInt); {$IFDEF UseInline}inline;{$ENDIF}
 
 procedure HugeIntNormalise(var A: HugeInt);
 
@@ -588,6 +579,14 @@ const
 {$ENDIF}
 {$ENDIF}
 
+{$IFDEF DELPHI}
+{$IFDEF CPU_X86_64}
+{$IFNDEF PurePascal}
+  {$DEFINE Asm64}
+{$ENDIF}
+{$ENDIF}
+{$ENDIF}
+
 {$IFDEF Pas64}
 {$IFDEF FREEPASCAL}
 type
@@ -678,6 +677,7 @@ begin
   FreeMem(A.Data);
   A.Alloc := 0;
   A.Data := @A.InitBuf;
+  A.Used := 0;
 end;
 
 { HugeWord Realloc                                                             }
@@ -711,6 +711,20 @@ procedure HugeWordFinalise(var A: HugeWord);
 begin
   if A.Alloc > 0 then
     HugeWordFree(A);
+end;
+
+{ HugeWord Clear And Finalise                                                  }
+{ Clear used data before finalising HugeWord.                                  }
+procedure HugeWordClearAndFinalise(var A: HugeWord);
+begin
+  if Assigned(A.Data) then
+    begin
+      if A.Used > 0 then
+        FillChar(A.Data^, A.Used, 0);
+      if A.Data <> @A.InitBuf then
+        FillChar(A.InitBuf, SizeOf(A.InitBuf), 0);
+    end;
+  HugeWordFinalise(A);
 end;
 
 { HugeWord GetSize                                                             }
@@ -2141,8 +2155,13 @@ begin
     end;
 end;
 
+{$IFDEF _Asm64}
+procedure HugeWordShl1(var A: HugeWord); assembler;
+asm
+end;
+{$ELSE}
 {$IFDEF Pas64}
-procedure HugeWordShl1_Original(var A: HugeWord);
+procedure HugeWordShl1_Pas64_Original(var A: HugeWord);
 var I, L : Integer;
     M : PWord32;
     F : Word32;
@@ -2294,6 +2313,7 @@ begin
   // P^ := P^ shl 1; // A[0] := A[0] shl 1
   P^ := W shl 1;
 end;
+{$ENDIF}
 {$ENDIF}
 
 procedure HugeWordShr(var A: HugeWord; const B: Integer);
@@ -2705,149 +2725,6 @@ begin
   else
     Result := 1;
 end;
-
-{$IFDEF ASM386_DELPHI}
-function HugeWordSubtract_Asm1(const A, B, R: PWord32; const L: Word32): Boolean; assembler; // not used
-asm
-  push esi
-  push edi
-  push ebx
-  push ecx
-
-  mov esi, A
-  mov ebx, B
-  mov edi, R
-  mov ecx, L
-
-  or ecx, ecx
-  jz @Fin0
-  xor edx, edx
-
-@loop1:
-  mov eax, [esi]
-  sub eax, [ebx]
-  mov dh, 0
-  sbb dh, 0
-  or dl, dl
-  jz @save
-  stc
-  sbb eax, 0
-
-@save:
-  mov [edi], eax
-  mov dl, dh
-
-  add esi, 4
-  add ebx, 4
-  add edi, 4
-
-  dec ecx
-  jnz @loop1
-
-  or edx, edx
-  jz @Fin0
-  mov al, 1
-  jmp @Fin
-@Fin0:
-  mov al, 0
-@Fin:
-  pop ecx
-  pop ebx
-  pop edi
-  pop esi
-end;
-
-function HugeWordSubtract_Asm(var A: HugeWord; const B: HugeWord): Integer; // not used
-var C       : Integer;
-    D, E    : PHugeWord;
-    L, M    : Integer;
-    R       : Int64;
-    I, J    : Integer;
-    F       : Boolean;
-    P, Q, Z : PWord32;
-begin
-  // Handle A = 0 or B = 0
-  if HugeWordIsZero(A) then
-    begin
-      if HugeWordIsZero(B) then
-        begin
-          Result := 0;
-          exit;
-        end;
-      HugeWordAssign(A, B);
-      Result := -1;
-      exit;
-    end;
-  if HugeWordIsZero(B) then
-    begin
-      Result := 1;
-      exit;
-    end;
-  // Handle A = B
-  C := HugeWordCompare(A, B);
-  if C = 0 then
-    begin
-      HugeWordAssignZero(A);
-      Result := 0;
-      exit;
-    end;
-  // Swap around if A < B
-  if C > 0 then
-    begin
-      D := @A;
-      E := @B;
-    end
-  else
-    begin
-      HugeWordSetSize(A, B.Used);
-      D := @B;
-      E := @A;
-    end;
-  // Subtract
-  P := D^.Data;
-  Q := E^.Data;
-  Z := A.Data;
-  L := D^.Used;
-  M := E^.Used;
-  F := HugeWordSubtract_Asm1(P, Q, Z, M);
-  Inc(P, M);
-  Inc(Z, M);
-  if F then
-    for I := M to L - 1 do
-      begin
-        R := $FFFFFFFF;
-        Inc(R, P^);
-        Z^ := Int64Rec(R).Lo;
-        if Int64Rec(R).Hi > 0 then
-          begin
-            if P <> Z then
-              begin
-                Inc(P);
-                Inc(Z);
-                for J := I + 1 to L - 1 do
-                  begin
-                    Z^ := P^;
-                    Inc(P);
-                    Inc(Z);
-                  end;
-              end;
-            break;
-          end;
-        Inc(P);
-        Inc(Z);
-      end;
-  // Normalise
-  HugeWordNormalise(A);
-  // Return sign
-  if HugeWordIsZero(A) then
-    Result := 0
-  else
-  if C > 0 then
-    Result := 1
-  else
-    Result := -1;
-end;
-{$ENDIF}
 
 { HugeWord Subtract (A Larger)                                                 }
 {   Pre:   A and B normalised                                                  }
@@ -4788,6 +4665,11 @@ end;
 procedure HugeIntFinalise(var A: HugeInt);
 begin
   HugeWordFinalise(A.Value);
+end;
+
+procedure HugeIntClearAndFinalise(var A: HugeInt);
+begin
+  HugeWordClearAndFinalise(A.Value);
 end;
 
 { HugeIntNormalise                                                             }
