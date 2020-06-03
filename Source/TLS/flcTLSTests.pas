@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals TLS                                         }
 {   File name:        flcTLSTests.pas                                          }
-{   File version:     5.04                                                     }
+{   File version:     5.05                                                     }
 {   Description:      TLS tests                                                }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -34,10 +34,11 @@
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2008/01/18  0.01  Initial version.                                         }
-{   2010/12/15  0.02  Client/Server test case.                                 ]
+{   2008/01/18  0.01  Initial development.                                     }
+{   2010/12/15  0.02  Client/Server test case.                                 }
 {   2010/12/17  0.03  Client/Server test cases for TLS 1.0, 1.1 and 1.2.       }
 {   2018/07/17  5.04  Revised for Fundamentals 5.                              }
+{   2020/05/11  5.05  Use client options.                                      }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }
@@ -47,14 +48,34 @@
 {   RFC 5246 - The TLS Protocol Version 1.2                                    }
 {   RFC 4366 - Transport Layer Security (TLS) Extensions                       }
 {   www.mozilla.org/projects/security/pki/nss/ssl/traces/trc-clnt-ex.html      }
+{   RFC 4492 - Elliptic Curve Cryptography (ECC) Cipher Suites                 }
 {                                                                              }
-{ Todo:                                                                        }
-{ - Test compression.                                                          }
 {******************************************************************************}
+
+//  -----------------------------------------------------  -------------------------------------------
+//  CIPHER SUITE                                           ClientServer Test
+//  -----------------------------------------------------  -------------------------------------------
+//  RSA_WITH_RC4_128_MD5                                   TESTED OK
+//  RSA_WITH_RC4_128_SHA                                   TESTED OK
+//  RSA_WITH_DES_CBC_SHA                                   TESTED OK
+//  RSA_WITH_AES_128_CBC_SHA                               TESTED OK
+//  RSA_WITH_AES_256_CBC_SHA                               TESTED OK
+//  RSA_WITH_AES_128_CBC_SHA256                            TESTED OK TLS 1.2 only
+//  RSA_WITH_AES_256_CBC_SHA256                            TESTED OK TLS 1.2 only
+//  NULL_WITH_NULL_NULL                                    UNTESTED
+//  RSA_WITH_NULL_MD5                                      UNTESTED
+//  RSA_WITH_NULL_SHA                                      UNTESTED
+//  RSA_WITH_IDEA_CBC_SHA                                  UNTESTED
+//  RSA_WITH_3DES_EDE_CBC_SHA                              ERROR: SERVER DECRYPTION FAILED
+//  RSA_WITH_NULL_SHA256                                   ERROR
+//  DHE_RSA_WITH_AES_256_CBC_SHA                           TESTED OK TLS 1.2
+//  -----------------------------------------------------  -------------------------------------------
 
 {$INCLUDE flcTLS.inc}
 
 {$DEFINE TLS_TEST_LOG_TO_CONSOLE}
+
+{$DEFINE Cipher_SupportEC}
 
 unit flcTLSTests;
 
@@ -63,7 +84,7 @@ interface
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF TLS_TEST}
 procedure Test;
@@ -74,28 +95,53 @@ procedure Test;
 implementation
 
 uses
+  { System }
+
   SysUtils,
   SyncObjs,
-  { Fundamentals }
+
+  { Utils }
+
   flcStdTypes,
-  flcUtils,
   flcBase64,
   flcStrings,
+  flcPEM,
+  flcASN1,
   flcX509Certificate,
+  flcHugeInt,
+
+  { Cipher }
+
+  flcCipherAES,
+  flcCipherRSA,
+  flcCipherDH,
+  {$IFDEF Cipher_SupportEC}
+  flcCipherEllipticCurve,
+  {$ENDIF}
+
   { TLS }
-  flcTLSUtils,
+
+  flcTLSConsts,
+  flcTLSProtocolVersion,
   flcTLSRecord,
   flcTLSAlert,
+  flcTLSAlgorithmTypes,
+  flcTLSRandom,
+  flcTLSCertificate,
   flcTLSHandshake,
   flcTLSCipher,
-  flcTLSConnection,
-  flcTLSClient,
-  flcTLSServer;
+  flcTLSPRF,
+  flcTLSKeys,
+  flcTLSTransportTypes,
+  flcTLSTransportConnection,
+  flcTLSTransportClient,
+  flcTLSTransportServer,
+  flcTLSTestCertificates;
 
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF TLS_TEST}
 type
@@ -171,7 +217,13 @@ begin
   Log(IntToStr(LogLevel) + ' S:' + LogMsg);
 end;
 
-procedure SelfTestClientServer(const ClientOptions: TTLSClientOptions);
+procedure TestClientServer(
+          const ClientOptions      : TTLSClientOptions      = [];
+          const VersionOptions     : TTLSVersionOptions     = DefaultTLSClientVersionOptions;
+          const KeyExchangeOptions : TTLSKeyExchangeOptions = DefaultTLSClientKeyExchangeOptions;
+          const CipherOptions      : TTLSCipherOptions      = DefaultTLSClientCipherOptions;
+          const HashOptions        : TTLSHashOptions        = DefaultTLSClientHashOptions
+          );
 const
   LargeBlockSize = TLS_PLAINTEXT_FRAGMENT_MAXSIZE * 8;
 var CS : TTLSClientServerTester;
@@ -184,36 +236,11 @@ begin
     // initialise client
     CS.Cl.ClientOptions := ClientOptions;
     // initialise server
-    CS.Sr.PrivateKeyRSAPEM := // from stunnel pem file
-      'MIICXAIBAAKBgQCxUFMuqJJbI9KnB8VtwSbcvwNOltWBtWyaSmp7yEnqwWel5TFf' +
-      'cOObCuLZ69sFi1ELi5C91qRaDMow7k5Gj05DZtLDFfICD0W1S+n2Kql2o8f2RSvZ' +
-      'qD2W9l8i59XbCz1oS4l9S09L+3RTZV9oer/Unby/QmicFLNM0WgrVNiKywIDAQAB' +
-      'AoGAKX4KeRipZvpzCPMgmBZi6bUpKPLS849o4pIXaO/tnCm1/3QqoZLhMB7UBvrS' +
-      'PfHj/Tejn0jjHM9xYRHi71AJmAgzI+gcN1XQpHiW6kATNDz1r3yftpjwvLhuOcp9' +
-      'tAOblojtImV8KrAlVH/21rTYQI+Q0m9qnWKKCoUsX9Yu8UECQQDlbHL38rqBvIMk' +
-      'zK2wWJAbRvVf4Fs47qUSef9pOo+p7jrrtaTqd99irNbVRe8EWKbSnAod/B04d+cQ' +
-      'ci8W+nVtAkEAxdqPOnCISW4MeS+qHSVtaGv2kwvfxqfsQw+zkwwHYqa+ueg4wHtG' +
-      '/9+UgxcXyCXrj0ciYCqURkYhQoPbWP82FwJAWWkjgTgqsYcLQRs3kaNiPg8wb7Yb' +
-      'NxviX0oGXTdCaAJ9GgGHjQ08lNMxQprnpLT8BtZjJv5rUOeBuKoXagggHQJAaUAF' +
-      '91GLvnwzWHg5p32UgPsF1V14siX8MgR1Q6EfgKQxS5Y0Mnih4VXfnAi51vgNIk/2' +
-      'AnBEJkoCQW8BTYueCwJBALvz2JkaUfCJc18E7jCP7qLY4+6qqsq+wr0t18+ogOM9' +
-      'JIY9r6e1qwNxQ/j1Mud6gn6cRrObpRtEad5z2FtcnwY=';
+    CS.Sr.PrivateKeyRSAPEM := RSA_STunnel_PrivateKeyRSAPEM;
     TLSCertificateListAppend(CtL,
-      MIMEBase64Decode( // from stunnel pem file
-        'MIICDzCCAXigAwIBAgIBADANBgkqhkiG9w0BAQQFADBCMQswCQYDVQQGEwJQTDEf' +
-        'MB0GA1UEChMWU3R1bm5lbCBEZXZlbG9wZXJzIEx0ZDESMBAGA1UEAxMJbG9jYWxo' +
-        'b3N0MB4XDTk5MDQwODE1MDkwOFoXDTAwMDQwNzE1MDkwOFowQjELMAkGA1UEBhMC' +
-        'UEwxHzAdBgNVBAoTFlN0dW5uZWwgRGV2ZWxvcGVycyBMdGQxEjAQBgNVBAMTCWxv' +
-        'Y2FsaG9zdDCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAsVBTLqiSWyPSpwfF' +
-        'bcEm3L8DTpbVgbVsmkpqe8hJ6sFnpeUxX3Djmwri2evbBYtRC4uQvdakWgzKMO5O' +
-        'Ro9OQ2bSwxXyAg9FtUvp9iqpdqPH9kUr2ag9lvZfIufV2ws9aEuJfUtPS/t0U2Vf' +
-        'aHq/1J28v0JonBSzTNFoK1TYissCAwEAAaMVMBMwEQYJYIZIAYb4QgEBBAQDAgZA' +
-        'MA0GCSqGSIb3DQEBBAUAA4GBAAhYFTngWc3tuMjVFhS4HbfFF/vlOgTu44/rv2F+' +
-        'ya1mEB93htfNxx3ofRxcjCdorqONZFwEba6xZ8/UujYfVmIGCBy4X8+aXd83TJ9A' +
-        'eSjTzV9UayOoGtmg8Dv2aj/5iabNeK1Qf35ouvlcTezVZt2ZeJRhqUHcGaE+apCN' +
-        'TC9Y'));
+        MIMEBase64Decode(RSA_STunnel_CertificatePEM));
     CS.Sr.CertificateList := CtL;
-    CS.Sr.DHKeySize := 256;
+    CS.Sr.DHKeySize := 512;
     // start server
     CS.Sr.Start;
     Assert(CS.Sr.State = tlssActive);
@@ -274,77 +301,111 @@ begin
   end;
 end;
 
-procedure Test;
+procedure Test_Units_Dependencies;
 begin
-  flcTLSUtils.Test;
-  flcTLSRecord.Test;
-  flcTLSHandshake.Test;
-  flcTLSCipher.Test;
+  flcPEM.Test;
+  flcASN1.Test;
+  flcX509Certificate.Test;
 
-  // TLS version tests
+  flcHugeInt.Test;
+
+  flcCipherAES.Test;
+  flcCipherRSA.Test;
+  flcCipherDH.Test;
+  {$IFDEF Cipher_SupportEC}
+  flcCipherEllipticCurve.Test;
+  {$ENDIF}
+end;
+
+procedure Test_Units_TLS;
+begin
+  flcTLSAlert.Test;
+  flcTLSAlgorithmTypes.Test;
+  flcTLSRandom.Test;
+  flcTLSCipher.Test;
+  flcTLSHandshake.Test;
+  flcTLSKeys.Test;
+  flcTLSProtocolVersion.Test;
+  flcTLSPRF.Test;
+  flcTLSRecord.Test;
+end;
+
+procedure Test_ClientServer_TLSVersions;
+begin
   // TLS 1.2
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11]);
+  TestClientServer([], [tlsvoTLS12]);
   // TLS 1.1
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS12]);
+  TestClientServer([], [tlsvoTLS11]);
   // TLS 1.0
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS11, tlscoDisableTLS12]);
+  TestClientServer([], [tlsvoTLS10]);
+  Sleep(100);
   // SSL 3
   // Fails with invalid parameter
-  // SelfTestClientServer([tlscoDisableTLS10, tlscoDisableTLS11, tlscoDisableTLS12]);
+  //SelfTestClientServer([], [tlsvoSSL3]);
+end;
 
-  // TLS cipher tests
-  // TLS 1.2 RC4_128
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableCipherAES128, tlscoDisableCipherAES256, tlscoDisableCipherDES]);
-  // TLS 1.2 AES128
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableCipherAES256, tlscoDisableCipherRC4_128, tlscoDisableCipherDES]);
-  // TLS 1.2 AES256
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableCipherAES128, tlscoDisableCipherRC4_128, tlscoDisableCipherDES]);
-  // TLS 1.2 DES
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableCipherAES128, tlscoDisableCipherAES256, tlscoDisableCipherRC4_128]);
-
-  // TLS hash tests
-  // TLS 1.2 SHA256
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableHashMD5, tlscoDisableHashSHA1]);
-  // TLS 1.2 SHA1
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableHashMD5, tlscoDisableHashSHA256]);
-  // TLS 1.2 MD5
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-      tlscoDisableHashSHA1, tlscoDisableHashSHA256]);
-
-  // TLS key exchange tests
+procedure Test_ClientServer_KeyExchangeAlgos;
+begin
   // TLS 1.2 RSA
-  SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-       tlscoDisableKeyExchangeDH_Anon, tlscoDisableKeyExchangeDH_RSA]);
-  // TLS 1.2 DH_RSA
-  // Not implemented
-  // SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-  //     tlscoDisableKeyExchangeDH_Anon, tlscoDisableKeyExchangeRSA]);
+  TestClientServer([], [tlsvoTLS12], [tlskeoRSA]);
+  // TLS 1.2 DHE_RSA
+  TestClientServer([], [tlsvoTLS12], [tlskeoDHE_RSA]);
   // TLS 1.2 DH_anon
   // Under development/testing
-  // SelfTestClientServer([tlscoDisableSSL3, tlscoDisableTLS10, tlscoDisableTLS11,
-  //    tlscoDisableKeyExchangeDH_RSA, tlscoDisableKeyExchangeRSA]);
+  //SelfTestClientServer([], [tlsvoTLS12], [tlskeoDH_Anon]);
+end;
+
+procedure Test_ClientServer_CipherAlgos;
+begin
+  // TLS 1.2 RC4
+  TestClientServer([], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions,
+      [tlscoRC4]);
+  // TLS 1.2 AES128
+  TestClientServer([], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions,
+      [tlscoAES128]);
+  // TLS 1.2 AES256
+  TestClientServer([], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions,
+      [tlscoAES256]);
+  // TLS 1.2 DES
+  TestClientServer([], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions,
+      [tlscoDES]);
+  // TLS 1.2 3DES
+  // No Cipher Suite
+  {SelfTestClientServer([], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions,
+      [tlsco3DES]);}
+end;
+
+procedure Test_ClientServer_HashAlgos;
+begin
+  // TLS 1.2 SHA256
+  TestClientServer(
+      [], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions, DefaultTLSClientCipherOptions,
+      [tlshoSHA256]);
+  // TLS 1.2 SHA1
+  TestClientServer(
+      [], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions, DefaultTLSClientCipherOptions,
+      [tlshoSHA1]);
+  // TLS 1.2 MD5
+  TestClientServer(
+      [], [tlsvoTLS12], DefaultTLSClientKeyExchangeOptions, DefaultTLSClientCipherOptions,
+      [tlshoMD5]);
+end;
+
+procedure Test_ClientServer;
+begin
+  Test_ClientServer_TLSVersions;
+  Test_ClientServer_KeyExchangeAlgos;
+  Test_ClientServer_CipherAlgos;
+  Test_ClientServer_HashAlgos;
+end;
+
+procedure Test;
+begin
+  Test_Units_Dependencies;
+  Test_Units_TLS;
+  Test_ClientServer;
 end;
 {$ENDIF}
-
-//    tlscsRSA_WITH_RC4_128_MD5,                                                // TESTED OK
-//    tlscsRSA_WITH_RC4_128_SHA,                                                // TESTED OK
-//    tlscsRSA_WITH_DES_CBC_SHA,                                                // TESTED OK
-//    tlscsRSA_WITH_AES_128_CBC_SHA,                                            // TESTED OK
-//    tlscsRSA_WITH_AES_256_CBC_SHA,                                            // TESTED OK
-//    tlscsRSA_WITH_AES_128_CBC_SHA256,                                         // TESTED OK, TLS 1.2 only
-//    tlscsRSA_WITH_AES_256_CBC_SHA256                                          // TESTED OK, TLS 1.2 only
-//    tlscsNULL_WITH_NULL_NULL                                                  // UNTESTED
-//    tlscsRSA_WITH_NULL_MD5                                                    // UNTESTED
-//    tlscsRSA_WITH_NULL_SHA                                                    // UNTESTED
-//    tlscsRSA_WITH_IDEA_CBC_SHA                                                // UNTESTED
-//    tlscsRSA_WITH_3DES_EDE_CBC_SHA                                            // ERROR: SERVER DECRYPTION FAILED
-//    tlscsRSA_WITH_NULL_SHA256                                                 // ERROR
 
 
 

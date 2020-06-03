@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      TLS records                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -34,7 +34,7 @@
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2008/01/18  0.01  Initial version.                                         }
+{   2008/01/18  0.01  Initial development.                                     }
 {   2010/11/30  0.02  Stream cipher.                                           }
 {   2010/12/01  0.03  Block cipher for TLS 1.0.                                }
 {   2010/12/02  0.04  Block cipher for TLS 1.1 and TLS 1.2.                    }
@@ -53,7 +53,9 @@ interface
 
 uses
   { TLS }
-  flcTLSUtils,
+
+  flcTLSProtocolVersion,
+  flcTLSAlgorithmTypes,
   flcTLSCipherSuite,
   flcTLSCipher;
 
@@ -64,10 +66,12 @@ uses
 {                                                                              }
 type
   TTLSContentType = (
+    tlsctInvalid            = 0,
     tlsctChange_cipher_spec = 20,
     tlsctAlert              = 21,
     tlsctHandshake          = 22,
     tlsctApplication_data   = 23,
+    tlsctHeartbeat          = 24,   // RFC 6520
     tlsctMax                = 255
   );
   PTLSContentType = ^TTLSContentType;
@@ -176,13 +180,22 @@ implementation
 
 uses
   { System }
+
   SysUtils,
-  { Fundamentals }
+
+  { Utils }
+
   flcStdTypes,
-  flcStrings,
   flcHash,
+
+  { Cipher }
+
   flcCipherRandom,
+
   { TLS }
+
+  flcTLSConsts,
+  flcTLSErrors,
   flcTLSCompress;
 
 
@@ -193,10 +206,12 @@ uses
 function TLSContentTypeToStr(const A: TTLSContentType): String;
 begin
   case A of
+    tlsctInvalid            : Result := 'Invalid';
     tlsctChange_cipher_spec : Result := 'Change_cipher_spec';
     tlsctAlert              : Result := 'Alert';
     tlsctHandshake          : Result := 'Handshake';
     tlsctApplication_data   : Result := 'Application_data';
+    tlsctHeartbeat          : Result := 'Heartbeat';
   else
     Result := '[TLSContentType#' + IntToStr(Ord(A)) + ']';
   end;
@@ -208,7 +223,8 @@ begin
       tlsctChange_cipher_spec,
       tlsctAlert,
       tlsctHandshake,
-      tlsctApplication_data];
+      tlsctApplication_data,
+      tlsctHeartbeat];
 end;
 
 
@@ -912,6 +928,7 @@ end;
 {                                                                              }
 { Test cases                                                                   }
 {                                                                              }
+//// TBytes
 {$IFDEF TLS_TEST}
 {$ASSERTIONS ON}
 procedure SelfTestPayloadMAC;
@@ -946,4 +963,6 @@ end;
 
 
 end.
+
+
 

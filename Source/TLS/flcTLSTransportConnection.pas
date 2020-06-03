@@ -1,11 +1,11 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals TLS                                         }
-{   File name:        flcTLSConnection.pas                                     }
+{   File name:        flcTLSTransportConnection.pas                            }
 {   File version:     5.06                                                     }
-{   Description:      TLS connection                                           }
+{   Description:      TLS Transport Connection                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -45,22 +45,29 @@
 
 {$INCLUDE flcTLS.inc}
 
-unit flcTLSConnection;
+unit flcTLSTransportConnection;
 
 interface
 
 uses
-  { Fundamentals }
+  { Utils }
+
   flcStdTypes,
-  
+
   { TLS }
-  flcTLSUtils,
+
+  flcTLSErrors,
+  flcTLSProtocolVersion,
+  flcTLSAlgorithmTypes,
+  flcTLSPRF,
   flcTLSCipherSuite,
   flcTLSCipher,
   flcTLSRecord,
   flcTLSAlert,
   flcTLSHandshake,
-  flcTLSBuffer;
+  flcTLSBuffer,
+  flcTLSKeys,
+  flcTLSTransportTypes;
 
 
 
@@ -88,20 +95,6 @@ procedure InitTLSSecurityParametersNULL(var A: TTLSSecurityParameters);
 
 
 {                                                                              }
-{ TLS alert error                                                              }
-{                                                                              }
-type
-  ETLSAlertError = class(ETLSError)
-  private
-    FDescription : TTLSAlertDescription;
-  public
-    constructor Create(const Description: TTLSAlertDescription; const TLSError: Integer = TLSError_BadProtocol; const Msg: String = '');
-    property Description: TTLSAlertDescription read FDescription;
-  end;
-
-
-
-{                                                                              }
 { TLS connection                                                               }
 {                                                                              }
 type
@@ -111,18 +104,14 @@ type
     procedure (const Sender: TTLSConnection; const Buffer; const Size: Integer) of object;
 
   TTLSConnectionState = (
-    tlscoInit,
-    tlscoStart,
-    tlscoHandshaking,
-    tlscoApplicationData,
-    tlscoErrorBadProtocol,
-    tlscoCancelled,
-    tlscoClosed);
-
-  TTLSLogType = (
-    tlsltDebug,
-    tlsltInfo,
-    tlsltError);
+      tlscoInit,
+      tlscoStart,
+      tlscoHandshaking,
+      tlscoApplicationData,
+      tlscoErrorBadProtocol,
+      tlscoCancelled,
+      tlscoClosed
+    );
 
   TTLSConnectionLogEvent = procedure (Sender: TTLSConnection; LogType: TTLSLogType; LogMsg: String; LogLevel: Integer) of object;
   TTLSConnectionStateChangeEvent = procedure (Sender: TTLSConnection; State: TTLSConnectionState) of object;
@@ -137,6 +126,7 @@ type
     FOnAlert                : TTLSConnectionAlertEvent;
     FOnHandshakeFinished    : TTLSConnectionNotifyEvent;
     FConnectionState        : TTLSConnectionState;
+    FConnectionErrorMessage : String;
     FInBuf                  : TTLSBuffer;
     FOutBuf                 : TTLSBuffer;
     FProtocolVersion        : TTLSProtocolVersion;
@@ -214,7 +204,7 @@ type
     procedure ProcessTransportLayerData;
 
   public
-    constructor Create(const TransportLayerSendProc: TTLSConnectionTransportLayerSendProc);
+    constructor Create(const ATransportLayerSendProc: TTLSConnectionTransportLayerSendProc);
     destructor Destroy; override;
 
     property  OnLog: TTLSConnectionLogEvent read FOnLog write FOnLog;
@@ -223,6 +213,8 @@ type
     property  OnHandshakeFinished: TTLSConnectionNotifyEvent read FOnHandshakeFinished write FOnHandshakeFinished;
 
     property  ConnectionState: TTLSConnectionState read FConnectionState;
+    property  ConnectionErrorMessage: String read FConnectionErrorMessage;
+
     function  IsNegotiatingState: Boolean;
     function  IsReadyState: Boolean;
     function  IsFinishedState: Boolean;
@@ -241,9 +233,16 @@ implementation
 
 uses
   { System }
+
   SysUtils,
+
   { Cipher }
-  flcCipherUtils;
+
+  flcCipherUtils,
+
+  { TLS }
+
+  flcTLSConsts;
 
 
 
@@ -276,26 +275,15 @@ end;
 
 
 {                                                                              }
-{ TLS alert error                                                              }
-{                                                                              }
-constructor ETLSAlertError.Create(const Description: TTLSAlertDescription; const TLSError: Integer; const Msg: String);
-begin
-  FDescription := Description;
-  inherited Create(TLSError, Msg);
-end;
-
-
-
-{                                                                              }
 { TLS connection                                                               }
 {                                                                              }
-constructor TTLSConnection.Create(const TransportLayerSendProc: TTLSConnectionTransportLayerSendProc);
+constructor TTLSConnection.Create(const ATransportLayerSendProc: TTLSConnectionTransportLayerSendProc);
 begin
   inherited Create;
   Init;
-  if not Assigned(TransportLayerSendProc) then
+  if not Assigned(ATransportLayerSendProc) then
     raise ETLSError.Create(TLSError_InvalidParameter);
-  FTransportLayerSendProc := TransportLayerSendProc;
+  FTransportLayerSendProc := ATransportLayerSendProc;
 end;
 
 procedure TTLSConnection.Init;
@@ -479,6 +467,11 @@ begin
 
   InitTLSAlert(B, Level, Description);
   SendContent(tlsctAlert, B, TLSAlertSize);
+
+  if Level = tlsalFatal then
+    FConnectionErrorMessage :=
+        TLSAlertLevelToStr(Level) + ':' +
+        TLSAlertDescriptionToStr(Description);
 end;
 
 procedure TTLSConnection.SendAlertCloseNotify;
@@ -646,6 +639,11 @@ begin
                                     TLSAlertDescriptionToStr(Alert^.description)]);
   {$ENDIF}
 
+  if Alert^.level = tlsalFatal then
+    FConnectionErrorMessage :=
+        TLSAlertLevelToStr(Alert^.level) + ':' +
+        TLSAlertDescriptionToStr(Alert^.description);
+
   case Alert^.description of
     tlsadClose_notify            : HandleAlertCloseNotify;
     tlsadProtocol_version        : HandleAlertProtocolVersion;
@@ -672,6 +670,7 @@ begin
     tlsadInsufficient_security   : HandleAlertSecurityError(Alert^);
     tlsadUser_canceled           : HandleAlertUserCancelled;
     tlsadNo_renegotiation        : HandleAlertNoRenegotiation;
+    /////
   else
     HandleAlertUnknown(Alert^);
   end;
@@ -699,23 +698,30 @@ var P : PByte;
     MsgType : TTLSHandshakeType;
     Len : Integer;
 begin
-  P := @Buffer;
-  N := Size;
-  repeat
-    DecodeTLSHandshakeHeader(PTLSHandshakeHeader(P)^, MsgType, Len);
-    if MsgType <> tlshtHello_request then
-      AddVerifyHandshakeData(P^, TLSHandshakeHeaderSize + Len);
-    Inc(P, TLSHandshakeHeaderSize);
-    Dec(N, TLSHandshakeHeaderSize);
+  try
+    P := @Buffer;
+    N := Size;
+    repeat
+      DecodeTLSHandshakeHeader(PTLSHandshakeHeader(P)^, MsgType, Len);
+      if MsgType <> tlshtHello_request then
+        AddVerifyHandshakeData(P^, TLSHandshakeHeaderSize + Len);
+      Inc(P, TLSHandshakeHeaderSize);
+      Dec(N, TLSHandshakeHeaderSize);
 
-    {$IFDEF TLS_DEBUG}
-    Log(tlsltDebug, 'R:Handshake:[%s]:%db', [TLSHandshakeTypeToStr(MsgType), Len]);
-    {$ENDIF}
+      {$IFDEF TLS_DEBUG}
+      Log(tlsltDebug, 'R:Handshake:[%s]:%db', [TLSHandshakeTypeToStr(MsgType), Len]);
+      {$ENDIF}
 
-    HandleHandshakeMessage(MsgType, P^, Len);
-    Inc(P, Len);
-    Dec(N, Len);
-  until N <= 0;
+      HandleHandshakeMessage(MsgType, P^, Len);
+      Inc(P, Len);
+      Dec(N, Len);
+    until N <= 0;
+  except
+    on E : ETLSError do
+      ShutdownBadProtocol(E.AlertDescription)
+    else
+      ShutdownBadProtocol(tlsadHandshake_failure);
+  end;
 end;
 
 procedure TTLSConnection.ProcessTransportLayerData;
@@ -779,8 +785,13 @@ begin
           ShutdownBadProtocol(tlsadUnexpected_message);
         end;
       except
-        on E : ETLSAlertError do ShutdownBadProtocol(E.FDescription);
-        else ShutdownBadProtocol(tlsadDecode_error);
+        on E : ETLSError do
+          if E.AlertDescription = tlsadMax then
+            ShutdownBadProtocol(tlsadDecode_error)
+          else
+            ShutdownBadProtocol(E.AlertDescription);
+        else
+          ShutdownBadProtocol(tlsadDecode_error);
       end;
       if IsFinishedState then
          exit;
@@ -793,6 +804,7 @@ begin
   TLSBufferAddBuf(FInBuf, Buffer, Size);
   if IsFinishedState then
     raise ETLSError.Create(TLSError_InvalidState); // tls session finished
+
   ProcessTransportLayerData;
 end;
 
@@ -828,8 +840,10 @@ begin
     exit;
   if IsFinishedState then
     raise ETLSError.Create(TLSError_InvalidState); // tls session finished
+
   if FConnectionState <> tlscoApplicationData then
     raise ETLSError.Create(TLSError_InvalidState); // cannot accept application data yet.. todo: buffer until negotiation finished?
+
   SendApplicationData(Buffer, Size);
 end;
 
@@ -837,6 +851,7 @@ procedure TTLSConnection.Close;
 begin
   if IsFinishedState then
     raise ETLSError.Create(TLSError_InvalidState); // not open
+
   DoClose;
 end;
 

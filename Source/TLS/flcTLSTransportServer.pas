@@ -1,11 +1,11 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals TLS                                         }
-{   File name:        flcTLSServer.pas                                         }
+{   File name:        flcTLSTransportServer.pas                                }
 {   File version:     5.04                                                     }
-{   Description:      TLS server                                               }
+{   Description:      TLS Transport Server                                     }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -38,42 +38,66 @@
 {   2010/12/15  0.02  Development. Simple client server test case.             }
 {   2016/01/08  0.03  String changes.                                          }
 {   2018/07/17  5.04  Revised for Fundamentals 5.                              }
+{   2020/05/19  5.08  Sign RSA authentication signature for DHE_RSA.           }
 {                                                                              }
-{ Todo:                                                                        }
-{ - Server options for cipher and compression selection.                       }
-{ - SSL3 can only select SHA1 and MD5 hash.                                    }
 {******************************************************************************}
 
 {$INCLUDE flcTLS.inc}
 
-unit flcTLSServer;
+unit flcTLSTransportServer;
 
 interface
 
 uses
   { System }
+
   SyncObjs,
-  { Fundamentals }
+
+  { Utils }
+
   flcStdTypes,
+
   { Cipher }
+
   flcCipherRSA,
   flcCipherDH,
+
   { X509 }
+
   flcX509Certificate,
+
   { PEM }
+
   flcPEM,
+
   { TLS }
-  flcTLSUtils,
+
+  flcTLSProtocolVersion,
+  flcTLSAlgorithmTypes,
+  flcTLSRandom,
   flcTLSCipherSuite,
   flcTLSAlert,
+  flcTLSKeyExchangeParams,
+  flcTLSCertificate,
+  flcTLSKeys,
   flcTLSHandshake,
-  flcTLSConnection;
+  flcTLSTransportTypes,
+  flcTLSTransportConnection;
 
 
 
 {                                                                              }
 { TLS Server                                                                   }
 {                                                                              }
+const
+  DefaultTLSServerOptions            = [];
+  DefaultTLSServerVersionOptions     = AllTLSVersionOptions - [tlsvoSSL3];
+  DefaultTLSServerKeyExchangeOptions = AllTLSKeyExchangeOptions;
+  DefaultTLSServerCipherOptions      = AllTLSCipherOptions;
+  DefaultTLSServerHashOptions        = AllTLSHashOptions;
+
+
+
 type
   TTLSServer = class;
 
@@ -82,7 +106,8 @@ type
     tlsscHandshakeAwaitingClientHello,
     tlsscHandshakeAwaitingClientKeyExchange,
     tlsscHandshakeAwaitingFinish,
-    tlsscConnection);
+    tlsscConnection
+    );
 
   TTLSServerClient = class(TTLSConnection)
   protected
@@ -140,7 +165,7 @@ type
     procedure DoStart;
 
   public
-    constructor Create(const Server: TTLSServer; const UserObj: TObject);
+    constructor Create(const AServer: TTLSServer; const AUserObj: TObject);
     destructor Destroy; override;
 
     property  UserObj: TObject read FUserObj;
@@ -148,15 +173,14 @@ type
   end;
 
   TTLSServerOptions = set of (
-    tlssoDontUseSSL3,
-    tlssoDontUseTLS10,
-    tlssoDontUseTLS11,
-    tlssoDontUseTLS12);
+    tlssoNone
+    );
 
   TTLSServerState = (
     tlssInit,
     tlssActive,
-    tlssStopped);
+    tlssStopped
+    );
 
   TTLSServerTransportLayerSendProc = procedure (Server: TTLSServer; Client: TTLSServerClient; const Buffer; const Size: Integer) of object;
   TTLSServerNotifyEvent = procedure (Sender: TTLSServer) of object;
@@ -171,7 +195,11 @@ type
     FOnClientAlert             : TTLSServerClientAlertEvent;
     FOnClientHandshakeFinished : TTLSServerClientEvent;
     FTransportLayerSendProc    : TTLSServerTransportLayerSendProc;
-    FOptions                   : TTLSServerOptions;
+    FServerOptions             : TTLSServerOptions;
+    FVersionOptions            : TTLSVersionOptions;
+    FKeyExchangeOptions        : TTLSKeyExchangeOptions;
+    FCipherOptions             : TTLSCipherOptions;
+    FHashOptions               : TTLSHashOptions;
     FCertificateList           : TTLSCertificateList;
     FPrivateKeyRSA             : RawByteString;
     FPEMFileName               : String;
@@ -196,14 +224,19 @@ type
     procedure CheckNotActive;
     procedure CheckActive;
 
-    procedure SetOptions(const Options: TTLSServerOptions);
+    procedure SetServerOptions(const AServerOptions: TTLSServerOptions);
+    procedure SetVersionOptions(const AVersionOptions: TTLSVersionOptions);
+    procedure SetCipherOptions(const ACipherOptions: TTLSCipherOptions);
+    procedure SetKeyExchangeOptions(const AKeyExchangeOptions: TTLSKeyExchangeOptions);
+    procedure SetHashOptions(const AHashOptions: TTLSHashOptions);
+
     procedure SetCertificateList(const List: TTLSCertificateList);
-    procedure SetPrivateKeyRSA(const PrivateKeyRSA: RawByteString);
+    procedure SetPrivateKeyRSA(const APrivateKeyRSA: RawByteString);
     function  GetPrivateKeyRSAPEM: RawByteString;
-    procedure SetPrivateKeyRSAPEM(const PrivateKeyRSAPEM: RawByteString);
-    procedure SetPEMFileName(const PEMFileName: String);
-    procedure SetPEMText(const PEMText: RawByteString);
-    procedure SetDHKeySize(const DHKeySize: Integer);
+    procedure SetPrivateKeyRSAPEM(const APrivateKeyRSAPEM: RawByteString);
+    procedure SetPEMFileName(const APEMFileName: String);
+    procedure SetPEMText(const APEMText: RawByteString);
+    procedure SetDHKeySize(const ADHKeySize: Integer);
 
     procedure ClientLog(const Client: TTLSServerClient; const LogType: TTLSLogType; const LogMsg: String; const LogLevel: Integer);
     procedure ClientStateChange(const Client: TTLSServerClient);
@@ -225,7 +258,7 @@ type
     procedure DoStop;
 
   public
-    constructor Create(const TransportLayerSendProc: TTLSServerTransportLayerSendProc);
+    constructor Create(const ATransportLayerSendProc: TTLSServerTransportLayerSendProc);
     destructor Destroy; override;
 
     property  OnLog: TTLSServerLogEvent read FOnLog write FOnLog;
@@ -233,7 +266,12 @@ type
     property  OnClientStateChange: TTLSServerClientEvent read FOnClientStateChange write FOnClientStateChange;
     property  OnClientHandshakeFinished: TTLSServerClientEvent read FOnClientHandshakeFinished write FOnClientHandshakeFinished;
 
-    property  Options: TTLSServerOptions read FOptions write SetOptions;
+    property  ServerOptions: TTLSServerOptions read FServerOptions write SetServerOptions default DefaultTLSServerOptions;
+    property  VersionOptions: TTLSVersionOptions read FVersionOptions write SetVersionOptions default DefaultTLSServerVersionOptions;
+    property  KeyExchangeOptions: TTLSKeyExchangeOptions read FKeyExchangeOptions write SetKeyExchangeOptions default DefaultTLSServerKeyExchangeOptions;
+    property  CipherOptions: TTLSCipherOptions read FCipherOptions write SetCipherOptions default DefaultTLSServerCipherOptions;
+    property  HashOptions: TTLSHashOptions read FHashOptions write SetHashOptions default DefaultTLSServerHashOptions;
+
     property  CertificateList: TTLSCertificateList read FCertificateList write SetCertificateList;
     property  PrivateKeyRSA: RawByteString read FPrivateKeyRSA write SetPrivateKeyRSA;
     property  PrivateKeyRSAPEM: RawByteString read GetPrivateKeyRSAPEM write SetPrivateKeyRSAPEM;
@@ -250,7 +288,9 @@ type
     function  AddClient(const UserObj: TObject): TTLSServerClient;
     procedure RemoveClient(const Client: TTLSServerClient);
 
-    procedure ProcessTransportLayerReceivedData(const Client: TTLSServerClient; const Buffer; const Size: Integer);
+    procedure ProcessTransportLayerReceivedData(
+              const AClient: TTLSServerClient;
+              const Buffer; const Size: Integer);
   end;
 
 
@@ -260,13 +300,18 @@ implementation
 uses
   { System }
   SysUtils,
+
   { Utils }
   flcBase64,
   flcHugeInt,
+
   { Cipher }
   flcCipherUtils,
   flcCipherRandom,
+
   { TLS }
+  flcTLSErrors,
+  flcTLSSessionID,
   flcTLSCipher;
 
 
@@ -274,12 +319,12 @@ uses
 {                                                                              }
 { TLS Server Client                                                            }
 {                                                                              }
-constructor TTLSServerClient.Create(const Server: TTLSServer; const UserObj: TObject);
+constructor TTLSServerClient.Create(const AServer: TTLSServer; const AUserObj: TObject);
 begin
-  Assert(Assigned(Server));
+  Assert(Assigned(AServer));
   inherited Create(TransportLayerSendProc);
-  FServer := Server;
-  FUserObj := UserObj;
+  FServer := AServer;
+  FUserObj := AUserObj;
 end;
 
 destructor TTLSServerClient.Destroy;
@@ -333,8 +378,9 @@ begin
 end;
 
 procedure TTLSServerClient.SelectCipherSuite(var CipherSuite: TTLSCipherSuite);
-var I : TTLSCipherSuite;
-    C : PTLSCipherSuiteInfo;
+var
+  I : TTLSCipherSuite;
+  C : PTLSCipherSuiteInfo;
 begin
   for I := High(TTLSCipherSuite) downto Low(TTLSCipherSuite) do
     if (I <> tlscsNone) and (I in FClientHello.CipherSuites) then
@@ -354,18 +400,52 @@ begin
   New(FDHState);
   DHStateInit(FDHState^);
 
-  DHGenerateKeys(FDHState^, dhhSHA1, DHQBitCount(FServer.FDHKeySize), FServer.FDHKeySize);
+  (*
+  P = 'FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A63A3620FFFFFFFFFFFFFFFF'
+  G = '00000002'
+  *)
+
+{  HugeWordToHexB(FDHState^.Q);
+  HugeWordToHexB(FDHState^.X);
+  HugeWordToHexB(FDHState^.Y);
+}
+
+(*
+  DHInitHashAlgorithm(FDHState^, dhhSHA1);
+
+  HexToHugeWordB('FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A63A3620FFFFFFFFFFFFFFFF',
+      FDHState^.P);
+  HexToHugeWordB('00000002', FDHState^.G);
+
+  HexToHugeWordB('AF2FCC0B5ADD8F623266378ADBF72664D5913FFF', FDHState^.Q);
+  HexToHugeWordB('8E62C571E6ECCC720CF65E432FA779BE56EFAB46', FDHState^.X);
+  HexToHugeWordB('A37CCB97CAB7AC5C3C2B59FC7C33007B2CDD9FA6C616D8BA4A202EC901FE5F37F790295D5DAA990E22121C154B78E2201B36AB4A8944E61D34ADA541221653B49E432B782A5A59806E87ADBCC57033385FB9197CEC137170DD80466D82F431BA',
+      FDHState^.Y);
+
+  FDHState^.PrimePBitCount := DHWellKnownGroup[0].PBitCount;
+  FDHState^.PrimeQBitCount := DHWellKnownGroup[0].QBitCount;
+*)
+
+  //DHGenerateKeys(FDHState^, dhhSHA1, DHQBitCount(FServer.FDHKeySize), FServer.FDHKeySize);
+  //// Use well known pairs
+  //// x/prikey is a random nr
+
+  HexToHugeWordB(DHWellKnownGroup[0].P_Hex, FDHState^.P);
+  HexToHugeWordB(DHWellKnownGroup[0].G_Hex, FDHState^.G);
+  DHDeriveKeysFromGroupParametersPG(
+      FDHState^, dhhSHA1, DHWellKnownGroup[0].QBitCount, DHWellKnownGroup[0].PBitCount,
+      FDHState^.P, FDHState^.G);
 end;
 
 procedure TTLSServerClient.InitProtocolVersion;
 begin
   FProtocolVersion := FClientHello.ProtocolVersion;
   if IsSSL2(FProtocolVersion) then
-    raise ETLSAlertError.Create(tlsadProtocol_version); // SSL2 not supported
-  if IsFutureTLSVersion(FProtocolVersion) then
+    raise ETLSError.CreateAlertBadProtocolVersion; // SSL2 not supported
+  if IsPostTLS12(FProtocolVersion) then
     FProtocolVersion := TLSProtocolVersion12;
   if not IsKnownTLSVersion(FProtocolVersion) then
-    raise ETLSAlertError.Create(tlsadProtocol_version); // unknown SSL version
+    raise ETLSError.CreateAlertBadProtocolVersion; // unknown SSL version
 end;
 
 procedure TTLSServerClient.InitHandshakeServerHello;
@@ -375,6 +455,12 @@ begin
       FSessionID,
       FCipherSpecNew.CipherSuiteDetails.CipherSuiteInfo^.Rec,
       FCompression);
+
+  {$IFDEF TLS_TEST_NO_RANDOM_HELLO}
+  FClientHello.Random.gmt_unix_time := 123;
+  FillChar(FServerHello.Random.random_bytes, 28, 117);
+  {$ENDIF}
+
   FServerHelloRandomStr := TLSRandomToStr(FServerHello.Random);
 end;
 
@@ -388,10 +474,18 @@ begin
     tlskeaDH_Anon :
       begin
         InitDHState;
-        InitTLSServerDHParams(FServerKeyExchange.Params,
+
+        AssignTLSServerKeyExchangeDHParams(
+            FServerKeyExchange,
             DHHugeWordKeyEncodeBytes(FDHState^.P),
             DHHugeWordKeyEncodeBytes(FDHState^.G),
-            DHHugeWordKeyEncodeBytes(FDHState^.Y));
+            DHHugeWordKeyEncodeBytes(FDHState^.Y));  /////////
+
+        SignTLSServerKeyExchangeDH_RSA(
+            FServerKeyExchange,
+            PTLSClientServerRandom(@FClientHello.Random)^,
+            PTLSClientServerRandom(@FServerHello.Random)^,
+            FServer.FRSAPrivateKey);
       end;
   end;
 end;
@@ -406,69 +500,76 @@ const
   MaxHandshakeFinishedSize           = 2048;
 
 procedure TTLSServerClient.SendHandshakeHelloRequest;
-var B : array[0..MaxHandshakeHelloRequestSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeHelloRequestSize - 1] of Byte;
+  Size : Integer;
 begin
-  L := EncodeTLSHandshakeHelloRequest(B, SizeOf(B));
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeHelloRequest(Buf, SizeOf(Buf));
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeServerHello;
-var B : array[0..MaxHandshakeServerHelloSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeServerHelloSize - 1] of Byte;
+  Size : Integer;
 begin
   InitHandshakeServerHello;
-  L := EncodeTLSHandshakeServerHello(B, SizeOf(B), FServerHello);
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeServerHello(Buf, SizeOf(Buf), FServerHello);
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeCertificate;
-var B : array[0..MaxHandshakeCertificateSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeCertificateSize - 1] of Byte;
+  Size : Integer;
 begin
-  L := EncodeTLSHandshakeCertificate(B, SizeOf(B), FServer.FCertificateList);
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeCertificate(Buf, SizeOf(Buf), FServer.FCertificateList);
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeServerKeyExchange;
-var B : array[0..MaxHandshakeServerKeyExchangeSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeServerKeyExchangeSize - 1] of Byte;
+  Size : Integer;
 begin
   InitHandshakeServerKeyExchange;
-  L := EncodeTLSHandshakeServerKeyExchange(B, SizeOf(B),
+  Size := EncodeTLSHandshakeServerKeyExchange(Buf, SizeOf(Buf),
       FCipherSpecNew.KeyExchangeAlgorithm, FServerKeyExchange);
-  SendHandshake(B, L);
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeCertificateRequest;
-var B : array[0..MaxHandshakeCertificateRequestSize - 1] of Byte;
-    L : Integer;
-    R : TTLSCertificateRequest;
+var
+  Buf  : array[0..MaxHandshakeCertificateRequestSize - 1] of Byte;
+  Size : Integer;
+  CReq : TTLSCertificateRequest;
 begin
-  L := EncodeTLSHandshakeCertificateRequest(B, SizeOf(B), R);
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeCertificateRequest(Buf, SizeOf(Buf), CReq);
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeServerHelloDone;
-var B : array[0..MaxHandshakeServerHelloDoneSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeServerHelloDoneSize - 1] of Byte;
+  Size : Integer;
 begin
-  L := EncodeTLSHandshakeServerHelloDone(B, SizeOf(B));
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeServerHelloDone(Buf, SizeOf(Buf));
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.SendHandshakeFinished;
-var B : array[0..MaxHandshakeFinishedSize - 1] of Byte;
-    L : Integer;
+var
+  Buf  : array[0..MaxHandshakeFinishedSize - 1] of Byte;
+  Size : Integer;
 begin
-  L := EncodeTLSHandshakeFinished(B, SizeOf(B), FMasterSecret, FProtocolVersion, FVerifyHandshakeData, False);
-  SendHandshake(B, L);
+  Size := EncodeTLSHandshakeFinished(Buf, SizeOf(Buf), FMasterSecret, FProtocolVersion, FVerifyHandshakeData, False);
+  SendHandshake(Buf, Size);
 end;
 
 procedure TTLSServerClient.HandleHandshakeClientHello(const Buffer; const Size: Integer);
 begin
   if FClientState <> tlsscHandshakeAwaitingClientHello then
-    raise ETLSAlertError.Create(tlsadUnexpected_message);
+    raise ETLSError.CreateAlertUnexpectedMessage;
 
   DecodeTLSClientHello(Buffer, Size, FClientHello);
   FClientHelloRandomStr := TLSRandomToStr(FClientHello.Random);
@@ -487,28 +588,45 @@ begin
   Log(tlsltDebug, 'CipherSuite:%s', [TLSCipherSuiteInfo[FCipherSuite].Name]);
   {$ENDIF}
   if FCipherSuite = tlscsNone then
-    raise ETLSAlertError.Create(tlsadHandshake_failure);
+    raise ETLSError.CreateAlert(TLSError_BadProtocol, tlsadHandshake_failure);
   InitTLSSecurityParameters(FCipherSpecNew, FCompression, FCipherSuite);
 
   SetClientState(tlsscHandshakeAwaitingClientKeyExchange);
 
   SendHandshakeServerHello;
   SendHandshakeCertificate;
-  SendHandshakeServerKeyExchange;
+
+  { The ServerKeyExchange message is sent by the server only when the ServerCertificate message (if sent) }
+  { does not contain enough data to allow the user-agent to exchange a premaster secret. }
+  { This is true for the following key exchange methods: }
+  { RSA_EXPORT (if the public key in the server certificate is longer than 512 bits) }
+  { DHE_DSS, DHE_DSS_EXPORT, DHE_RSA, DHE_RSA_EXPORT, DH_anon }
+  { It is not legal to send the server key exchange message for the following key exchange methods: }
+  { RSA, DH_DSS, DH_RSA, }
+  { RSA_EXPORT (when the public key in the server certificate is less than or equal to 512 bits in length) }
+  { Additionally, a ServerKeyExchange message may be sent, if it is required (e.g., if the server has no }
+  { certificate, or if its certificate is for signing only).  If the server is authenticated, it may }
+  { request a certificate from the client. }
+
+  if FCipherSpecNew.KeyExchangeAlgorithm in [tlskeaDHE_DSS, tlskeaDHE_RSA, tlskeaDH_Anon] then
+    SendHandshakeServerKeyExchange;
+
   SendHandshakeServerHelloDone;
 end;
 
 procedure TTLSServerClient.HandleHandshakeCertificateVerify(const Buffer; const Size: Integer);
 begin
   if FClientState <> tlsscHandshakeAwaitingClientKeyExchange then
-    raise ETLSAlertError.Create(tlsadUnexpected_message);
+    raise ETLSError.CreateAlertUnexpectedMessage;
 end;
 
 procedure TTLSServerClient.HandleHandshakeClientKeyExchange(const Buffer; const Size: Integer);
-var R : HugeWord;
+var
+  Yc : HugeWord;
+  ZZ : HugeWord;
 begin
   if FClientState <> tlsscHandshakeAwaitingClientKeyExchange then
-    raise ETLSAlertError.Create(tlsadUnexpected_message);
+    raise ETLSError.CreateAlertUnexpectedMessage;
 
   DecodeTLSClientKeyExchange(Buffer, Size,
       FCipherSpecNew.KeyExchangeAlgorithm,
@@ -526,7 +644,7 @@ begin
         { private key to decrypt the pre_master_secret.  Both parties then }
         { convert the pre_master_secret into the master_secret, as specified above. }
 
-        FPreMasterSecret := RSADecryptStr(rsaetPKCS1, FServer.FRSAPrivateKey,
+        FPreMasterSecret := RSADecryptStr(rsaetRSAES_PKCS1, FServer.FRSAPrivateKey,
             FClientKeyExchange.EncryptedPreMasterSecret);
       end;
     tlskeaDHE_DSS,
@@ -541,15 +659,18 @@ begin
         { contain all zero bits are stripped before it is used as the }
         { pre_master_secret }
 
-        HugeWordInit(R);
-        DHHugeWordKeyDecodeBytes(R, FClientKeyExchange.ClientDiffieHellmanPublic.dh_Yc);
-        DHGenerateSharedSecretZZ(FDHState^, HugeWordGetSizeInBits(R), R);
-        HugeWordFinalise(R);
+        HugeWordInit(Yc);
+        HugeWordInit(ZZ);
+        DHHugeWordKeyDecodeBytes(Yc, FClientKeyExchange.ClientDiffieHellmanPublic.dh_Yc);
+        HugeWordPowerAndMod(ZZ, Yc, FDHState^.X, FDHState^.P);
 
-        FPreMasterSecret := DHHugeWordKeyEncodeBytes(FDHState^.ZZ);
+        FPreMasterSecret := DHHugeWordKeyEncodeBytes(ZZ);
+
+        HugeWordFinalise(ZZ);
+        HugeWordFinalise(Yc);
       end;
   else
-    raise ETLSAlertError.Create(tlsadHandshake_failure);
+    raise ETLSError.CreateAlert(TLSError_BadProtocol, tlsadHandshake_failure);
   end;
 
   case FCipherSpecNew.KeyExchangeAlgorithm of
@@ -589,7 +710,7 @@ end;
 procedure TTLSServerClient.HandleHandshakeFinished(const Buffer; const Size: Integer);
 begin
   if FClientState <> tlsscHandshakeAwaitingFinish then
-    raise ETLSAlertError.Create(tlsadUnexpected_message);
+    raise ETLSError.CreateAlertUnexpectedMessage;
 
   SendChangeCipherSpec;
   ChangeEncryptCipherSpec;
@@ -650,18 +771,23 @@ end;
 {                                                                              }
 { TLS Server                                                                   }
 {                                                                              }
-constructor TTLSServer.Create(const TransportLayerSendProc: TTLSServerTransportLayerSendProc);
+constructor TTLSServer.Create(const ATransportLayerSendProc: TTLSServerTransportLayerSendProc);
 begin
   inherited Create;
   Init;
-  if not Assigned(TransportLayerSendProc) then
+  if not Assigned(ATransportLayerSendProc) then
     raise ETLSError.Create(TLSError_InvalidParameter);
-  FTransportLayerSendProc := TransportLayerSendProc;
+  FTransportLayerSendProc := ATransportLayerSendProc;
 end;
 
 procedure TTLSServer.Init;
 begin
-  FOptions := [];
+  FServerOptions      := DefaultTLSServerOptions;
+  FVersionOptions     := DefaultTLSServerVersionOptions;
+  FKeyExchangeOptions := DefaultTLSServerKeyExchangeOptions;
+  FCipherOptions      := DefaultTLSServerCipherOptions;
+  FHashOptions        := DefaultTLSServerHashOptions;
+
   FState := tlssInit;
   FLock := TCriticalSection.Create;
   RSAPrivateKeyInit(FRSAPrivateKey);
@@ -712,12 +838,52 @@ begin
     raise ETLSError.Create(TLSError_InvalidState, 'Operation not allowed while not active');
 end;
 
-procedure TTLSServer.SetOptions(const Options: TTLSServerOptions);
+procedure TTLSServer.SetServerOptions(const AServerOptions: TTLSServerOptions);
 begin
-  if Options = FOptions then
+  if AServerOptions = FServerOptions then
     exit;
   CheckNotActive;
-  FOptions := Options;
+  FServerOptions := AServerOptions;
+end;
+
+procedure TTLSServer.SetVersionOptions(const AVersionOptions: TTLSVersionOptions);
+begin
+  if AVersionOptions = FVersionOptions then
+    exit;
+  CheckNotActive;
+  if AVersionOptions = [] then
+    raise ETLSError.Create(TLSError_InvalidParameter, 'Invalid version options');
+  FVersionOptions := AVersionOptions;
+end;
+
+procedure TTLSServer.SetCipherOptions(const ACipherOptions: TTLSCipherOptions);
+begin
+  if ACipherOptions = FCipherOptions then
+    exit;
+  CheckNotActive;
+  if ACipherOptions = [] then
+    raise ETLSError.Create(TLSError_InvalidParameter, 'Invalid cipher options');
+  FCipherOptions := ACipherOptions;
+end;
+
+procedure TTLSServer.SetKeyExchangeOptions(const AKeyExchangeOptions: TTLSKeyExchangeOptions);
+begin
+  if AKeyExchangeOptions = FKeyExchangeOptions then
+    exit;
+  CheckNotActive;
+  if AKeyExchangeOptions = [] then
+    raise ETLSError.Create(TLSError_InvalidParameter, 'Invalid key exchange options');
+  FKeyExchangeOptions := AKeyExchangeOptions;
+end;
+
+procedure TTLSServer.SetHashOptions(const AHashOptions: TTLSHashOptions);
+begin
+  if AHashOptions = FHashOptions then
+    exit;
+  CheckNotActive;
+  if AHashOptions = [] then
+    raise ETLSError.Create(TLSError_InvalidParameter, 'Invalid hash options');
+  FHashOptions := AHashOptions;
 end;
 
 procedure TTLSServer.SetCertificateList(const List: TTLSCertificateList);
@@ -726,12 +892,12 @@ begin
   FCertificateList := Copy(List);
 end;
 
-procedure TTLSServer.SetPrivateKeyRSA(const PrivateKeyRSA: RawByteString);
+procedure TTLSServer.SetPrivateKeyRSA(const APrivateKeyRSA: RawByteString);
 begin
-  if PrivateKeyRSA = FPrivateKeyRSA then
+  if APrivateKeyRSA = FPrivateKeyRSA then
     exit;
   CheckNotActive;
-  FPrivateKeyRSA := PrivateKeyRSA;
+  FPrivateKeyRSA := APrivateKeyRSA;
 end;
 
 function TTLSServer.GetPrivateKeyRSAPEM: RawByteString;
@@ -739,33 +905,33 @@ begin
   Result := MIMEBase64Encode(PrivateKeyRSA);
 end;
 
-procedure TTLSServer.SetPrivateKeyRSAPEM(const PrivateKeyRSAPEM: RawByteString);
+procedure TTLSServer.SetPrivateKeyRSAPEM(const APrivateKeyRSAPEM: RawByteString);
 begin
-  SetPrivateKeyRSA(MIMEBase64Decode(PrivateKeyRSAPEM));
+  SetPrivateKeyRSA(MIMEBase64Decode(APrivateKeyRSAPEM));
 end;
 
-procedure TTLSServer.SetPEMFileName(const PEMFileName: String);
+procedure TTLSServer.SetPEMFileName(const APEMFileName: String);
 begin
-  if PEMFileName = FPEMFileName then
+  if APEMFileName = FPEMFileName then
     exit;
   CheckNotActive;
-  FPEMFileName := PEMFileName;
+  FPEMFileName := APEMFileName;
 end;
 
-procedure TTLSServer.SetPEMText(const PEMText: RawByteString);
+procedure TTLSServer.SetPEMText(const APEMText: RawByteString);
 begin
-  if PEMText = FPEMText then
+  if APEMText = FPEMText then
     exit;
   CheckNotActive;
-  FPEMText := PEMText;
+  FPEMText := APEMText;
 end;
 
-procedure TTLSServer.SetDHKeySize(const DHKeySize: Integer);
+procedure TTLSServer.SetDHKeySize(const ADHKeySize: Integer);
 begin
-  if DHKeySize = FDHKeySize then
+  if ADHKeySize = FDHKeySize then
     exit;
   CheckNotActive;
-  FDHKeySize := DHKeySize;
+  FDHKeySize := ADHKeySize;
 end;
 
 procedure TTLSServer.ClientLog(const Client: TTLSServerClient; const LogType: TTLSLogType; const LogMsg: String; const LogLevel: Integer);
@@ -866,11 +1032,11 @@ begin
   FTransportLayerSendProc(self, Sender, Buffer, Size);
 end;
 
-procedure TTLSServer.ProcessTransportLayerReceivedData(const Client: TTLSServerClient; const Buffer; const Size: Integer);
+procedure TTLSServer.ProcessTransportLayerReceivedData(const AClient: TTLSServerClient; const Buffer; const Size: Integer);
 begin
-  if not Assigned(Client) then
+  if not Assigned(AClient) then
     raise ETLSError.Create(TLSError_InvalidParameter);
-  Client.ProcessTransportLayerReceivedData(Buffer, Size);
+  AClient.ProcessTransportLayerReceivedData(Buffer, Size);
 end;
 
 procedure TTLSServer.InitFromPEM;

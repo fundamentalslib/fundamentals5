@@ -5,7 +5,7 @@
 {   File version:     5.03                                                     }
 {   Description:      TLS compression                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -34,7 +34,7 @@
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2008/01/18  0.01  Initial version.                                         }
+{   2008/01/18  0.01  Initial development.                                     }
 {   2010/11/30  0.02  Revision.                                                }
 {   2018/07/17  5.03  Revised for Fundamentals 5.                              }
 {                                                                              }
@@ -54,7 +54,10 @@ interface
 
 uses
   { TLS }
-  flcTLSUtils;
+
+  flcTLSConsts,
+  flcTLSErrors,
+  flcTLSAlgorithmTypes;
 
 
 
@@ -79,7 +82,7 @@ implementation
 
 {$IFDEF TLS_COMPRESS_ZLIB}
 uses
-  { Fundamentals }
+  { Utils }
   flcZLib;
 {$ENDIF}
 

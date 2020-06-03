@@ -2,15 +2,14 @@
 {                                                                              }
 {   Library:          Fundamentals TLS                                         }
 {   File name:        flcTLS.inc                                               }
-{   File version:     5.04                                                     }
 {   Description:      TLS library defines                                      }
+{   Last updated:     2020/05/19                                               }
 {                                                                              }
 {******************************************************************************}
 
-{.DEFINE DEBUG}
-{.DEFINE SELFTEST}
-
 {$INCLUDE ..\flcInclude.inc}
+
+{$DEFINE TLS}
 
 {$IFDEF DEBUG}
   {$DEFINE TLS_DEBUG}
@@ -19,10 +18,9 @@
 {$IFDEF DEBUG}
 {$IFDEF TEST}
   {$DEFINE TLS_TEST}
+  {.DEFINE TLS_TEST_NO_RANDOM_HELLO}
 {$ENDIF}
 {$ENDIF}
 
-{$IFNDEF MSWIN}
-  {$DEFINE TLS_ZLIB_DISABLE}
-{$ENDIF}
+{$DEFINE TLS_ZLIB_DISABLE}
 

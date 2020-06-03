@@ -49,8 +49,11 @@ interface
 
 uses
   { Cipher }
+
   flcCipher,
+
   { TLS }
+
   flcTLSCipherSuite;
 
 
@@ -105,7 +108,7 @@ const
      CipherMode : cmCBC;
      Padding    : cpNone),
     ( // 3DES_EDE_CBC
-     CipherType : ctTripleDESEDE;
+     CipherType : ctTripleDES3EDE; //// TripleDESEDE or TripleDES3EDE ?
      CipherMode : cmCBC;
      Padding    : cpNone),
     ( // AES_128_CBC
@@ -181,11 +184,13 @@ procedure Test;
 implementation
 
 uses
-  { Fundamentals }
+  { Utils }
+
   flcStdTypes,
-  
+
   { TLS }
-  flcTLSUtils;
+
+  flcTLSErrors;
 
 
 

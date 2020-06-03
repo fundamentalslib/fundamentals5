@@ -5,7 +5,7 @@
 {   File version:     5.04                                                     }
 {   Description:      TLS handshake protocol                                   }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -48,12 +48,24 @@ unit flcTLSHandshake;
 interface
 
 uses
-  { Fundamentals }
+  { Utils }
+
   flcStdTypes,
+
+  { Cipher }
+
   flcCipherRSA,
+
   { TLS }
-  flcTLSUtils,
-  flcTLSCipherSuite;
+
+  flcTLSProtocolVersion,
+  flcTLSAlgorithmTypes,
+  flcTLSRandom,
+  flcTLSCipherSuite,
+  flcTLSSessionID,
+  flcTLSKeyExchangeParams,
+  flcTLSCertificate,
+  flcTLSHandshakeExtension;
 
 
 
@@ -62,19 +74,24 @@ uses
 {                                                                              }
 type
   TTLSHandshakeType = (
-    tlshtHello_request       = 0,
-    tlshtClient_hello        = 1,
-    tlshtServer_hello        = 2,
-    tlshtCertificate         = 11,
-    tlshtServer_key_exchange = 12,
-    tlshtCertificate_request = 13,
-    tlshtServer_hello_done   = 14,
-    tlshtCertificate_verify  = 15,
-    tlshtClient_key_exchange = 16,
-    tlshtFinished            = 20,
-    tlshtCertificate_url     = 21, // RFC 6066
-    tlshtCertificate_status  = 22, // RFC 6066
-    tlshtMax                 = 255
+    tlshtHello_request        = 0,    // Not used in TLS 1.3
+    tlshtClient_hello         = 1,
+    tlshtServer_hello         = 2,
+    tlshtNew_session_ticket   = 4,    // TLS 1.3
+    tlshtEnd_of_early_data    = 5,    // TLS 1.3
+    tlshtEncrypted_extensions = 8,    // TLS 1.3
+    tlshtCertificate          = 11,
+    tlshtServer_key_exchange  = 12,   // Not used in TLS 1.3
+    tlshtCertificate_request  = 13,
+    tlshtServer_hello_done    = 14,   // Not used in TLS 1.3
+    tlshtCertificate_verify   = 15,
+    tlshtClient_key_exchange  = 16,   // Not used in TLS 1.3
+    tlshtFinished             = 20,
+    tlshtCertificate_url      = 21,   // RFC 6066  // Not used in TLS 1.3
+    tlshtCertificate_status   = 22,   // RFC 6066  // Not used in TLS 1.3
+    tlshtKey_update           = 24,   // TLS 1.3
+    tlshtMessage_hash         = 254,  // TLS 1.3
+    tlshtMax                  = 255
     );
 
   TTLSHandshakeHeader = packed record
@@ -124,22 +141,25 @@ type
     CompressionMethods : TTLSCompressionMethods;
     Random             : TTLSRandom;
     ExtensionsPresent  : Boolean;
+    SignAndHashAlgos   : TTLSSignatureAndHashAlgorithmArray;
   end;
 
 procedure InitTLSClientHello(
           var ClientHello: TTLSClientHello;
           const ProtocolVersion: TTLSProtocolVersion;
           const SessionID: RawByteString);
+
 function  EncodeTLSClientHello(
           var Buffer; const Size: Integer;
-          const ClientHello: TTLSClientHello): Integer;
+          var ClientHello: TTLSClientHello): Integer;
+
 function  DecodeTLSClientHello(
           const Buffer; const Size: Integer;
           var ClientHello: TTLSClientHello): Integer;
 
 function  EncodeTLSHandshakeClientHello(
           var Buffer; const Size: Integer;
-          const ClientHello: TTLSClientHello): Integer;
+          var ClientHello: TTLSClientHello): Integer;
 
 
 
@@ -161,9 +181,11 @@ procedure InitTLSServerHello(
           const SessionID: RawByteString;
           const CipherSuite: TTLSCipherSuiteRec;
           const CompressionMethod: TTLSCompressionMethod);
+
 function  EncodeTLSServerHello(
           var Buffer; const Size: Integer;
           const ServerHello: TTLSServerHello): Integer;
+
 function  DecodeTLSServerHello(
           const Buffer; const Size: Integer;
           var ServerHello: TTLSServerHello): Integer;
@@ -177,18 +199,6 @@ function  EncodeTLSHandshakeServerHello(
 {                                                                              }
 { Certificate                                                                  }
 {                                                                              }
-type
-  TTLSCertificateList = array of RawByteString;
-
-procedure TLSCertificateListAppend(var List: TTLSCertificateList; const A: RawByteString);
-
-function  EncodeTLSCertificate(
-          var Buffer; const Size: Integer;
-          const CertificateList: TTLSCertificateList): Integer;
-function  DecodeTLSCertificate(
-          const Buffer; const Size: Integer;
-          var CertificateList: TTLSCertificateList): Integer;
-
 function  EncodeTLSHandshakeCertificate(
           var Buffer; const Size: Integer;
           const CertificateList: TTLSCertificateList): Integer;
@@ -196,69 +206,8 @@ function  EncodeTLSHandshakeCertificate(
 
 
 {                                                                              }
-{ ServerDHParams                                                               }
-{                                                                              }
-type
-  TTLSServerDHParams = record
-    dh_p  : RawByteString;
-    dh_g  : RawByteString;
-    dh_Ys : RawByteString;
-  end;
-
-procedure InitTLSServerDHParams_None(var ServerDHParams: TTLSServerDHParams);
-procedure InitTLSServerDHParams(var ServerDHParams: TTLSServerDHParams;
-          const p, g, Ys: RawByteString);
-
-function  EncodeTLSServerDHParams(
-          var Buffer; const Size: Integer;
-          const ServerDHParams: TTLSServerDHParams): Integer;
-function  DecodeTLSServerDHParams(
-          const Buffer; const Size: Integer;
-          var ServerDHParams: TTLSServerDHParams): Integer;
-
-
-
-{                                                                              }
-{ SignedParams                                                                 }
-{                                                                              }
-type
-  TTLSSignedParams = record
-    client_random : array[0..31] of Byte;
-    server_random : array[0..31] of Byte;
-    params        : TTLSServerDHParams;
-  end;
-
-procedure InitTLSSignedParams(var SignedParams: TTLSSignedParams);
-
-function  EncodeTLSSignedParams(
-          var Buffer; const Size: Integer;
-          const SignedParams: TTLSSignedParams): Integer;
-function  DecodeTLSSignedParams(
-          const Buffer; const Size: Integer;
-          var SignedParams: TTLSSignedParams): Integer;
-
-
-
-{                                                                              }
 { ServerKeyExchange                                                            }
 {                                                                              }
-type
-  TTLSServerKeyExchange = record
-    Params       : TTLSServerDHParams;
-    SignedParams : TTLSSignedParams;
-  end;
-
-procedure InitTLSServerKeyExchange(var ServerKeyExchange: TTLSServerKeyExchange);
-
-function  EncodeTLSServerKeyExchange(
-          var Buffer; const Size: Integer;
-          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-          const ServerKeyExchange: TTLSServerKeyExchange): Integer;
-function  DecodeTLSServerKeyExchange(
-          const Buffer; const Size: Integer;
-          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-          var ServerKeyExchange: TTLSServerKeyExchange): Integer;
-
 function  EncodeTLSHandshakeServerKeyExchange(
           var Buffer; const Size: Integer;
           const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
@@ -270,16 +219,6 @@ function  EncodeTLSHandshakeServerKeyExchange(
 { CertificateRequest                                                           }
 {                                                                              }
 type
-  TTLSClientCertificateType = (
-      tlscctRsa_sign                  = 1,
-      tlscctDss_sign                  = 2,
-      tlscctRsa_fixed_dh              = 3,
-      tlscctDss_fixed_dh              = 4,
-      tlscctRsa_ephemeral_dh_RESERVED = 5,
-      tlscctDss_ephemeral_dh_RESERVED = 6,
-      tlscctFortezza_dms_RESERVED     = 20,
-      tlscctMax                       = 255
-  );
   TTLSClientCertificateTypeArray = array of TTLSClientCertificateType;
 
   TTLSCertificateRequest = record
@@ -291,6 +230,7 @@ type
 function  EncodeTLSCertificateRequest(
           var Buffer; const Size: Integer;
           const CertificateRequest: TTLSCertificateRequest): Integer;
+
 function  DecodeTLSCertificateRequest(
           const Buffer; const Size: Integer;
           var CertificateRequest: TTLSCertificateRequest): Integer;
@@ -340,50 +280,13 @@ procedure InitTLSEncryptedPreMasterSecret_RSA(
 
 
 
-
-{                                                                              }
-{ ClientDiffieHellmanPublic                                                    }
-{                                                                              }
-type
-  TTLSClientDiffieHellmanPublic = record
-    PublicValueEncodingExplicit : Boolean;
-    dh_Yc : RawByteString;
-  end;
-
-function EncodeTLSClientDiffieHellmanPublic(
-         var Buffer; const Size: Integer;
-         const ClientDiffieHellmanPublic: TTLSClientDiffieHellmanPublic): Integer;
-function DecodeTLSClientDiffieHellmanPublic(
-         const Buffer; const Size: Integer;
-         const PublicValueEncodingExplicit: Boolean;
-         var ClientDiffieHellmanPublic: TTLSClientDiffieHellmanPublic): Integer;
-
-
-
 {                                                                              }
 { ClientKeyExchange                                                            }
 {                                                                              }
-type
-  TTLSClientKeyExchange = record
-    EncryptedPreMasterSecret  : RawByteString;
-    ClientDiffieHellmanPublic : TTLSClientDiffieHellmanPublic;
-  end;
-
-function  EncodeTLSClientKeyExchange(
-          var Buffer; const Size: Integer;
-          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-          const ClientKeyExchange: TTLSClientKeyExchange): Integer;
-
 function  EncodeTLSHandshakeClientKeyExchange(
           var Buffer; const Size: Integer;
           const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
           const ClientKeyExchange: TTLSClientKeyExchange): Integer;
-
-function  DecodeTLSClientKeyExchange(
-          const Buffer; const Size: Integer;
-          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-          const PublicValueEncodingExplicit: Boolean;
-          var ClientKeyExchange: TTLSClientKeyExchange): Integer;
 
 
 
@@ -410,14 +313,14 @@ type
   PTLSChangeCipherSpec = ^TTLSChangeCipherSpec;
 
 const
-  TLSChangeCipherSpecSize = Sizeof(TTLSChangeCipherSpec);
+  TLSChangeCipherSpecSize = SizeOf(TTLSChangeCipherSpec);
 
 procedure InitTLSChangeCipherSpec(var ChangeCipherSpec: TTLSChangeCipherSpec);
 
 
 
 {                                                                              }
-{ Unit test                                                                    }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF TLS_TEST}
 procedure Test;
@@ -429,144 +332,24 @@ implementation
 
 uses
   { System }
+
   SysUtils,
-  { Fundamentals }
+
+  { Utils }
+
   flcStrings,
   flcHash,
-  flcCipherRandom;
 
+  { Cipher }
 
+  flcCipherRandom,
 
-{                                                                              }
-{ Helper functions                                                             }
-{                                                                              }
-function EncodeTLSLen16(var Buffer; const Size: Integer; const Len: Integer): Integer;
-var P : PByte;
-begin
-  Assert(Len >= 0);
-  Assert(Len <= $FFFF);
-  if Size < 2 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  P := @Buffer;
-  P^ := (Len and $FF00) shr 8;
-  Inc(P);
-  P^ := (Len and $00FF);
-  Result := 2;
-end;
+  { TLS }
 
-function EncodeTLSLen24(var Buffer; const Size: Integer; const Len: Integer): Integer;
-var P : PByte;
-begin
-  Assert(Len >= 0);
-  Assert(Len <= $FFFFFF);
-  if Size < 3 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  P := @Buffer;
-  P^ := (Len and $FF0000) shr 16;
-  Inc(P);
-  P^ := (Len and $00FF00) shr 8;
-  Inc(P);
-  P^ := (Len and $0000FF);
-  Result := 3;
-end;
-
-function DecodeTLSLen16(const Buffer; const Size: Integer; var Len: Integer): Integer;
-var P : PByte;
-begin
-  if Size < 2 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  P := @Buffer;
-  Len := P^ shl 8;
-  Inc(P);
-  Inc(Len, P^);
-  Result := 2;
-end;
-
-function DecodeTLSLen24(const Buffer; const Size: Integer; var Len: Integer): Integer;
-var P : PByte;
-begin
-  if Size < 3 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  P := @Buffer;
-  Len := P^ shl 16;
-  Inc(P);
-  Inc(Len, P^ shl 8);
-  Inc(P);
-  Inc(Len, P^);
-  Result := 3;
-end;
-
-function EncodeTLSOpaque16(var Buffer; const Size: Integer; const A: RawByteString): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  L := Length(A);
-  EncodeTLSLen16(P^, N, L);
-  Inc(P, 2);
-  Dec(N, 2);
-  Dec(N, L);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  if L > 0 then
-    Move(A[1], P^, L);
-  Result := Size - N;
-end;
-
-function EncodeTLSOpaque24(var Buffer; const Size: Integer; const A: RawByteString): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  L := Length(A);
-  EncodeTLSLen24(P^, N, L);
-  Inc(P, 3);
-  Dec(N, 3);
-  Dec(N, L);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  if L > 0 then
-    Move(A[1], P^, L);
-  Result := Size - N;
-end;
-
-function DecodeTLSOpaque16(const Buffer; const Size: Integer; var A: RawByteString): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  DecodeTLSLen16(P^, N, L);
-  Inc(P, 2);
-  Dec(N, 2);
-  Dec(N, L);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  SetLength(A, L);
-  if L > 0 then
-    Move(P^, A[1], L);
-  Result := Size - N;
-end;
-
-function DecodeTLSOpaque24(const Buffer; const Size: Integer; var A: RawByteString): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  DecodeTLSLen24(P^, N, L);
-  Inc(P, 3);
-  Dec(N, 3);
-  Dec(N, L);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  SetLength(A, L);
-  if L > 0 then
-    Move(P^, A[1], L);
-  Result := Size - N;
-end;
+  flcTLSAlert,
+  flcTLSErrors,
+  flcTLSPRF,
+  flcTLSOpaqueEncoding;
 
 
 
@@ -647,7 +430,7 @@ begin
   P := @Buffer;
   L := TLSHandshakeHeaderSize + MsgSize;
   if not Assigned(P) or (Size < L) then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   EncodeTLSHandshakeHeader(PTLSHandshakeHeader(P)^, MsgType, MsgSize);
   Result := L;
 end;
@@ -689,12 +472,13 @@ end;
 
 function EncodeTLSClientHello(
          var Buffer; const Size: Integer;
-         const ClientHello: TTLSClientHello): Integer;
-var P     : PByte;
-    L, N  : Integer;
-    C     : TTLSCipherSuite;
-    D     : TTLSCompressionMethod;
-    Suite : TTLSCipherSuiteRec;
+         var ClientHello: TTLSClientHello): Integer;
+var P       : PByte;
+    L, N    : Integer;
+    C       : TTLSCipherSuite;
+    D       : TTLSCompressionMethod;
+    Suite   : TTLSCipherSuiteRec;
+    SignRSA : Boolean;
 begin
   Assert(Assigned(@Buffer));
 
@@ -704,13 +488,13 @@ begin
   // client_version
   Dec(N, TLSProtocolVersionSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSProtocolVersion(P)^ := ClientHello.ProtocolVersion;
   Inc(P, TLSProtocolVersionSize);
   // random
   Dec(N, TLSRandomSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSRandom(P)^ := ClientHello.Random;
   Inc(P, TLSRandomSize);
   // session_id
@@ -727,7 +511,8 @@ begin
   Inc(P, 2);
   Dec(N, 2 + L * TLSCipherSuiteRecSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
+  SignRSA := False;
   for C := Low(TTLSCipherSuite) to High(TTLSCipherSuite) do
     if C in ClientHello.CipherSuites then
       begin
@@ -735,6 +520,8 @@ begin
         Suite.B2 := TLSCipherSuiteInfo[C].Rec.B2;
         PTLSCipherSuiteRec(P)^ := Suite;
         Inc(P, TLSCipherSuiteRecSize);
+        if TLSCipherSuiteInfo[C].Authentication = tlscsaRSA then
+          SignRSA := True;
       end;
   // compression_methods
   L := 0;
@@ -744,7 +531,7 @@ begin
   Assert(L <= $FF);
   Dec(N, 1 + L);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   P^ := L;
   Inc(P);
   for D := Low(TTLSCompressionMethod) to High(TTLSCompressionMethod) do
@@ -753,7 +540,27 @@ begin
         P^ := Ord(D);
         Inc(P);
       end;
-
+  // extensions
+  {
+  if IsTLS12(ClientHello.ProtocolVersion) then
+    if SignRSA then
+      begin
+        SetLength(ClientHello.SignAndHashAlgos, 5);
+        ClientHello.SignAndHashAlgos[0].Hash := tlshaSHA1;
+        ClientHello.SignAndHashAlgos[0].Signature := tlssaRSA;
+        ClientHello.SignAndHashAlgos[1].Hash := tlshaSHA224;
+        ClientHello.SignAndHashAlgos[1].Signature := tlssaRSA;
+        ClientHello.SignAndHashAlgos[2].Hash := tlshaSHA256;
+        ClientHello.SignAndHashAlgos[2].Signature := tlssaRSA;
+        ClientHello.SignAndHashAlgos[3].Hash := tlshaSHA384;
+        ClientHello.SignAndHashAlgos[3].Signature := tlssaRSA;
+        ClientHello.SignAndHashAlgos[4].Hash := tlshaSHA512;
+        ClientHello.SignAndHashAlgos[4].Signature := tlssaRSA;
+        ClientHello.ExtensionsPresent := True;
+        L := EncodeTLSClientHelloExtension_SignatureAlgorithms(P^, N, ClientHello);
+        Dec(N, L);
+      end;
+    }
   Result := Size - N;
 end;
 
@@ -761,7 +568,7 @@ function DecodeTLSClientHello(
          const Buffer; const Size: Integer;
          var ClientHello: TTLSClientHello): Integer;
 var P : PByte;
-    L, N, C : Integer;
+    L, N, C, ExtType, ExtLen : Integer;
     I : Word;
     E : TTLSCipherSuite;
     F : TTLSCipherSuiteRec;
@@ -776,13 +583,13 @@ begin
   // client_version
   Dec(N, TLSProtocolVersionSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ClientHello.ProtocolVersion := PTLSProtocolVersion(P)^;
   Inc(P, TLSProtocolVersionSize);
   // random
   Dec(N, TLSRandomSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ClientHello.Random := PTLSRandom(P)^;
   Inc(P, TLSRandomSize);
   // session_id
@@ -796,7 +603,7 @@ begin
   Inc(P, L);
   Dec(N, C);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   C := C div TLSCipherSuiteRecSize;
   for I := 0 to C - 1 do
     begin
@@ -808,13 +615,13 @@ begin
   // compression_methods
   Dec(N);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ClientHello.CompressionMethods := [];
   C := P^;
   Inc(P);
   Dec(N, C);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   for I := 0 to C - 1 do
     begin
       D := PTLSCompressionMethod(P)^;
@@ -823,13 +630,28 @@ begin
     end;
   // extensions
   ClientHello.ExtensionsPresent := N > 0;
-  
+  while N > 0 do
+    begin
+      if N < 4 then
+        raise ETLSError.CreateAlertBufferDecode;
+      DecodeTLSWord16(P^, N, ExtType);
+      Inc(P, 2);
+      Dec(N, 2);
+      DecodeTLSLen16(P^, N, ExtLen);
+      Inc(P, 2);
+      Dec(N, 2);
+      Dec(N, ExtLen);
+      if N < 0 then
+        raise ETLSError.CreateAlertBufferDecode;
+      Inc(P, ExtLen);
+    end;
+
   Result := Size - N;
 end;
 
 function EncodeTLSHandshakeClientHello(
          var Buffer; const Size: Integer;
-         const ClientHello: TTLSClientHello): Integer;
+         var ClientHello: TTLSClientHello): Integer;
 var P : Pointer;
     N, L : Integer;
 begin
@@ -879,13 +701,13 @@ begin
   // server_version
   Dec(N, TLSProtocolVersionSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSProtocolVersion(P)^ := ServerHello.ProtocolVersion;
   Inc(P, TLSProtocolVersionSize);
   // random
   Dec(N, TLSRandomSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSRandom(P)^ := ServerHello.Random;
   Inc(P, TLSRandomSize);
   // session_id
@@ -895,13 +717,13 @@ begin
   // cipher_suite
   Dec(N, TLSCipherSuiteRecSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSCipherSuiteRec(P)^ := ServerHello.CipherSuite;
   Inc(P, TLSCipherSuiteRecSize);
   // compression_method
   Dec(N, TLSCompressionMethodSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferEncode;
   PTLSCompressionMethod(P)^ := ServerHello.CompressionMethod;
 
   Result := Size - N;
@@ -921,13 +743,13 @@ begin
   // server_version
   Dec(N, TLSProtocolVersionSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ServerHello.ProtocolVersion := PTLSProtocolVersion(P)^;
   Inc(P, TLSProtocolVersionSize);
   // random
   Dec(N, TLSRandomSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ServerHello.Random := PTLSRandom(P)^;
   Inc(P, TLSRandomSize);
   // session_id
@@ -937,13 +759,13 @@ begin
   // cipher_suite
   Dec(N, TLSCipherSuiteRecSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ServerHello.CipherSuite := PTLSCipherSuiteRec(P)^;
   Inc(P, TLSCipherSuiteRecSize);
   // compression_method
   Dec(N, TLSCompressionMethodSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   ServerHello.CompressionMethod := PTLSCompressionMethod(P)^;
 
   Result := Size - N;
@@ -968,76 +790,6 @@ end;
 {                                                                              }
 { ASN.1Cert = <1..2^24-1> opaque;                                              }
 {                                                                              }
-procedure TLSCertificateListAppend(var List: TTLSCertificateList; const A: RawByteString);
-var L : Integer;
-begin
-  L := Length(List);
-  SetLength(List, L + 1);
-  List[L] := A;
-end;
-
-function EncodeTLSCertificate(
-         var Buffer; const Size: Integer;
-         const CertificateList: TTLSCertificateList): Integer;
-var P : PByte;
-    N, L, I, M, T : Integer;
-    C : RawByteString;
-begin
-  Assert(Size >= 0);
-  N := Size;
-  P := @Buffer;
-  // certificate_list
-  L := Length(CertificateList);
-  T := 0;
-  for I := 0 to L - 1 do
-    Inc(T, 3 + Length(CertificateList[I]));
-  EncodeTLSLen24(P^, N, T);
-  Dec(N, 3);
-  Inc(P, 3);
-  for I := 0 to L - 1 do
-    begin
-      // ASN.1Cert
-      C := CertificateList[I];
-      if C = '' then
-        raise ETLSError.Create(TLSError_InvalidCertificate);
-      M := EncodeTLSOpaque24(P^, N, C);
-      Dec(N, M);
-      Inc(P, M);
-    end;
-
-  Result := Size - N;
-end;
-
-function DecodeTLSCertificate(
-         const Buffer; const Size: Integer;
-         var CertificateList: TTLSCertificateList): Integer;
-var P : PByte;
-    N, L, M, F : Integer;
-    C : RawByteString;
-begin
-  Assert(Size >= 0);
-  N := Size;
-  P := @Buffer;
-  // certificate_list
-  DecodeTLSLen24(P^, N, L);
-  Dec(N, 3);
-  Inc(P, 3);
-  SetLength(CertificateList, 0);
-  F := 0;
-  while L > 0 do
-    begin
-      // ASN.1Cert
-      M := DecodeTLSOpaque24(P^, N, C);
-      Dec(N, M);
-      Inc(P, M);
-      Dec(L, M);
-      Inc(F);
-      SetLength(CertificateList, F);
-      CertificateList[F - 1] := C;
-    end;
-  Result := Size - N;
-end;
-
 function EncodeTLSHandshakeCertificate(
          var Buffer; const Size: Integer;
          const CertificateList: TTLSCertificateList): Integer;
@@ -1051,221 +803,10 @@ end;
 
 
 
-{                                                                              }
-{ ServerDHParams                                                               }
-{ Ephemeral DH parameters                                                      }
-{                                                                              }
-{     dh_p  : opaque <1..2^16-1>;                                              }
-{     dh_g  : opaque <1..2^16-1>;                                              }
-{     dh_Ys : opaque <1..2^16-1>;                                              }
-{                                                                              }
-procedure InitTLSServerDHParams_None(var ServerDHParams: TTLSServerDHParams);
-begin
-  ServerDHParams.dh_p := '';
-  ServerDHParams.dh_g := '';
-  ServerDHParams.dh_Ys := '';
-end;
-
-procedure InitTLSServerDHParams(var ServerDHParams: TTLSServerDHParams;
-          const p, g, Ys: RawByteString);
-begin
-  ServerDHParams.dh_p := p;
-  ServerDHParams.dh_g := g;
-  ServerDHParams.dh_Ys := Ys;
-end;
-
-function EncodeTLSServerDHParams(
-         var Buffer; const Size: Integer;
-         const ServerDHParams: TTLSServerDHParams): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  Assert(Size >= 0);
-  if (ServerDHParams.dh_p = '') or
-     (ServerDHParams.dh_g = '') or
-     (ServerDHParams.dh_Ys = '') then
-    raise ETLSError.Create(TLSError_InvalidParameter);
-  N := Size;
-  P := @Buffer;
-  // dh_p
-  L := EncodeTLSOpaque16(P^, N, ServerDHParams.dh_p);
-  Dec(N, L);
-  Inc(P, L);
-  // dh_g
-  L := EncodeTLSOpaque16(P^, N, ServerDHParams.dh_g);
-  Dec(N, L);
-  Inc(P, L);
-  // dh_Ys
-  L := EncodeTLSOpaque16(P^, N, ServerDHParams.dh_Ys);
-  Dec(N, L);
-  Result := Size - N;
-end;
-
-function DecodeTLSServerDHParams(
-         const Buffer; const Size: Integer;
-         var ServerDHParams: TTLSServerDHParams): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  Assert(Size >= 0);
-  N := Size;
-  P := @Buffer;
-  // dh_p
-  L := DecodeTLSOpaque16(P^, N, ServerDHParams.dh_p);
-  Dec(N, L);
-  Inc(P, L);
-  // dh_g
-  L := DecodeTLSOpaque16(P^, N, ServerDHParams.dh_g);
-  Dec(N, L);
-  Inc(P, L);
-  // dh_Ys
-  L := DecodeTLSOpaque16(P^, N, ServerDHParams.dh_Ys);
-  Dec(N, L);
-  Result := Size - N;
-end;
-
 
 {                                                                              }
-{ TTLSSignedParams                                                             }
-{                   signed_params = digitally-signed struct (                  }
-{                     client_random : opaque [32];                             }
-{                     server_random : opaque [32];                             }
-{                     params : ServerDHParams ;                                }
-{                     );                                                       }
+{ ServerKeyExchange                                                            }
 {                                                                              }
-procedure InitTLSSignedParams(var SignedParams: TTLSSignedParams);
-begin
-  FillChar(SignedParams.client_random, SizeOf(SignedParams.client_random), 0);
-  FillChar(SignedParams.server_random, SizeOf(SignedParams.server_random), 0);
-  InitTLSServerDHParams_None(SignedParams.params);
-end;
-
-function EncodeTLSSignedParams(
-         var Buffer; const Size: Integer;
-         const SignedParams: TTLSSignedParams): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  Dec(N, 64);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  Move(SignedParams.client_random, P^, 32);
-  Inc(P, 32);
-  Move(SignedParams.server_random, P^, 32);
-  Inc(P, 32);
-  L := EncodeTLSServerDHParams(P^, N, SignedParams.params);
-  Dec(N, L);
-  Result := Size - N;
-end;
-
-function DecodeTLSSignedParams(
-         const Buffer; const Size: Integer;
-         var SignedParams: TTLSSignedParams): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  Dec(N, 64);
-  if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
-  Move(P^, SignedParams.client_random, 32);
-  Inc(P, 32);
-  Move(P^, SignedParams.server_random, 32);
-  Inc(P, 32);
-  L := DecodeTLSServerDHParams(P^, N, SignedParams.params);
-  Dec(N, L);
-  Result := Size - N;
-end;
-
-
-
-{                                                                              }
-{ Server Key Exchange                                                          }
-{                                                                              }
-{   select (KeyExchangeAlgorithm)                                              }
-{     case dh_anon: params : ServerDHParams;                                   }
-{     case dhe_dss:                                                            }
-{     case dhe_rsa: params : ServerDHParams;                                   }
-{                   signed_params : digitally-signed = struct (                }
-{                     client_random : opaque [32];                             }
-{                     server_random : opaque [32];                             }
-{                     params : ServerDHParams ;                                }
-{                     );                                                       }
-{     case rsa:                                                                }
-{     case dh_dss:                                                             }
-{     case dh_rsa: struct ();                                                  }
-{                                                                              }
-procedure InitTLSServerKeyExchange(var ServerKeyExchange: TTLSServerKeyExchange);
-begin
-  InitTLSServerDHParams_None(ServerKeyExchange.Params);
-  InitTLSSignedParams(ServerKeyExchange.SignedParams);
-end;
-
-function  EncodeTLSServerKeyExchange(
-          var Buffer; const Size: Integer;
-          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-          const ServerKeyExchange: TTLSServerKeyExchange): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  case KeyExchangeAlgorithm of
-    tlskeaDH_Anon :
-      begin
-        L := EncodeTLSServerDHParams(P^, N, ServerKeyExchange.Params);
-        Dec(N, L);
-      end;
-    tlskeaDHE_DSS,
-    tlskeaDHE_RSA :
-      begin
-        L := EncodeTLSServerDHParams(P^, N, ServerKeyExchange.Params);
-        Dec(N, L);
-        Inc(P, L);
-        L := EncodeTLSSignedParams(P^, N, ServerKeyExchange.SignedParams);
-        Dec(N, L);
-      end;
-    tlskeaRSA,
-    tlskeaDH_DSS,
-    tlskeaDH_RSA : ;
-  end;
-  Result := Size - N;
-end;
-
-function DecodeTLSServerKeyExchange(
-         const Buffer; const Size: Integer;
-         const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-         var ServerKeyExchange: TTLSServerKeyExchange): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  case KeyExchangeAlgorithm of
-    tlskeaDH_Anon :
-      begin
-        L := DecodeTLSServerDHParams(P^, N, ServerKeyExchange.Params);
-        Dec(N, L);
-      end;
-    tlskeaDHE_DSS,
-    tlskeaDHE_RSA :
-      begin
-        L := DecodeTLSServerDHParams(P^, N, ServerKeyExchange.Params);
-        Dec(N, L);
-        Inc(P, L);
-        L := DecodeTLSSignedParams(P^, N, ServerKeyExchange.SignedParams);
-        Dec(N, L);
-      end;
-    tlskeaRSA,
-    tlskeaDH_DSS,
-    tlskeaDH_RSA : ;
-  end;
-  Result := Size - N;
-end;
-
 function EncodeTLSHandshakeServerKeyExchange(
          var Buffer; const Size: Integer;
          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
@@ -1344,12 +885,12 @@ begin
   // certificate_types
   Dec(N);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   L := P^;
   Inc(P);
   Dec(N, L);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   SetLength(CertificateRequest.CertificateTypes, L);
   for I := 0 to L - 1 do
     begin
@@ -1363,7 +904,7 @@ begin
   Inc(P, 2);
   Dec(N, 2 + L * TLSSignatureAndHashAlgorithmSize);
   if N < 0 then
-    raise ETLSError.Create(TLSError_InvalidBuffer);
+    raise ETLSError.CreateAlertBufferDecode;
   SetLength(CertificateRequest.SupportedSignatureAlgorithms, L);
   for I := 0 to L - 1 do
     begin
@@ -1440,7 +981,7 @@ procedure InitTLSEncryptedPreMasterSecret_RSA(
 var B : array[0..1023] of Byte;
     L : Integer;
 begin
-  L := RSAEncrypt(rsaetPKCS1, RSAPublicKey, PreMasterSecret, SizeOf(PreMasterSecret),
+  L := RSAEncrypt(rsaetRSAES_PKCS1, RSAPublicKey, PreMasterSecret, SizeOf(PreMasterSecret),
       B, SizeOf(B));
   SetLength(EncryptedPreMasterSecret, L + 2);
   EncodeTLSLen16(EncryptedPremasterSecret[1], L + 2, L);
@@ -1450,90 +991,16 @@ end;
 
 
 {                                                                              }
-{ ClientDiffieHellmanPublic                                                    }
-{   select (PublicValueEncoding)                                               }
-{       case implicit: struct ();                                              }
-{       case explicit: opaque dh_Yc<1..2^16-1>;                                }
-{                                                                              }
-function EncodeTLSClientDiffieHellmanPublic(
-         var Buffer; const Size: Integer;
-         const ClientDiffieHellmanPublic: TTLSClientDiffieHellmanPublic): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  if ClientDiffieHellmanPublic.PublicValueEncodingExplicit then
-    begin
-      if ClientDiffieHellmanPublic.dh_Yc = '' then
-        raise ETLSError.Create(TLSError_InvalidParameter);
-      L := EncodeTLSOpaque16(P^, N, ClientDiffieHellmanPublic.dh_Yc);
-      Dec(N, L);
-    end;
-  Result := Size - N;
-end;
-
-function DecodeTLSClientDiffieHellmanPublic(
-         const Buffer; const Size: Integer;
-         const PublicValueEncodingExplicit: Boolean;
-         var ClientDiffieHellmanPublic: TTLSClientDiffieHellmanPublic): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  if PublicValueEncodingExplicit then
-    begin
-      L := DecodeTLSOpaque16(P^, N, ClientDiffieHellmanPublic.dh_Yc);
-      Dec(N, L);
-    end;
-  Result := Size - N;
-end;
-
-
-
-{                                                                              }
 { ClientKeyExchange                                                            }
 {                                                                              }
 {   select (KeyExchangeAlgorithm)                                              }
-{       case rsa : EncryptedPreMasterSecret;                                   }
+{       case rsa     : EncryptedPreMasterSecret;                               }
 {       case dhe_dss :                                                         }
 {       case dhe_rsa :                                                         }
 {       case dh_dss  :                                                         }
 {       case dh_rsa  :                                                         }
 {       case dh_anon : ClientDiffieHellmanPublic;                              }
 {                                                                              }
-function EncodeTLSClientKeyExchange(
-         var Buffer; const Size: Integer;
-         const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-         const ClientKeyExchange: TTLSClientKeyExchange): Integer;
-var P : PByte;
-    N, L : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  case KeyExchangeAlgorithm of
-    tlskeaRSA :
-      begin
-        L := Length(ClientKeyExchange.EncryptedPreMasterSecret);
-        if L = 0 then
-          raise ETLSError.Create(TLSError_InvalidParameter);
-        Move(ClientKeyExchange.EncryptedPreMasterSecret[1], P^, L);
-        Dec(N, L);
-      end;
-    tlskeaDHE_DSS,
-    tlskeaDHE_RSA,
-    tlskeaDH_DSS,
-    tlskeaDH_RSA,
-    tlskeaDH_Anon :
-      begin
-        L := EncodeTLSClientDiffieHellmanPublic(P^, N, ClientKeyExchange.ClientDiffieHellmanPublic);
-        Dec(N, L);
-      end;
-  end;
-  Result := Size - N;
-end;
-
 function EncodeTLSHandshakeClientKeyExchange(
          var Buffer; const Size: Integer;
          const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
@@ -1544,40 +1011,6 @@ begin
   P := TLSHandshakeDataPtr(Buffer, Size, N);
   L := EncodeTLSClientKeyExchange(P^, N, KeyExchangeAlgorithm, ClientKeyExchange);
   Result := EncodeTLSHandshake(Buffer, Size, tlshtClient_key_exchange, L);
-end;
-
-function DecodeTLSClientKeyExchange(
-         const Buffer; const Size: Integer;
-         const KeyExchangeAlgorithm: TTLSKeyExchangeAlgorithm;
-         const PublicValueEncodingExplicit: Boolean;
-         var ClientKeyExchange: TTLSClientKeyExchange): Integer;
-var P : PByte;
-    N, L, C : Integer;
-begin
-  N := Size;
-  P := @Buffer;
-  case KeyExchangeAlgorithm of
-    tlskeaRSA :
-      begin
-        L := DecodeTLSLen16(P^, N, C);
-        Dec(N, L);
-        Inc(P, L);
-        Assert(N = C);
-        SetLength(ClientKeyExchange.EncryptedPreMasterSecret, C);
-        Move(P^, ClientKeyExchange.EncryptedPreMasterSecret[1], C);
-        Dec(N, C);
-      end;
-    tlskeaDHE_DSS,
-    tlskeaDHE_RSA,
-    tlskeaDH_DSS,
-    tlskeaDH_RSA,
-    tlskeaDH_Anon :
-      begin
-        L := DecodeTLSClientDiffieHellmanPublic(P^, N, PublicValueEncodingExplicit, ClientKeyExchange.ClientDiffieHellmanPublic);
-        Dec(N, L);
-      end;
-  end;
-  Result := Size - N;
 end;
 
 
@@ -1652,7 +1085,8 @@ procedure CalcSSLVerifyData(
           const SenderIsClient: Boolean;
           var md5_hash: TSSLFinishedMD5Hash;
           var sha_hash: TSSLFinishedSHAHash);
-var M, S, T : RawByteString;
+var
+  M, S, T : RawByteString;
 begin
   if SenderIsClient then
     T := #$43#$4C#$4E#$54

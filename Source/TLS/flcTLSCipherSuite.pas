@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals TLS                                         }
 {   File name:        flcTLSCipherSuite.pas                                    }
-{   File version:     5.02                                                     }
+{   File version:     5.04                                                     }
 {   Description:      TLS cipher suite                                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -35,11 +35,14 @@
 { References:                                                                  }
 {                                                                              }
 {   http://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml        }
+{   https://ldapwiki.com/wiki/Known%20Cipher%20Suites                          }
 {                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2008/01/18  0.01  Initial version                                          }
+{   2008/01/18  0.01  Initial development.                                     }
 {   2018/07/17  5.02  Revised for Fundamentals 5.                              }
+{   2020/05/09  5.03  Populate CipherSuiteInfo.Auhtentication.                 }
+{   2020/05/19  5.04  Enable support for DHE_RSA_WITH_AES suites.              }
 {                                                                              }
 {******************************************************************************}
 
@@ -50,10 +53,14 @@ unit flcTLSCipherSuite;
 interface
 
 uses
-  { Fundamentals }
+  { Utils }
+
   flcStdTypes,
+
   { TLS }
-  flcTLSUtils;
+
+  flcTLSProtocolVersion,
+  flcTLSAlgorithmTypes;
 
 
 
@@ -71,6 +78,8 @@ type
     tlscsDH_Anon_EXPORT_WITH_DES40_CBC_SHA,
     tlscsDH_Anon_WITH_DES_CBC_SHA,
     tlscsDH_Anon_WITH_3DES_EDE_CBC_SHA,
+    tlscsDH_Anon_WITH_AES_128_CBC_SHA256,
+    tlscsDH_Anon_WITH_AES_256_CBC_SHA256,
     tlscsDH_DSS_EXPORT_WITH_DES40_CBC_SHA,
     tlscsDH_DSS_WITH_DES_CBC_SHA,
     tlscsDH_DSS_WITH_3DES_EDE_CBC_SHA,
@@ -96,13 +105,13 @@ type
     tlscsRSA_EXPORT1024_WITH_DES_CBC_SHA,            // draft-ietf-tls-56-bit-ciphersuites-01
     tlscsRSA_EXPORT1024_WITH_RC4_56_SHA,             // draft-ietf-tls-56-bit-ciphersuites-01
     tlscsRSA_WITH_NULL_SHA256,
-    tlscsRSA_WITH_AES_128_CBC_SHA,
+    tlscsRSA_WITH_AES_128_CBC_SHA,                   // mandatory for tls 1.2 (rfc 5246)
     tlscsRSA_WITH_AES_256_CBC_SHA,
     tlscsRSA_WITH_AES_128_CBC_SHA256,
     tlscsRSA_WITH_AES_256_CBC_SHA256,
     tlscsDHE_DSS_EXPORT_WITH_DES40_CBC_SHA,
     tlscsDHE_DSS_WITH_DES_CBC_SHA,
-    tlscsDHE_DSS_WITH_3DES_EDE_CBC_SHA,              // required
+    tlscsDHE_DSS_WITH_3DES_EDE_CBC_SHA,
     tlscsDHE_DSS_WITH_RC4_128_SHA,                   // draft-ietf-tls-56-bit-ciphersuites-01
     tlscsDHE_RSA_EXPORT_WITH_DES40_CBC_SHA,
     tlscsDHE_RSA_WITH_DES_CBC_SHA,
@@ -114,7 +123,15 @@ type
     tlscsDHE_RSA_WITH_AES_128_CBC_SHA,
     tlscsDHE_RSA_WITH_AES_256_CBC_SHA,
     tlscsDHE_RSA_WITH_AES_128_CBC_SHA256,
-    tlscsDHE_RSA_WITH_AES_256_CBC_SHA256
+    tlscsDHE_RSA_WITH_AES_256_CBC_SHA256,
+    tlscsECDHE_ECDSA_WITH_AES_128_CBC_SHA256,        // rfc 5289
+    tlscsECDHE_ECDSA_WITH_AES_256_CBC_SHA384,        // rfc 5289
+    tlscsECDH_ECDSA_WITH_AES_128_CBC_SHA256,         // rfc 5289
+    tlscsECDH_ECDSA_WITH_AES_256_CBC_SHA384,         // rfc 5289
+    tlscsECDHE_RSA_WITH_AES_128_CBC_SHA256,          // rfc 5289
+    tlscsECDHE_RSA_WITH_AES_256_CBC_SHA384,          // rfc 5289
+    tlscsECDH_RSA_WITH_AES_128_CBC_SHA256,           // rfc 5289
+    tlscsECDH_RSA_WITH_AES_256_CBC_SHA384            // rfc 5289
   );
   TTLSCipherSuites = set of TTLSCipherSuite;
 
@@ -133,8 +150,21 @@ type
     tlscskeDHE_RSA_EXPORT,
     tlscskeDHE_RSA,
     tlscskeDH_anon_EXPORT,
-    tlscskeDH_anon
+    tlscskeDH_anon,
+    tlscskeECDHE_ECDSA,
+    tlscskeECDH_ECDSA,
+    tlscskeECDHE_RSA,
+    tlscskeECDH_RSA
   );
+
+  TTLSCipherSuiteAuthentication = (
+    tlscsaNone,
+    tlscsaAnon,
+    tlscsaRSA,
+    tlscsaDSS,
+    tlscsaPSK,
+    tlscsaECDSA
+    );
 
   TTLSCipherSuiteCipher = (
     tlscscNone,
@@ -156,6 +186,7 @@ type
     tlscshNULL,
     tlscshSHA,
     tlscshSHA256,
+    tlscshSHA384,
     tlscshMD5
   );
 
@@ -170,507 +201,661 @@ const
 
 type
   TTLSCipherSuiteInfo = record
-    Name          : RawByteString;
-    KeyExchange   : TTLSCipherSuiteKeyExchange;
-    Cipher        : TTLSCipherSuiteCipher;
-    Hash          : TTLSCipherSuiteHash;
-    Rec           : TTLSCipherSuiteRec;
-    ServerSupport : Boolean;
-    ClientSupport : Boolean;
-    MinVersion    : TTLSProtocolVersion;
+    Name           : RawByteString;
+    KeyExchange    : TTLSCipherSuiteKeyExchange;
+    Authentication : TTLSCipherSuiteAuthentication;
+    Cipher         : TTLSCipherSuiteCipher;
+    Hash           : TTLSCipherSuiteHash;
+    Rec            : TTLSCipherSuiteRec;
+    ServerSupport  : Boolean;
+    ClientSupport  : Boolean;
+    MinVersion     : TTLSProtocolVersion;
   end;
   PTLSCipherSuiteInfo = ^TTLSCipherSuiteInfo;
 
 const
   TLSCipherSuiteInfo : array[TTLSCipherSuite] of TTLSCipherSuiteInfo = (
     ( // None
-    Name          : '';
-    KeyExchange   : tlscskeNone;
-    Cipher        : tlscscNone;
-    Hash          : tlscshNone;
-    Rec           : (B1: $FF; B2: $FF);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 0; minor: 0);
+    Name           : '';
+    KeyExchange    : tlscskeNone;
+    Authentication : tlscsaNone;
+    Cipher         : tlscscNone;
+    Hash           : tlscshNone;
+    Rec            : (B1: $FF; B2: $FF);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 0; minor: 0);
     ),
     ( // NULL_WITH_NULL_NULL
-    Name          : 'NULL_WITH_NULL_NULL';
-    KeyExchange   : tlscskeNULL;
-    Cipher        : tlscscNULL;
-    Hash          : tlscshNULL;
-    Rec           : (B1: $00; B2: $00);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 0; minor: 0);
+    Name           : 'NULL_WITH_NULL_NULL';
+    KeyExchange    : tlscskeNULL;
+    Authentication : tlscsaNone;
+    Cipher         : tlscscNULL;
+    Hash           : tlscshNULL;
+    Rec            : (B1: $00; B2: $00);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 0; minor: 0);
     ),
     ( // RSA_WITH_NULL_MD5
-    Name          : 'RSA_WITH_NULL_MD5';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscNULL;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $01);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'RSA_WITH_NULL_MD5';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscNULL;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $01);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // RSA_WITH_NULL_SHA
-    Name          : 'RSA_WITH_NULL_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscNULL;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $02);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'RSA_WITH_NULL_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscNULL;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $02);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_anon_EXPORT_WITH_RC4_40_MD5
-    Name          : 'DH_anon_EXPORT_WITH_RC4_40_MD5';
-    KeyExchange   : tlscskeDH_anon_EXPORT;
-    Cipher        : tlscscRC4_40;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $17);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_anon_EXPORT_WITH_RC4_40_MD5';
+    KeyExchange    : tlscskeDH_anon_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_40;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $17);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_anon_WITH_RC4_128_MD5
-    Name          : 'DH_anon_WITH_RC4_128_MD5';
-    KeyExchange   : tlscskeDH_anon;
-    Cipher        : tlscscRC4_128;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $18);
-    ServerSupport : False; // Under development
-    ClientSupport : False; // Under development
+    Name           : 'DH_anon_WITH_RC4_128_MD5';
+    KeyExchange    : tlscskeDH_anon;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_128;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $18);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_anon_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'DH_anon_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeDH_anon_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $19);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_anon_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeDH_anon_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $19);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_anon_WITH_DES_CBC_SHA
-    Name          : 'DH_anon_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeDH_anon;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $1A);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_anon_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeDH_anon;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $1A);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_anon_WITH_3DES_EDE_CBC_SHA
-    Name          : 'DH_anon_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeDH_anon;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $1B);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_anon_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeDH_anon;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $1B);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // DH_anon_WITH_AES_128_CBC_SHA256
+    Name           : 'DH_anon_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeDH_anon;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $6C);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // DH_anon_WITH_AES_256_CBC_SHA256
+    Name           : 'DH_anon_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeDH_anon;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $6D);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'DH_DSS_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeDH_DSS_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0B);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeDH_DSS_EXPORT;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0B);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_DES_CBC_SHA
-    Name          : 'DH_DSS_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0C);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0C);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_3DES_EDE_CBC_SHA
-    Name          : 'DH_DSS_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0D);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0D);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'DH_RSA_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeDH_RSA_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0E);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeDH_RSA_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0E);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_DES_CBC_SHA
-    Name          : 'DH_RSA_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0F);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0F);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_3DES_EDE_CBC_SHA
-    Name          : 'DH_RSA_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $10);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $10);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_AES_128_CBC_SHA
-    Name          : 'DH_DSS_WITH_AES_128_CBC_SHA';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $30);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_AES_128_CBC_SHA';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $30);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_AES_256_CBC_SHA
-    Name          : 'DH_DSS_WITH_AES_256_CBC_SHA';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $36);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_AES_256_CBC_SHA';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $36);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_AES_128_CBC_SHA256
-    Name          : 'DH_DSS_WITH_AES_128_CBC_SHA256';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $3E);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $3E);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_DSS_WITH_AES_256_CBC_SHA256
-    Name          : 'DH_DSS_WITH_AES_256_CBC_SHA256';
-    KeyExchange   : tlscskeDH_DSS;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $68);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_DSS_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeDH_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $68);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_AES_128_CBC_SHA
-    Name          : 'DH_RSA_WITH_AES_128_CBC_SHA';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $31);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_AES_128_CBC_SHA';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $31);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_AES_256_CBC_SHA
-    Name          : 'DH_RSA_WITH_AES_256_CBC_SHA';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $37);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_AES_256_CBC_SHA';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $37);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_AES_128_CBC_SHA256
-    Name          : 'DH_RSA_WITH_AES_128_CBC_SHA256';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $3F);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $3F);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DH_RSA_WITH_AES_256_CBC_SHA256
-    Name          : 'DH_RSA_WITH_AES_256_CBC_SHA256';
-    KeyExchange   : tlscskeDH_RSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $69);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DH_RSA_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $69);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // RSA_EXPORT_WITH_RC4_40_MD5
-    Name          : 'RSA_EXPORT_WITH_RC4_40_MD5';
-    KeyExchange   : tlscskeRSA_EXPORT;
-    Cipher        : tlscscRC4_40;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $03);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_EXPORT_WITH_RC4_40_MD5';
+    KeyExchange    : tlscskeRSA_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_40;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $03);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_WITH_RC4_128_MD5
-    Name          : 'RSA_WITH_RC4_128_MD5';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscRC4_128;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $04);
-    ServerSupport : True;
-    ClientSupport : True;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_WITH_RC4_128_MD5';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_128;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $04);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_WITH_RC4_128_SHA
-    Name          : 'RSA_WITH_RC4_128_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscRC4_128;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $05);
-    ServerSupport : True;
-    ClientSupport : True;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_WITH_RC4_128_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_128;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $05);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_EXPORT_WITH_RC2_CBC_40_MD5
-    Name          : 'RSA_EXPORT_WITH_RC2_CBC_40_MD5';
-    KeyExchange   : tlscskeRSA_EXPORT;
-    Cipher        : tlscscRC2_CBC_40;
-    Hash          : tlscshMD5;
-    Rec           : (B1: $00; B2: $06);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_EXPORT_WITH_RC2_CBC_40_MD5';
+    KeyExchange    : tlscskeRSA_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC2_CBC_40;
+    Hash           : tlscshMD5;
+    Rec            : (B1: $00; B2: $06);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_WITH_IDEA_CBC_SHA
-    Name          : 'RSA_WITH_IDEA_CBC_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscIDEA_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $07);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'RSA_WITH_IDEA_CBC_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscIDEA_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $07);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // RSA_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'RSA_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeRSA_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $08);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'RSA_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeRSA_EXPORT;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $08);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // RSA_WITH_DES_CBC_SHA
-    Name          : 'RSA_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $09);
-    ServerSupport : True;
-    ClientSupport : True;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $09);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_WITH_3DES_EDE_CBC_SHA
-    Name          : 'RSA_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $0A);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $0A);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_EXPORT1024_WITH_DES_CBC_SHA
-    Name          : 'RSA_EXPORT1024_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeRSA_EXPORT1024;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $62);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_EXPORT1024_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeRSA_EXPORT1024;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $62);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_EXPORT1024_WITH_RC4_56_SHA
-    Name          : 'RSA_EXPORT1024_WITH_RC4_56_SHA';
-    KeyExchange   : tlscskeRSA_EXPORT1024;
-    Cipher        : tlscscRC4_56;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $64);
-    ServerSupport : False;
-    ClientSupport : False;
-    MinVersion    : (major: 3; minor: 0); // SSL 3
+    Name           : 'RSA_EXPORT1024_WITH_RC4_56_SHA';
+    KeyExchange    : tlscskeRSA_EXPORT1024;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscRC4_56;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $64);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    MinVersion     : (major: 3; minor: 0); // SSL 3
     ),
     ( // RSA_WITH_NULL_SHA256
-    Name          : 'RSA_WITH_NULL_SHA256';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscNULL;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $3B);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'RSA_WITH_NULL_SHA256';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscNULL;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $3B);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // RSA_WITH_AES_128_CBC_SHA
-    Name          : 'RSA_WITH_AES_128_CBC_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $2F);
-    ServerSupport : True;
-    ClientSupport : True;
+    Name           : 'RSA_WITH_AES_128_CBC_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $2F);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // RSA_WITH_AES_256_CBC_SHA
-    Name          : 'RSA_WITH_AES_256_CBC_SHA';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $35);
-    ServerSupport : True;
-    ClientSupport : True;
+    Name           : 'RSA_WITH_AES_256_CBC_SHA';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $35);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // RSA_WITH_AES_128_CBC_SHA256
-    Name          : 'RSA_WITH_AES_128_CBC_SHA256';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $3C);
-    ServerSupport : True;
-    ClientSupport : True;
-    MinVersion    : (major: 3; minor: 3); // TLS 1.2
+    Name           : 'RSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $3C);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    MinVersion     : (major: 3; minor: 3); // TLS 1.2
     ),
     ( // RSA_WITH_AES_256_CBC_SHA256
-    Name          : 'RSA_WITH_AES_256_CBC_SHA256';
-    KeyExchange   : tlscskeRSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $3D);
-    ServerSupport : True;
-    ClientSupport : True;
-    MinVersion    : (major: 3; minor: 3); // TLS 1.2
+    Name           : 'RSA_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeRSA;
+    Authentication : tlscsaAnon;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $3D);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    MinVersion     : (major: 3; minor: 3); // TLS 1.2
     ),
     ( // DHE_DSS_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'DHE_DSS_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeDHE_DSS_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $11);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeDHE_DSS_EXPORT;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $11);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_DES_CBC_SHA
-    Name          : 'DHE_DSS_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $12);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $12);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_3DES_EDE_CBC_SHA
-    Name          : 'DHE_DSS_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $13);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $13);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_RC4_128_SHA
-    Name          : 'DHE_DSS_WITH_RC4_128_SHA';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscRC4_128;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $66);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_RC4_128_SHA';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscRC4_128;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $66);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_RSA_EXPORT_WITH_DES40_CBC_SHA
-    Name          : 'DHE_RSA_EXPORT_WITH_DES40_CBC_SHA';
-    KeyExchange   : tlscskeDHE_RSA_EXPORT;
-    Cipher        : tlscscDES40_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $14);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_EXPORT_WITH_DES40_CBC_SHA';
+    KeyExchange    : tlscskeDHE_RSA_EXPORT;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscDES40_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $14);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_RSA_WITH_DES_CBC_SHA
-    Name          : 'DHE_RSA_WITH_DES_CBC_SHA';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscscDES_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $15);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_DES_CBC_SHA';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscDES_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $15);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // DHE_RSA_WITH_3DES_EDE_CBC_SHA
-    Name          : 'DHE_RSA_WITH_3DES_EDE_CBC_SHA';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscsc3DES_EDE_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $16);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_3DES_EDE_CBC_SHA';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscsc3DES_EDE_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $16);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_AES_128_CBC_SHA
-    Name          : 'DHE_DSS_WITH_AES_128_CBC_SHA  ';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $32);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_AES_128_CBC_SHA  ';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $32);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_AES_256_CBC_SHA
-    Name          : 'DHE_DSS_WITH_AES_256_CBC_SHA';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $38);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_AES_256_CBC_SHA';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $38);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_AES_128_CBC_SHA256
-    Name          : 'DHE_DSS_WITH_AES_128_CBC_SHA256';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $40);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $40);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_DSS_WITH_AES_256_CBC_SHA256
-    Name          : 'DHE_DSS_WITH_AES_256_CBC_SHA256';
-    KeyExchange   : tlscskeDHE_DSS;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $6A);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_DSS_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeDHE_DSS;
+    Authentication : tlscsaDSS;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $6A);
+    ServerSupport  : False;
+    ClientSupport  : False;
     ),
     ( // DHE_RSA_WITH_AES_128_CBC_SHA
-    Name          : 'DHE_RSA_WITH_AES_128_CBC_SHA';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $33);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_AES_128_CBC_SHA';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $33);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // DHE_RSA_WITH_AES_256_CBC_SHA
-    Name          : 'DHE_RSA_WITH_AES_256_CBC_SHA';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA;
-    Rec           : (B1: $00; B2: $39);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_AES_256_CBC_SHA';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA;
+    Rec            : (B1: $00; B2: $39);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // DHE_RSA_WITH_AES_128_CBC_SHA256
-    Name          : 'DHE_RSA_WITH_AES_128_CBC_SHA256';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscscAES_128_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $67);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $67);
+    ServerSupport  : True;
+    ClientSupport  : True;
     ),
     ( // DHE_RSA_WITH_AES_256_CBC_SHA256
-    Name          : 'DHE_RSA_WITH_AES_256_CBC_SHA256';
-    KeyExchange   : tlscskeDHE_RSA;
-    Cipher        : tlscscAES_256_CBC;
-    Hash          : tlscshSHA256;
-    Rec           : (B1: $00; B2: $6B);
-    ServerSupport : False;
-    ClientSupport : False;
+    Name           : 'DHE_RSA_WITH_AES_256_CBC_SHA256';
+    KeyExchange    : tlscskeDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $00; B2: $6B);
+    ServerSupport  : True;
+    ClientSupport  : True;
+    ),
+    ( // ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+    Name           : 'ECDHE_ECDSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeECDHE_ECDSA;
+    Authentication : tlscsaECDSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $C0; B2: $23);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDHE_ECDSA_WITH_AES_256_CBC_SHA384
+    Name           : 'ECDHE_ECDSA_WITH_AES_256_CBC_SHA384';
+    KeyExchange    : tlscskeECDHE_ECDSA;
+    Authentication : tlscsaECDSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA384;
+    Rec            : (B1: $C0; B2: $24);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDH_ECDSA_WITH_AES_128_CBC_SHA256
+    Name           : 'ECDH_ECDSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeECDH_ECDSA;
+    Authentication : tlscsaECDSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $C0; B2: $25);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDH_ECDSA_WITH_AES_256_CBC_SHA384
+    Name           : 'ECDH_ECDSA_WITH_AES_256_CBC_SHA384';
+    KeyExchange    : tlscskeECDH_ECDSA;
+    Authentication : tlscsaECDSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA384;
+    Rec            : (B1: $C0; B2: $26);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDHE_RSA_WITH_AES_128_CBC_SHA256
+    Name           : 'ECDHE_RSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeECDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $C0; B2: $27);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDHE_RSA_WITH_AES_256_CBC_SHA384
+    Name           : 'ECDHE_RSA_WITH_AES_256_CBC_SHA384';
+    KeyExchange    : tlscskeECDHE_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA384;
+    Rec            : (B1: $C0; B2: $28);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDH_RSA_WITH_AES_128_CBC_SHA256
+    Name           : 'ECDH_RSA_WITH_AES_128_CBC_SHA256';
+    KeyExchange    : tlscskeECDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_128_CBC;
+    Hash           : tlscshSHA256;
+    Rec            : (B1: $C0; B2: $29);
+    ServerSupport  : False;
+    ClientSupport  : False;
+    ),
+    ( // ECDH_RSA_WITH_AES_256_CBC_SHA384
+    Name           : 'ECDH_RSA_WITH_AES_256_CBC_SHA384';
+    KeyExchange    : tlscskeECDH_RSA;
+    Authentication : tlscsaRSA;
+    Cipher         : tlscscAES_256_CBC;
+    Hash           : tlscshSHA384;
+    Rec            : (B1: $C0; B2: $2A);
+    ServerSupport  : False;
+    ClientSupport  : False;
     )
     );
 
@@ -682,7 +867,6 @@ type
     Name        : RawByteString;
     Algorithm   : TTLSKeyExchangeAlgorithm;
     Exportable  : Boolean;
-    Supported   : Boolean; // Not used
   end;
   PTLSCipherSuiteKeyExchangeInfo = ^TTLSCipherSuiteKeyExchangeInfo;
 
@@ -692,92 +876,98 @@ const
       Name        : '';
       Algorithm   : tlskeaNone;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // NULL
       Name        : 'NULL';
       Algorithm   : tlskeaNULL;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // RSA
       Name        : 'RSA';
       Algorithm   : tlskeaRSA;
       Exportable  : False;
-      Supported   : True;
     ),
     ( // RSA_EXPORT
       Name        : 'RSA_EXPORT';
       Algorithm   : tlskeaRSA;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // RSA_EXPORT1024
       Name        : 'RSA_EXPORT1024';
       Algorithm   : tlskeaRSA;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // DH_DSS_EXPORT
       Name        : 'DH_DSS_EXPORT';
       Algorithm   : tlskeaDH_DSS;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // DH_DSS
       Name        : 'DH_DSS';
       Algorithm   : tlskeaDH_DSS;
       Exportable  : False;
-      Supported   : False;
     ),
     ( // DH_RSA_EXPORT
       Name        : 'DH_RSA_EXPORT';
       Algorithm   : tlskeaDH_RSA;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // DH_RSA
       Name        : 'DH_RSA';
       Algorithm   : tlskeaDH_RSA;
       Exportable  : False;
-      Supported   : False;
     ),
     ( // DHE_DSS_EXPORT
       Name        : 'DHE_DSS_EXPORT';
       Algorithm   : tlskeaDHE_DSS;
       Exportable  : True;
-      Supported   : False;
     ),
     (  // DHE_DSS
       Name        : 'DHE_DSS';
       Algorithm   : tlskeaDHE_DSS;
       Exportable  : False;
-      Supported   : False;
     ),
     ( // DHE_RSA_EXPORT
       Name        : 'DHE_RSA_EXPORT';
       Algorithm   : tlskeaDHE_RSA;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // DHE_RSA
       Name        : 'DHE_RSA';
       Algorithm   : tlskeaDHE_RSA;
       Exportable  : False;
-      Supported   : False;
     ),
     ( // DH_anon_EXPORT
       Name        : 'DH_anon_EXPORT';
       Algorithm   : tlskeaDH_Anon;
       Exportable  : True;
-      Supported   : False;
     ),
     ( // DH_anon
       Name        : 'DH_anon';
       Algorithm   : tlskeaDH_Anon;
       Exportable  : False;
-      Supported   : False;
-    ));
+    ),
+    ( // ECDHE_ECDSA
+      Name        : 'ECDHE_ECDSA';
+      Algorithm   : tlskeaECDHE_ECDSA;
+      Exportable  : False;
+    ),
+    ( // ECDH_ECDSA
+      Name        : 'ECDH_ECDSA';
+      Algorithm   : tlskeaECDH_ECDSA;
+      Exportable  : False;
+    ),
+    ( // ECDHE_RSA
+      Name        : 'ECDHE_RSA';
+      Algorithm   : tlskeaECDHE_RSA;
+      Exportable  : False;
+    ),
+    ( // ECDH_RSA
+      Name        : 'ECDH_RSA';
+      Algorithm   : tlskeaECDH_RSA;
+      Exportable  : False;
+    )
+    );
 
 
 
@@ -789,7 +979,8 @@ type
     tlscsctNone,
     tlscsctNULL,
     tlscsctStream,
-    tlscsctBlock);
+    tlscsctBlock
+    );
 
   TTLSCipherSuiteBulkCipher = (
     tlscsbcNone,
@@ -801,7 +992,7 @@ type
     tlscsbcIDEA,
     tlscsbcDES40,
     tlscsbcAES
-  );
+    );
 
   TTLSCipherSuiteCipherInfo = record
     Name        : RawByteString;
@@ -1011,6 +1202,13 @@ const
     HashSize     : 256;
     KeyLength    : 256;
     MACAlgorithm : tlsmaHMAC_SHA256;
+    Supported    : True;
+    ),
+    ( // SHA384
+    Name         : 'SHA384';
+    HashSize     : 384;
+    KeyLength    : 384;
+    MACAlgorithm : tlsmaHMAC_SHA384;
     Supported    : True;
     ),
     ( // MD5
