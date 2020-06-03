@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcASCII.pas                                             }
-{   File version:     5.03                                                     }
+{   File version:     5.04                                                     }
 {   Description:      Ascii utility functions.                                 }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -37,10 +37,13 @@
 {   2000-2017   1.01  Initial versions.                                        }
 {   2018/07/11  5.02  Move to flcASCII unit from flcUtils.                     }
 {   2018/08/12  5.03  String type changes.                                     }
+{   2020/03/21  5.04  NativeInt changes.                                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 10 Win32                     5.02  2016/01/09                       }
+{   Delphi 2010-10.4 Win32/Win64        5.04  2020/06/02                       }
+{   Delphi 10.2-10.4 Linux64            5.04  2020/06/02                       }
+{   FreePascal 3.0.4 Win64              5.04  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -231,8 +234,8 @@ function  IsAsciiCharB(const C: ByteChar): Boolean; {$IFDEF UseInline}inline;{$E
 function  IsAsciiCharW(const C: WideChar): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  IsAsciiChar(const C: Char): Boolean;      {$IFDEF UseInline}inline;{$ENDIF}
 
-function  IsAsciiBufB(const Buf: Pointer; const Len: Integer): Boolean;
-function  IsAsciiBufW(const Buf: Pointer; const Len: Integer): Boolean;
+function  IsAsciiBufB(const Buf: Pointer; const Len: NativeInt): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+function  IsAsciiBufW(const Buf: Pointer; const Len: NativeInt): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 
 function  IsAsciiStringB(const S: RawByteString): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 function  IsAsciiStringU(const S: UnicodeString): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
@@ -273,9 +276,9 @@ function  CharEqualNoAsciiCaseB(const A, B: ByteChar): Boolean;  {$IFDEF UseInli
 function  CharEqualNoAsciiCaseW(const A, B: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
 function  CharEqualNoAsciiCase(const A, B: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
 
-function  StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: Integer): Integer;
-function  StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: Integer): Integer;
-function  StrPCompareNoAsciiCase(const A, B: PChar; const Len: Integer): Integer;
+function  StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: NativeInt): Integer;
+function  StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Integer;
+function  StrPCompareNoAsciiCase(const A, B: PChar; const Len: NativeInt): Integer;
 
 {$IFDEF SupportAnsiString}
 function  StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
@@ -290,12 +293,12 @@ function  StrCompareNoAsciiCase(const A, B: String): Integer;
 { ASCII case conversion                                                        }
 {                                                                              }
 function  AsciiLowCaseB(const C: ByteChar): ByteChar;
-function  AsciiLowCaseW(const C: WideChar): WideChar;
-function  AsciiLowCase(const C: Char): Char;
+function  AsciiLowCaseW(const C: WideChar): WideChar; {$IFDEF UseInline}inline;{$ENDIF}
+function  AsciiLowCase(const C: Char): Char;          {$IFDEF UseInline}inline;{$ENDIF}
 
 function  AsciiUpCaseB(const C: ByteChar): ByteChar;
-function  AsciiUpCaseW(const C: WideChar): WideChar;
-function  AsciiUpCase(const C: Char): Char;
+function  AsciiUpCaseW(const C: WideChar): WideChar; {$IFDEF UseInline}inline;{$ENDIF}
+function  AsciiUpCase(const C: Char): Char; {$IFDEF UseInline}inline;{$ENDIF}
 
 procedure AsciiConvertUpperB(var S: RawByteString);
 procedure AsciiConvertUpperU(var S: UnicodeString);
@@ -358,9 +361,10 @@ begin
   Result := Ord(C) <= 127;
 end;
 
-function IsAsciiBufB(const Buf: Pointer; const Len: Integer): Boolean;
-var I : Integer;
-    P : PByte;
+function IsAsciiBufB(const Buf: Pointer; const Len: NativeInt): Boolean;
+var
+  I : NativeInt;
+  P : PByte;
 begin
   P := Buf;
   for I := 1 to Len do
@@ -374,9 +378,10 @@ begin
   Result := True;
 end;
 
-function IsAsciiBufW(const Buf: Pointer; const Len: Integer): Boolean;
-var I : Integer;
-    P : PWord16;
+function IsAsciiBufW(const Buf: Pointer; const Len: NativeInt): Boolean;
+var
+  I : NativeInt;
+  P : PWord16;
 begin
   P := Buf;
   for I := 1 to Len do
@@ -556,10 +561,11 @@ begin
   Result := AsciiUpCase(A) = AsciiUpCase(B);
 end;
 
-function StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: Integer): Integer;
-var P, Q : PByte;
-    C, D : Byte;
-    I    : Integer;
+function StrPCompareNoAsciiCaseB(const A, B: PByteChar; const Len: NativeInt): Integer;
+var
+  P, Q : PByte;
+  C, D : Byte;
+  I    : NativeInt;
 begin
   P := Pointer(A);
   Q := Pointer(B);
@@ -585,10 +591,11 @@ begin
   Result := 0;
 end;
 
-function StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: Integer): Integer;
-var P, Q : PWideChar;
-    C, D : Word;
-    I    : Integer;
+function StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Integer;
+var
+  P, Q : PWideChar;
+  C, D : Word16;
+  I    : NativeInt;
 begin
   P := A;
   Q := B;
@@ -618,10 +625,11 @@ begin
   Result := 0;
 end;
 
-function StrPCompareNoAsciiCase(const A, B: PChar; const Len: Integer): Integer;
-var P, Q : PChar;
-    C, D : Integer;
-    I    : Integer;
+function StrPCompareNoAsciiCase(const A, B: PChar; const Len: NativeInt): Integer;
+var
+  P, Q : PChar;
+  C, D : Integer;
+  I    : NativeInt;
 begin
   P := A;
   Q := B;
@@ -653,7 +661,8 @@ end;
 
 {$IFDEF SupportAnsiString}
 function StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I: NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -674,7 +683,8 @@ end;
 {$ENDIF}
 
 function StrCompareNoAsciiCaseB(const A, B: RawByteString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I: NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -694,7 +704,8 @@ begin
 end;
 
 function StrCompareNoAsciiCaseU(const A, B: UnicodeString): Integer;
-var L, M, I: Integer;
+var
+  L, M, I: NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -714,7 +725,8 @@ begin
 end;
 
 function StrCompareNoAsciiCase(const A, B: String): Integer;
-var L, M, I: Integer;
+var
+  L, M, I: Integer;
 begin
   L := Length(A);
   M := Length(B);
@@ -752,7 +764,7 @@ asm
 @@exit:
 end;
 {$ELSE}
-function AsciiLowCaseB(const C: ByteChar): ByteChar;
+function AsciiLowCaseB(const C: ByteChar): ByteChar; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if C in [AsciiUpperA..AsciiUpperZ] then
     Result := ByteChar(Byte(C) + AsciiCaseDiff)
@@ -790,7 +802,7 @@ asm
 @@exit:
 end;
 {$ELSE}
-function AsciiUpCaseB(const C: ByteChar): ByteChar;
+function AsciiUpCaseB(const C: ByteChar): ByteChar; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if C in [AsciiLowerA..AsciiLowerZ] then
     Result := ByteChar(Byte(C) - AsciiCaseDiff)
@@ -830,8 +842,9 @@ begin
 end;
 
 procedure AsciiConvertUpperU(var S: UnicodeString);
-var F : Integer;
-    C : WideChar;
+var
+  F : NativeInt;
+  C : WideChar;
 begin
   for F := 1 to Length(S) do
     begin
@@ -843,8 +856,9 @@ begin
 end;
 
 procedure AsciiConvertUpper(var S: String);
-var F : Integer;
-    C : Char;
+var
+  F : NativeInt;
+  C : Char;
 begin
   for F := 1 to Length(S) do
     begin
@@ -858,7 +872,8 @@ begin
 end;
 
 procedure AsciiConvertLowerB(var S: RawByteString);
-var F : Integer;
+var
+  F : NativeInt;
 begin
   for F := 1 to Length(S) do
     if S[F] in [AsciiUpperA..AsciiUpperZ] then
@@ -866,8 +881,9 @@ begin
 end;
 
 procedure AsciiConvertLowerU(var S: UnicodeString);
-var F : Integer;
-    C : WideChar;
+var
+  F : NativeInt;
+  C : WideChar;
 begin
   for F := 1 to Length(S) do
     begin
@@ -879,8 +895,9 @@ begin
 end;
 
 procedure AsciiConvertLower(var S: String);
-var F : Integer;
-    C : Char;
+var
+  F : NativeInt;
+  C : Char;
 begin
   for F := 1 to Length(S) do
     begin
@@ -930,7 +947,8 @@ begin
 end;
 
 procedure AsciiConvertFirstUpB(var S: RawByteString);
-var C : ByteChar;
+var
+  C : ByteChar;
 begin
   if S <> '' then
     begin
@@ -941,7 +959,8 @@ begin
 end;
 
 procedure AsciiConvertFirstUpU(var S: UnicodeString);
-var C : WideChar;
+var
+  C : WideChar;
 begin
   if S <> '' then
     begin
@@ -952,7 +971,8 @@ begin
 end;
 
 procedure AsciiConvertFirstUp(var S: String);
-var C : Char;
+var
+  C : Char;
 begin
   if S <> '' then
     begin
