@@ -5,7 +5,7 @@
 {   File version:     5.01                                                     }
 {   Description:      RC2 cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }

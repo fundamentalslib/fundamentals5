@@ -5,7 +5,7 @@
 {   File version:     5.02                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -80,7 +80,7 @@ type
 
 
 {                                                                              }
-{ Secure clear helper function                                                 }
+{ Secure clear                                                                 }
 {                                                                              }
 procedure SecureClear(var Buffer; const BufferSize: Integer);
 procedure SecureClearBytes(var B: TBytes);

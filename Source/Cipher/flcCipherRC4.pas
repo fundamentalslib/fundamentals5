@@ -5,7 +5,7 @@
 {   File version:     5.06                                                     }
 {   Description:      RC4 cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2016, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -58,7 +58,7 @@ interface
 { Also known as Arcfour.                                                       }
 {                                                                              }
 type
-  TRC4SBox = array[Byte] of Byte;
+  TRC4SBox = packed array[Byte] of Byte;
   TRC4Context = packed record
     S  : TRC4SBox;
     SI : Byte;
@@ -67,7 +67,7 @@ type
   PRC4Context = ^TRC4Context;
 
 procedure RC4Init(const Key; const KeySize: Integer; var Context: TRC4Context);
-procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: Integer);
+procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: NativeInt);
 
 
 
@@ -103,7 +103,7 @@ begin
       J := 0;
       for I := 0 to 255 do
         begin
-          J := Byte(J + S[I] + K^[I mod KeySize]);
+          J := Byte(Byte(J + S[I]) + K^[I mod KeySize]);
           T := S[I];
           S[I] := S[J];
           S[J] := T;
@@ -113,27 +113,36 @@ begin
     end;
 end;
 
-procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: Integer);
-var T : Byte;
-    F : Integer;
-    P : PByte;
+procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: NativeInt);
+var
+  SI : Byte;
+  SJ : Byte;
+  P  : PByte;
+  F  : NativeInt;
+  T  : Byte;
+  U  : Byte;
 begin
+  SI := Context.SI;
+  SJ := Context.SJ;
   P := @Buffer;
-  with Context do
-    for F := 0 to BufferSize - 1 do
-      begin
-        SI := Byte(SI + 1);
-        SJ := Byte(SJ + S[SI]);
-        T := S[SI];
-        S[SI] := S[SJ];
-        S[SJ] := T;
-        T := Byte(S[SI] + S[SJ]);
-        T := S[T];
-        P^ := P^ xor T;
-        Inc(P);
-      end;
+  for F := 0 to BufferSize - 1 do
+    begin
+      SI := Byte(SI + 1);
+      T := Context.S[SI];
+      SJ := Byte(SJ + T);
+      U := Context.S[SJ];
+      Context.S[SI] := U;
+      Context.S[SJ] := T;
+      T := Byte(T + U);
+      T := Context.S[T];
+      P^ := P^ xor T;
+      Inc(P);
+    end;
+  Context.SI := SI;
+  Context.SJ := SJ;
 end;
 
 
 
 end.
+

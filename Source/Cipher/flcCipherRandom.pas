@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherRandom.pas                                      }
-{   File version:     5.05                                                     }
+{   File version:     5.06                                                     }
 {   Description:      Cipher random                                            }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -42,6 +42,9 @@
 {                     generator.                                               }
 {   2016/01/09  5.04  Revised for Fundamentals 5.                              }
 {   2019/06/06  5.05  SecureRandomBytes function.                              }
+{   2020/02/13  5.06  Remove MD5 from generator.                               }
+{                     Use 8 random bits in generator for each secure           }
+{                     random bit.                                              }
 {                                                                              }
 {******************************************************************************}
 
@@ -53,7 +56,7 @@ interface
 
 uses
   { System }
-  System.SysUtils,
+  SysUtils,
 
   { Fundamentals }
   flcStdTypes;
@@ -95,45 +98,46 @@ type
 // produces a block of SecureRandomBlockSize bytes of secure random material
 procedure SecureRandomBlockGenerator(var Block: TSecureRandomBlock);
 const
-  RandomSeedDataLen = 512 div 32;
-var I : Integer;
-    R512 : array[0..RandomSeedDataLen - 1] of Word32;
-    H512 : T512BitDigest;
-    H256 : T256BitDigest;
-    H128 : T128BitDigest;
+  RandomDataBits = SecureRandomBlockBits * 8; // 1024 bits (128 bytes)
+  RandomDataLen  = RandomDataBits div 32;     // 32 * Word32
+var
+  I     : Integer;
+  RData : array[0..RandomDataLen - 1] of Word32;
+  S32   : Word32;
+  H512  : T512BitDigest;
+  H256  : T256BitDigest;
 begin
   try
-    // initialise 512 bits with multiple Pseudo Random Numbers Generators (PRNG)
+    // initialise 1024 bits with multiple Pseudo Random Numbers Generators (PRNG)
     // and Pseudo Random System State (PRSS)
-    FillChar(R512, SizeOf(R512), $FF);
-    R512[0] := R512[0] xor RandomSeed32;
-    for I := 0 to RandomSeedDataLen - 1 do
-      R512[I] := R512[I] xor RandomUniform32;
-    R512[0] := R512[0] xor RandomSeed32;
-    for I := 0 to RandomSeedDataLen - 1 do
-      R512[I] := R512[I] xor urnRandom32;
-    R512[0] := R512[0] xor RandomSeed32;
-    // hash 512 bits using SHA512
-    H512 := CalcSHA512(R512, SizeOf(R512));
-    // hash 512 bits using SHA256
+    FillChar(RData, SizeOf(RData), $FF);
+    S32 := RandomSeed32;
+    RData[0] := RData[0] xor S32;
+    for I := 0 to RandomDataLen - 1 do
+      RData[I] := RData[I] xor RandomUniform32;
+    for I := 0 to RandomDataLen - 1 do
+      RData[I] := RData[I] xor urnRandom32;
+    S32 := RandomSeed32;
+    RData[RandomDataLen - 1] := RData[RandomDataLen - 1] xor S32;
+    // hash 1024 bits using SHA512 into 512 bits
+    H512 := CalcSHA512(RData, SizeOf(RData));
+    // hash 512 bits using SHA256 into 256 bits
     H256 := CalcSHA256(H512, SizeOf(T512BitDigest));
-    // hash 256 bits using MD5
-    H128 := CalcMD5(H256, SizeOf(T256BitDigest));
-    // result is 128 bits of secure pseudo random data
-    Assert(SizeOf(H128) >= SecureRandomBlockSize);
-    Move(H128, Block, SecureRandomBlockSize);
+    // move 128 bits to secure random block
+    Assert(SizeOf(H256) >= SecureRandomBlockSize);
+    Move(H256, Block, SecureRandomBlockSize);
   finally
-    SecureClear(H128, SizeOf(T128BitDigest));
     SecureClear(H256, SizeOf(T256BitDigest));
     SecureClear(H512, SizeOf(T512BitDigest));
-    SecureClear(R512, SizeOf(R512));
+    SecureClear(RData, SizeOf(RData));
   end;
 end;
 
 procedure SecureRandomBuf(var Buf; const Size: Integer);
-var P : PSecureRandomBlock;
-    L : Integer;
-    B : TSecureRandomBlock;
+var
+  P : PSecureRandomBlock;
+  L : Integer;
+  B : TSecureRandomBlock;
 begin
   P := @Buf;
   L := Size;
@@ -168,11 +172,12 @@ begin
 end;
 
 function SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = True): String;
-var B    : TSecureRandomBlock;
-    S, T : String;
-    L, N : Integer;
-    P    : PWord32;
-    Q    : PChar;
+var
+  B    : TSecureRandomBlock;
+  S, T : String;
+  L, N : Integer;
+  P    : PWord32;
+  Q    : PChar;
 begin
   if Digits <= 0 then
     begin
@@ -211,11 +216,12 @@ begin
 end;
 
 function SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean): RawByteString;
-var B    : TSecureRandomBlock;
-    S, T : RawByteString;
-    L, N : Integer;
-    P    : PWord32;
-    Q    : PByte;
+var
+  B    : TSecureRandomBlock;
+  S, T : RawByteString;
+  L, N : Integer;
+  P    : PWord32;
+  Q    : PByte;
 begin
   if Digits <= 0 then
     begin
@@ -254,11 +260,12 @@ begin
 end;
 
 function SecureRandomHexStrU(const Digits: Integer; const UpperCase: Boolean): UnicodeString;
-var B    : TSecureRandomBlock;
-    S, T : UnicodeString;
-    L, N : Integer;
-    P    : PWord32;
-    Q    : PWideChar;
+var
+  B    : TSecureRandomBlock;
+  S, T : UnicodeString;
+  L, N : Integer;
+  P    : PWord32;
+  Q    : PWideChar;
 begin
   if Digits <= 0 then
     begin
@@ -297,7 +304,8 @@ begin
 end;
 
 function SecureRandomWord32: Word32;
-var L : Word32;
+var
+  L : Word32;
 begin
   SecureRandomBuf(L, SizeOf(Word32));
   Result := L;
