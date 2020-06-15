@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUnicodeCodecs.pas                                     }
-{   File version:     5.26                                                     }
+{   File version:     5.27                                                     }
 {   Description:      Unicode codecs                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2002-2020                                  }
@@ -92,6 +92,7 @@
 {   2019/04/28  5.25  Reduce dependencies.                                     }
 {   2019/10/03  5.26  RegisterDefaultCodecs not called in unit initialization  }
 {                     but in GetCodecByAlias.                                  }
+{   2020/06/10  5.27  Fix little endian, big endian issue.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -2304,147 +2305,9 @@ const
   UTF16BEAlias : array[0..UTF16BEAliases - 1] of String = (
       'UTF-16BE', 'UTF16be');
 
-class function TUTF16LECodec.GetAliasCount: Integer;
-begin
-  Result := UTF16BEAliases;
-end;
-
-class function TUTF16LECodec.GetAlias(const Idx: Integer): String;
-begin
-  if Idx < 0 then
-    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
-  if Idx >= GetAliasCount then
-    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
-  Result := UTF16BEAlias[Idx];
-end;
-
-procedure TUTF16LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
-    const DestBuf: Pointer; const DestSize: Integer;
-    out ProcessedBytes, DestLength: Integer);
-var
-  L, M : Integer;
-  P, Q : PWideChar;
-begin
-  L := BufSize;
-  if L > DestSize then
-    L := DestSize;
-  if L <= 1 then
-    begin
-      ProcessedBytes := 0;
-      DestLength := 0;
-      exit;
-    end;
-  Dec(L, L mod Sizeof(WideChar));
-  M := L div Sizeof(WideChar);
-  P := Buf;
-  Q := DestBuf;
-  Move(P^, Q^, L);
-  DestLength := M;
-  ProcessedBytes := L;
-end;
-
-function TUTF16LECodec.Encode(const S: PWideChar; const Length: Integer;
-    out ProcessedChars: Integer): RawByteString;
-var L : Integer;
-begin
-  if Length <= 0 then
-    begin
-      ProcessedChars := 0;
-      SetLength(Result, 0);
-      exit;
-    end;
-  L := Length * 2;
-  SetLength(Result, L);
-  Move(S^, Pointer(Result)^, L);
-  ProcessedChars := Length;
-end;
-
-procedure TUTF16LECodec.InternalReadUCS4Char(out C: UCS4Char;
-    out ByteCount: Integer);
-var LowSurrogate: array[0..1] of Byte;  // We do not use Word, because the byte order of a Word is CPU dependant
-begin
-  C := 0;
-  // C must be initialized, because the ReadBuffer(C, 2) call below does
-  // not fill the whole variable!
-  if not ReadBuffer(C, 2) then
-    begin
-      C := UCS4_STRING_TERMINATOR;
-      ByteCount := 0;
-      Exit;
-    end;
-  C := System.Swap(C);  // UCS4Chars are stored in Little Endian mode; so we need to swap the bytes.
-  case C of
-    $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
-      begin
-        if not ReadBuffer(LowSurrogate, 2) then
-          raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
-        case LowSurrogate[0] of
-          $DC..$DF:
-          begin
-            C := ((C - $D7C0) shl 10) + ((LowSurrogate[0] xor $DC) shl 8) + LowSurrogate[1];
-            ByteCount := 4;
-          end;
-        else
-          raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
-        end;
-      end;
-    $DC00..$DFFF: // Low surrogate of Unicode character [$10000..$10FFFF]
-      raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
-    else
-      ByteCount := 2;
-  end;
-end;
-
-procedure TUTF16LECodec.InternalWriteUCS4Char(const C: UCS4Char;
-    out ByteCount: Integer);
-var Buffer : array[0..3] of Byte;
-begin
-  UCS4CharToUTF16BE(C, @Buffer, 4, ByteCount);
-  WriteBuffer(Buffer[0], ByteCount);
-end;
-
-procedure TUTF16LECodec.WriteUCS4Char(const C: UCS4Char;
-    out ByteCount: Integer);
-const
-  UTF16BE_LF   : array[0..1] of Byte = ($00, $0A);
-  UTF16BE_CR   : array[0..1] of Byte = ($00, $0D);
-  UTF16BE_CRLF : array[0..3] of Byte = ($00, $0D, $00, $0A);
-begin
-  if C = UCS4_LF then
-    case WriteLFOption of
-      lwLF:
-        begin
-          WriteBuffer(UTF16BE_LF, 2);
-          ByteCount := 2;
-        end;
-      lwCR:
-        begin
-          WriteBuffer(UTF16BE_CR, 2);
-          ByteCount := 2;
-        end;
-      lwCRLF:
-        begin
-          WriteBuffer(UTF16BE_CRLF, 4);
-          ByteCount := 4;
-        end;
-    end
-  else
-    InternalWriteUCS4Char(C, ByteCount);
-end;
-
-
-
-{                                                                              }
-{ UTF-16LE                                                                     }
-{                                                                              }
-const
-  UTF16LEAliases = 2;
-  UTF16LEAlias : array[0..UTF16LEAliases - 1] of String = (
-      'UTF-16LE', 'utf16le');
-
 class function TUTF16BECodec.GetAliasCount: Integer;
 begin
-  Result := UTF16LEAliases;
+  Result := UTF16BEAliases;
 end;
 
 class function TUTF16BECodec.GetAlias(const Idx: Integer): String;
@@ -2453,13 +2316,16 @@ begin
     raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
   if Idx >= GetAliasCount then
     raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
-  Result := UTF16LEAlias[Idx];
+  Result := UTF16BEAlias[Idx];
 end;
 
 procedure TUTF16BECodec.Decode(const Buf: Pointer; const BufSize: Integer;
-  const DestBuf: Pointer; const DestSize: Integer; out ProcessedBytes, DestLength: Integer);
-var I, L, M : Integer;
-    P, Q    : PWideChar;
+    const DestBuf: Pointer; const DestSize: Integer;
+    out ProcessedBytes, DestLength: Integer);
+var
+  L, M : Integer;
+  I    : Integer;
+  P, Q : PWideChar;
 begin
   L := BufSize;
   if L > DestSize then
@@ -2510,7 +2376,143 @@ end;
 
 procedure TUTF16BECodec.InternalReadUCS4Char(out C: UCS4Char;
     out ByteCount: Integer);
-var LowSurrogate : array[0..1] of Byte;  // We do not use Word, because the byte order of a Word is CPU dependant
+var LowSurrogate: array[0..1] of Byte; // We do not use Word, because the byte order of a Word is CPU dependant
+begin
+  C := 0;
+  // C must be initialized, because the ReadBuffer(C, 2) call below does
+  // not fill the whole variable!
+  if not ReadBuffer(C, 2) then
+    begin
+      C := UCS4_STRING_TERMINATOR;
+      ByteCount := 0;
+      Exit;
+    end;
+  C := System.Swap(C); // UCS4Chars are stored in Little Endian mode; so we need to swap the bytes.
+  case C of
+    $D800..$DBFF: // High surrogate of Unicode character [$10000..$10FFFF]
+      begin
+        if not ReadBuffer(LowSurrogate, 2) then
+          raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
+        case LowSurrogate[0] of
+          $DC..$DF:
+          begin
+            C := ((C - $D7C0) shl 10) + ((LowSurrogate[0] xor $DC) shl 8) + LowSurrogate[1];
+            ByteCount := 4;
+          end;
+        else
+          raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
+        end;
+      end;
+    $DC00..$DFFF: // Low surrogate of Unicode character [$10000..$10FFFF]
+      raise EConvertError.CreateFmt(SInvalidEncoding, ['UTF-16BE']);
+    else
+      ByteCount := 2;
+  end;
+end;
+
+procedure TUTF16BECodec.InternalWriteUCS4Char(const C: UCS4Char;
+    out ByteCount: Integer);
+var Buffer : array[0..3] of Byte;
+begin
+  UCS4CharToUTF16BE(C, @Buffer, 4, ByteCount);
+  WriteBuffer(Buffer[0], ByteCount);
+end;
+
+procedure TUTF16BECodec.WriteUCS4Char(const C: UCS4Char;
+    out ByteCount: Integer);
+const
+  UTF16BE_LF   : array[0..1] of Byte = ($00, $0A);
+  UTF16BE_CR   : array[0..1] of Byte = ($00, $0D);
+  UTF16BE_CRLF : array[0..3] of Byte = ($00, $0D, $00, $0A);
+begin
+  if C = UCS4_LF then
+    case WriteLFOption of
+      lwLF:
+        begin
+          WriteBuffer(UTF16BE_LF, 2);
+          ByteCount := 2;
+        end;
+      lwCR:
+        begin
+          WriteBuffer(UTF16BE_CR, 2);
+          ByteCount := 2;
+        end;
+      lwCRLF:
+        begin
+          WriteBuffer(UTF16BE_CRLF, 4);
+          ByteCount := 4;
+        end;
+    end
+  else
+    InternalWriteUCS4Char(C, ByteCount);
+end;
+
+
+
+{                                                                              }
+{ UTF-16LE                                                                     }
+{                                                                              }
+const
+  UTF16LEAliases = 2;
+  UTF16LEAlias : array[0..UTF16LEAliases - 1] of String = (
+      'UTF-16LE', 'utf16le');
+
+class function TUTF16LECodec.GetAliasCount: Integer;
+begin
+  Result := UTF16LEAliases;
+end;
+
+class function TUTF16LECodec.GetAlias(const Idx: Integer): String;
+begin
+  if Idx < 0 then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  if Idx >= GetAliasCount then
+    raise EUnicodeCodecException.Create(SAliasIndexOutOfRange);
+  Result := UTF16LEAlias[Idx];
+end;
+
+procedure TUTF16LECodec.Decode(const Buf: Pointer; const BufSize: Integer;
+  const DestBuf: Pointer; const DestSize: Integer; out ProcessedBytes, DestLength: Integer);
+var L, M : Integer;
+    P, Q : PWideChar;
+begin
+  L := BufSize;
+  if L > DestSize then
+    L := DestSize;
+  if L <= 1 then
+    begin
+      ProcessedBytes := 0;
+      DestLength := 0;
+      exit;
+    end;
+  Dec(L, L mod Sizeof(WideChar));
+  M := L div Sizeof(WideChar);
+  P := Buf;
+  Q := DestBuf;
+  Move(P^, Q^, L);
+  DestLength := M;
+  ProcessedBytes := L;
+end;
+
+function TUTF16LECodec.Encode(const S: PWideChar; const Length: Integer;
+    out ProcessedChars: Integer): RawByteString;
+var L : Integer;
+begin
+  if Length <= 0 then
+    begin
+      ProcessedChars := 0;
+      SetLength(Result, 0);
+      exit;
+    end;
+  L := Length * 2;
+  SetLength(Result, L);
+  Move(S^, Pointer(Result)^, L);
+  ProcessedChars := Length;
+end;
+
+procedure TUTF16LECodec.InternalReadUCS4Char(out C: UCS4Char;
+    out ByteCount: Integer);
+var LowSurrogate : array[0..1] of Byte; // We do not use Word, because the byte order of a Word is CPU dependant
 begin
   C := 0;
   // C must be initialized, because the ReadBuffer(C, 2) call below does
@@ -2543,7 +2545,7 @@ begin
   end;
 end;
 
-procedure TUTF16BECodec.InternalWriteUCS4Char(const C: UCS4Char;
+procedure TUTF16LECodec.InternalWriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 var Buffer : array[0..3] of Byte;
 begin
@@ -2551,7 +2553,7 @@ begin
   WriteBuffer(Buffer[0], ByteCount);
 end;
 
-procedure TUTF16BECodec.WriteUCS4Char(const C: UCS4Char;
+procedure TUTF16LECodec.WriteUCS4Char(const C: UCS4Char;
     out ByteCount: Integer);
 const
   UTF16LE_LF   : array[0..1] of Byte = ($0A, $00);
