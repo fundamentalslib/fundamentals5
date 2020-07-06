@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2020/06/02                                               }
+{   File updated:     2020/07/03                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Github:           https://github.com/fundamentalslib                       }
@@ -143,6 +143,14 @@
 {   ExtendedIs16Bytes   - Extended type is 16 bytes.                           }
 {   TBytesDeclared      - System defines TBytes type.                          }
 {   ObjectARC           - Objects has Automatic Reference Countinging (ARC).   }
+{   LongWordIs32Bits    - LongWord type is 32 bits.                            }
+{   LongIntIs32Bits     - LongInt type is 32 bits.                             }
+{   LongWordIs64Bits    - LongWord type is 64 bits.                            }
+{   LongIntIs64Bits     - LongInt type is 64 bits.                             }
+{   NativeIntIs32Bits   - NativeInt type is 32 bits.                           }
+{   NativeIntIs64Bits   - NativeInt type is 64 bits.                           }
+{   NativeUIntIs32Bits  - NativeUInt type is 32 bits.                          }
+{   NativeUIntIs64Bits  - NativeUInt type is 64 bits.                          }
 {                                                                              }
 {   UseInline         - SupportInline and not PurePascal.                      }
 {                                                                              }
@@ -790,239 +798,6 @@
 
 
 {                                                                              }
-{ Delphi: Supported language features                                          }
-{                                                                              }
-{$IFDEF DELPHI}
-  {$DEFINE SupportShortString}
-  {$DEFINE SetSizeAlignIsByte}
-{$ENDIF}
-
-{$IFDEF DELPHI2_UP}
-  {$DEFINE SupportAnsiChar}
-  {$DEFINE SupportAnsiString}
-{$ENDIF}
-
-{$IFDEF DELPHI3_UP}
-  {$DEFINE SupportCardinal}
-  {$DEFINE SupportCurrency}
-  {$DEFINE SupportVariant}
-  {$DEFINE ExtendedIs80Bits}
-{$ENDIF}
-
-{$IFDEF DELPHI4_UP}
-  {$DEFINE SupportInt64}
-  {$DEFINE SupportWideChar}
-  {$DEFINE SupportWideString}
-  {$DEFINE SupportDynArray}
-  {$DEFINE SupportAssert}
-{$ENDIF}
-
-{$IFDEF DELPHI5_UP}
-  {$DEFINE SupportOverload}
-{$ENDIF}
-
-{$IFDEF DELPHI6_UP}
-  {$DEFINE SupportInterface}
-  {$DEFINE SupportUCS4String}
-  {$DEFINE SupportUCS4Char}
-  {$DEFINE SupportEnumValue}
-{$ENDIF}
-
-{$IFDEF DELPHI2005_UP}
-  {$DEFINE SupportInline}
-  {$DEFINE SupportOperatorOverloading}
-{$ENDIF}
-
-{$IFDEF DELPHI2005}
-  {$DEFINE SupportInlineIsBuggy}
-{$ENDIF}
-
-{$IFDEF DELPHI2006}
-  {$DEFINE SupportInlineIsBuggy}
-{$ENDIF}
-
-{$IFDEF DELPHI2007_UP}
-  {$DEFINE SupportForIn}
-  {$DEFINE TBytesDeclared}
-{$ENDIF}
-
-{$IFDEF DELPHI2009_UP}
-  {$DEFINE SupportAnonymousMethods}
-  {$DEFINE SupportGenerics}
-  {$DEFINE SupportUnicodeString}
-  {$DEFINE SupportRawByteString}
-  {$DEFINE SupportUTF8String}
-  {$IFDEF ManagedCode}
-    {$UNDEF SupportRawByteString}
-    {$UNDEF SupportUTF8String}
-    {$UNDEF SupportUTF8Char}
-    {$UNDEF SupportUCS4String}
-    {$UNDEF SupportUCS4Char}
-  {$ENDIF}
-  {$DEFINE SupportNativeInt}
-  {$DEFINE SupportNativeUInt}
-  {$DEFINE SupportUInt64}
-  {$DEFINE SupportStringRefCount}
-{$ENDIF}
-
-{$IFDEF DELPHI2009_UP}
-  {$DEFINE CharIsWide}
-  {$DEFINE StringIsUnicode}
-{$ELSE}
-  {$DEFINE CharIsAnsi}
-  {$DEFINE StringIsAnsi}
-{$ENDIF}
-
-{$IFDEF DELPHIXE2_UP}
-  {$IFNDEF WIN32}
-    {$UNDEF ExtendedIs80Bits}
-    {$DEFINE ExtendedIsDouble}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHIXE4_UP}
-  {$IFDEF LINUX}
-    {$UNDEF ExtendedIs80Bits}
-    {$UNDEF ExtendedIsDouble}
-    {$DEFINE ExtendedIs16Bytes}
-  {$ENDIF}
-  {$IFDEF IOS}
-    {$UNDEF SupportAnsiChar}
-    {$UNDEF SupportAnsiString}
-    {$UNDEF SupportWideString}
-    {$UNDEF SupportShortString}
-  {$ENDIF}
-  {$IFDEF ANDROID}
-    {$UNDEF SupportAnsiChar}
-    {$UNDEF SupportAnsiString}
-    {$UNDEF SupportWideString}
-    {$UNDEF SupportShortString}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHIXE4_UP}
-  {$IFDEF AUTOREFCOUNT}
-    {$DEFINE ObjectARC}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHIXE8_UP}
-  {$DEFINE SupportFixedInt}
-  {$DEFINE SupportFixedUInt}
-  {$IFDEF LINUX}
-    {$UNDEF SupportAnsiChar}
-    {$UNDEF SupportAnsiString}
-    {$UNDEF SupportWideString}
-    {$UNDEF SupportShortString}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI10_UP}
-  {$DEFINE SupportUTF8Char}
-  {$IFDEF MACOS32}
-    {$UNDEF ExtendedIs80Bits}
-    {$UNDEF ExtendedIsDouble}
-    {$DEFINE ExtendedIs16Bytes}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI10_3_UP}
-  {$IFDEF LINUX}
-    {$DEFINE SupportAnsiChar}
-    {$DEFINE SupportAnsiString}
-  {$ENDIF}
-{$ENDIF}
-
-{$IFDEF DELPHI10_4_UP}
-  {$DEFINE SupportAnsiChar}
-  {$DEFINE SupportAnsiString}
-{$ENDIF}
-
-
-
-{                                                                              }
-{ Delphi: Switches                                                             }
-{                                                                              }
-{$IFDEF DELPHIXE4_UP}
-  {$IFDEF IOS}
-    {$ZEROBASEDSTRINGS OFF}
-  {$ENDIF}
-  {$IFDEF ANDROID}
-    {$ZEROBASEDSTRINGS OFF}
-  {$ENDIF}
-{$ENDIF}
-
-
-
-{                                                                              }
-{ Free Pascal                                                                  }
-{                                                                              }
-{$IFDEF FPC}
-
-  {$DEFINE FREEPASCAL}
-
-  {$IFDEF VER1}
-    {$DEFINE FREEPASCAL1}
-  {$ELSE}
-    {$DEFINE FREEPASCAL2_UP}
-
-    {$IFDEF VER2}
-      {$DEFINE FREEPASCAL2}
-    {$ENDIF}
-
-    {$IFDEF VER2_0}
-      {$DEFINE FREEPASCAL2_0}
-    {$ENDIF}
-    {$IFDEF VER2_2}
-      {$DEFINE FREEPASCAL2_2}
-    {$ENDIF}
-    {$IFDEF VER2_4}
-      {$DEFINE FREEPASCAL2_4}
-    {$ENDIF}
-    {$IFDEF VER2_6}
-      {$DEFINE FREEPASCAL2_6}
-      {$DEFINE FREEPASCAL2_6_UP}
-    {$ENDIF}
-    {$IFDEF VER2_7}
-      {$DEFINE FREEPASCAL2_7}
-      {$DEFINE FREEPASCAL2_6_UP}
-      {$DEFINE FREEPASCAL2_7_UP}
-    {$ENDIF}
-
-    {$IFDEF VER3_0}
-      {$DEFINE FREEPASCAL3}
-      {$DEFINE FREEPASCAL3_UP}
-      {$DEFINE FREEPASCAL3_0}
-      {$DEFINE FREEPASCAL2_6_UP}
-      {$DEFINE FREEPASCAL2_7_UP}
-      {$DEFINE FREEPASCAL3_0_UP}
-    {$ENDIF}
-    {$IFDEF VER3_1}
-      {$DEFINE FREEPASCAL3}
-      {$DEFINE FREEPASCAL3_UP}
-      {$DEFINE FREEPASCAL3_1}
-      {$DEFINE FREEPASCAL2_6_UP}
-      {$DEFINE FREEPASCAL2_7_UP}
-      {$DEFINE FREEPASCAL3_0_UP}
-      {$DEFINE FREEPASCAL3_1_UP}
-    {$ENDIF}
-    {$IFDEF VER3_2}
-      {$DEFINE FREEPASCAL3}
-      {$DEFINE FREEPASCAL3_UP}
-      {$DEFINE FREEPASCAL3_2}
-      {$DEFINE FREEPASCAL2_6_UP}
-      {$DEFINE FREEPASCAL2_7_UP}
-      {$DEFINE FREEPASCAL3_0_UP}
-      {$DEFINE FREEPASCAL3_1_UP}
-      {$DEFINE FREEPASCAL3_2_UP}
-    {$ENDIF}
-  {$ENDIF}
-
-{$ENDIF}
-
-
-
-{                                                                              }
 { Free Pascal: Operating System and CPU                                        }
 {                                                                              }
 {$IFDEF FREEPASCAL}
@@ -1047,72 +822,6 @@
   {$IFDEF CPUM68K}      {$DEFINE CPU_68K}    {$ENDIF}
   {$IFDEF CPUPOWERPC32} {$DEFINE CPU_PPC32}  {$ENDIF}
   {$IFDEF CPUPOWERPC64} {$DEFINE CPU_PPC64}  {$ENDIF}
-{$ENDIF}
-
-
-
-{                                                                              }
-{ FreePascal: Mode                                                             }
-{                                                                              }
-{$IFDEF FREEPASCAL2}
-  {$MODE DELPHI}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL3_UP}
-  {$MODE DELPHIUNICODE}
-{$ENDIF}
-
-
-
-{                                                                              }
-{ FreePascal: Supported language features                                      }
-{                                                                              }
-{$IFDEF FREEPACAL2}
-  {$DEFINE CharIsAnsi}
-  {$DEFINE StringIsAnsi}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL2_UP}
-  {$DEFINE SupportNativeInt}
-  {$DEFINE SupportNativeUInt}
-  {$DEFINE SupportInt64}
-  {$DEFINE SupportUInt64}
-  {$DEFINE SupportAnsiChar}
-  {$DEFINE SupportAnsiString}
-  {$DEFINE SupportCardinal}
-  {$DEFINE SupportCurrency}
-  {$DEFINE SupportWideChar}
-  {$DEFINE SupportWideString}
-  {$DEFINE SupportDynArray}
-  {$DEFINE SupportAssert}
-  {$DEFINE SupportInterface}
-  {$DEFINE SupportOverload}
-  {$DEFINE SupportUTF8String}
-  {$DEFINE SupportUCS4String}
-  {$IFDEF FREEPASCAL2_6_UP}
-    {$DEFINE SetSizeAlignIsByte}
-  {$ELSE}
-    {$IFDEF FREEPASCAL2_UP}
-      {$DEFINE SetSizeAlignIsLongWord}
-    {$ELSE}
-      {$DEFINE SetSizeAlignIsByte}
-    {$ENDIF}
-  {$ENDIF}
-  {$DEFINE SupportEnumValue}
-{$ENDIF}
-
-{$IFDEF FREEPASCAL3_UP}
-  {$DEFINE CharIsWide}
-  {$DEFINE StringIsUnicode}
-  {$DEFINE SupportUnicodeString}
-  {$DEFINE SupportRawByteString}
-  {$DEFINE SupportStringRefCount}
-
-  {$IFDEF CPUX86_64}
-  {$IFNDEF LINUX}
-    {$DEFINE ExtendedIsDouble}
-  {$ENDIF}
-  {$ENDIF}
 {$ENDIF}
 
 
@@ -1376,6 +1085,333 @@
     {$DEFINE CPU_32}
   {$ENDIF}
 {$ENDIF}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Delphi: Supported language features                                          }
+{                                                                              }
+{$IFDEF DELPHI}
+  {$DEFINE SupportShortString}
+  {$DEFINE SetSizeAlignIsByte}
+{$ENDIF}
+
+{$IFDEF DELPHI2_UP}
+  {$DEFINE SupportAnsiChar}
+  {$DEFINE SupportAnsiString}
+{$ENDIF}
+
+{$IFDEF DELPHI3_UP}
+  {$DEFINE SupportCardinal}
+  {$DEFINE SupportCurrency}
+  {$DEFINE SupportVariant}
+  {$DEFINE ExtendedIs80Bits}
+  {$DEFINE LongWordIs32Bits}
+  {$DEFINE LongIntIs32Bits}
+{$ENDIF}
+
+{$IFDEF DELPHI4_UP}
+  {$DEFINE SupportInt64}
+  {$DEFINE SupportWideChar}
+  {$DEFINE SupportWideString}
+  {$DEFINE SupportDynArray}
+  {$DEFINE SupportAssert}
+{$ENDIF}
+
+{$IFDEF DELPHI5_UP}
+  {$DEFINE SupportOverload}
+{$ENDIF}
+
+{$IFDEF DELPHI6_UP}
+  {$DEFINE SupportInterface}
+  {$DEFINE SupportUCS4String}
+  {$DEFINE SupportUCS4Char}
+  {$DEFINE SupportEnumValue}
+{$ENDIF}
+
+{$IFDEF DELPHI2005_UP}
+  {$DEFINE SupportInline}
+  {$DEFINE SupportOperatorOverloading}
+{$ENDIF}
+
+{$IFDEF DELPHI2005}
+  {$DEFINE SupportInlineIsBuggy}
+{$ENDIF}
+
+{$IFDEF DELPHI2006}
+  {$DEFINE SupportInlineIsBuggy}
+{$ENDIF}
+
+{$IFDEF DELPHI2007_UP}
+  {$DEFINE SupportForIn}
+  {$DEFINE TBytesDeclared}
+{$ENDIF}
+
+{$IFDEF DELPHI2009_UP}
+  {$DEFINE SupportAnonymousMethods}
+  {$DEFINE SupportGenerics}
+  {$DEFINE SupportUnicodeString}
+  {$DEFINE SupportRawByteString}
+  {$DEFINE SupportUTF8String}
+  {$IFDEF ManagedCode}
+    {$UNDEF SupportRawByteString}
+    {$UNDEF SupportUTF8String}
+    {$UNDEF SupportUTF8Char}
+    {$UNDEF SupportUCS4String}
+    {$UNDEF SupportUCS4Char}
+  {$ENDIF}
+  {$DEFINE SupportNativeInt}
+  {$DEFINE SupportNativeUInt}
+  {$IFDEF CPU_64}
+    {$DEFINE NativeIntIs64Bits}
+    {$DEFINE NativeUIntIs64Bits}
+  {$ELSE}
+    {$IFDEF CPU_32}
+      {$DEFINE NativeIntIs32Bits}
+      {$DEFINE NativeUIntIs32Bits}
+    {$ENDIF}
+  {$ENDIF}
+  {$DEFINE SupportUInt64}
+  {$DEFINE SupportStringRefCount}
+{$ENDIF}
+
+{$IFDEF DELPHI2009_UP}
+  {$DEFINE CharIsWide}
+  {$DEFINE StringIsUnicode}
+{$ELSE}
+  {$DEFINE CharIsAnsi}
+  {$DEFINE StringIsAnsi}
+{$ENDIF}
+
+{$IFDEF DELPHIXE2_UP}
+  {$IFNDEF WIN32}
+    {$UNDEF ExtendedIs80Bits}
+    {$DEFINE ExtendedIsDouble}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF LINUX}
+    {$UNDEF ExtendedIs80Bits}
+    {$UNDEF ExtendedIsDouble}
+    {$DEFINE ExtendedIs16Bytes}
+  {$ENDIF}
+  {$IFDEF IOS}
+    {$UNDEF SupportAnsiChar}
+    {$UNDEF SupportAnsiString}
+    {$UNDEF SupportWideString}
+    {$UNDEF SupportShortString}
+  {$ENDIF}
+  {$IFDEF ANDROID}
+    {$UNDEF SupportAnsiChar}
+    {$UNDEF SupportAnsiString}
+    {$UNDEF SupportWideString}
+    {$UNDEF SupportShortString}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF AUTOREFCOUNT}
+    {$DEFINE ObjectARC}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHIXE8_UP}
+  {$DEFINE SupportFixedInt}
+  {$DEFINE SupportFixedUInt}
+  {$IFDEF LINUX}
+    {$UNDEF SupportAnsiChar}
+    {$UNDEF SupportAnsiString}
+    {$UNDEF SupportWideString}
+    {$UNDEF SupportShortString}
+  {$ENDIF}
+  {$IFDEF OS_IOS64}
+    {$UNDEF LongWordIs32Bits}
+    {$UNDEF LongIntIs32Bits}
+    {$DEFINE LongWordIs64Bits}
+    {$DEFINE LongIntIs64Bits}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHI10_UP}
+  {$DEFINE SupportUTF8Char}
+  {$IFDEF MACOS32}
+    {$UNDEF ExtendedIs80Bits}
+    {$UNDEF ExtendedIsDouble}
+    {$DEFINE ExtendedIs16Bytes}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHI10_3_UP}
+  {$IFDEF LINUX}
+    {$DEFINE SupportAnsiChar}
+    {$DEFINE SupportAnsiString}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DELPHI10_4_UP}
+  {$DEFINE SupportAnsiChar}
+  {$DEFINE SupportAnsiString}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Delphi: Switches                                                             }
+{                                                                              }
+{$IFDEF DELPHIXE4_UP}
+  {$IFDEF IOS}
+    {$ZEROBASEDSTRINGS OFF}
+  {$ENDIF}
+  {$IFDEF ANDROID}
+    {$ZEROBASEDSTRINGS OFF}
+  {$ENDIF}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ Free Pascal                                                                  }
+{                                                                              }
+{$IFDEF FPC}
+
+  {$DEFINE FREEPASCAL}
+
+  {$IFDEF VER1}
+    {$DEFINE FREEPASCAL1}
+  {$ELSE}
+    {$DEFINE FREEPASCAL2_UP}
+
+    {$IFDEF VER2}
+      {$DEFINE FREEPASCAL2}
+    {$ENDIF}
+
+    {$IFDEF VER2_0}
+      {$DEFINE FREEPASCAL2_0}
+    {$ENDIF}
+    {$IFDEF VER2_2}
+      {$DEFINE FREEPASCAL2_2}
+    {$ENDIF}
+    {$IFDEF VER2_4}
+      {$DEFINE FREEPASCAL2_4}
+    {$ENDIF}
+    {$IFDEF VER2_6}
+      {$DEFINE FREEPASCAL2_6}
+      {$DEFINE FREEPASCAL2_6_UP}
+    {$ENDIF}
+    {$IFDEF VER2_7}
+      {$DEFINE FREEPASCAL2_7}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+    {$ENDIF}
+
+    {$IFDEF VER3_0}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_0}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+    {$ENDIF}
+    {$IFDEF VER3_1}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_1}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+      {$DEFINE FREEPASCAL3_1_UP}
+    {$ENDIF}
+    {$IFDEF VER3_2}
+      {$DEFINE FREEPASCAL3}
+      {$DEFINE FREEPASCAL3_UP}
+      {$DEFINE FREEPASCAL3_2}
+      {$DEFINE FREEPASCAL2_6_UP}
+      {$DEFINE FREEPASCAL2_7_UP}
+      {$DEFINE FREEPASCAL3_0_UP}
+      {$DEFINE FREEPASCAL3_1_UP}
+      {$DEFINE FREEPASCAL3_2_UP}
+    {$ENDIF}
+  {$ENDIF}
+
+{$ENDIF}
+
+
+
+{                                                                              }
+{ FreePascal: Mode                                                             }
+{                                                                              }
+{$IFDEF FREEPASCAL2}
+  {$MODE DELPHI}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL3_UP}
+  {$MODE DELPHIUNICODE}
+{$ENDIF}
+
+
+
+{                                                                              }
+{ FreePascal: Supported language features                                      }
+{                                                                              }
+{$IFDEF FREEPACAL2}
+  {$DEFINE CharIsAnsi}
+  {$DEFINE StringIsAnsi}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL2_UP}
+  {$DEFINE SupportNativeInt}
+  {$DEFINE SupportNativeUInt}
+  {$DEFINE SupportInt64}
+  {$DEFINE SupportUInt64}
+  {$DEFINE SupportAnsiChar}
+  {$DEFINE SupportAnsiString}
+  {$DEFINE SupportCardinal}
+  {$DEFINE SupportCurrency}
+  {$DEFINE SupportWideChar}
+  {$DEFINE SupportWideString}
+  {$DEFINE SupportDynArray}
+  {$DEFINE SupportAssert}
+  {$DEFINE SupportInterface}
+  {$DEFINE SupportOverload}
+  {$DEFINE SupportUTF8String}
+  {$DEFINE SupportUCS4String}
+  {$IFDEF FREEPASCAL2_6_UP}
+    {$DEFINE SetSizeAlignIsByte}
+  {$ELSE}
+    {$IFDEF FREEPASCAL2_UP}
+      {$DEFINE SetSizeAlignIsLongWord}
+    {$ELSE}
+      {$DEFINE SetSizeAlignIsByte}
+    {$ENDIF}
+  {$ENDIF}
+  {$DEFINE SupportEnumValue}
+  {$DEFINE LongWordIs32Bits}
+  {$DEFINE LongIntIs32Bits}
+  {$IFDEF CPU_64}
+    {$DEFINE NativeIntIs64Bits}
+    {$DEFINE NativeUIntIs64Bits}
+  {$ELSE}
+    {$IFDEF CPU_32}
+      {$DEFINE NativeIntIs32Bits}
+      {$DEFINE NativeUIntIs32Bits}
+    {$ENDIF}
+  {$ENDIF}
+{$ENDIF}
+
+{$IFDEF FREEPASCAL3_UP}
+  {$DEFINE CharIsWide}
+  {$DEFINE StringIsUnicode}
+  {$DEFINE SupportUnicodeString}
+  {$DEFINE SupportRawByteString}
+  {$DEFINE SupportStringRefCount}
+
+  {$IFDEF CPUX86_64}
+  {$IFNDEF LINUX}
+    {$DEFINE ExtendedIsDouble}
+  {$ENDIF}
+  {$ENDIF}
 {$ENDIF}
 
 
