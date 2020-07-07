@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStdTypes.pas                                          }
-{   File version:     5.06                                                     }
+{   File version:     5.07                                                     }
 {   Description:      Standard type definitions.                               }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -40,6 +40,7 @@
 {   2019/04/02  5.04  LongInt/LongWord changes.                                }
 {   2020/03/30  5.05  Add NativeWord.                                          }
 {   2020/06/02  5.06  UInt arrays.                                             }
+{   2020/06/09  5.07  Define PAnsiChar when not supported.                     }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -65,6 +66,10 @@
 unit flcStdTypes;
 
 interface
+
+uses
+  { System }
+  SysUtils;
 
 
 
@@ -359,6 +364,7 @@ type
 {$IFNDEF SupportAnsiChar}
 type
   AnsiChar = ByteChar;
+  PAnsiChar = ^AnsiChar;
 {$IFDEF ByteCharIsOrd}
   {$DEFINE AnsiCharIsOrd}
 {$ENDIF}
@@ -475,10 +481,21 @@ type
 
 
 {                                                                              }
+{ TBytes                                                                       }
+{   TBytes is a dynamic array of bytes.                                        }
+{                                                                              }
+{$IFNDEF TBytesDeclared}
+type
+  TBytes = array of Bytes;
+{$ENDIF}
+
+
+
+{                                                                              }
 { Dynamic arrays                                                               }
 {                                                                              }
 type
-  ByteArray = array of Byte;
+  ByteArray = TBytes;
   WordArray = array of Word;
   LongWordArray = array of LongWord;
   CardinalArray = array of Cardinal;
@@ -518,17 +535,6 @@ type
   InterfaceArray = array of IInterface;
   ByteCharSetArray = array of ByteCharSet;
   ByteSetArray = array of ByteSet;
-
-
-
-{                                                                              }
-{ TBytes                                                                       }
-{   TBytes is a dynamic array of bytes.                                        }
-{                                                                              }
-{$IFNDEF TBytesDeclared}
-type
-  TBytes = ByteArray;
-{$ENDIF}
 
 
 
