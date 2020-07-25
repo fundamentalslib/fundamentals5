@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDataStructArrays.pas                                  }
-{   File version:     5.32                                                     }
+{   File version:     5.33                                                     }
 {   Description:      Data structures: Arrays                                  }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -76,6 +76,7 @@
 {                     Remove dependencies on units flcDynArrays, flcStrings.   }
 {   2020/07/07  5.32  Refactor and remove dependency on unit flcUtils.         }
 {                     Added TByteArray.                                        }
+{   2020/07/07  5.33  Change memory allocation strategy for fewer allocations. }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -179,7 +180,7 @@ type
 
     function  Duplicate: TObjectArray;
 
-    function  IsEqual(const V: TObjectArray): Boolean;
+    function  IsEqual(const AArray: TObjectArray): Boolean;
 
     property  Count: NativeInt read FCount write SetCount;
     property  Item[const AIdx: NativeInt]: TObject read GetItem write SetItem; default;
@@ -215,7 +216,7 @@ type
     procedure Sort;
 
     function  GetRange(const ALoIdx, AHiIdx: NativeInt): ObjectArray;
-    procedure SetRange(const ALoIdx, AHiIdx: NativeInt; const V: ObjectArray);
+    procedure SetRange(const ALoIdx, AHiIdx: NativeInt; const AArray: ObjectArray);
   end;
 
 
@@ -245,13 +246,13 @@ type
     procedure SetItemAsString(const AIdx: NativeInt; const AValue: String);
 
     function  GetAsString: String;
-    procedure SetAsString(const S: String);{%ENDIF}
+    procedure SetAsString(const AStr: String);{%ENDIF}
 
   public
     class function CreateInstance: T%1%Array; virtual;
 
     constructor Create; overload; virtual;
-    constructor Create(const V: %1%Array); overload;
+    constructor Create(const AData: %1%Array); overload;
 
     property  Data: %1%Array read FData write SetData;
 
@@ -263,7 +264,7 @@ type
 
     function  Duplicate: T%1%Array;
 
-    function  IsEqual(const V: T%1%Array): Boolean;
+    function  IsEqual(const AArray: T%1%Array): Boolean;
 
     property  Count: NativeInt read FCount write SetCount;
     property  Item[const AIdx: NativeInt]: %2% read GetItem write SetItem; default;
@@ -289,7 +290,7 @@ type
     procedure Sort;
 
     function  GetRange(const ALoIdx, AHiIdx: NativeInt): %1%Array;
-    procedure SetRange(const ALoIdx, AHiIdx: NativeInt; const V: %1%Array);
+    procedure SetRange(const ALoIdx, AHiIdx: NativeInt; const AArray: %1%Array);
 
     procedure Fill(const AIdx, ACount: NativeInt; const AValue: %2%);{%IF 3}
 
@@ -412,7 +413,7 @@ implementation
 {                                                                              }
 { Utility functions                                                            }
 {                                                                              }
-function MinNativeInt(const A, B: NativeInt): NativeInt; inline;
+function MinNatInt(const A, B: NativeInt): NativeInt; inline;
 begin
   if A < B then
     Result := A
@@ -420,7 +421,7 @@ begin
     Result := B;
 end;
 
-function MaxNativeInt(const A, B: NativeInt): NativeInt; inline;
+function MaxNatInt(const A, B: NativeInt): NativeInt; inline;
 begin
   if A > B then
     Result := A
@@ -540,14 +541,14 @@ begin
   Result := Obj;
 end;
 
-function TObjectArray.IsEqual(const V: TObjectArray): Boolean;
+function TObjectArray.IsEqual(const AArray: TObjectArray): Boolean;
 var
   I : NativeInt;
   L : NativeInt;
   A : TObject;
   B : TObject;
 begin
-  L := V.Count;
+  L := AArray.Count;
   if FCount <> L then
     begin
       Result := False;
@@ -556,7 +557,7 @@ begin
   for I := 0 to L - 1 do
     begin
       A := FData[I];
-      B := V.FData[I];
+      B := AArray.FData[I];
       if A <> B then
         begin
           Result := False;
@@ -568,10 +569,11 @@ end;
 
 { Memory allocation strategy to reduce memory copies:                          }
 {   * For first allocation: allocate the exact size.                           }
-{   * For change to < 16: allocate 16 entries.                                 }
-{   * For growing to >= 16: pre-allocate 1/8th of ANewCount.                   }
-{   * For shrinking blocks: shrink actual allocation when Count is less        }
-{     than half of the allocated size.                                         }
+{   * For growing to < 32: allocate 4, 8, 16 then 32 entries.                  }
+{   * For growing to >= 32: pre-allocate 1/4th of ANewCount.                   }
+{   * For shrinking blocks < 32: allocate 32, 16, 8, 4 then 0 entries.         }
+{   * For shrinking blocks >= 32: shrink allocation when Count is less than    }
+{     half of the allocated size.                                              }
 procedure TObjectArray.SetCount(const ANewCount: NativeInt);
 var
   N : NativeInt;
@@ -594,12 +596,27 @@ begin
   FCount := N;
   L := FCapacity;
   if L > 0 then
-    if N < 16 then
-      N := 16
+    if N < 32 then
+      // growing/shrinking block < 32 bytes
+      if N <= 4 then
+        begin
+          if N > 0 then
+            N := 4;
+        end
+      else
+      if N <= 8 then
+        N := 8
+      else
+      if N <= 16 then
+        N := 16
+      else
+        N := 32
     else
     if N > L then
-      N := N + N shr 3
+      // growing block >= 32 bytes
+      N := N + N shr 2
     else
+    // shrinking block >= 32 bytes
     if N > L shr 1 then
       exit;
 
@@ -994,10 +1011,10 @@ begin
   Assert((AHiIdx >= 0) and (AHiIdx < FCount) and (AHiIdx >= ALoIdx));
   {$ENDIF}
 
-  Result := Copy(FData, ALoIdx, MinNativeInt(AHiIdx, FCount - 1) - ALoIdx + 1);
+  Result := Copy(FData, ALoIdx, MinNatInt(AHiIdx, FCount - 1) - ALoIdx + 1);
 end;
 
-procedure TObjectArray.SetRange(const ALoIdx, AHiIdx: NativeInt; const V: ObjectArray);
+procedure TObjectArray.SetRange(const ALoIdx, AHiIdx: NativeInt; const AArray: ObjectArray);
 var
   I : NativeInt;
   L : NativeInt;
@@ -1014,12 +1031,12 @@ begin
   Assert((AHiIdx >= 0) and (AHiIdx < FCount) and (AHiIdx >= ALoIdx));
   {$ENDIF}
 
-  L := MaxNativeInt(0, ALoIdx);
-  H := MinNativeInt(Count - 1, AHiIdx);
-  C := MinNativeInt(Length(V), H - L  + 1);
+  L := MaxNatInt(0, ALoIdx);
+  H := MinNatInt(FCount - 1, AHiIdx);
+  C := MinNatInt(Length(AArray), H - L  + 1);
 
   for I := 0 to C - 1 do
-    Item[L + I] := V[I];
+    FData[L + I] := AArray[I];
 end;
 
 
@@ -1038,10 +1055,10 @@ begin
   inherited Create;
 end;
 
-constructor T%1%Array.Create(const V: %1%Array);
+constructor T%1%Array.Create(const AData: %1%Array);
 begin
   inherited Create;
-  SetData(V);
+  SetData(AData);
 end;
 
 procedure T%1%Array.SetData(const AData: %1%Array);
@@ -1109,16 +1126,17 @@ begin
   Result := Obj;
 end;
 
-function T%1%Array.IsEqual(const V: T%1%Array): Boolean;
+function T%1%Array.IsEqual(const AArray: T%1%Array): Boolean;
 var
-  I, L : NativeInt;
+  I : NativeInt;
+  L : NativeInt;
 begin
-  L := V.Count;
-  Result := L = Count;
+  L := AArray.Count;
+  Result := L = FCount;
   if not Result then
     exit;
   for I := 0 to L - 1 do
-    if FData[I] <> V.FData[I] then
+    if FData[I] <> AArray.FData[I] then
       begin
         Result := False;
         exit;
@@ -1141,13 +1159,25 @@ begin
   FCount := N;
   L := FCapacity;
   if L > 0 then
-    if N < 16 then // pre-allocate first 16 entries
-      N := 16
+    if N < 32 then
+      if N <= 4 then
+        begin
+          if N > 0 then
+            N := 4;
+        end
+      else
+      if N <= 8 then
+        N := 8
+      else
+      if N <= 16 then
+        N := 16
+      else
+        N := 32
     else
     if N > L then
-      N := N + N shr 3 // pre-allocate 1/8th extra if growing
+      N := N + N shr 2
     else
-    if N > L shr 1 then // only reduce capacity if size is at least half
+    if N > L shr 1 then
       exit;
 
   if N <> L then
@@ -1458,15 +1488,15 @@ begin
   Assert((AHiIdx >= 0) and (AHiIdx < FCount) and (AHiIdx >= ALoIdx));
   {$ENDIF}
 
-  L := MaxNativeInt(0, ALoIdx);
-  H := MinNativeInt(AHiIdx, FCount);
+  L := MaxNatInt(0, ALoIdx);
+  H := MinNatInt(AHiIdx, FCount);
   if H >= L then
     Result := Copy(FData, L, H - L + 1)
   else
     Result := nil;
 end;
 
-procedure T%1%Array.SetRange(const ALoIdx, AHiIdx: NativeInt; const V: %1%Array);
+procedure T%1%Array.SetRange(const ALoIdx, AHiIdx: NativeInt; const AArray: %1%Array);
 var
   L : NativeInt;
   H : NativeInt;
@@ -1482,11 +1512,11 @@ begin
   Assert((AHiIdx >= 0) and (AHiIdx < FCount) and (AHiIdx >= ALoIdx));
   {$ENDIF}
 
-  L := MaxNativeInt(0, ALoIdx);
-  H := MinNativeInt(AHiIdx, FCount);
-  C := MaxNativeInt(MinNativeInt(Length(V), H - L + 1), 0);
+  L := MaxNatInt(0, ALoIdx);
+  H := MinNatInt(AHiIdx, FCount);
+  C := MaxNatInt(MinNatInt(Length(AArray), H - L + 1), 0);
   if C > 0 then
-    Move(V[0], FData[L], C * Sizeof(%3%));
+    Move(AArray[0], FData[L], C * Sizeof(%3%));
 end;
 
 {%IF 7}function T%1%Array.GetItemAsString(const AIdx: NativeInt): String;
@@ -1515,30 +1545,29 @@ begin
   SetItem(AIdx, %8%(AValue));
 end;
 
-procedure T%1%Array.SetAsString(const S: String);
+procedure T%1%Array.SetAsString(const AStr: String);
 var
+  C : NativeInt;
   L : NativeInt;
   F : NativeInt;
-  C : NativeInt;
   G : NativeInt;
 begin
-  L := Length(S);
-  if L = 0 then
+  C := Length(AStr);
+  if C = 0 then
     begin
-      Count := 0;
+      Clear;
       exit;
     end;
   L := 0;
   F := 1;
-  C := Length(S);
   while F < C do
     begin
       G := 0;
-      while (F + G <= C) and (S[F + G] <> ',') do
+      while (F + G <= C) and (AStr[F + G] <> ',') do
         Inc(G);
       Inc(L);
-      Count := L;
-      SetItemAsString(L - 1, Copy(S, F, G));
+      SetCount(L);
+      SetItemAsString(L - 1, Copy(AStr, F, G));
       Inc(F, G + 1);
     end;
 end;
