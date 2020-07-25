@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherRandom.pas                                      }
-{   File version:     5.06                                                     }
+{   File version:     5.07                                                     }
 {   Description:      Cipher random                                            }
 {                                                                              }
 {   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
@@ -45,6 +45,7 @@
 {   2020/02/13  5.06  Remove MD5 from generator.                               }
 {                     Use 8 random bits in generator for each secure           }
 {                     random bit.                                              }
+{   2020/07/07  5.07  NativeInt changes.                                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -63,11 +64,11 @@ uses
 
 
 
-procedure SecureRandomBuf(var Buf; const Size: Integer);
+procedure SecureRandomBuf(var Buf; const Size: NativeInt);
 
-function  SecureRandomBytes(const Size: Integer): TBytes;
+function  SecureRandomBytes(const Size: NativeInt): TBytes;
 
-function  SecureRandomStrA(const Size: Integer): RawByteString;
+function  SecureRandomStrB(const Size: NativeInt): RawByteString;
 
 function  SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = True): String;
 function  SecureRandomHexStrB(const Digits: Integer; const UpperCase: Boolean = True): RawByteString;
@@ -133,10 +134,10 @@ begin
   end;
 end;
 
-procedure SecureRandomBuf(var Buf; const Size: Integer);
+procedure SecureRandomBuf(var Buf; const Size: NativeInt);
 var
   P : PSecureRandomBlock;
-  L : Integer;
+  L : NativeInt;
   B : TSecureRandomBlock;
 begin
   P := @Buf;
@@ -155,7 +156,7 @@ begin
     end;
 end;
 
-function SecureRandomBytes(const Size: Integer): TBytes;
+function SecureRandomBytes(const Size: NativeInt): TBytes;
 begin
   SetLength(Result, Size);
   if Size <= 0 then
@@ -163,12 +164,12 @@ begin
   SecureRandomBuf(Pointer(Result)^, Size);
 end;
 
-function SecureRandomStrA(const Size: Integer): RawByteString;
+function SecureRandomStrB(const Size: NativeInt): RawByteString;
 begin
   SetLength(Result, Size);
   if Size <= 0 then
     exit;
-  SecureRandomBuf(Result[1], Size);
+  SecureRandomBuf(Pointer(Result)^, Size);
 end;
 
 function SecureRandomHexStr(const Digits: Integer; const UpperCase: Boolean = True): String;
@@ -284,7 +285,7 @@ begin
         begin
           T := Word32ToHexU(P^, 8, UpperCase);
           Move(PWideChar(T)^, Q^, 8 * SizeOf(WideChar));
-          SecureClear(T[1], 8 * SizeOf(WideChar));
+          SecureClear(Pointer(T)^, 8 * SizeOf(WideChar));
           Inc(Q, 8);
           Dec(N);
           Inc(P);
@@ -297,7 +298,7 @@ begin
       P := @B;
       T := Word32ToHexU(P^, L, UpperCase);
       Move(PWideChar(T)^, Q^, L * SizeOf(WideChar));
-      SecureClear(T[1], 8 * SizeOf(WideChar));
+      SecureClear(Pointer(T)^, 8 * SizeOf(WideChar));
     end;
   SecureClear(B, SecureRandomBlockSize);
   Result := S;
