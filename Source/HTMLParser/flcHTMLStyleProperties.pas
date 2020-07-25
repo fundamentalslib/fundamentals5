@@ -895,8 +895,10 @@ implementation
 
 uses
   { System }
+  {$IFDEF WindowsPlatform}
   {$IFDEF DELPHI6_UP}
   Windows,
+  {$ENDIF}
   {$ENDIF}
   System.UITypes;
 
@@ -924,7 +926,9 @@ begin
       Margins.Right.LengthType := lenDefault;
       Width.LengthType := lenDefault;
       Height.LengthType := lenDefault;
+      {$IFDEF WindowsPlatform}
       SetRect(Padding, -1, -1, -1, -1);
+      {$ENDIF}
       Clear := clearDefault;
       Display := displayDefault;
       ListStyle := liststyleDefault;

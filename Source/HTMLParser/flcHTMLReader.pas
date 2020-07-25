@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00 - HTML Parser                          }
 {   File name:        flcHTMLReader.pas                                        }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      HTML reader utilities                                    }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -36,6 +36,7 @@
 {                                                                              }
 {   2001/04/13  1.01  Part of cHTML unit.                                      }
 {   2019/02/21  5.02  Part flcHTMLReader unit.                                 }
+{   2020/06/09  5.03  String changes.                                          }
 {                                                                              }
 {******************************************************************************}
 
@@ -76,6 +77,7 @@ function  htmlGetDocumentReaderForFile(
 implementation
 
 uses
+  flcStdTypes,
   flcUTF,
   flcStrings;
 

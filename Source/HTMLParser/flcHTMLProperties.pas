@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00 - HTML Parser                          }
 {   File name:        flcHTMLProperties.pas                                    }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      HTML properties                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -46,6 +46,7 @@
 {   2015/04/11  1.08  UnicodeString changes.                                   }
 {   2019/02/21  1.09  Part of flcHTMLProperties.                               }
 {   2019/02/22  5.10  Revise for Fundamentals 5.                               }
+{   2020/06/09  5.11  WideString changes.                                      }
 {                                                                              }
 {******************************************************************************}
 

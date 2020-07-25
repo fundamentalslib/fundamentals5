@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00 - HTML Parser                          }
 {   File name:        flcHTMLDocBase.pas                                       }
-{   File version:     5.10                                                     }
+{   File version:     5.11                                                     }
 {   Description:      HTML DOM base classes                                    }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -45,6 +45,7 @@
 {   2002/12/16  1.08  Improved white-space and line-break handling.            }
 {   2015/04/11  1.09  UnicodeString changes.                                   }
 {   2019/02/22  5.10  Revise for Fundamentals 5.                               }
+{   2020/06/09  5.11  String changes.                                          }
 {                                                                              }
 {******************************************************************************}
 
@@ -235,7 +236,7 @@ type
 
   public
     constructor Create(const Text: String); overload;
-    constructor CreateWide(const Text: WideString);
+    constructor CreateWide(const Text: UnicodeString);
 
     function  DuplicateObject: AhtmlObject; override;
 
@@ -562,7 +563,7 @@ uses
 {                                                                              }
 function EncodeHTMLText(const WideHTMLText: PWideChar; const Len: Integer;
     const Codec: TCustomUnicodeCodec; const CanUseRefs: Boolean;
-    const ReplaceText: WideString): RawByteString;
+    const ReplaceText: UnicodeString): RawByteString;
 var I, L : Integer;
     P : PWideChar;
     T : RawByteString;
@@ -1077,7 +1078,7 @@ begin
   FText := Text;
 end;
 
-constructor AhtmlTextStringContentObject.CreateWide(const Text: WideString);
+constructor AhtmlTextStringContentObject.CreateWide(const Text: UnicodeString);
 begin
   inherited Create;
   SetContentText(Text);
@@ -1120,7 +1121,7 @@ begin
 end;
 
 function ThtmlText.GetEncodedHTMLText(const Codec: TCustomUnicodeCodec): RawByteString;
-var S: WideString;
+var S: UnicodeString;
 begin
   S := GetHTMLText;
   Result := EncodeHTMLText(Pointer(S), Length(S), Codec, True, '');
@@ -1263,7 +1264,7 @@ begin
 end;
 
 function ThtmlCharRef.GetEncodedHTMLText(const Codec: TCustomUnicodeCodec): RawByteString;
-var S: WideString;
+var S: UnicodeString;
 begin
   S := GetHTMLText;
   Result := EncodeHTMLText(Pointer(S), Length(S), Codec, False, '');
@@ -1312,7 +1313,7 @@ begin
 end;
 
 function ThtmlEntityRef.GetEncodedHTMLText(const Codec: TCustomUnicodeCodec): RawByteString;
-var S: WideString;
+var S: UnicodeString;
 begin
   S := GetHTMLText;
   Result := EncodeHTMLText(Pointer(S), Length(S), Codec, False, '');

@@ -1,11 +1,16 @@
+{$INCLUDE flcHTML.inc}
+
 unit flcHTMLTest;
 
 interface
 
+{$IFDEF HTML_TEST}
 procedure Test;
+{$ENDIF}
 
 implementation
 
+{$IFDEF HTML_TEST}
 uses
   flcHTMLCharEntity,
   flcHTMLProperties,
@@ -21,6 +26,7 @@ begin
   flcHTMLLexer.Test;
   flcHTMLParser.Test;
 end;
+{$ENDIF}
 
 
 

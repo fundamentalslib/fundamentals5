@@ -61,7 +61,7 @@ uses
 
   { Fundamentals }
   flcStdTypes,
-  flcDataStructs,
+  flcDataStructsLegacy,
 
   { HTML }
   flcHTMLElements,
@@ -351,8 +351,10 @@ implementation
 
 uses
   { System }
+  {$IFDEF WindowsPlatform}
   {$IFDEF DELPHI6_UP}
   Windows,
+  {$ENDIF}
   {$ENDIF}
 
   { Fundamentals }

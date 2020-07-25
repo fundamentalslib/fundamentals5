@@ -58,7 +58,7 @@ uses
 
   { Fundamentals }
   flcStdTypes,
-  flcDataStructs,
+  flcDataStructsLegacy,
 
   { HTML }
   flcHTMLElements,

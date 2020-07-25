@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00 - HTML Parser                          }
 {   File name:        flcHTMLElements.pas                                      }
-{   File version:     5.08                                                     }
+{   File version:     5.09                                                     }
 {   Description:      HTML elements                                            }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -44,6 +44,7 @@
 {   2019/02/21  5.06  Revised for Fundamentals 5.                              }
 {   2019/02/22  5.07  Part of flcHTMLElements.                                 }
 {   2019/10/03  5.08  Fix AnsiChar lookups.                                    }
+{   2020/06/09  5.09  String changes.                                          }
 {                                                                              }
 {******************************************************************************}
 
@@ -406,7 +407,9 @@ function  htmlAutoOpenTag(const OpenTagID, TagID: ThtmlTagID): ThtmlTagID;
 {                                                                              }
 { Tests                                                                        }
 {                                                                              }
+{$IFDEF HTML_TEST}
 procedure Test;
+{$ENDIF}
 
 
 
