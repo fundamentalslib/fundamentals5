@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcXMLParser.pas                                         }
-{   File version:     5.09                                                     }
+{   File version:     5.10                                                     }
 {   Description:      XML parser                                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2019, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -43,6 +43,7 @@
 {   2003/09/07  3.07  Revised for Fundamentals 3.                              }
 {   2019/04/28  5.08  String type changes.                                     }
 {   2019/04/28  5.09  Revised for Fundamentals 5.                              }
+{   2020/07/25  5.10  Remove dependancy on flcCharSet unit.                    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -200,7 +201,7 @@ type
     procedure Clear;
     procedure SetUnicodeReader(const Reader: TUnicodeReader; const ReaderOwner: Boolean = False);
     procedure SetReader(const Reader: AReaderEx; const ReaderOwner: Boolean = False);
-    procedure SetBuffer(const Buf: Pointer; const Size: Integer);
+    procedure SetBuffer(const Buf: Pointer; const Size: NativeInt);
     procedure SetStringB(const Buf: RawByteString);
     procedure SetFileName(const FileName: String);
 
@@ -214,7 +215,7 @@ type
 {                                                                              }
 { Parse functions                                                              }
 {                                                                              }
-function  ParseXMLBuffer(const Buffer: Pointer; const Size: Integer): TxmlDocument;
+function  ParseXMLBuffer(const Buffer: Pointer; const Size: NativeInt): TxmlDocument;
 function  ParseXMLStringB(const S: RawByteString): TxmlDocument;
 function  ParseXMLStringU(const S: UnicodeString): TxmlDocument;
 function  ParseXMLFile(const FileName: String): TxmlDocument;
@@ -234,8 +235,7 @@ implementation
 
 uses
   { Fundamentals }
-  flcStrings,
-  flcCharSet;
+  flcStrings;
 
 
 
@@ -287,9 +287,10 @@ begin
 end;
 
 procedure TxmlParser.SetReader(const Reader: AReaderEx; const ReaderOwner: Boolean);
-var T    : TUnicodeCodecClass;
-    B    : array[0..1023] of Byte;
-    L, N : Integer;
+var
+  T    : TUnicodeCodecClass;
+  B    : array[0..1023] of Byte;
+  L, N : Int32;
 begin
   if FRawReaderOwner then
     FreeAndNil(FRawReader);
@@ -314,7 +315,7 @@ begin
     SetUnicodeReader(nil);
 end;
 
-procedure TxmlParser.SetBuffer(const Buf: Pointer; const Size: Integer);
+procedure TxmlParser.SetBuffer(const Buf: Pointer; const Size: NativeInt);
 begin
   if Assigned(Buf) and (Size > 0) then
     SetReader(TMemoryReader.Create(Buf, Size), True)
@@ -506,7 +507,8 @@ end;
 
 {   [..]  Text ::=  TextString                                                 }
 function TxmlParser.ExtractText(const Delimiters: ByteCharSet): AxmlType;
-var Text : UnicodeString;
+var
+  Text : UnicodeString;
 begin
   Text := ExtractTextString(Delimiters);
   if not (xmlPreserveSpaceAroundContent in FOptions) then
@@ -519,7 +521,8 @@ end;
 
 {   [69]  PEReference ::=  '%' Name ';'                                        }
 function TxmlParser.ExtractPEReference: TxmlPEReference;
-var Name : UnicodeString;
+var
+  Name : UnicodeString;
 begin
   if not FReader.MatchWideChar('%', True) then
     begin
@@ -533,8 +536,9 @@ end;
 
 {   [66]  CharRef ::=  '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';'                }
 function TxmlParser.ExtractCharRef: AxmlType;
-var Str : RawByteString;
-    Val : Word32;
+var
+  Str : RawByteString;
+  Val : Word32;
 begin
   Result := nil;
   if not FReader.MatchRawByteStr('&#', True, True) then
@@ -582,7 +586,8 @@ end;
 
 {   [68]  EntityRef ::=  '&' Name ';'                                          }
 function TxmlParser.ExtractEntityRef: AxmlType;
-var Name : UnicodeString;
+var
+  Name : UnicodeString;
 begin
   Result := nil;
   if not FReader.MatchWideChar('&', True) then
@@ -621,8 +626,9 @@ end;
 
 {   [..]  ReferenceText ::=  (Text | Reference | PEReference)*                 }
 procedure TxmlParser.ExtractReferenceText(const List: TxmlTypeList; const Delimiters: ByteCharSet; const InclPEReference: Boolean);
-var C : AxmlType;
-    R : Boolean;
+var
+  C : AxmlType;
+  R : Boolean;
 begin
   Assert(Assigned(List));
   repeat
@@ -639,7 +645,8 @@ end;
 
 {   [..]  Quote ::=  "'" | '"'                                                 }
 function TxmlParser.ExtractQuote(out Quote: WideChar): Boolean;
-var C : WideChar;
+var
+  C : WideChar;
 begin
   C := FReader.PeekChar;
   if (C = '''') or (C = '"') then
@@ -657,7 +664,8 @@ end;
 
 {   [..]  QuotedText ::=  "'" Text "'" | '"' Text '"'                          }
 function TxmlParser.ExtractQuotedTextString(out Quote: WideChar; const Delimiters: ByteCharSet): UnicodeString;
-var D : ByteCharSet;
+var
+  D : ByteCharSet;
 begin
   if not ExtractQuote(Quote) then
     begin
@@ -671,8 +679,9 @@ begin
 end;
 
 function TxmlParser.ExtractQuotedText(const Delimiters: ByteCharSet): TxmlQuotedText;
-var Q : WideChar;
-    T : UnicodeString;
+var
+  Q : WideChar;
+  T : UnicodeString;
 begin
   T := ExtractQuotedTextString(Q, Delimiters);
   if Q = #0 then
@@ -684,8 +693,9 @@ end;
 {   [..]  QuotedReferenceText ::=  "'" ReferenceText "'" |                     }
 {                                  '"' ReferenceText '"'                       }
 function TxmlParser.ExtractQuotedReferenceText(const TextClass: CxmlQuotedReferenceText; const Delimiters: ByteCharSet; const InclPEReference: Boolean): TxmlQuotedReferenceText;
-var D : ByteCharSet;
-    C : WideChar;
+var
+  D : ByteCharSet;
+  C : WideChar;
 begin
   if not ExtractQuote(C) then
     begin
@@ -693,7 +703,7 @@ begin
       exit;
     end;
   Result := TextClass.Create;
-  AssignCharSet(D, Delimiters);
+  D := Delimiters;
   Include(D, AnsiChar(Ord(C)));
   ExtractReferenceText(Result, D, InclPEReference);
   ExpectChar(C);
@@ -701,8 +711,9 @@ end;
 
 {   [..]  TextAttribute ::=  Name Eq QuotedText                                }
 function TxmlParser.ExtractTextAttribute: AxmlType;
-var Name : UnicodeString;
-    Val  : TxmlQuotedText;
+var
+  Name : UnicodeString;
+  Val  : TxmlQuotedText;
 begin
   Name := ExtractName;
   if Name = '' then
@@ -724,8 +735,9 @@ end;
 
 {   [41]  Attribute ::=  Name Eq AttValue                                      }
 function TxmlParser.ExtractAttribute: AxmlType;
-var Name : UnicodeString;
-    Val  : TxmlAttValue;
+var
+  Name : UnicodeString;
+  Val  : TxmlAttValue;
 begin
   Name := ExtractName;
   if Name = '' then
@@ -740,9 +752,10 @@ end;
 
 {   [..]  (S Attribute)* S?                                                    }
 function TxmlParser.ExtractAttributeList(const TagName: UnicodeString): AxmlAttributeList;
-var D : AxmlType;
-    L : TxmlTypeList;
-    R : Boolean;
+var
+  D : AxmlType;
+  L : TxmlTypeList;
+  R : Boolean;
 begin
   SkipSpace;
   D := ExtractAttribute;
@@ -769,8 +782,9 @@ end;
 {   [32]  SDDecl ::=  S 'standalone' Eq (("'" ('yes' | 'no') "'") |            }
 {                    ('"' ('yes' | 'no') '"'))                                 }
 function TxmlParser.ExtractXMLDeclaration: TxmlXMLDecl;
-var C : AxmlType;
-    R : Boolean;
+var
+  C : AxmlType;
+  R : Boolean;
 begin
   Result := TxmlXMLDecl.Create;
   R := False;
@@ -791,7 +805,8 @@ end;
 
 {   [16]  PI ::=  '<?' PITarget (S (Char* - (Char* '?>' Char*)))? '?>'         }
 function TxmlParser.ExtractProcessingInstruction: AxmlType;
-var Target, Text : UnicodeString;
+var
+  Target, Text : UnicodeString;
 begin
   Target := ExtractName;
   if Target = '' then
@@ -819,7 +834,8 @@ end;
 
 {   [15]  Comment ::=  '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'       }
 function TxmlParser.ExtractComment: AxmlType;
-var S : UnicodeString;
+var
+  S : UnicodeString;
 begin
   FReader.Skip(2);
   S := FReader.ReadToRawByteStr('-->', True);
@@ -834,7 +850,8 @@ end;
 {   [20]  CData ::=  (Char* - (Char* ']]>' Char*))                             }
 {   [21]  CDEnd ::=  ']]>'                                                     }
 function TxmlParser.ExtractCDATASection: AxmlType;
-var S : UnicodeString;
+var
+  S : UnicodeString;
 begin
   FReader.Skip(7);
   S := FReader.ReadToRawByteStr(']]>', True);
@@ -844,7 +861,8 @@ end;
 
 {   [..]  NamesRest ::=  (S? 'Delimiter' S? Name)* ')'                         }
 procedure TxmlParser.ExtractNamesRest(const L: TxmlTypeList; const NmToken: Boolean; const Delimiter: AnsiChar);
-var R : Boolean;
+var
+  R : Boolean;
 begin
   R := False;
   repeat
@@ -866,7 +884,8 @@ end;
 
 {   [..]  Names ::=  S? Name NamesRest                                         }
 procedure TxmlParser.ExtractNames(const L: TxmlTypeList; const NmToken: Boolean; const Delimiter: AnsiChar);
-var N : UnicodeString;
+var
+  N : UnicodeString;
 begin
   SkipSpace;
   if FReader.MatchWideChar(WideChar(')'), True) then
@@ -968,8 +987,9 @@ function TxmlParser.ExtractElementDeclaration: AxmlType;
     end;
   end;
 
-var N : UnicodeString;
-    E : TxmlElementDeclaration;
+var
+  N : UnicodeString;
+  E : TxmlElementDeclaration;
 
 begin
   if not MatchSpaceDelimited('<!ELEMENT') then
@@ -1021,11 +1041,12 @@ end;
 {   [60]  DefaultDecl ::=  '#REQUIRED' | '#IMPLIED'                            }
 {                        | (('#FIXED' S)? AttValue)                            }
 function TxmlParser.ExtractAttDef: TxmlAttDef;
-var N : UnicodeString;
-    P : TxmlTypeList;
-    T : TxmlAttType;
-    D : TxmlDefaultType;
-    A : TxmlAttValue;
+var
+  N : UnicodeString;
+  P : TxmlTypeList;
+  T : TxmlAttType;
+  D : TxmlDefaultType;
+  A : TxmlAttValue;
 begin
   N := ExtractName;
   if N = '' then
@@ -1120,7 +1141,8 @@ end;
 
 {   [52]  AttlistDecl ::=  '<!ATTLIST' S Name AttDef* S? '>'                   }
 function TxmlParser.ExtractAttListDeclaration: AxmlType;
-var N : UnicodeString;
+var
+  N : UnicodeString;
 begin
   if not MatchSpaceDelimited('<!ATTLIST') then
     begin
@@ -1143,8 +1165,9 @@ end;
 {                       | 'PUBLIC' S PubidLiteral S SystemLiteral            }
 {   [76]  NDataDecl ::=  S 'NDATA' S Name                                    }
 function TxmlParser.ExtractExternalID(const NData: Boolean; const PublicID: Boolean): TxmlExternalID;
-var T, U : TxmlQuotedText;
-    C    : CxmlExternalID;
+var
+  T, U : TxmlQuotedText;
+  C    : CxmlExternalID;
 begin
   if NData then
     C := TxmlExternalIDNData
@@ -1209,9 +1232,10 @@ end;
 {   [9]   EntityValue ::=  '"' ([^%&"] | PEReference | Reference)* '"'       }
 {                       |  "'" ([^%&'] | PEReference | Reference)* "'"       }
 function TxmlParser.ExtractEntityDeclaration: AxmlType;
-var N : UnicodeString;
-    PE : Boolean;
-    D : AxmlType;
+var
+  N : UnicodeString;
+  PE : Boolean;
+  D : AxmlType;
 begin
   if not MatchSpaceDelimited('<!ENTITY') then
     begin
@@ -1238,8 +1262,9 @@ end;
 {                           (ExternalID |  PublicID) S? '>'                  }
 {   [83]  PublicID ::=  'PUBLIC' S PubidLiteral                              }
 function TxmlParser.ExtractNotationDeclaration: AxmlType;
-var X : TxmlExternalID;
-    N : UnicodeString;
+var
+  X : TxmlExternalID;
+  N : UnicodeString;
 begin
   if not MatchSpaceDelimited('<!NOTATION') then
     begin
@@ -1290,7 +1315,8 @@ end;
 
 {   [..]  Declarations ::=  ('[' (markupdecl | PEReference | S)* ']')? '>'   }
 function TxmlParser.ExtractDeclarations: TxmlDocTypeDeclarationList;
-var R : Boolean;
+var
+  R : Boolean;
 begin
   if not FReader.MatchWideChar('[', True) then
     begin
@@ -1318,8 +1344,9 @@ end;
 {   [28]  doctypedecl ::=  '<!DOCTYPE' S Name (S ExternalID)? S?             }
 {                        ('[' (markupdecl | PEReference | S)* ']' S?)? '>'   }
 function TxmlParser.ExtractDTD: AxmlType;
-var N : UnicodeString;
-    D : TxmlDocTypeDecl;
+var
+  N : UnicodeString;
+  D : TxmlDocTypeDecl;
 begin
   if not SkipSpace then
     begin
@@ -1347,7 +1374,8 @@ end;
 {   [28]  doctypedecl ::=  '<!DOCTYPE' S Name (S ExternalID)? S?             }
 {                        ('[' (markupdecl | PEReference | S)* ']' S?)? '>'   }
 function TxmlParser.ExtractETag: AxmlType;
-var S : UnicodeString;
+var
+  S : UnicodeString;
 begin
   FReader.Skip(1);
   if FReader.MatchRawByteStr('--', True, False) then
@@ -1372,9 +1400,10 @@ end;
 {   [42]  ETag ::=  '</' Name S? '>'                                         }
 {   [44]  EmptyElemTag ::=  '<' Name (S Attribute)* S? '/>'                  }
 function TxmlParser.ExtractTag: AxmlType;
-var N : UnicodeString;
-    EmptyTag, EndTag : Boolean;
-    C : AxmlAttributeList;
+var
+  N : UnicodeString;
+  EmptyTag, EndTag : Boolean;
+  C : AxmlAttributeList;
 begin
   EndTag := FReader.MatchWideChar(WideChar('/'), True);
   N := ExtractName(True);
@@ -1407,7 +1436,8 @@ end;
 { Returns S, CharData, Reference, XMLDecl, PI, Comment, CDSect, STag, ETag,    }
 {         EmptyElemTag                                                         }
 procedure TxmlParser.GetNextToken;
-var Ch : WideChar;
+var
+  Ch : WideChar;
 begin
   SkipSpace;
   if FReader.EOF then
@@ -1446,8 +1476,9 @@ end;
 
 {   [22]  prolog ::=  XMLDecl? Misc* (doctypedecl Misc*)?                      }
 function TxmlParser.ParseProlog: TxmlProlog;
-var DocTypeDecl : Boolean;
-    FirstToken : Boolean;
+var
+  DocTypeDecl : Boolean;
+  FirstToken : Boolean;
 begin
   Result := nil;
   DocTypeDecl := False;
@@ -1481,11 +1512,12 @@ end;
 {   [43]  content ::=  (element | CharData | Reference | CDSect |              }
 {                       PI | Comment)*                                         }
 function TxmlParser.ParseElement: AxmlElement;
-var StartTag : TxmlStartTag;
-    EndTag   : TxmlEndTag;
-    Content  : TxmlElementContent;
-    C        : AxmlType;
-    Closed   : Boolean;
+var
+  StartTag : TxmlStartTag;
+  EndTag   : TxmlEndTag;
+  Content  : TxmlElementContent;
+  C        : AxmlType;
+  Closed   : Boolean;
 begin
   if FToken is TxmlStartTag then
     begin
@@ -1545,8 +1577,9 @@ end;
 
 {   [1]  document ::=  prolog element Misc*                                    }
 function TxmlParser.ExtractDocument: TxmlDocument;
-var Prolog      : TxmlProlog;
-    RootElement : AxmlElement;
+var
+  Prolog      : TxmlProlog;
+  RootElement : AxmlElement;
 begin
   if not Assigned(FReader) then
     ParseError('No xml text');
@@ -1578,8 +1611,9 @@ end;
 {                                                                              }
 { Parse functions                                                              }
 {                                                                              }
-function ParseXMLBuffer(const Buffer: Pointer; const Size: Integer): TxmlDocument;
-var P : TxmlParser;
+function ParseXMLBuffer(const Buffer: Pointer; const Size: NativeInt): TxmlDocument;
+var
+  P : TxmlParser;
 begin
   P := TxmlParser.Create;
   try
@@ -1596,7 +1630,8 @@ begin
 end;
 
 function ParseXMLStringU(const S: UnicodeString): TxmlDocument;
-var P : TxmlParser;
+var
+  P : TxmlParser;
 begin
   P := TxmlParser.Create;
   try
@@ -1608,7 +1643,8 @@ begin
 end;
 
 function ParseXMLFile(const FileName: String): TxmlDocument;
-var P : TxmlParser;
+var
+  P : TxmlParser;
 begin
   P := TxmlParser.Create;
   try
@@ -1627,7 +1663,8 @@ end;
 {$IFDEF XML_TEST}
 {$ASSERTIONS ON}
 procedure TestParser(const S: RawByteString);
-var D : TxmlDocument;
+var
+  D : TxmlDocument;
 begin
   D := ParseXMLStringB(S);
   try

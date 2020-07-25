@@ -58,6 +58,9 @@ unit flcXMLDocument;
 interface
 
 uses
+  { System }
+  SysUtils,
+
   { Fundamentals }
   flcStdTypes,
   flcStreams,
@@ -101,26 +104,26 @@ type
   AxmlPrinter = class
   protected
     FOptions      : TxmlPrintOptions;
-    FIndentLength : Integer;
+    FIndentLength : Int32;
 
     procedure PrintToken(const TokenType: TxmlPrintToken;
               const Txt: UnicodeString); virtual; abstract;
     procedure PrintSpecial(const SpecialSymbol: TxmlPrintSpecialSymbol;
-              const Count: Integer); virtual; abstract;
+              const Count: Int32); virtual; abstract;
 
   public
     constructor Create(const Options: TxmlPrintOptions = xmlDefaultPrintOptions;
-                const IndentLength: Integer = xmlDefaultIndentLength);
+                const IndentLength: Int32 = xmlDefaultIndentLength);
 
     property  Options: TxmlPrintOptions read FOptions write FOptions;
-    property  IndentLength: Integer read FIndentLength write FIndentLength;
+    property  IndentLength: Int32 read FIndentLength write FIndentLength;
 
     function  GetQuoteChar(const Txt: UnicodeString): WideChar;
 
     procedure PrintEOL;
-    procedure PrintSpace(const Count: Integer = 1);
-    procedure PrintTab(const Count: Integer = 1);
-    procedure PrintIndent(const IndentLevel: Integer);
+    procedure PrintSpace(const Count: Int32 = 1);
+    procedure PrintTab(const Count: Int32 = 1);
+    procedure PrintIndent(const IndentLevel: Int32);
 
     procedure PrintDefault(const Txt: UnicodeString);
     procedure PrintText(const Txt: UnicodeString);
@@ -149,14 +152,14 @@ type
     procedure PrintToken(const TokenType: TxmlPrintToken;
               const Txt: UnicodeString); override;
     procedure PrintSpecial(const SpecialSymbol: TxmlPrintSpecialSymbol;
-              const Count: Integer); override;
+              const Count: Int32); override;
 
     function  GetXMLUnicodeString: UnicodeString;
     function  GetXMLUTF8String: UTF8String;
 
   public
     constructor Create(const Options: TxmlPrintOptions = xmlDefaultPrintOptions;
-                const IndentLength: Integer = xmlDefaultIndentLength);
+                const IndentLength: Int32 = xmlDefaultIndentLength);
     destructor Destroy; override;
 
     property  XMLUnicodeString: UnicodeString read GetXMLUnicodeString;
@@ -183,15 +186,15 @@ type
     function  GetNameSpace: UnicodeString;
     function  GetLocalName: UnicodeString;
 
-    function  GetChildCount: Integer; virtual;
-    function  GetChildByIndex(const Idx: Integer): AxmlType; virtual;
+    function  GetChildCount: Int32; virtual;
+    function  GetChildByIndex(const Idx: Int32): AxmlType; virtual;
 
     function  GetChildByName(const Name: UnicodeString): AxmlType;
     function  PosNext(var C: AxmlType; const ClassType: CxmlType = nil;
-              const PrevPos: Integer = -1): Integer; overload;
+              const PrevPos: Int32 = -1): Int32; overload;
     function  PosNext(var C: AxmlType; const Name: UnicodeString;
               const ClassType: CxmlType = nil;
-              const PrevPos: Integer = -1): Integer; overload;
+              const PrevPos: Int32 = -1): Int32; overload;
     function  Find(const ClassType: CxmlType): AxmlType; overload;
     function  Find(const Name: UnicodeString;
               const ClassType: CxmlType = nil): AxmlType; overload;
@@ -207,10 +210,10 @@ type
     function  IsAsciiName(const Name: RawByteString;
               const CaseSensitive: Boolean = True): Boolean;
 
-    property  ChildCount: Integer read GetChildCount;
-    property  ChildByIndex[const Idx: Integer]: AxmlType read GetChildByIndex;
+    property  ChildCount: Int32 read GetChildCount;
+    property  ChildByIndex[const Idx: Int32]: AxmlType read GetChildByIndex;
     property  ChildByName[const Name: UnicodeString]: AxmlType read GetChildByName; default;
-    function  GetChildCountByClass(const ClassType: CxmlType = nil): Integer;
+    function  GetChildCountByClass(const ClassType: CxmlType = nil): Int32;
     function  GetNames(const ClassType: CxmlType = nil): UnicodeStringArray;
 
     procedure AddChild(const Child: AxmlType); virtual;
@@ -219,12 +222,12 @@ type
 
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; virtual;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); virtual;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); virtual;
 
     function  AsUnicodeString(const Options: TxmlPrintOptions = xmlDefaultPrintOptions;
-              const IndentLength: Integer = xmlDefaultIndentLength): UnicodeString;
+              const IndentLength: Int32 = xmlDefaultIndentLength): UnicodeString;
     function  AsUTF8String(const Options: TxmlPrintOptions = xmlDefaultPrintOptions;
-              const IndentLength: Integer = xmlDefaultIndentLength): UTF8String;
+              const IndentLength: Int32 = xmlDefaultIndentLength): UTF8String;
   end;
   ExmlType = class(Exml);
 
@@ -237,8 +240,8 @@ type
   protected
     FChildren : AxmlTypeArray;
 
-    function  GetChildCount: Integer; override;
-    function  GetChildByIndex(const Idx: Integer): AxmlType; override;
+    function  GetChildCount: Int32; override;
+    function  GetChildByIndex(const Idx: Int32): AxmlType; override;
 
   public
     constructor Create(const Children: Array of AxmlType); reintroduce; overload;
@@ -246,7 +249,7 @@ type
 
     procedure AddChild(const Child: AxmlType); override;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
   end;
 
@@ -265,7 +268,7 @@ type
   public
     constructor Create(const Data: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
 
     property  Data: UnicodeString read FData;
@@ -280,7 +283,7 @@ type
   public
     constructor Create(const Data: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
 
@@ -303,7 +306,7 @@ type
   public
     constructor Create(const RefName: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
 
     property  RefName: UnicodeString read FRefName;
@@ -319,7 +322,7 @@ type
   public
     constructor Create(const Number: UCS4Char; const Hex: Boolean = True);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
 
     property  Hex: Boolean read FHex write FHex;
@@ -335,7 +338,7 @@ type
   public
     constructor Create(const RefName: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
 
     property  RefName: UnicodeString read FRefName;
@@ -359,7 +362,7 @@ type
   public
     constructor Create(const Text: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
 
     property  Text: UnicodeString read FText;
   end;
@@ -379,7 +382,7 @@ type
   {   [..]  QuotedReferenceText ::=  "'" ReferenceText "'" |                   }
   {                                  '"' ReferenceText '"'                     }
   TxmlQuotedReferenceText = class(TxmlReferenceText)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
   CxmlQuotedReferenceText = class of TxmlQuotedReferenceText;
 
@@ -387,7 +390,7 @@ type
   {   [..]  QuotedText ::=  "'" Text "'" | '"' Text '"'                        }
   TxmlQuotedText = class(TxmlLiteralFormatting)
     public
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  IntegerContent(const DefaultValue: Int64 = -1): Int64;
   end;
 
@@ -406,7 +409,7 @@ type
   public
     constructor Create(const Text: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  Text: UnicodeString read FText;
   end;
 
@@ -420,7 +423,7 @@ type
   public
     constructor Create(const PITarget, Text: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
 
     property  PITarget: UnicodeString read FPITarget;
     property  Text: UnicodeString read FText;
@@ -468,7 +471,7 @@ type
     constructor Create(const Name: UnicodeString; const Value: TxmlAttValue); overload;
     destructor Destroy; override;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
 
     property  Value: TxmlAttValue read FValue;
     function  TextContent(const Declarations: TxmlMarkupDeclarationList = nil): UnicodeString; override;
@@ -484,16 +487,16 @@ type
   AxmlAttributeList = class(AxmlType)
   protected
     procedure InitList(const List: TxmlTypeList); virtual;
-    function  GetAttrCount: Integer; virtual; abstract;
+    function  GetAttrCount: Int32; virtual; abstract;
     function  GetAttrNames: UnicodeStringArray; virtual; abstract;
 
   public
     constructor Create(const List: TxmlTypeList);
 
-    property  AttrCount: Integer read GetAttrCount;
+    property  AttrCount: Int32 read GetAttrCount;
     property  AttrNames: UnicodeStringArray read GetAttrNames;
     function  HasAttribute(const Name: UnicodeString): Boolean; virtual; abstract;
-    function  FindNextAttr(var A: TxmlAttribute; const Idx: Integer = -1): Integer; virtual; abstract;
+    function  FindNextAttr(var A: TxmlAttribute; const Idx: Int32 = -1): Int32; virtual; abstract;
 
     function  AttrAsText(const Name: UnicodeString;
               const Declarations: TxmlMarkupDeclarationList = nil;
@@ -515,15 +518,15 @@ type
     FList : TxmlTypeList;
 
     procedure InitList(const List: TxmlTypeList); override;
-    function  GetAttrCount: Integer; override;
+    function  GetAttrCount: Int32; override;
     function  GetAttrNames: UnicodeStringArray; override;
 
   public
     destructor Destroy; override;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     function  HasAttribute(const Name: UnicodeString): Boolean; override;
-    function  FindNextAttr(var A: TxmlAttribute; const Idx: Integer = -1): Integer; override;
+    function  FindNextAttr(var A: TxmlAttribute; const Idx: Int32 = -1): Int32; override;
     function  AttrAsText(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: UnicodeString = ''): UnicodeString; override;
     function  AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: Int64 = -1): Int64; override;
     function  AttrAsFloat(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: Extended = 0.0): Extended; override;
@@ -542,7 +545,7 @@ type
     constructor Create(const Name: UnicodeString; const Value: TxmlQuotedText); overload;
     constructor Create(const Name, TextValue: UnicodeString); overload;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  Value: TxmlQuotedText read FValue;
     function  ValueText: UnicodeString;
     function  IntegerContent(const DefaultValue: Int64 = -1): Int64;
@@ -572,7 +575,7 @@ type
     function  GetStandalone: TxmlOptionalBoolean;
 
   public
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  VersionNum: UnicodeString read GetVersionNum;
     property  EncodingName: UnicodeString read GetEncodingName;
     property  Standalone: TxmlOptionalBoolean read GetStandalone;
@@ -587,7 +590,7 @@ type
   public
     constructor Create(const Name: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  Name: UnicodeString read FName;
   end;
 
@@ -597,7 +600,7 @@ type
   AxmlChildSpec = class(AxmlType)
     Numerator : TxmlChildSpecNumerator;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
   {   [..]  namechildspec ::=  Name ('?' | '*' | '+')?                         }
   TxmlNameChildSpec = class(AxmlChildSpec)
@@ -606,15 +609,15 @@ type
 
   public
     constructor Create(const Name: UnicodeString);
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  Name: UnicodeString read FName;
   end;
   {   [..]  listchildspec ::=  childspec* ('?' | '*' | '+')?                   }
   AxmlListChildSpec = class(AxmlChildSpec)
     List : TxmlTypeList;
 
-    function  PosNextChildSpec(var C: AxmlChildSpec; const PrevPos: Integer = -1): Integer;
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    function  PosNextChildSpec(var C: AxmlChildSpec; const PrevPos: Int32 = -1): Int32;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
   {   [49]  choice ::=  '(' S? cp ( S? '|' S? cp )* S? ')'                     }
   {   [..]  choicechildspec ::=  choice ('?' | '*' | '+')?                     }
@@ -631,10 +634,10 @@ type
   {                  | '(' S? '#PCDATA' S? ')'                                 }
   AxmlContentSpec = class(AxmlType);
   TxmlEmptyContentSpec = class(AxmlContentSpec)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
   TxmlAnyContentSpec = class(AxmlContentSpec)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
   TxmlMixedContentSpec = class(AxmlContentSpec)
   protected
@@ -643,7 +646,7 @@ type
     function  GetAllowedNames: UnicodeStringArray;
 
   public
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  List: TxmlTypeList read FList write FList;
     property  AllowedNames: UnicodeStringArray read GetAllowedNames;
   end;
@@ -652,7 +655,7 @@ type
     FChildrenSpec : TxmlChildrenElementContentSpec;
 
   public
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  ChildrenSpec: TxmlChildrenElementContentSpec read FChildrenSpec write FChildrenSpec;
   end;
 
@@ -667,7 +670,7 @@ type
     constructor Create(const Name: UnicodeString;
                 const ContentSpecType: TxmlElementContentSpec);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  ContentSpec: AxmlContentSpec read FContentSpec;
   end;
 
@@ -705,7 +708,7 @@ type
                 const Names: TxmlTypeList; const DefaultType: TxmlDefaultType;
                 const DefaultValue: TxmlAttValue);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  Name: UnicodeString read FName;
     property  AttType: TxmlAttType read FAttType;
     property  Names: TxmlTypeList read FNames;
@@ -714,7 +717,7 @@ type
   end;
   {   [52]  AttlistDecl ::=  '<!ATTLIST' S Name AttDef* S? '>'                 }
   TxmlAttListDecl = class(AxmlDeclaration)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   { TxmlExternalID                                                             }
@@ -731,7 +734,7 @@ type
     constructor CreateSystemID(const SystemID: TxmlQuotedText);
     constructor CreatePublicID(const PublicID, SystemID: TxmlQuotedText);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  IDType: TxmlExternalIDType read FIDType;
     property  SystemID: TxmlQuotedText read FSystemID;
     property  PublicID: TxmlQuotedText read FPublicID;
@@ -745,7 +748,7 @@ type
     FNData : UnicodeString;
 
   public
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  NData: UnicodeString read FNData write FNData;
   end;
 
@@ -765,7 +768,7 @@ type
     constructor Create(const PEDeclaration: Boolean; const Name: UnicodeString;
                        const Definition: AxmlType);
     property  Definition: AxmlType read FDefinition;
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   {   [29]  markupdecl ::=  elementdecl | AttlistDecl | EntityDecl |           }
@@ -799,7 +802,7 @@ type
   {   [28]  doctypedecl ::=  '<!DOCTYPE' S Name (S ExternalID)? S?             }
   {                        ('[' (markupdecl | PEReference | S)* ']' S?)? '>'   }
   TxmlDocTypeDeclarationList = class(TxmlMarkupDeclarationList)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   TxmlDocTypeDecl = class(TxmlTypeList)
@@ -815,7 +818,7 @@ type
   public
     constructor Create(const Name: UnicodeString);
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
     property  ExternalID: TxmlExternalID read GetExternalID;
     property  Declarations: TxmlDocTypeDeclarationList read GetDeclarations;
 
@@ -834,12 +837,12 @@ type
   AxmlTagWithAttr = class(AxmlTag)
   protected
     function  GetAttributes: AxmlAttributeList; virtual; abstract;
-    function  GetAttrCount: Integer; virtual; abstract;
+    function  GetAttrCount: Int32; virtual; abstract;
     function  GetAttrNames: UnicodeStringArray; virtual; abstract;
 
   public
     property  Attributes: AxmlAttributeList read GetAttributes;
-    property  AttrCount: Integer read GetAttrCount;
+    property  AttrCount: Int32 read GetAttrCount;
     property  AttrNames: UnicodeStringArray read GetAttrNames;
     function  HasAttribute(const Attr: UnicodeString): Boolean; virtual; abstract;
     function  AttrAsText(const Attr: UnicodeString;
@@ -847,7 +850,7 @@ type
               const DefaultValue: UnicodeString = ''): UnicodeString; virtual; abstract;
     function  AttrAsInteger(const Attr: UnicodeString;
               const Declarations: TxmlMarkupDeclarationList = nil;
-              const DefaultValue: Integer = -1): Integer; virtual;
+              const DefaultValue: Int64 = -1): Int64; virtual;
     function  AttrAsFloat(const Attr: UnicodeString;
               const Declarations: TxmlMarkupDeclarationList = nil;
               const DefaultValue: Extended = 0.0): Extended; virtual;
@@ -867,7 +870,7 @@ type
     FAttributes : AxmlAttributeList;
 
     function  GetName: UnicodeString; override;
-    function  GetAttrCount: Integer; override;
+    function  GetAttrCount: Int32; override;
     function  GetAttributes: AxmlAttributeList; override;
     function  GetAttrNames: UnicodeStringArray; override;
 
@@ -886,19 +889,19 @@ type
   { TxmlStartTag                                                               }
   {   [40]  STag ::=  '<' Name (S Attribute)* S? '>'                           }
   TxmlStartTag = class(ATxmlTagWithAttr)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   { TxmlEndTag                                                                 }
   {   [42]  ETag ::=  '</' Name S? '>'                                         }
   TxmlEndTag = class(ATxmlTag)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   { TxmlEmptyElementTag                                                        }
   {   [44]  EmptyElemTag ::=  '<' Name (S Attribute)* S? '/>'                  }
   TxmlEmptyElementTag = class(ATxmlTagWithAttr)
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
 
@@ -935,7 +938,7 @@ type
     function  AttrNames: UnicodeStringArray;
     function  HasAttribute(const Name: UnicodeString): Boolean;
     function  AttrAsText(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: UnicodeString = ''): UnicodeString;
-    function  AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: Integer = -1): Integer;
+    function  AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: Int32 = -1): Int32;
     function  AttrAsFloat(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList = nil; const DefaultValue: Extended = 0.0): Extended;
 
     // Child Elements
@@ -945,10 +948,10 @@ type
     function  ElementNames: UnicodeStringArray;
     function  ElementByName(const Path: UnicodeString): AxmlElement;
     function  ElementsByName(const Path: UnicodeString): AxmlElementArray;
-    function  PosNextElement(var C: AxmlElement; const PrevPos: Integer = -1): Integer;
-    function  PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Integer = -1): Integer;
-    function  ElementCount: Integer;
-    function  ElementCountByName(const Name: UnicodeString): Integer;
+    function  PosNextElement(var C: AxmlElement; const PrevPos: Int32 = -1): Int32;
+    function  PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Int32 = -1): Int32;
+    function  ElementCount: Int32;
+    function  ElementCountByName(const Name: UnicodeString): Int32;
   end;
 
   { TxmlEmptyElement                                                           }
@@ -963,7 +966,7 @@ type
     constructor Create(const Tag: TxmlEmptyElementTag);
     destructor Destroy; override;
 
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   { TxmlElement                                                                }
@@ -982,7 +985,7 @@ type
     destructor Destroy; override;
 
     property  EndTag: TxmlEndTag read FEndTag;
-    procedure Print(const D: AxmlPrinter; const IndentLevel: Integer = 0); override;
+    procedure Print(const D: AxmlPrinter; const IndentLevel: Int32 = 0); override;
   end;
 
   { TxmlElementContent                                                         }
@@ -994,10 +997,10 @@ type
     function  ResolveElementPath(const Path: UnicodeString; var Name: UnicodeString): TxmlElementContent;
 
   public
-    function  PosNextElement(var C: AxmlElement; const PrevPos: Integer = -1): Integer;
-    function  PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Integer = -1): Integer;
-    function  ElementCount: Integer;
-    function  ElementCountByName(const Name: UnicodeString): Integer;
+    function  PosNextElement(var C: AxmlElement; const PrevPos: Int32 = -1): Int32;
+    function  PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Int32 = -1): Int32;
+    function  ElementCount: Int32;
+    function  ElementCountByName(const Name: UnicodeString): Int32;
 
     function  FirstElement: AxmlElement;
     function  FirstElementName: UnicodeString;
@@ -1070,14 +1073,10 @@ type
 implementation
 
 uses
-  { System }
-  SysUtils,
-
   { Fundamentals }
   flcUtils,
   flcStrings,
   flcDynArrays,
-  flcAscii,
   flcUTF;
 
 
@@ -1085,7 +1084,7 @@ uses
 {                                                                              }
 { AxmlPrinter                                                                  }
 {                                                                              }
-constructor AxmlPrinter.Create(const Options: TxmlPrintOptions; const IndentLength: Integer);
+constructor AxmlPrinter.Create(const Options: TxmlPrintOptions; const IndentLength: Int32);
 begin
   inherited Create;
   FOptions := Options;
@@ -1099,8 +1098,9 @@ begin
   PrintSpecial(xmlsEOL, 1);
 end;
 
-procedure AxmlPrinter.PrintSpace(const Count: Integer);
-var C : Integer;
+procedure AxmlPrinter.PrintSpace(const Count: Int32);
+var
+  C : Int32;
 begin
   if (xmloNoFormatting in FOptions) and (Count > 1) then
     C := 1
@@ -1109,8 +1109,9 @@ begin
   PrintSpecial(xmlsSpace, C);
 end;
 
-procedure AxmlPrinter.PrintTab(const Count: Integer);
-var C : Integer;
+procedure AxmlPrinter.PrintTab(const Count: Int32);
+var
+  C : Int32;
 begin
   if (xmloNoFormatting in FOptions) and (Count > 1) then
     C := 1
@@ -1119,7 +1120,7 @@ begin
   PrintSpecial(xmlsTab, C);
 end;
 
-procedure AxmlPrinter.PrintIndent(const IndentLevel: Integer);
+procedure AxmlPrinter.PrintIndent(const IndentLevel: Int32);
 begin
   if [xmloNoFormatting, xmloNoIndent] * FOptions <> [] then
     exit;
@@ -1164,7 +1165,8 @@ begin
 end;
 
 procedure AxmlPrinter.PrintQuoteStr(const Txt: UnicodeString);
-var Q : WideChar;
+var
+  Q : WideChar;
 begin
   Q := GetQuoteChar(Txt);
   PrintSymbol(Q);
@@ -1202,7 +1204,7 @@ end;
 {                                                                              }
 { TxmlStringPrinter                                                            }
 {                                                                              }
-constructor TxmlStringPrinter.Create(const Options: TxmlPrintOptions; const IndentLength: Integer);
+constructor TxmlStringPrinter.Create(const Options: TxmlPrintOptions; const IndentLength: Int32);
 begin
   inherited Create(Options, IndentLength);
   FxmlWideString := TUnicodeStringWriter.Create;
@@ -1221,8 +1223,9 @@ begin
 end;
 
 procedure TxmlStringPrinter.PrintSpecial(const SpecialSymbol: TxmlPrintSpecialSymbol;
-    const Count: Integer);
-var I : Integer;
+    const Count: Int32);
+var
+  I : Int32;
 begin
   case SpecialSymbol of
     xmlsSpace : for I := 1 to Count do
@@ -1264,7 +1267,8 @@ begin
 end;
 
 function AxmlType.GetNameSpace: UnicodeString;
-var I : Integer;
+var
+  I : Int32;
 begin
   Result := GetName;
   I := PosCharU(WideChar(':'), Result);
@@ -1275,7 +1279,8 @@ begin
 end;
 
 function AxmlType.GetLocalName: UnicodeString;
-var I : Integer;
+var
+  I : Int32;
 begin
   Result := GetName;
   I := PosCharU(WideChar(':'), Result);
@@ -1299,24 +1304,25 @@ begin
   Result := '';
 end;
 
-procedure AxmlType.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure AxmlType.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   raise ExmlType.Create(ClassName + '.Print not implemented');
 end;
 
-function AxmlType.GetChildCount: Integer;
+function AxmlType.GetChildCount: Int32;
 begin
   Result := 0;
 end;
 
-function AxmlType.GetChildByIndex(const Idx: Integer): AxmlType;
+function AxmlType.GetChildByIndex(const Idx: Int32): AxmlType;
 begin
   raise ExmlType.Create(ClassName + '.GetChildByIndex not implemented');
 end;
 
 function AxmlType.PosNext(var C: AxmlType; const ClassType: CxmlType;
-    const PrevPos: Integer): Integer;
-var I : Integer;
+         const PrevPos: Int32): Int32;
+var
+  I : Int32;
 begin
   for I := MaxInt(PrevPos + 1, 0) to ChildCount - 1 do
     begin
@@ -1332,8 +1338,9 @@ begin
 end;
 
 function AxmlType.PosNext(var C: AxmlType; const Name: UnicodeString;
-    const ClassType: CxmlType; const PrevPos: Integer): Integer;
-var I : Integer;
+         const ClassType: CxmlType; const PrevPos: Int32): Int32;
+var
+  I : Int32;
 begin
   for I := MaxInt(PrevPos + 1, 0) to ChildCount - 1 do
     begin
@@ -1351,7 +1358,8 @@ begin
 end;
 
 function AxmlType.GetChildByName(const Name: UnicodeString): AxmlType;
-var C : AxmlType;
+var
+  C : AxmlType;
 begin
   if PosNext(C, Name, AxmlType) >= 0 then
     Result := AxmlType(C)
@@ -1375,7 +1383,8 @@ begin
 end;
 
 procedure AxmlType.AddChildren(const Children: Array of AxmlType);
-var I : Integer;
+var
+  I : Int32;
 begin
   for I := Low(Children) to High(Children) do
     AddChild(Children[I]);
@@ -1388,9 +1397,10 @@ begin
     AddChild(Child);
 end;
 
-function AxmlType.GetChildCountByClass(const ClassType: CxmlType = nil): Integer;
-var I : Integer;
-    C : AxmlType;
+function AxmlType.GetChildCountByClass(const ClassType: CxmlType = nil): Int32;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   Result := 0;
   I := PosNext(C, ClassType);
@@ -1402,8 +1412,9 @@ begin
 end;
 
 function AxmlType.GetNames(const ClassType: CxmlType = nil): UnicodeStringArray;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   Result := nil;
   I := PosNext(C, ClassType);
@@ -1415,8 +1426,9 @@ begin
 end;
 
 function AxmlType.AsUnicodeString(const Options: TxmlPrintOptions;
-    const IndentLength: Integer): UnicodeString;
-var P : TxmlStringPrinter;
+    const IndentLength: Int32): UnicodeString;
+var
+  P : TxmlStringPrinter;
 begin
   P := TxmlStringPrinter.Create(Options, IndentLength);
   try
@@ -1428,7 +1440,7 @@ begin
 end;
 
 function AxmlType.AsUTF8String(const Options: TxmlPrintOptions;
-    const IndentLength: Integer): UTF8String;
+    const IndentLength: Int32): UTF8String;
 begin
   Result := UnicodeStringToUTF8String(AsUnicodeString(Options, IndentLength));
 end;
@@ -1439,7 +1451,8 @@ end;
 { TxmlTypeList                                                                 }
 {                                                                              }
 constructor TxmlTypeList.Create(const Children: Array of AxmlType);
-var I : Integer;
+var
+  I : Int32;
 begin
   inherited Create;
   for I := 0 to High(Children) do
@@ -1452,26 +1465,28 @@ begin
   inherited Destroy;
 end;
 
-function TxmlTypeList.GetChildCount: Integer;
+function TxmlTypeList.GetChildCount: Int32;
 begin
   Result := Length(FChildren);
 end;
 
-function TxmlTypeList.GetChildByIndex(const Idx: Integer): AxmlType;
+function TxmlTypeList.GetChildByIndex(const Idx: Int32): AxmlType;
 begin
   Result := FChildren[Idx];
 end;
 
-procedure TxmlTypeList.Print(const D: AxmlPrinter; const IndentLevel: Integer);
-var I : Integer;
+procedure TxmlTypeList.Print(const D: AxmlPrinter; const IndentLevel: Int32);
+var
+  I : Int32;
 begin
   for I := 0 to ChildCount - 1 do
     ChildByIndex[I].Print(D, IndentLevel);
 end;
 
 function TxmlTypeList.TextContent(const Declarations: TxmlMarkupDeclarationList): UnicodeString;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   Result := '';
   I := PosNext(C, AxmlType);
@@ -1500,7 +1515,7 @@ begin
   FData := Data;
 end;
 
-procedure TxmlCharData.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlCharData.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintText(xmlSafeText(FData));
 end;
@@ -1511,7 +1526,7 @@ begin
 end;
 
 { TxmlQuotedText                                                               }
-procedure TxmlQuotedText.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlQuotedText.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintQuoteStr(FText);
 end;
@@ -1528,7 +1543,7 @@ begin
   inherited Create(Data);
 end;
 
-procedure TxmlCDSect.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlCDSect.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<![CDATA[');
@@ -1551,7 +1566,7 @@ begin
   FRefName := RefName;
 end;
 
-procedure TxmlGeneralEntityRef.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlGeneralEntityRef.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('&');
   D.PrintName(FRefName);
@@ -1559,7 +1574,8 @@ begin
 end;
 
 function TxmlGeneralEntityRef.TextContent(const Declarations: TxmlMarkupDeclarationList): UnicodeString;
-var Ch : WideChar;
+var
+  Ch : WideChar;
 begin
   Ch := xmlResolveEntityReference(FRefName);
   if Ch <> WideChar(#0) then
@@ -1579,7 +1595,7 @@ begin
   FHex := Hex;
 end;
 
-procedure TxmlCharRef.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlCharRef.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   if FHex then
     begin
@@ -1607,7 +1623,7 @@ begin
   FRefName := RefName;
 end;
 
-procedure TxmlPEReference.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlPEReference.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('%');
   D.PrintName(FRefName);
@@ -1624,8 +1640,9 @@ end;
 { TxmlQuotedReferenceText                                                      }
 {   [..]  QuotedReferenceText ::=  "'" ReferenceText "'" |                     }
 {                                  '"' ReferenceText '"'                       }
-procedure TxmlQuotedReferenceText.Print(const D: AxmlPrinter; const IndentLevel: Integer);
-var Q : UnicodeString;
+procedure TxmlQuotedReferenceText.Print(const D: AxmlPrinter; const IndentLevel: Int32);
+var
+  Q : UnicodeString;
 begin
   Q := D.GetQuoteChar('');
   D.PrintSymbol(Q);
@@ -1646,7 +1663,7 @@ begin
   FText := Text;
 end;
 
-procedure TxmlLiteralFormatting.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlLiteralFormatting.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintDefault(FText);
 end;
@@ -1703,7 +1720,7 @@ begin
   Result := FName;
 end;
 
-procedure TxmlAttribute.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlAttribute.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSpace;
   D.PrintAttrName(FName);
@@ -1776,9 +1793,10 @@ begin
 end;
 
 function AxmlAttributeList.GetNameSpaceURI(const NameSpace: UnicodeString): UnicodeString;
-var I    : Integer;
-    A    : TxmlAttribute;
-    N, U : UnicodeString;
+var
+  I    : Int32;
+  A    : TxmlAttribute;
+  N, U : UnicodeString;
 begin
   I := -1;
   Repeat
@@ -1806,12 +1824,12 @@ begin
   inherited Destroy;
 end;
 
-procedure TxmlAttributeList.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlAttributeList.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   FList.Print(D, IndentLevel);
 end;
 
-function TxmlAttributeList.GetAttrCount: Integer;
+function TxmlAttributeList.GetAttrCount: Int32;
 begin
   Result := FList.GetChildCountByClass(TxmlAttribute);
 end;
@@ -1826,13 +1844,14 @@ begin
   Result := Assigned(FList.Find(Name, TxmlAttribute));
 end;
 
-function TxmlAttributeList.FindNextAttr(var A: TxmlAttribute; const Idx: Integer): Integer;
+function TxmlAttributeList.FindNextAttr(var A: TxmlAttribute; const Idx: Int32): Int32;
 begin
   Result := FList.PosNext(AxmlType(A), TxmlAttribute, Idx);
 end;
 
 function TxmlAttributeList.AttrAsText(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: UnicodeString): UnicodeString;
-var A : TxmlAttribute;
+var
+  A : TxmlAttribute;
 begin
   A := TxmlAttribute(FList.Find(Name, TxmlAttribute));
   if Assigned(A) then
@@ -1842,7 +1861,8 @@ begin
 end;
 
 function TxmlAttributeList.AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Int64): Int64;
-var A : TxmlAttribute;
+var
+  A : TxmlAttribute;
 begin
   A := TxmlAttribute(FList.Find(Name, TxmlAttribute));
   if Assigned(A) then
@@ -1852,7 +1872,8 @@ begin
 end;
 
 function TxmlAttributeList.AttrAsFloat(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Extended): Extended;
-var A : TxmlAttribute;
+var
+  A : TxmlAttribute;
 begin
   A := TxmlAttribute(FList.Find(Name, TxmlAttribute));
   if Assigned(A) then
@@ -1883,7 +1904,7 @@ begin
   Result := FName;
 end;
 
-procedure TxmlTextAttribute.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlTextAttribute.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSpace;
   D.PrintAttrName(FName);
@@ -1909,7 +1930,7 @@ begin
   FText := Text;
 end;
 
-procedure TxmlComment.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlComment.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<--');
@@ -1927,7 +1948,7 @@ begin
   FText := Text;
 end;
 
-procedure TxmlProcessingInstruction.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlProcessingInstruction.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<?');
@@ -1940,7 +1961,8 @@ end;
 
 { TxmlMiscList                                                        }
 function TxmlMiscList.FirstComment: UnicodeString;
-var C : TxmlComment;
+var
+  C : TxmlComment;
 begin
   C := TxmlComment(Find(TxmlComment));
   if Assigned(C) then
@@ -1950,8 +1972,9 @@ begin
 end;
 
 function TxmlMiscList.Comments: UnicodeStringArray;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   SetLength(Result, 0);
   I := PosNext(C, TxmlComment);
@@ -1963,8 +1986,9 @@ begin
 end;
 
 function TxmlMiscList.FirstProcessingInstruction(const PITarget: UnicodeString): UnicodeString;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   I := PosNext(C, TxmlProcessingInstruction);
   while I >= 0 do
@@ -1980,8 +2004,9 @@ begin
 end;
 
 function TxmlMiscList.ProcessingInstructions(const PITarget: UnicodeString): UnicodeStringArray;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   SetLength(Result, 0);
   I := PosNext(C, TxmlProcessingInstruction);
@@ -1995,7 +2020,8 @@ end;
 
 { TxmlXMLDecl                                                                  }
 function TxmlXMLDecl.GetVersionNum: UnicodeString;
-var C : AxmlType;
+var
+  C : AxmlType;
 begin
   if PosNext(C, 'version', TxmlTextAttribute) >= 0 then
     Result := TxmlTextAttribute(C).TextContent
@@ -2004,7 +2030,8 @@ begin
 end;
 
 function TxmlXMLDecl.GetEncodingName: UnicodeString;
-var C : AxmlType;
+var
+  C : AxmlType;
 begin
   if PosNext(C, 'encoding', TxmlTextAttribute) >= 0 then
     Result := TxmlTextAttribute(C).TextContent
@@ -2013,8 +2040,9 @@ begin
 end;
 
 function TxmlXMLDecl.GetStandalone: TxmlOptionalBoolean;
-var C : AxmlType;
-    S : UnicodeString;
+var
+  C : AxmlType;
+  S : UnicodeString;
 begin
   if PosNext(C, 'standalone', TxmlTextAttribute) < 0 then
     Result := obUnspecified
@@ -2030,7 +2058,7 @@ begin
     end;
 end;
 
-procedure TxmlXMLDecl.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlXMLDecl.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<?xml');
@@ -2047,7 +2075,7 @@ begin
   FName := Name;
 end;
 
-procedure AxmlDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure AxmlDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSpace;
   D.PrintDefault(FName);
@@ -2058,7 +2086,7 @@ end;
 {   [48]  cp ::=  (Name | choice | seq) ('?' | '*' | '+')?                     }
 {   [49]  choice ::=  '(' S? cp ( S? '|' S? cp )* S? ')'                       }
 {   [50]  seq ::=  '(' S? cp ( S? ',' S? cp )* S? ')'                          }
-procedure AxmlChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure AxmlChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   case Numerator of
     csnOne        : ;
@@ -2074,20 +2102,21 @@ begin
   FName := Name;
 end;
 
-procedure TxmlNameChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlNameChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintDefault(Name);
   inherited Print(D, IndentLevel);
 end;
 
-function AxmlListChildSpec.PosNextChildSpec(var C: AxmlChildSpec; const PrevPos: Integer): Integer;
-var D : AxmlType;
+function AxmlListChildSpec.PosNextChildSpec(var C: AxmlChildSpec; const PrevPos: Int32): Int32;
+var
+  D : AxmlType;
 begin
   Result := List.PosNext(D, AxmlChildSpec, PrevPos);
   C := AxmlChildSpec(D);
 end;
 
-procedure AxmlListChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure AxmlListChildSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('(');
   List.Print(D, IndentLevel);
@@ -2095,19 +2124,20 @@ begin
 end;
 
 { AxmlContentSpec                                                              }
-procedure TxmlEmptyContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlEmptyContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintDefault('EMPTY');
 end;
 
-procedure TxmlAnyContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlAnyContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintDefault('ANY');
 end;
 
 function TxmlMixedContentSpec.GetAllowedNames: UnicodeStringArray;
-var I : Integer;
-    C : AxmlType;
+var
+  I : Int32;
+  C : AxmlType;
 begin
   SetLength(Result, 0);
   I := FList.PosNext(C, TxmlLiteralFormatting);
@@ -2118,12 +2148,12 @@ begin
     end;
 end;
 
-procedure TxmlMixedContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlMixedContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   { Not implemented }
 end;
 
-procedure TxmlChildrenContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlChildrenContentSpec.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   ChildrenSpec.Print(D, IndentLevel);
 end;
@@ -2144,7 +2174,7 @@ begin
   end;
 end;
 
-procedure TxmlElementDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlElementDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent (IndentLevel);
   D.PrintSymbol('<!ELEMENT');
@@ -2182,7 +2212,7 @@ begin
   FDefaultValue := DefaultValue;
 end;
 
-procedure TxmlAttDef.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlAttDef.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSpace;
   D.PrintName(Name);
@@ -2225,7 +2255,7 @@ begin
   end;
 end;
 
-procedure TxmlAttListDecl.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlAttListDecl.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<!ATTLIST');
@@ -2247,7 +2277,8 @@ begin
 end;
 
 function TxmlMarkupDeclarationList.ResolveEntityReference(const RefName: UnicodeString; var Value: UnicodeString): Boolean;
-var D : TxmlEntityDeclaration;
+var
+  D : TxmlEntityDeclaration;
 begin
   D := FindEntityDeclaration(RefName);
   Result := Assigned(D);
@@ -2258,7 +2289,8 @@ begin
 end;
 
 function TxmlMarkupDeclarationList.ResolveParseEntityReference(const RefName: UnicodeString; var Value: UnicodeString): Boolean;
-var D : TxmlEntityDeclaration;
+var
+  D : TxmlEntityDeclaration;
 begin
   D := FindEntityDeclaration(RefName);
   Result := Assigned(D);
@@ -2292,7 +2324,7 @@ begin
   FSystemID := SystemID;
 end;
 
-procedure TxmlExternalID.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlExternalID.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   if IDType = eidSystem then
     begin
@@ -2308,7 +2340,7 @@ begin
     end;
 end;
 
-procedure TxmlExternalIDNData.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlExternalIDNData.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   inherited Print(D, IndentLevel);
   D.PrintSpace;
@@ -2324,7 +2356,7 @@ begin
   FDefinition := Definition;
 end;
 
-procedure TxmlEntityDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlEntityDeclaration.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<!ENTITY');
@@ -2336,7 +2368,7 @@ begin
 end;
 
 { TxmlDocTypeDeclarationList                                                   }
-procedure TxmlDocTypeDeclarationList.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlDocTypeDeclarationList.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSpace;
   D.PrintSymbol('[');
@@ -2366,7 +2398,7 @@ begin
   Result := TxmlDocTypeDeclarationList(Find(TxmlDocTypeDeclarationList));
 end;
 
-procedure TxmlDocTypeDecl.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlDocTypeDecl.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   D.PrintSymbol('<!DOCTYPE');
@@ -2384,7 +2416,8 @@ begin
 end;
 
 function TxmlDocTypeDecl.GetURI: UnicodeString;
-var I : TxmlExternalID;
+var
+  I : TxmlExternalID;
 begin
   I := GetExternalID;
   if not Assigned(I) then
@@ -2400,9 +2433,9 @@ end;
 {                                                                              }
 
 { AxmlTagWithAttr                                                              }
-function AxmlTagWithAttr.AttrAsInteger(const Attr: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Integer): Integer;
+function AxmlTagWithAttr.AttrAsInteger(const Attr: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Int64): Int64;
 begin
-  Result := StrToIntDef(AttrAsText(Attr, Declarations, ''), DefaultValue);
+  Result := StrToInt64Def(AttrAsText(Attr, Declarations, ''), DefaultValue);
 end;
 
 function AxmlTagWithAttr.AttrAsFloat(const Attr: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Extended): Extended;
@@ -2441,7 +2474,7 @@ begin
   Result := FName;
 end;
 
-function ATxmlTagWithAttr.GetAttrCount: Integer;
+function ATxmlTagWithAttr.GetAttrCount: Int32;
 begin
   Result := FAttributes.AttrCount;
 end;
@@ -2473,7 +2506,7 @@ begin
 end;
 
 { TxmlStartTag                                                                 }
-procedure TxmlStartTag.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlStartTag.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('<');
   D.PrintTagName(Name);
@@ -2483,7 +2516,7 @@ begin
 end;
 
 { TxmlEndTag                                                                   }
-procedure TxmlEndTag.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlEndTag.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('</');
   D.PrintTagName(Name);
@@ -2491,7 +2524,7 @@ begin
 end;
 
 { TxmlEmptyElementTag                                                          }
-procedure TxmlEmptyElementTag.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlEmptyElementTag.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintSymbol('<');
   D.PrintTagName(Name);
@@ -2526,7 +2559,7 @@ begin
   Result := GetTag.AttrAsText(Name, Declarations, DefaultValue);
 end;
 
-function AxmlElement.AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Integer): Integer;
+function AxmlElement.AttrAsInteger(const Name: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: Int32): Int32;
 begin
   Result := GetTag.AttrAsInteger(Name, Declarations, DefaultValue);
 end;
@@ -2537,7 +2570,8 @@ begin
 end;
 
 function AxmlElement.TextContent(const Declarations: TxmlMarkupDeclarationList): UnicodeString;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2547,7 +2581,8 @@ begin
 end;
 
 function AxmlElement.GetChildContent(const Path: UnicodeString): TxmlElementContent;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2557,7 +2592,8 @@ begin
 end;
 
 function AxmlElement.GetChildContentText(const Path: UnicodeString): UnicodeString;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetChildContent(Path);
   if not Assigned(C) then
@@ -2567,7 +2603,8 @@ begin
 end;
 
 function AxmlElement.FirstElement: AxmlElement;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2577,7 +2614,8 @@ begin
 end;
 
 function AxmlElement.ElementNames: UnicodeStringArray;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2587,7 +2625,8 @@ begin
 end;
 
 function AxmlElement.ElementByName(const Path: UnicodeString): AxmlElement;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2597,7 +2636,8 @@ begin
 end;
 
 function AxmlElement.ElementsByName(const Path: UnicodeString): AxmlElementArray;
-var C : TxmlElementContent;
+var
+  C : TxmlElementContent;
 begin
   C := GetContent;
   if not Assigned(C) then
@@ -2606,8 +2646,9 @@ begin
     Result := C.ElementsByName(Path);
 end;
 
-function AxmlElement.PosNextElement(var C: AxmlElement; const PrevPos: Integer): Integer;
-var N : TxmlElementContent;
+function AxmlElement.PosNextElement(var C: AxmlElement; const PrevPos: Int32): Int32;
+var
+  N : TxmlElementContent;
 begin
   N := GetContent;
   if not Assigned(N) then
@@ -2617,8 +2658,9 @@ begin
 end;
 
 function AxmlElement.PosNextElementByName(var C: AxmlElement; const Name: UnicodeString;
-    const PrevPos: Integer): Integer;
-var N : TxmlElementContent;
+    const PrevPos: Int32): Int32;
+var
+  N : TxmlElementContent;
 begin
   N := GetContent;
   if not Assigned(N) then
@@ -2627,8 +2669,9 @@ begin
     Result := N.PosNextElementByName(C, Name, PrevPos);
 end;
 
-function AxmlElement.ElementCount: Integer;
-var N : TxmlElementContent;
+function AxmlElement.ElementCount: Int32;
+var
+  N : TxmlElementContent;
 begin
   N := GetContent;
   if not Assigned(N) then
@@ -2637,8 +2680,9 @@ begin
     Result := N.ElementCount;
 end;
 
-function AxmlElement.ElementCountByName(const Name: UnicodeString): Integer;
-var N : TxmlElementContent;
+function AxmlElement.ElementCountByName(const Name: UnicodeString): Int32;
+var
+  N : TxmlElementContent;
 begin
   N := GetContent;
   if not Assigned(N) then
@@ -2671,7 +2715,7 @@ begin
   Result := nil;
 end;
 
-procedure TxmlEmptyElement.Print(const D: AxmlPrinter; const IndentLevel: Integer);
+procedure TxmlEmptyElement.Print(const D: AxmlPrinter; const IndentLevel: Int32);
 begin
   D.PrintIndent(IndentLevel);
   FTag.Print(D, IndentLevel);
@@ -2707,8 +2751,9 @@ begin
   Result := FContent;
 end;
 
-procedure TxmlElement.Print(const D: AxmlPrinter; const IndentLevel: Integer);
-var R : Boolean;
+procedure TxmlElement.Print(const D: AxmlPrinter; const IndentLevel: Int32);
+var
+  R : Boolean;
 begin
   D.PrintIndent(IndentLevel);
   FStartTag.Print(D, IndentLevel);
@@ -2726,14 +2771,15 @@ begin
 end;
 
 { TxmlElementContent                                                           }
-function TxmlElementContent.PosNextElement(var C: AxmlElement; const PrevPos: Integer): Integer;
-var S : AxmlType;
+function TxmlElementContent.PosNextElement(var C: AxmlElement; const PrevPos: Int32): Int32;
+var
+  S : AxmlType;
 begin
   Result := PosNext(S, AxmlElement, PrevPos);
   C := AxmlElement(S);
 end;
 
-function TxmlElementContent.PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Integer): Integer;
+function TxmlElementContent.PosNextElementByName(var C: AxmlElement; const Name: UnicodeString; const PrevPos: Int32): Int32;
 begin
   if Name <> '' then
     begin
@@ -2749,9 +2795,10 @@ begin
   Result := -1;
 end;
 
-function TxmlElementContent.ElementCount: Integer;
-var I : Integer;
-    C : AxmlElement;
+function TxmlElementContent.ElementCount: Int32;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   Result := 0;
   I := -1;
@@ -2762,9 +2809,10 @@ begin
   Until I < 0;
 end;
 
-function TxmlElementContent.ElementCountByName(const Name: UnicodeString): Integer;
-var I : Integer;
-    C : AxmlElement;
+function TxmlElementContent.ElementCountByName(const Name: UnicodeString): Int32;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   Result := 0;
   I := -1;
@@ -2781,7 +2829,8 @@ begin
 end;
 
 function TxmlElementContent.FirstElementName: UnicodeString;
-var C : AxmlElement;
+var
+  C : AxmlElement;
 begin
   PosNextElement(C);
   if not Assigned(C) then
@@ -2791,8 +2840,9 @@ begin
 end;
 
 function TxmlElementContent.ElementNames: UnicodeStringArray;
-var I : Integer;
-    C : AxmlElement;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   SetLength(Result, 0);
   I := PosNextElement(C);
@@ -2804,9 +2854,10 @@ begin
 end;
 
 function TxmlElementContent.ResolveElementPath(const Path: UnicodeString;
-    var Name: UnicodeString): TxmlElementContent;
-var I, J : Integer;
-    E    : AxmlElement;
+         var Name: UnicodeString): TxmlElementContent;
+var
+  I, J : Int32;
+  E    : AxmlElement;
 begin
   Name := '';
   I := 1;
@@ -2831,8 +2882,9 @@ begin
 end;
 
 function TxmlElementContent.ElementByName(const Path: UnicodeString): AxmlElement;
-var N : UnicodeString;
-    C : TxmlElementContent;
+var
+  N : UnicodeString;
+  C : TxmlElementContent;
 begin
   C := ResolveElementPath(Path, N);
   if Assigned(C) then
@@ -2842,10 +2894,11 @@ begin
 end;
 
 function TxmlElementContent.ElementsByName(const Path: UnicodeString): AxmlElementArray;
-var N : UnicodeString;
-    C : TxmlElementContent;
-    E : AxmlElement;
-    I, J, L : Integer;
+var
+  N : UnicodeString;
+  C : TxmlElementContent;
+  E : AxmlElement;
+  I, J, L : Int32;
 begin
   Result := nil;
   C := ResolveElementPath(Path, N);
@@ -2872,7 +2925,8 @@ begin
 end;
 
 function TxmlElementContent.ElementContentByName(const Path: UnicodeString): TxmlElementContent;
-var C : AxmlElement;
+var
+  C : AxmlElement;
 begin
   C := ElementByName(Path);
   if not Assigned(C) then
@@ -2882,8 +2936,9 @@ begin
 end;
 
 function TxmlElementContent.ElementAttributeNames(const ElementName: UnicodeString): UnicodeStringArray;
-var I : Integer;
-    C : AxmlElement;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   SetLength(Result, 0);
   I := PosNextElementByName(C, ElementName);
@@ -2895,8 +2950,9 @@ begin
 end;
 
 function TxmlElementContent.ElementAttributeValues(const ElementName, AttributeName: UnicodeString; const Declarations: TxmlMarkupDeclarationList; const DefaultValue: UnicodeString): UnicodeStringArray;
-var I : Integer;
-    C : AxmlElement;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   SetLength(Result, 0);
   I := PosNextElementByName(C, ElementName);
@@ -2908,8 +2964,9 @@ begin
 end;
 
 function TxmlElementContent.ElementTextContent(const ElementName: UnicodeString; const Declarations: TxmlMarkupDeclarationList): UnicodeStringArray;
-var I : Integer;
-    C : AxmlElement;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   SetLength(Result, 0);
   I := PosNextElementByName(C, ElementName);
@@ -2921,8 +2978,9 @@ begin
 end;
 
 function TxmlElementContent.ElementTextContent(const ElementName, AttributeName, AttributeValue: UnicodeString; const Declarations: TxmlMarkupDeclarationList): UnicodeStringArray;
-var I : Integer;
-    C : AxmlElement;
+var
+  I : Int32;
+  C : AxmlElement;
 begin
   SetLength(Result, 0);
   I := PosNextElementByName(C, ElementName);
@@ -2978,7 +3036,8 @@ begin
 end;
 
 function TxmlDocument.DocTypeDecl: TxmlDocTypeDecl;
-var P : TxmlProlog;
+var
+  P : TxmlProlog;
 begin
   P := GetProlog;
   if not Assigned(P) then
@@ -2988,7 +3047,8 @@ begin
 end;
 
 function TxmlDocument.DocTypeName: UnicodeString;
-var D : TxmlDocTypeDecl;
+var
+  D : TxmlDocTypeDecl;
 begin
   D := DocTypeDecl;
   if not Assigned(D) then
@@ -2998,7 +3058,8 @@ begin
 end;
 
 function TxmlDocument.DocTypeURI: UnicodeString;
-var D : TxmlDocTypeDecl;
+var
+  D : TxmlDocTypeDecl;
 begin
   D := DocTypeDecl;
   if not Assigned(D) then

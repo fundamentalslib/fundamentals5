@@ -108,8 +108,9 @@ function  xmlExtractQuotedText(var P: PWideChar; var S: UnicodeString): Boolean;
 {   Buf is a pointer to the first part of an xml entity. It must include       }
 {   the xml declaration. HeaderSize returns the number of bytes offset in      }
 {   Buf to the actual xml.                                                     }
-function  xmlGetEntityEncoding(const Buf: Pointer; const BufSize: Integer;
-          out HeaderSize: Integer): TUnicodeCodecClass;
+function  xmlGetEntityEncoding(
+          const Buf: Pointer; const BufSize: NativeInt;
+          out HeaderSize: Int32): TUnicodeCodecClass;
 
 function  xmlResolveEntityReference(const RefName: UnicodeString): WideChar;
 
@@ -125,9 +126,9 @@ function  xmlAttrTag(const Tag: UnicodeString;
 function  xmlEmptyTag(const Tag, Attr: UnicodeString): UnicodeString;
 procedure xmlSafeTextInPlace(var Txt: UnicodeString);
 function  xmlSafeText(const Txt: UnicodeString): UnicodeString;
-function  xmlSpaceIndent(const IndentLength: Integer;
-          const IndentLevel: Integer): UnicodeString;
-function  xmlTabIndent(const IndentLevel: Integer): UnicodeString;
+function  xmlSpaceIndent(const IndentLength: Int32;
+          const IndentLevel: Int32): UnicodeString;
+function  xmlTabIndent(const IndentLevel: Int32): UnicodeString;
 function  xmlComment(const Comment: UnicodeString): UnicodeString;
 
 
@@ -256,8 +257,9 @@ begin
 end;
 
 function xmlValidName(const Text: UnicodeString): Boolean;
-var P : PWideChar;
-    L : Integer;
+var
+  P : PWideChar;
+  L : NativeInt;
 begin
   Result := False;
   P := Pointer(Text);
@@ -280,7 +282,8 @@ end;
 
 {   [25]  Eq ::=  S? '=' S?                                                    }
 function xmlSkipEq(var P: PWideChar): Boolean;
-var Q : PWideChar;
+var
+  Q : PWideChar;
 begin
   Q := P;
   xmlSkipSpace(Q);
@@ -294,7 +297,8 @@ end;
 
 {   [15]  Comment ::=  '<!--' ((Char - '-') | ('-' (Char - '-')))* '-->'       }
 function xmlSkipComment(var P: PWideChar): Boolean;
-var I : Integer;
+var
+  I : NativeInt;
 begin
   Result := StrZMatchStrAsciiBW(P, '<!--', True);
   if not Result then
@@ -322,12 +326,14 @@ end;
 {   [26]  VersionNum ::=  ([a-zA-Z0-9_.:] | '-')+                              }
 {   [80]  EncodingDecl ::=  S 'encoding' Eq ('"' EncName '"' |                 }
 {         "'" EncName "'" )                                                    }
-function xmlGetEntityEncoding(const Buf: Pointer; const BufSize: Integer;
-    out HeaderSize: Integer): TUnicodeCodecClass;
-var S    : UnicodeString;
-    R    : PByteChar;
-    P, Q : PWideChar;
-    L    : Integer;
+function xmlGetEntityEncoding(
+         const Buf: Pointer; const BufSize: NativeInt;
+         out HeaderSize: Int32): TUnicodeCodecClass;
+var
+  S    : UnicodeString;
+  R    : PByteChar;
+  P, Q : PWideChar;
+  L    : NativeInt;
 begin
   R := Buf;
   L := BufSize;
@@ -454,12 +460,12 @@ begin
   xmlSafeTextInPlace(Result);
 end;
 
-function xmlSpaceIndent(const IndentLength: Integer; const IndentLevel: Integer): UnicodeString;
+function xmlSpaceIndent(const IndentLength: Int32; const IndentLevel: Int32): UnicodeString;
 begin
   Result := DupCharU(#32, IndentLevel * IndentLength);
 end;
 
-function xmlTabIndent(const IndentLevel: Integer): UnicodeString;
+function xmlTabIndent(const IndentLevel: Int32): UnicodeString;
 begin
   Result := DupCharU(#9, IndentLevel);
 end;
@@ -479,9 +485,10 @@ end;
 {$IFDEF XML_TEST}
 {$ASSERTIONS ON}
 procedure Test;
-var S : RawByteString;
-    T : UnicodeString;
-    I : Integer;
+var
+  S : RawByteString;
+  T : UnicodeString;
+  I : Int32;
 begin
   Assert(xmlValidChar(WideChar(#32)), 'xmlValidChar');
   Assert(xmlValidChar(WideChar(#13)), 'xmlValidChar');
