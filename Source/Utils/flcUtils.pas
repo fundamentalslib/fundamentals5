@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcUtils.pas                                             }
-{   File version:     5.69                                                     }
+{   File version:     5.74                                                     }
 {   Description:      Utility functions.                                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
@@ -117,6 +117,11 @@
 {   2020/03/13  5.67  NativeInt changes.                                       }
 {   2020/03/30  5.68  EqualMem optimisations and tests.                        }
 {   2020/06/02  5.69  String to/from UInt64 conversion functions.              }
+{   2020/06/07  5.70  Remove IInterface definition for Delphi 5.               }
+{   2020/06/15  5.71  Byte/Word versions of memory functions.                  }
+{   2020/07/20  5.72  Replace Bounded functions with IsInRange functions.      }
+{   2020/07/25  5.73  Optimise EqualMem and EqualMemNoAsciiCase.               }
+{   2020/07/25  5.74  Add common String and Ascii functions.                   }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -153,10 +158,11 @@ uses
 
 
 {                                                                              }
-{ Version                                                                      }
+{ Release                                                                      }
 {                                                                              }
 const
-  FundamentalsVersion = '5.0.6';
+  FundamentalsRelease   = '5.0.9';
+  FundamentalsTitleText = 'Fundamentals Library ' + FundamentalsRelease;
 
 
 
@@ -172,41 +178,228 @@ type
 
 
 {                                                                              }
-{ Compare result                                                               }
-{   Generic compare result enumeration.                                        }
-{                                                                              }
-type
-  TCompareResult = (
-      crLess,
-      crEqual,
-      crGreater,
-      crUndefined
-      );
-  TCompareResultSet = set of TCompareResult;
-
-function InverseCompareResult(const C: TCompareResult): TCompareResult;
-
-
-
-{                                                                              }
 { Integer functions                                                            }
 {                                                                              }
 
 { Min returns smallest of A and B                                              }
 { Max returns greatest of A and B                                              }
-function  MinInt(const A, B: Integer): Integer;   {$IFDEF UseInline}inline;{$ENDIF}
-function  MaxInt(const A, B: Integer): Integer;   {$IFDEF UseInline}inline;{$ENDIF}
-function  MinCrd(const A, B: Cardinal): Cardinal; {$IFDEF UseInline}inline;{$ENDIF}
-function  MaxCrd(const A, B: Cardinal): Cardinal; {$IFDEF UseInline}inline;{$ENDIF}
+function  MinInt(const A, B: Int64): Int64;                   {$IFDEF UseInline}inline;{$ENDIF}
+function  MaxInt(const A, B: Int64): Int64;                   {$IFDEF UseInline}inline;{$ENDIF}
+function  MinUInt(const A, B: UInt64): UInt64;                {$IFDEF UseInline}inline;{$ENDIF}
+function  MaxUInt(const A, B: UInt64): UInt64;                {$IFDEF UseInline}inline;{$ENDIF}
+function  MinNatInt(const A, B: NativeInt): NativeInt;        {$IFDEF UseInline}inline;{$ENDIF}
+function  MaxNatInt(const A, B: NativeInt): NativeInt;        {$IFDEF UseInline}inline;{$ENDIF}
+function  MinNatUInt(const A, B: NativeUInt): NativeUInt;     {$IFDEF UseInline}inline;{$ENDIF}
+function  MaxNatUInt(const A, B: NativeUInt): NativeUInt;     {$IFDEF UseInline}inline;{$ENDIF}
 
-{ Bounded returns Value if in Min..Max range, otherwise Min or Max             }
-function  Int32Bounded(const Value: Int32; const Min, Max: Int32): Int32;       {$IFDEF UseInline}inline;{$ENDIF}
-function  Int64Bounded(const Value: Int64; const Min, Max: Int64): Int64;       {$IFDEF UseInline}inline;{$ENDIF}
-function  Int32BoundedByte(const Value: Int32): Int32;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int64BoundedByte(const Value: Int64): Int64;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int32BoundedWord(const Value: Int32): Int32;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int64BoundedWord(const Value: Int64): Int64;                          {$IFDEF UseInline}inline;{$ENDIF}
-function  Int64BoundedWord32(const Value: Int64): Word32;                       {$IFDEF UseInline}inline;{$ENDIF}
+{ IsInRange returns True if Value is in range of type }
+function  IsIntInInt32Range(const Value: Int64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+function  IsIntInInt16Range(const Value: Int64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+function  IsIntInInt8Range(const Value: Int64): Boolean;      {$IFDEF UseInline}inline;{$ENDIF}
+
+function  IsUIntInInt32Range(const Value: UInt64): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
+function  IsUIntInInt16Range(const Value: UInt64): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
+function  IsUIntInInt8Range(const Value: UInt64): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+
+function  IsIntInUInt32Range(const Value: Int64): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  IsIntInUInt16Range(const Value: Int64): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  IsIntInUInt8Range(const Value: Int64): Boolean;     {$IFDEF UseInline}inline;{$ENDIF}
+
+function  IsUIntInUInt32Range(const Value: UInt64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  IsUIntInUInt16Range(const Value: UInt64): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  IsUIntInUInt8Range(const Value: UInt64): Boolean;   {$IFDEF UseInline}inline;{$ENDIF}
+
+
+
+{                                                                              }
+{ Memory operations                                                            }
+{                                                                              }
+const
+  Bytes1KB  = 1024;
+  Bytes1MB  = 1024 * Bytes1KB;
+  Bytes1GB  = 1024 * Bytes1MB;
+  Bytes64KB = 64 * Bytes1KB;
+  Bytes64MB = 64 * Bytes1MB;
+  Bytes2GB  = 2 * Word32(Bytes1GB);
+
+procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+procedure ZeroMem(var Buf; const Count: NativeInt);                    {$IFDEF UseInline}inline;{$ENDIF}
+procedure GetZeroMem(var P: Pointer; const Size: NativeInt);           {$IFDEF UseInline}inline;{$ENDIF}
+
+procedure MoveMem(const Source; var Dest; const Count: NativeInt);     {$IFDEF UseInline}inline;{$ENDIF}
+
+function  EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+function  EqualMemNoAsciiCaseB(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+function  EqualMemNoAsciiCaseW(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+
+function  CompareMemB(const Buf1; const Buf2; const Count: NativeInt): Integer;
+function  CompareMemW(const Buf1; const Buf2; const Count: NativeInt): Integer;
+function  CompareMemNoAsciiCaseB(const Buf1; const Buf2; const Count: NativeInt): Integer;
+function  CompareMemNoAsciiCaseW(const Buf1; const Buf2; const Count: NativeInt): Integer;
+
+function  LocateMemB(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+function  LocateMemW(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+function  LocateMemNoAsciiCaseB(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+function  LocateMemNoAsciiCaseW(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+
+procedure ReverseMem(var Buf; const Size: NativeInt);
+
+
+
+{                                                                              }
+{ ByteChar ASCII constants                                                     }
+{                                                                              }
+const
+  AsciiNULL = ByteChar(#0);
+  AsciiSOH  = ByteChar(#1);
+  AsciiSTX  = ByteChar(#2);
+  AsciiETX  = ByteChar(#3);
+  AsciiEOT  = ByteChar(#4);
+  AsciiENQ  = ByteChar(#5);
+  AsciiACK  = ByteChar(#6);
+  AsciiBEL  = ByteChar(#7);
+  AsciiBS   = ByteChar(#8);
+  AsciiHT   = ByteChar(#9);
+  AsciiLF   = ByteChar(#10);
+  AsciiVT   = ByteChar(#11);
+  AsciiFF   = ByteChar(#12);
+  AsciiCR   = ByteChar(#13);
+  AsciiSO   = ByteChar(#14);
+  AsciiSI   = ByteChar(#15);
+  AsciiDLE  = ByteChar(#16);
+  AsciiDC1  = ByteChar(#17);
+  AsciiDC2  = ByteChar(#18);
+  AsciiDC3  = ByteChar(#19);
+  AsciiDC4  = ByteChar(#20);
+  AsciiNAK  = ByteChar(#21);
+  AsciiSYN  = ByteChar(#22);
+  AsciiETB  = ByteChar(#23);
+  AsciiCAN  = ByteChar(#24);
+  AsciiEM   = ByteChar(#25);
+  AsciiEOF  = ByteChar(#26);
+  AsciiESC  = ByteChar(#27);
+  AsciiFS   = ByteChar(#28);
+  AsciiGS   = ByteChar(#29);
+  AsciiRS   = ByteChar(#30);
+  AsciiUS   = ByteChar(#31);
+  AsciiSP   = ByteChar(#32);
+  AsciiDEL  = ByteChar(#127);
+  AsciiXON  = AsciiDC1;
+  AsciiXOFF = AsciiDC3;
+
+  AsciiCRLF = AsciiCR + AsciiLF;
+
+  AsciiDecimalPoint = ByteChar(#46);
+  AsciiComma        = ByteChar(#44);
+  AsciiBackSlash    = ByteChar(#92);
+  AsciiForwardSlash = ByteChar(#47);
+  AsciiPercent      = ByteChar(#37);
+  AsciiAmpersand    = ByteChar(#38);
+  AsciiPlus         = ByteChar(#43);
+  AsciiMinus        = ByteChar(#45);
+  AsciiEqualSign    = ByteChar(#61);
+  AsciiSingleQuote  = ByteChar(#39);
+  AsciiDoubleQuote  = ByteChar(#34);
+
+  AsciiDigit0 = ByteChar(#48);
+  AsciiDigit9 = ByteChar(#57);
+  AsciiUpperA = ByteChar(#65);
+  AsciiUpperZ = ByteChar(#90);
+  AsciiLowerA = ByteChar(#97);
+  AsciiLowerZ = ByteChar(#122);
+
+
+
+{                                                                              }
+{ ASCII low case lookup                                                        }
+{                                                                              }
+const
+  AsciiLowCaseLookup: array[Byte] of Byte = (
+    $00, $01, $02, $03, $04, $05, $06, $07,
+    $08, $09, $0A, $0B, $0C, $0D, $0E, $0F,
+    $10, $11, $12, $13, $14, $15, $16, $17,
+    $18, $19, $1A, $1B, $1C, $1D, $1E, $1F,
+    $20, $21, $22, $23, $24, $25, $26, $27,
+    $28, $29, $2A, $2B, $2C, $2D, $2E, $2F,
+    $30, $31, $32, $33, $34, $35, $36, $37,
+    $38, $39, $3A, $3B, $3C, $3D, $3E, $3F,
+    $40, $61, $62, $63, $64, $65, $66, $67,
+    $68, $69, $6A, $6B, $6C, $6D, $6E, $6F,
+    $70, $71, $72, $73, $74, $75, $76, $77,
+    $78, $79, $7A, $5B, $5C, $5D, $5E, $5F,
+    $60, $61, $62, $63, $64, $65, $66, $67,
+    $68, $69, $6A, $6B, $6C, $6D, $6E, $6F,
+    $70, $71, $72, $73, $74, $75, $76, $77,
+    $78, $79, $7A, $7B, $7C, $7D, $7E, $7F,
+    $80, $81, $82, $83, $84, $85, $86, $87,
+    $88, $89, $8A, $8B, $8C, $8D, $8E, $8F,
+    $90, $91, $92, $93, $94, $95, $96, $97,
+    $98, $99, $9A, $9B, $9C, $9D, $9E, $9F,
+    $A0, $A1, $A2, $A3, $A4, $A5, $A6, $A7,
+    $A8, $A9, $AA, $AB, $AC, $AD, $AE, $AF,
+    $B0, $B1, $B2, $B3, $B4, $B5, $B6, $B7,
+    $B8, $B9, $BA, $BB, $BC, $BD, $BE, $BF,
+    $C0, $C1, $C2, $C3, $C4, $C5, $C6, $C7,
+    $C8, $C9, $CA, $CB, $CC, $CD, $CE, $CF,
+    $D0, $D1, $D2, $D3, $D4, $D5, $D6, $D7,
+    $D8, $D9, $DA, $DB, $DC, $DD, $DE, $DF,
+    $E0, $E1, $E2, $E3, $E4, $E5, $E6, $E7,
+    $E8, $E9, $EA, $EB, $EC, $ED, $EE, $EF,
+    $F0, $F1, $F2, $F3, $F4, $F5, $F6, $F7,
+    $F8, $F9, $FA, $FB, $FC, $FD, $FE, $FF);
+
+
+
+{                                                                              }
+{ WideChar ASCII constants                                                     }
+{                                                                              }
+const
+  WideNULL = WideChar(#0);
+  WideSOH  = WideChar(#1);
+  WideSTX  = WideChar(#2);
+  WideETX  = WideChar(#3);
+  WideEOT  = WideChar(#4);
+  WideENQ  = WideChar(#5);
+  WideACK  = WideChar(#6);
+  WideBEL  = WideChar(#7);
+  WideBS   = WideChar(#8);
+  WideHT   = WideChar(#9);
+  WideLF   = WideChar(#10);
+  WideVT   = WideChar(#11);
+  WideFF   = WideChar(#12);
+  WideCR   = WideChar(#13);
+  WideSO   = WideChar(#14);
+  WideSI   = WideChar(#15);
+  WideDLE  = WideChar(#16);
+  WideDC1  = WideChar(#17);
+  WideDC2  = WideChar(#18);
+  WideDC3  = WideChar(#19);
+  WideDC4  = WideChar(#20);
+  WideNAK  = WideChar(#21);
+  WideSYN  = WideChar(#22);
+  WideETB  = WideChar(#23);
+  WideCAN  = WideChar(#24);
+  WideEM   = WideChar(#25);
+  WideEOF  = WideChar(#26);
+  WideESC  = WideChar(#27);
+  WideFS   = WideChar(#28);
+  WideGS   = WideChar(#29);
+  WideRS   = WideChar(#30);
+  WideUS   = WideChar(#31);
+  WideSP   = WideChar(#32);
+  WideDEL  = WideChar(#127);
+  WideXON  = WideDC1;
+  WideXOFF = WideDC3;
+
+  {$IFDEF DELPHI5}
+  WideCRLF = WideString(#13#10);
+  {$ELSE}
+  {$IFDEF DELPHI7_DOWN}
+  WideCRLF = WideString(WideCR) + WideString(WideLF);
+  {$ELSE}
+  WideCRLF = WideCR + WideLF;
+  {$ENDIF}
+  {$ENDIF}
 
 
 
@@ -292,19 +485,68 @@ function  CharInCharSet(const A: Char; const C: ByteCharSet): Boolean;         {
 
 
 {                                                                              }
-{ String compare functions                                                     }
+{ Character functions                                                          }
 {                                                                              }
-{   Returns  -1  if A < B                                                      }
+function  CharCompareB(const A, B: ByteChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompareW(const A, B: WideChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompare(const A, B: Char): Integer;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharCompareNoAsciiCaseB(const A, B: ByteChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompareNoAsciiCaseW(const A, B: WideChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharCompareNoAsciiCase(const A, B: Char): Integer;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharEqualNoAsciiCaseB(const A, B: ByteChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharEqualNoAsciiCaseW(const A, B: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharEqualNoAsciiCase(const A, B: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharIsAsciiB(const C: ByteChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAsciiW(const C: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAscii(const C: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharIsAsciiUpperCaseB(const C: ByteChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAsciiUpperCaseW(const C: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAsciiUpperCase(const C: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharIsAsciiLowerCaseB(const C: ByteChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAsciiLowerCaseW(const C: WideChar): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharIsAsciiLowerCase(const C: Char): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharAsciiLowCaseB(const C: ByteChar): ByteChar;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharAsciiLowCaseW(const C: WideChar): WideChar;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharAsciiLowCase(const C: Char): Char;           {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharAsciiUpCaseB(const C: ByteChar): ByteChar;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharAsciiUpCaseW(const C: WideChar): WideChar;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharAsciiUpCase(const C: Char): Char;           {$IFDEF UseInline}inline;{$ENDIF}
+
+function  CharAsciiHexValueB(const C: ByteChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  CharAsciiHexValueW(const C: WideChar): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+
+
+
+{                                                                              }
+{ String functions                                                             }
+{                                                                              }
+{ Compare returns:                                                             }
+{            -1  if A < B                                                      }
 {             0  if A = B                                                      }
 {             1  if A > B                                                      }
 {                                                                              }
-function  CharCompareB(const A, B: ByteChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
-function  CharCompareW(const A, B: WideChar): Integer; {$IFDEF UseInline}inline;{$ENDIF}
-function  CharCompare(const A, B: Char): Integer;      {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;    {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPCompareW(const A, B: PWideChar; const Len: NativeInt): Integer;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPCompare(const A, B: PChar; const Len: NativeInt): Integer;       {$IFDEF UseInline}inline;{$ENDIF}
 
-function  StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;
-function  StrPCompareW(const A, B: PWideChar; const Len: NativeInt): Integer;
-function  StrPCompare(const A, B: PChar; const Len: NativeInt): Integer;
+function  StrPCompareNoAsciiCaseB(const A, B: Pointer; const Len: NativeInt): Integer;
+function  StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Integer;
+function  StrPCompareNoAsciiCase(const A, B: PChar; const Len: NativeInt): Integer;
+
+function  StrPEqualB(const A, B: Pointer; const Len: NativeInt): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPEqualW(const A, B: PWideChar; const Len: NativeInt): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPEqual(const A, B: PChar; const Len: NativeInt): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
+
+function  StrPEqualNoAsciiCaseB(const A, B: Pointer; const Len: NativeInt): Boolean;    {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPEqualNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Boolean;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPEqualNoAsciiCase(const A, B: PChar; const Len: NativeInt): Boolean;       {$IFDEF UseInline}inline;{$ENDIF}
 
 {$IFDEF SupportAnsiString}
 function  StrCompareA(const A, B: AnsiString): Integer;
@@ -312,6 +554,55 @@ function  StrCompareA(const A, B: AnsiString): Integer;
 function  StrCompareB(const A, B: RawByteString): Integer;
 function  StrCompareU(const A, B: UnicodeString): Integer;
 function  StrCompare(const A, B: String): Integer;
+
+{$IFDEF SupportAnsiString}
+function  StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
+{$ENDIF}
+function  StrCompareNoAsciiCaseB(const A, B: RawByteString): Integer;
+function  StrCompareNoAsciiCaseU(const A, B: UnicodeString): Integer;
+function  StrCompareNoAsciiCase(const A, B: String): Integer;
+
+function  StrEqualNoAsciiCaseB(const A, B: RawByteString): Boolean;
+function  StrEqualNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+function  StrEqualNoAsciiCase(const A, B: String): Boolean;
+
+function  StrStartsWithB(const A, B: RawByteString): Boolean;
+function  StrStartsWithU(const A, B: UnicodeString): Boolean;
+function  StrStartsWith(const A, B: String): Boolean;
+
+function  StrStartsWithNoAsciiCaseB(const A, B: RawByteString): Boolean;
+function  StrStartsWithNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+function  StrStartsWithNoAsciiCase(const A, B: String): Boolean;
+
+function  StrEndsWithB(const A, B: RawByteString): Boolean;
+function  StrEndsWithU(const A, B: UnicodeString): Boolean;
+function  StrEndsWith(const A, B: String): Boolean;
+
+function  StrEndsWithNoAsciiCaseB(const A, B: RawByteString): Boolean;
+function  StrEndsWithNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+function  StrEndsWithNoAsciiCase(const A, B: String): Boolean;
+
+function  StrPosB(const S, M: RawByteString): Int32;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPosU(const S, M: UnicodeString): Int32;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPos(const S, M: String): Int32;          {$IFDEF UseInline}inline;{$ENDIF}
+
+function  StrPosNoAsciiCaseB(const S, M: RawByteString): Int32;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPosNoAsciiCaseU(const S, M: UnicodeString): Int32;  {$IFDEF UseInline}inline;{$ENDIF}
+function  StrPosNoAsciiCase(const S, M: String): Int32;          {$IFDEF UseInline}inline;{$ENDIF}
+
+{$IFDEF SupportAnsiString}
+function  StrAsciiUpperCaseA(const S: AnsiString): AnsiString;
+{$ENDIF}
+function  StrAsciiUpperCaseB(const S: RawByteString): RawByteString;
+function  StrAsciiUpperCaseU(const S: UnicodeString): UnicodeString;
+function  StrAsciiUpperCase(const S: String): String;  {$IFDEF UseInline}inline;{$ENDIF}
+
+{$IFDEF SupportAnsiString}
+function  StrAsciiLowerCaseA(const S: AnsiString): AnsiString;
+{$ENDIF}
+function  StrAsciiLowerCaseB(const S: RawByteString): RawByteString;
+function  StrAsciiLowerCaseU(const S: UnicodeString): UnicodeString;
+function  StrAsciiLowerCase(const S: String): String;  {$IFDEF UseInline}inline;{$ENDIF}
 
 
 
@@ -373,6 +664,23 @@ function  iif(const Expr: Boolean; const TrueValue: TObject;
 
 
 {                                                                              }
+{ Compare result                                                               }
+{   Generic compare result enumeration.                                        }
+{                                                                              }
+type
+  TCompareResult = (
+      crLess,
+      crEqual,
+      crGreater,
+      crUndefined
+      );
+  TCompareResultSet = set of TCompareResult;
+
+function InverseCompareResult(const C: TCompareResult): TCompareResult;
+
+
+
+{                                                                              }
 { Direct comparison                                                            }
 {                                                                              }
 {   Compare(I1, I2) returns crLess if I1 < I2, crEqual if I1 = I2 or           }
@@ -381,7 +689,7 @@ function  iif(const Expr: Boolean; const TrueValue: TObject;
 function  Compare(const I1, I2: Boolean): TCompareResult; overload;
 function  Compare(const I1, I2: Integer): TCompareResult; overload;
 function  Compare(const I1, I2: Int64): TCompareResult; overload;
-function  Compare(const I1, I2: Extended): TCompareResult; overload;
+function  Compare(const I1, I2: Double): TCompareResult; overload;
 {$IFDEF SupportAnsiString}
 function  CompareA(const I1, I2: AnsiString): TCompareResult;
 {$ENDIF}
@@ -391,7 +699,7 @@ function  CompareChB(const I1, I2: ByteChar): TCompareResult;
 function  CompareChW(const I1, I2: WideChar): TCompareResult;
 
 function  Sgn(const A: Int64): Integer; overload;
-function  Sgn(const A: Extended): Integer; overload;
+function  Sgn(const A: Double): Integer; overload;
 
 
 
@@ -403,7 +711,7 @@ type
       convertOK,
       convertFormatError,
       convertOverflow
-      );
+    );
 
 
 
@@ -646,15 +954,6 @@ function  StrToPointerB(const S: RawByteString): Pointer;
 function  StrToPointerU(const S: UnicodeString): Pointer;
 function  StrToPointer(const S: String): Pointer;
 
-{$IFDEF SupportInterface}
-{$IFDEF SupportAnsiString}
-function  InterfaceToStrA(const I: IInterface): AnsiString;
-{$ENDIF}
-function  InterfaceToStrB(const I: IInterface): RawByteString;
-function  InterfaceToStrU(const I: IInterface): UnicodeString;
-function  InterfaceToStr(const I: IInterface): String;
-{$ENDIF}
-
 function  ObjectClassName(const O: TObject): String;
 function  ClassClassName(const C: TClass): String;
 function  ObjectToStr(const O: TObject): String;
@@ -696,46 +995,6 @@ function  HashStr(const S: String;
 function  HashInteger(const I: Integer; const Slots: Word32 = 0): Word32;
 function  HashNativeUInt(const I: NativeUInt; const Slots: Word32): Word32;
 function  HashWord32(const I: Word32; const Slots: Word32 = 0): Word32;
-
-
-
-{                                                                              }
-{ Memory operations                                                            }
-{                                                                              }
-const
-  Bytes1KB  = 1024;
-  Bytes1MB  = 1024 * Bytes1KB;
-  Bytes1GB  = 1024 * Bytes1MB;
-  Bytes64KB = 64 * Bytes1KB;
-  Bytes64MB = 64 * Bytes1MB;
-  Bytes2GB  = 2 * Word32(Bytes1GB);
-
-procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte); {$IFDEF UseInline}inline;{$ENDIF}
-procedure ZeroMem(var Buf; const Count: NativeInt);                    {$IFDEF UseInline}inline;{$ENDIF}
-procedure GetZeroMem(var P: Pointer; const Size: NativeInt);           {$IFDEF UseInline}inline;{$ENDIF}
-procedure MoveMem(const Source; var Dest; const Count: NativeInt);     {$IFDEF UseInline}inline;{$ENDIF}
-function  EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
-function  EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Boolean;
-function  CompareMem(const Buf1; const Buf2; const Count: NativeInt): Integer;
-function  CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Integer;
-function  LocateMem(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
-function  LocateMemNoAsciiCase(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
-procedure ReverseMem(var Buf; const Size: NativeInt);
-
-
-
-{                                                                              }
-{ IInterface                                                                   }
-{                                                                              }
-{$IFDEF DELPHI5_DOWN}
-type
-  IInterface = interface
-    ['{00000000-0000-0000-C000-000000000046}']
-    function QueryInterface(const IID: TGUID; out Obj): HResult; stdcall;
-    function _AddRef: Integer; stdcall;
-    function _Release: Integer; stdcall;
-  end;
-{$ENDIF}
 
 
 
@@ -854,7 +1113,7 @@ end;
 {                                                                              }
 { Integer                                                                      }
 {                                                                              }
-function MinInt(const A, B: Integer): Integer;
+function MinInt(const A, B: Int64): Int64;
 begin
   if A < B then
     Result := A
@@ -862,7 +1121,7 @@ begin
     Result := B;
 end;
 
-function MaxInt(const A, B: Integer): Integer;
+function MaxInt(const A, B: Int64): Int64;
 begin
   if A > B then
     Result := A
@@ -870,7 +1129,7 @@ begin
     Result := B;
 end;
 
-function MinCrd(const A, B: Cardinal): Cardinal;
+function MinUInt(const A, B: UInt64): UInt64;
 begin
   if A < B then
     Result := A
@@ -878,7 +1137,7 @@ begin
     Result := B;
 end;
 
-function MaxCrd(const A, B: Cardinal): Cardinal;
+function MaxUInt(const A, B: UInt64): UInt64;
 begin
   if A > B then
     Result := A
@@ -886,75 +1145,834 @@ begin
     Result := B;
 end;
 
-function Int32Bounded(const Value: Int32; const Min, Max: Int32): Int32;
+function MinNatInt(const A, B: NativeInt): NativeInt;
 begin
-  if Value < Min then
-    Result := Min else
-  if Value > Max then
-    Result := Max
+  if A < B then
+    Result := A
   else
-    Result := Value;
+    Result := B;
 end;
 
-function Int64Bounded(const Value: Int64; const Min, Max: Int64): Int64;
+function MaxNatInt(const A, B: NativeInt): NativeInt;
 begin
-  if Value < Min then
-    Result := Min else
-  if Value > Max then
-    Result := Max
+  if A > B then
+    Result := A
   else
-    Result := Value;
+    Result := B;
 end;
 
-function Int32BoundedByte(const Value: Int32): Int32;
+function MinNatUInt(const A, B: NativeUInt): NativeUInt;
 begin
-  if Value < MinByte then
-    Result := MinByte else
-  if Value > MaxByte then
-    Result := MaxByte
+  if A < B then
+    Result := A
   else
-    Result := Value;
+    Result := B;
 end;
 
-function Int64BoundedByte(const Value: Int64): Int64;
+function MaxNatUInt(const A, B: NativeUInt): NativeUInt;
 begin
-  if Value < MinByte then
-    Result := MinByte else
-  if Value > MaxByte then
-    Result := MaxByte
+  if A > B then
+    Result := A
   else
-    Result := Value;
+    Result := B;
 end;
 
-function Int32BoundedWord(const Value: Int32): Int32;
+function IsIntInInt32Range(const Value: Int64): Boolean;
 begin
-  if Value < MinWord then
-    Result := MinWord else
-  if Value > MaxWord then
-    Result := MaxWord
-  else
-    Result := Value;
+  Result := (Value >= MinInt32) and (Value <= MaxInt32);
 end;
 
-function Int64BoundedWord(const Value: Int64): Int64;
+function IsIntInInt16Range(const Value: Int64): Boolean;
 begin
-  if Value < MinWord then
-    Result := MinWord else
-  if Value > MaxWord then
-    Result := MaxWord
-  else
-    Result := Value;
+  Result := (Value >= MinInt16) and (Value <= MaxInt16);
 end;
 
-function Int64BoundedWord32(const Value: Int64): Word32;
+function IsIntInInt8Range(const Value: Int64): Boolean;
 begin
-  if Value < MinWord32 then
-    Result := MinWord32 else
-  if Value > MaxWord32 then
-    Result := MaxWord32
-  else
-    Result := Word32(Value);
+  Result := (Value >= MinInt8) and (Value <= MaxInt8);
 end;
+
+function IsUIntInInt32Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxInt32;
+end;
+
+function IsUIntInInt16Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxInt16;
+end;
+
+function IsUIntInInt8Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxInt8;
+end;
+
+function IsIntInUInt32Range(const Value: Int64): Boolean;
+begin
+  Result := (Value >= MinUInt32) and (Value <= MaxUInt32);
+end;
+
+function IsIntInUInt16Range(const Value: Int64): Boolean;
+begin
+  Result := (Value >= MinUInt16) and (Value <= MaxUInt16);
+end;
+
+function IsIntInUInt8Range(const Value: Int64): Boolean;
+begin
+  Result := (Value >= MinUInt8) and (Value <= MaxUInt8);
+end;
+
+function IsUIntInUInt32Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxUInt32;
+end;
+
+function IsUIntInUInt16Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxUInt16;
+end;
+
+function IsUIntInUInt8Range(const Value: UInt64): Boolean;
+begin
+  Result := Value <= MaxUInt8;
+end;
+
+
+
+{                                                                              }
+{ Memory                                                                       }
+{                                                                              }
+{$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
+
+procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte);
+begin
+  FillChar(Buf, Count, Value);
+end;
+
+procedure ZeroMem(var Buf; const Count: NativeInt);
+begin
+  FillChar(Buf, Count, #0);
+end;
+
+procedure GetZeroMem(var P: Pointer; const Size: NativeInt);
+begin
+  GetMem(P, Size);
+  ZeroMem(P^, Size);
+end;
+
+procedure MoveMem(const Source; var Dest; const Count: NativeInt);
+begin
+  Move(Source, Dest, Count);
+end;
+
+function EqualMem24(const Buf1; const Buf2): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  P : Pointer;
+  Q : Pointer;
+begin
+  P := @Buf1;
+  Q := @Buf2;
+  if PWord16(P)^ = PWord16(Q)^ then
+    begin
+      Inc(PWord16(P));
+      Inc(PWord16(Q));
+      Result := PByte(P)^ = PByte(Q)^;
+    end
+  else
+    Result := False;
+end;
+
+function EqualMemTo64(const Buf1; const Buf2; const Count: Byte): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  P : Pointer;
+  Q : Pointer;
+begin
+  P := @Buf1;
+  Q := @Buf2;
+  case Count of
+    0 : Result := True;
+    1 : Result := PByte(P)^ = PByte(Q)^;
+    2 : Result := PWord16(P)^ = PWord16(Q)^;
+    3 : Result := EqualMem24(P^, Q^);
+    4 : Result := PWord32(P)^ = PWord32(Q)^;
+    5 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := PByte(P)^ = PByte(Q)^;
+            end;
+        end;
+    6 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := PWord16(P)^ = PWord16(Q)^;
+            end;
+        end;
+    7 : begin
+          Result := PWord32(P)^ = PWord32(Q)^;
+          if Result then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := EqualMem24(P^, Q^);
+            end;
+        end;
+    8 : Result := PWord64(P)^ = PWord64(Q)^;
+  else
+    Result := False;
+  end;
+end;
+
+function EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P : Pointer;
+  Q : Pointer;
+  I : NativeInt;
+begin
+  if Count <= 0 then
+    begin
+      Result := True;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
+  if Count <= 8 then
+    begin
+      Result := EqualMemTo64(P^, Q^, Byte(Count));
+      exit;
+    end;
+  I := Count;
+  while I >= SizeOf(Word64) do
+    if PWord64(P)^ = PWord64(Q)^ then
+      begin
+        Inc(PWord64(P));
+        Inc(PWord64(Q));
+        Dec(I, SizeOf(Word64));
+      end
+    else
+      begin
+        Result := False;
+        exit;
+      end;
+  if I > 0 then
+    begin
+      Assert(I < SizeOf(Word64));
+      Result := EqualMemTo64(P^, Q^, Byte(I));
+    end
+  else
+    Result := True;
+end;
+
+function EqualWord8NoAsciiCaseB(const A, B: Byte): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C, D : Byte;
+begin
+  if A = B then
+    Result := True
+  else
+    begin
+      C := A;
+      D := B;
+      if C in [Ord('A')..Ord('Z')] then
+        Inc(C, 32);
+      if D in [Ord('A')..Ord('Z')] then
+        Inc(D, 32);
+      if C = D then
+        Result := True
+      else
+        Result := False;
+    end;
+end;
+
+function EqualWord16NoAsciiCaseB(const A, B: Word16): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if A = B then
+    Result := True
+  else
+    Result :=
+        EqualWord8NoAsciiCaseB(Byte(A), Byte(B)) and
+        EqualWord8NoAsciiCaseB(Byte(A shr 8), Byte(B shr 8));
+end;
+
+function EqualWord32NoAsciiCaseB(const A, B: Word32): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if A = B then
+    Result := True
+  else
+    Result :=
+        EqualWord16NoAsciiCaseB(Word16(A), Word16(B)) and
+        EqualWord16NoAsciiCaseB(Word16(A shr 16), Word16(B shr 16));
+end;
+
+function EqualWord64NoAsciiCaseB(const A, B: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if A = B then
+    Result := True
+  else
+    Result :=
+        EqualWord32NoAsciiCaseB(Word32(A), Word32(B)) and
+        EqualWord32NoAsciiCaseB(Word32(A shr 32), Word32(B shr 32));
+end;
+
+function EqualMemTo64NoAsciiCaseB(const Buf1; const Buf2; const Count: Byte): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  P : Pointer;
+  Q : Pointer;
+begin
+  P := @Buf1;
+  Q := @Buf2;
+  case Count of
+    0 : Result := True;
+    1 : Result := EqualWord8NoAsciiCaseB(PByte(P)^, PByte(Q)^);
+    2 : Result := EqualWord16NoAsciiCaseB(PWord16(P)^, PWord16(Q)^);
+    3 : begin
+          if EqualWord16NoAsciiCaseB(PWord16(P)^, PWord16(Q)^) then
+            begin
+              Inc(PWord16(P));
+              Inc(PWord16(Q));
+              Result := EqualWord8NoAsciiCaseB(PByte(P)^, PByte(Q)^);
+            end
+          else
+            Result := False;
+        end;
+    4 : Result := EqualWord32NoAsciiCaseB(PWord32(P)^, PWord32(Q)^);
+    5 : begin
+          if EqualWord32NoAsciiCaseB(PWord32(P)^, PWord32(Q)^) then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := EqualWord8NoAsciiCaseB(PByte(P)^, PByte(Q)^);
+            end
+          else
+            Result := False;
+        end;
+    6 : begin
+          if EqualWord32NoAsciiCaseB(PWord32(P)^, PWord32(Q)^) then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              Result := EqualWord16NoAsciiCaseB(PWord16(P)^, PWord16(Q)^);
+            end
+          else
+            Result := False;
+        end;
+    7 : begin
+          if EqualWord32NoAsciiCaseB(PWord32(P)^, PWord32(Q)^) then
+            begin
+              Inc(PWord32(P));
+              Inc(PWord32(Q));
+              if EqualWord16NoAsciiCaseB(PWord16(P)^, PWord16(Q)^) then
+                begin
+                  Inc(PWord16(P));
+                  Inc(PWord16(Q));
+                  Result := EqualWord8NoAsciiCaseB(PByte(P)^, PByte(Q)^);
+                end
+              else
+                Result := False;
+            end
+          else
+            Result := False;
+        end;
+    8 : Result := EqualWord64NoAsciiCaseB(PWord64(P)^, PWord64(Q)^);
+  else
+    Result := False;
+  end;
+end;
+
+function EqualMemNoAsciiCaseB(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+begin
+  if Count <= 0 then
+    begin
+      Result := True;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
+  if Count <= 8 then
+    begin
+      Result := EqualMemTo64NoAsciiCaseB(P^, Q^, Byte(Count));
+      exit;
+    end;
+  I := Count;
+  while I >= SizeOf(Word64) do
+    begin
+      if not EqualWord64NoAsciiCaseB(PWord64(P)^, PWord64(Q)^) then
+        begin
+          Result := False;
+          exit;
+        end;
+      Inc(PWord64(P));
+      Inc(PWord64(Q));
+      Dec(I, SizeOf(Word64));
+    end;
+  if I > 0 then
+    begin
+      Assert(I < SizeOf(Word64));
+      Result := EqualMemTo64NoAsciiCaseB(P^, Q^, Byte(I));
+    end
+  else
+    Result := True;
+end;
+
+function EqualWord16NoAsciiCaseW(const A, B: Word16): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  C, D : Word16;
+begin
+  if A = B then
+    Result := True
+  else
+    begin
+      C := A;
+      D := B;
+      if C in [Ord('A')..Ord('Z')] then
+        Inc(C, 32);
+      if D in [Ord('A')..Ord('Z')] then
+        Inc(D, 32);
+      if C = D then
+        Result := True
+      else
+        Result := False;
+    end;
+end;
+
+function EqualWord32NoAsciiCaseW(const A, B: Word32): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if A = B then
+    Result := True
+  else
+    Result :=
+        EqualWord16NoAsciiCaseW(Word16(A), Word16(B)) and
+        EqualWord16NoAsciiCaseW(Word16(A shr 16), Word16(B shr 16));
+end;
+
+function EqualWord64NoAsciiCaseW(const A, B: Word64): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  if A = B then
+    Result := True
+  else
+    Result :=
+        EqualWord32NoAsciiCaseW(Word32(A), Word32(B)) and
+        EqualWord32NoAsciiCaseW(Word32(A shr 32), Word32(B shr 32));
+end;
+
+function EqualMemTo64NoAsciiCaseW(const P: Pointer; const Q: Pointer; const Count: Byte): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
+var
+  A, B : PByte;
+begin
+  case Count of
+    0 : Result := True;
+    1 : begin
+          Result := EqualWord16NoAsciiCaseW(PWord16(P)^, PWord16(Q)^);
+          exit;
+        end;
+    2 : begin
+          Result := EqualWord32NoAsciiCaseW(PWord32(P)^, PWord32(Q)^);
+          exit;
+        end;
+    3 : begin
+          if EqualWord32NoAsciiCaseW(PWord32(P)^, PWord32(Q)^) then
+            begin
+              A := P;
+              B := Q;
+              Inc(PWord32(A));
+              Inc(PWord32(B));
+              Result := EqualWord16NoAsciiCaseW(PWord16(A)^, PWord16(B)^);
+            end
+          else
+            Result := False;
+          exit;
+        end;
+    4 : begin
+          Result := EqualWord64NoAsciiCaseW(PWord64(P)^, PWord64(Q)^);
+          exit;
+        end;
+  else
+    Result := False;
+  end;
+end;
+
+function EqualMemNoAsciiCaseW(const Buf1; const Buf2; const Count: NativeInt): Boolean;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+begin
+  if Count <= 0 then
+    begin
+      Result := True;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := True;
+      exit;
+    end;
+  if Count <= 4 then
+    begin
+      Result := EqualMemTo64NoAsciiCaseW(P, Q, Byte(Count));
+      exit;
+    end;
+  I := Count;
+  while I >= SizeOf(Word64) div SizeOf(WideChar) do
+    begin
+      if not EqualWord64NoAsciiCaseW(PWord64(P)^, PWord64(Q)^) then
+        begin
+          Result := False;
+          exit;
+        end;
+      Inc(PWord64(P));
+      Inc(PWord64(Q));
+      Dec(I, SizeOf(Word64) div SizeOf(WideChar));
+    end;
+  if I > 0 then
+    begin
+      Assert(I < SizeOf(Word64) div SizeOf(WideChar));
+      Result := EqualMemTo64NoAsciiCaseW(P, Q, Byte(I));
+    end
+  else
+    Result := True;
+end;
+
+function CompareMemB(const Buf1; const Buf2; const Count: NativeInt): Integer;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+  C, D : Byte;
+begin
+  if Count <= 0 then
+    begin
+      Result := 0;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
+  I := Count;
+  while I >= SizeOf(Word64) do
+    if PWord64(P)^ = PWord64(Q)^ then
+      begin
+        Inc(PWord64(P));
+        Inc(PWord64(Q));
+        Dec(I, SizeOf(Word64));
+      end
+    else
+      break;
+  while I > 0 do
+    begin
+      C := PByte(P)^;
+      D := PByte(Q)^;
+      if C = D then
+        begin
+          Inc(PByte(P));
+          Inc(PByte(Q));
+        end
+      else
+        begin
+          if C < D then
+            Result := -1
+          else
+            Result := 1;
+          exit;
+        end;
+      Dec(I);
+    end;
+  Result := 0;
+end;
+
+function CompareMemW(const Buf1; const Buf2; const Count: NativeInt): Integer;
+var
+  P, Q : Pointer;
+  I    : NativeInt;
+  C, D : Word16;
+begin
+  if Count <= 0 then
+    begin
+      Result := 0;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
+  I := Count;
+  while I >= SizeOf(Word64) div SizeOf(WideChar) do
+    if PWord64(P)^ = PWord64(Q)^ then
+      begin
+        Inc(PWord64(P));
+        Inc(PWord64(Q));
+        Dec(I, SizeOf(Word64) div SizeOf(WideChar));
+      end
+    else
+      break;
+  while I > 0 do
+    begin
+      C := PWord16(P)^;
+      D := PWord16(Q)^;
+      if C = D then
+        begin
+          Inc(PWord16(P));
+          Inc(PWord16(Q));
+        end
+      else
+        begin
+          if C < D then
+            Result := -1
+          else
+            Result := 1;
+          exit;
+        end;
+      Dec(I);
+    end;
+  Result := 0;
+end;
+
+function CompareMemNoAsciiCaseB(const Buf1; const Buf2; const Count: NativeInt): Integer;
+var P, Q : Pointer;
+    I    : Integer;
+    C, D : Byte;
+begin
+  if Count <= 0 then
+    begin
+      Result := 0;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
+  for I := 1 to Count do
+    begin
+      C := PByte(P)^;
+      D := PByte(Q)^;
+      if C in [Ord('A')..Ord('Z')] then
+        C := C or 32;
+      if D in [Ord('A')..Ord('Z')] then
+        D := D or 32;
+      if C = D then
+        begin
+          Inc(PByte(P));
+          Inc(PByte(Q));
+        end
+      else
+        begin
+          if C < D then
+            Result := -1
+          else
+            Result := 1;
+          exit;
+        end;
+    end;
+  Result := 0;
+end;
+
+function CompareMemNoAsciiCaseW(const Buf1; const Buf2; const Count: NativeInt): Integer;
+var P, Q : Pointer;
+    I    : Integer;
+    C, D : Word16;
+begin
+  if Count <= 0 then
+    begin
+      Result := 0;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  if P = Q then
+    begin
+      Result := 0;
+      exit;
+    end;
+  for I := 1 to Count do
+    begin
+      C := PWord16(P)^;
+      D := PWord16(Q)^;
+      if (C >= Ord('A')) and (C <= Ord('Z')) then
+        C := C or 32;
+      if (D >= Ord('A')) and (D <= Ord('Z')) then
+        D := D or 32;
+      if C = D then
+        begin
+          Inc(PWord16(P));
+          Inc(PWord16(Q));
+        end
+      else
+        begin
+          if C < D then
+            Result := -1
+          else
+            Result := 1;
+          exit;
+        end;
+    end;
+  Result := 0;
+end;
+
+function LocateMemB(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+var
+  P, Q : PByte;
+  I    : NativeInt;
+begin
+  if (Count1 <= 0) or (Count2 <= 0) or (Count2 > Count1) then
+    begin
+      Result := -1;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  for I := 0 to Count1 - Count2 do
+    begin
+      if P = Q then
+        begin
+          Result := I;
+          exit;
+        end;
+      if EqualMem(P^, Q^, Count2) then
+        begin
+          Result := I;
+          exit;
+        end;
+      Inc(P);
+    end;
+  Result := -1;
+end;
+
+function LocateMemW(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+var
+  P, Q : PWord16;
+  I    : NativeInt;
+begin
+  if (Count1 <= 0) or (Count2 <= 0) or (Count2 > Count1) then
+    begin
+      Result := -1;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  for I := 0 to Count1 - Count2 do
+    begin
+      if P = Q then
+        begin
+          Result := I;
+          exit;
+        end;
+      if EqualMem(P^, Q^, Count2 * SizeOf(WideChar)) then
+        begin
+          Result := I;
+          exit;
+        end;
+      Inc(P);
+    end;
+  Result := -1;
+end;
+
+function LocateMemNoAsciiCaseB(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+var
+  P, Q : PByte;
+  I    : NativeInt;
+begin
+  if (Count1 <= 0) or (Count2 <= 0) or (Count2 > Count1) then
+    begin
+      Result := -1;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  for I := 0 to Count1 - Count2 do
+    begin
+      if P = Q then
+        begin
+          Result := I;
+          exit;
+        end;
+      if EqualMemNoAsciiCaseB(P^, Q^, Count2) then
+        begin
+          Result := I;
+          exit;
+        end;
+      Inc(P);
+    end;
+  Result := -1;
+end;
+
+function LocateMemNoAsciiCaseW(const Buf1; const Count1: NativeInt; const Buf2; const Count2: NativeInt): NativeInt;
+var
+  P, Q : PWord16;
+  I    : NativeInt;
+begin
+  if (Count1 <= 0) or (Count2 <= 0) or (Count2 > Count1) then
+    begin
+      Result := -1;
+      exit;
+    end;
+  P := @Buf1;
+  Q := @Buf2;
+  for I := 0 to Count1 - Count2 do
+    begin
+      if P = Q then
+        begin
+          Result := I;
+          exit;
+        end;
+      if EqualMemNoAsciiCaseW(P^, Q^, Count2) then
+        begin
+          Result := I;
+          exit;
+        end;
+      Inc(P);
+    end;
+  Result := -1;
+end;
+
+procedure ReverseMem(var Buf; const Size: NativeInt);
+var
+  I : NativeInt;
+  P : PByte;
+  Q : PByte;
+  T : Byte;
+begin
+  P := @Buf;
+  Q := P;
+  Inc(Q, Size - 1);
+  for I := 1 to Size div 2 do
+    begin
+      T := P^;
+      P^ := Q^;
+      Q^ := T;
+      Inc(P);
+      Dec(Q);
+    end;
+end;
+
+{$IFDEF QOn}{$Q+}{$ENDIF}
 
 
 
@@ -1387,26 +2405,28 @@ end;
 
 
 {                                                                              }
-{ Compare                                                                      }
+{ Character compare functions                                                  }
 {                                                                              }
 function CharCompareB(const A, B: ByteChar): Integer;
 begin
+  if Ord(A) = Ord(B) then
+    Result := 0
+  else
   if Ord(A) < Ord(B) then
-    Result := -1 else
-    if Ord(A) > Ord(B) then
-      Result := 1
-    else
-      Result := 0;
+    Result := -1
+  else
+    Result := 1;
 end;
 
 function CharCompareW(const A, B: WideChar): Integer;
 begin
+  if Ord(A) = Ord(B) then
+    Result := 0
+  else
   if Ord(A) < Ord(B) then
-    Result := -1 else
-    if Ord(A) > Ord(B) then
-      Result := 1
-    else
-      Result := 0;
+    Result := -1
+  else
+    Result := 1;
 end;
 
 function CharCompare(const A, B: Char): Integer;
@@ -1418,81 +2438,324 @@ begin
   {$ENDIF}
 end;
 
-function StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;
+function CharCompareNoAsciiCaseB(const A, B: ByteChar): Integer;
 var
-  P, Q : PByte;
-  I    : NativeInt;
+  C, D : Byte;
 begin
-  P := A;
-  Q := B;
-  if P <> Q then
-    for I := 1 to Len do
-      if P^ = Q^ then
-        begin
-          Inc(P);
-          Inc(Q);
-        end
+  C := Byte(A);
+  D := Byte(B);
+  if C = D then
+    Result := 0
+  else
+    begin
+      if C in [Ord('A')..Ord('Z')] then
+        Inc(C, 32);
+      if D in [Ord('A')..Ord('Z')] then
+        Inc(D, 32);
+      if C = D then
+        Result := 0
       else
-        begin
-          if Ord(P^) < Ord(Q^) then
-            Result := -1
-          else
-            Result := 1;
-          exit;
-        end;
-  Result := 0;
+      if C < D then
+        Result := -1
+      else
+        Result := 1;
+    end;
+end;
+
+function CharCompareNoAsciiCaseW(const A, B: WideChar): Integer;
+var
+  C, D : Word16;
+begin
+  C := Word16(A);
+  D := Word16(B);
+  if C = D then
+    Result := 0
+  else
+    begin
+      case C of
+        Ord('A')..Ord('Z') : Inc(C, 32);
+      end;
+      case D of
+        Ord('A')..Ord('Z') : Inc(D, 32);
+      end;
+      if C = D then
+        Result := 0
+      else
+      if C < D then
+        Result := -1
+      else
+        Result := 1;
+    end;
+end;
+
+function CharCompareNoAsciiCase(const A, B: Char): Integer;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := CharCompareNoAsciiCaseW(A, B);
+  {$ELSE}
+  Result := CharCompareNoAsciiCaseB(A, B);
+  {$ENDIF}
+end;
+
+function CharEqualNoAsciiCaseB(const A, B: ByteChar): Boolean;
+var
+  C, D : Byte;
+begin
+  C := Byte(A);
+  D := Byte(B);
+  if C = D then
+    Result := True
+  else
+    begin
+      if C in [Ord('A')..Ord('Z')] then
+        Inc(C, 32);
+      if D in [Ord('A')..Ord('Z')] then
+        Inc(D, 32);
+      Result := C = D;
+    end;
+end;
+
+function CharEqualNoAsciiCaseW(const A, B: WideChar): Boolean;
+var
+  C, D : Word16;
+begin
+  C := Word16(A);
+  D := Word16(B);
+  if C = D then
+    Result := True
+  else
+    begin
+      case C of
+        Ord('A')..Ord('Z') : Inc(C, 32);
+      end;
+      case D of
+        Ord('A')..Ord('Z') : Inc(D, 32);
+      end;
+      Result := C = D;
+    end;
+end;
+
+function CharEqualNoAsciiCase(const A, B: Char): Boolean;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := CharEqualNoAsciiCaseW(A, B);
+  {$ELSE}
+  Result := CharEqualNoAsciiCaseB(A, B);
+  {$ENDIF}
+end;
+
+function CharIsAsciiB(const C: ByteChar): Boolean;
+begin
+  Result := Ord(C) <= 127;
+end;
+
+function CharIsAsciiW(const C: WideChar): Boolean;
+begin
+  Result := Ord(C) <= 127;
+end;
+
+function CharIsAscii(const C: Char): Boolean;
+begin
+  Result := Ord(C) <= 127;
+end;
+
+function CharIsAsciiUpperCaseB(const C: ByteChar): Boolean;
+begin
+  Result := Ord(C) in [Ord('A')..Ord('Z')];
+end;
+
+function CharIsAsciiUpperCaseW(const C: WideChar): Boolean;
+begin
+  case Ord(C) of
+    Ord('A')..Ord('Z') : Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function CharIsAsciiUpperCase(const C: Char): Boolean;
+begin
+  {$IFDEF CharIsWide}
+  Result := CharIsAsciiUpperCaseW(C);
+  {$ELSE}
+  Result := CharIsAsciiUpperCaseB(C);
+  {$ENDIF}
+end;
+
+function CharIsAsciiLowerCaseB(const C: ByteChar): Boolean;
+begin
+  Result := Ord(C) in [Ord('a')..Ord('z')];
+end;
+
+function CharIsAsciiLowerCaseW(const C: WideChar): Boolean;
+begin
+  case Ord(C) of
+    Ord('a')..Ord('z') : Result := True;
+  else
+    Result := False;
+  end;
+end;
+
+function CharIsAsciiLowerCase(const C: Char): Boolean;
+begin
+  {$IFDEF CharIsWide}
+  Result := CharIsAsciiUpperCaseW(C);
+  {$ELSE}
+  Result := CharIsAsciiUpperCaseB(C);
+  {$ENDIF}
+end;
+
+function CharAsciiLowCaseB(const C: ByteChar): ByteChar;
+begin
+  if Ord(C) in [Ord('A')..Ord('Z')] then
+    Result := ByteChar(Ord(C) + 32)
+  else
+    Result := C;
+end;
+
+function CharAsciiLowCaseW(const C: WideChar): WideChar;
+begin
+  case Ord(C) of
+    Ord('A')..Ord('Z') : Result := WideChar(Ord(C) + 32)
+  else
+    Result := C;
+  end;
+end;
+
+function CharAsciiLowCase(const C: Char): Char;
+begin
+  {$IFDEF CharIsWide}
+  Result := CharAsciiLowCaseW(C);
+  {$ELSE}
+  Result := CharAsciiLowCaseB(C);
+  {$ENDIF}
+end;
+
+function CharAsciiUpCaseB(const C: ByteChar): ByteChar;
+begin
+  if Ord(C) in [Ord('a')..Ord('a')] then
+    Result := ByteChar(Ord(C) - 32)
+  else
+    Result := C;
+end;
+
+function CharAsciiUpCaseW(const C: WideChar): WideChar;
+begin
+  case Ord(C) of
+    Ord('a')..Ord('z') : Result := WideChar(Ord(C) - 32)
+  else
+    Result := C;
+  end;
+end;
+
+function CharAsciiUpCase(const C: Char): Char;
+begin
+  {$IFDEF CharIsWide}
+  Result := CharAsciiUpCaseW(C);
+  {$ELSE}
+  Result := CharAsciiUpCaseB(C);
+  {$ENDIF}
+end;
+
+function CharAsciiHexValueB(const C: ByteChar): Integer;
+begin
+  case Ord(C) of
+    Ord('0')..Ord('9') : Result := Ord(C) - Ord('0');
+    Ord('A')..Ord('F') : Result := Ord(C) - Ord('A') + 10;
+    Ord('a')..Ord('f') : Result := Ord(C) - Ord('a') + 10;
+  else
+    Result := -1;
+  end;
+end;
+
+function CharAsciiHexValueW(const C: WideChar): Integer;
+begin
+  if Ord(C) >= $80 then
+    Result := -1
+  else
+    Result := CharAsciiHexValueB(ByteChar(Ord(C)));
+end;
+
+
+
+{                                                                              }
+{ String compare functions                                                     }
+{                                                                              }
+function StrPCompareB(const A, B: Pointer; const Len: NativeInt): Integer;
+begin
+  Result := CompareMemB(A^, B^, Len);
 end;
 
 function StrPCompareW(const A, B: PWideChar; const Len: NativeInt): Integer;
-var
-  P, Q : PWideChar;
-  I    : NativeInt;
 begin
-  P := A;
-  Q := B;
-  if P <> Q then
-    for I := 1 to Len do
-      if Ord(P^) = Ord(Q^) then
-        begin
-          Inc(P);
-          Inc(Q);
-        end
-      else
-        begin
-          if Ord(P^) < Ord(Q^) then
-            Result := -1
-          else
-            Result := 1;
-          exit;
-        end;
-  Result := 0;
+  Result := CompareMemW(A^, B^, Len);
 end;
 
 function StrPCompare(const A, B: PChar; const Len: NativeInt): Integer;
-var
-  P, Q : PChar;
-  I    : NativeInt;
 begin
-  P := A;
-  Q := B;
-  if P <> Q then
-    for I := 1 to Len do
-      if Ord(P^) = Ord(Q^) then
-        begin
-          Inc(P);
-          Inc(Q);
-        end
-      else
-        begin
-          if Ord(P^) < Ord(Q^) then
-            Result := -1
-          else
-            Result := 1;
-          exit;
-        end;
-  Result := 0;
+  {$IFDEF CharIsWide}
+  Result := StrPCompareW(A, B, Len);
+  {$ELSE}
+  Result := StrPCompareB(A, B, Len);
+  {$ENDIF}
 end;
 
+function StrPCompareNoAsciiCaseB(const A, B: Pointer; const Len: NativeInt): Integer;
+begin
+  Result := CompareMemNoAsciiCaseB(A^, B^, Len);
+end;
+
+function StrPCompareNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Integer;
+begin
+  Result := CompareMemNoAsciiCaseW(A^, B^, Len);
+end;
+
+function StrPCompareNoAsciiCase(const A, B: PChar; const Len: NativeInt): Integer;
+begin
+  {$IFDEF CharIsWide}
+  Result := StrPCompareNoAsciiCaseW(A, B, Len);
+  {$ELSE}
+  Result := StrPCompareNoAsciiCaseB(A, B, Len);
+  {$ENDIF}
+end;
+
+function StrPEqualB(const A, B: Pointer; const Len: NativeInt): Boolean;
+begin
+  Result := EqualMem(A^, B^, Len);
+end;
+
+function StrPEqualW(const A, B: PWideChar; const Len: NativeInt): Boolean;
+begin
+  Result := EqualMem(A^, B^, Len * SizeOf(WideChar));
+end;
+
+function StrPEqual(const A, B: PChar; const Len: NativeInt): Boolean;
+begin
+  {$IFDEF CharIsWide}
+  Result := EqualMem(A^, B^, Len * SizeOf(WideChar));
+  {$ELSE}
+  Result := EqualMem(A^, B^, Len);
+  {$ENDIF}
+end;
+
+function StrPEqualNoAsciiCaseB(const A, B: Pointer; const Len: NativeInt): Boolean;
+begin
+  Result := EqualMemNoAsciiCaseB(A^, B^, Len);
+end;
+
+function StrPEqualNoAsciiCaseW(const A, B: PWideChar; const Len: NativeInt): Boolean;
+begin
+  Result := EqualMemNoAsciiCaseW(A^, B^, Len);
+end;
+
+function StrPEqualNoAsciiCase(const A, B: PChar; const Len: NativeInt): Boolean;
+begin
+  {$IFDEF CharIsWide}
+  Result := EqualMemNoAsciiCaseW(A^, B^, Len);
+  {$ELSE}
+  Result := EqualMemNoAsciiCaseB(A^, B^, Len);
+  {$ENDIF}
+end;
 
 {$IFDEF SupportAnsiString}
 function StrCompareA(const A, B: AnsiString): Integer;
@@ -1578,6 +2841,578 @@ begin
     Result := -1
   else
     Result := 1;
+end;
+
+{$IFDEF SupportAnsiString}
+function StrCompareNoAsciiCaseA(const A, B: AnsiString): Integer;
+var
+  L, M, I: NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    I := L
+  else
+    I := M;
+  Result := StrPCompareNoAsciiCaseB(PByteChar(A), PByteChar(B), I);
+  if Result <> 0 then
+    exit;
+  if L = M then
+    Result := 0 else
+  if L < M then
+    Result := -1
+  else
+    Result := 1;
+end;
+{$ENDIF}
+
+function StrCompareNoAsciiCaseB(const A, B: RawByteString): Integer;
+var
+  L, M, I: NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    I := L
+  else
+    I := M;
+  Result := StrPCompareNoAsciiCaseB(PByteChar(A), PByteChar(B), I);
+  if Result <> 0 then
+    exit;
+  if L = M then
+    Result := 0 else
+  if L < M then
+    Result := -1
+  else
+    Result := 1;
+end;
+
+function StrCompareNoAsciiCaseU(const A, B: UnicodeString): Integer;
+var
+  L, M, I: NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    I := L
+  else
+    I := M;
+  Result := StrPCompareNoAsciiCaseW(Pointer(A), Pointer(B), I);
+  if Result <> 0 then
+    exit;
+  if L = M then
+    Result := 0 else
+  if L < M then
+    Result := -1
+  else
+    Result := 1;
+end;
+
+function StrCompareNoAsciiCase(const A, B: String): Integer;
+var
+  L, M, I: Integer;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    I := L
+  else
+    I := M;
+  Result := StrPCompareNoAsciiCase(Pointer(A), Pointer(B), I);
+  if Result <> 0 then
+    exit;
+  if L = M then
+    Result := 0 else
+  if L < M then
+    Result := -1
+  else
+    Result := 1;
+end;
+
+function StrEqualNoAsciiCaseB(const A, B: RawByteString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L <> M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCaseB(PByteChar(A), PByteChar(B), L);
+end;
+
+function StrEqualNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L <> M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCaseW(PWideChar(A), PWideChar(B), L);
+end;
+
+function StrEqualNoAsciiCase(const A, B: String): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L <> M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCase(PChar(A), PChar(B), L);
+end;
+
+function StrStartsWithB(const A, B: RawByteString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqualB(PByteChar(A), PByteChar(B), M);
+end;
+
+function StrStartsWithU(const A, B: UnicodeString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqualW(PWideChar(A), PWideChar(B), M);
+end;
+
+function StrStartsWith(const A, B: String): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqual(PChar(A), PChar(B), M);
+end;
+
+function StrStartsWithNoAsciiCaseB(const A, B: RawByteString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCaseB(PByteChar(A), PByteChar(B), M);
+end;
+
+function StrStartsWithNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCaseW(PWideChar(A), PWideChar(B), M);
+end;
+
+function StrStartsWithNoAsciiCase(const A, B: String): Boolean;
+var
+  L, M : NativeInt;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    Result := StrPEqualNoAsciiCase(PChar(A), PChar(B), M);
+end;
+
+function StrEndsWithB(const A, B: RawByteString): Boolean;
+var
+  L, M : NativeInt;
+  P : PByteChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PByteChar(A);
+      Inc(P, L - M);
+      Result := StrPEqualB(P, PByteChar(B), M);
+    end;
+end;
+
+function StrEndsWithU(const A, B: UnicodeString): Boolean;
+var
+  L, M : NativeInt;
+  P : PWideChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PWideChar(A);
+      Inc(P, L - M);
+      Result := StrPEqualW(P, PWideChar(B), M);
+    end;
+end;
+
+function StrEndsWith(const A, B: String): Boolean;
+var
+  L, M : NativeInt;
+  P : PChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PChar(A);
+      Inc(P, L - M);
+      Result := StrPEqual(P, PChar(B), M);
+    end;
+end;
+
+function StrEndsWithNoAsciiCaseB(const A, B: RawByteString): Boolean;
+var
+  L, M : NativeInt;
+  P : PByteChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PByteChar(A);
+      Inc(P, L - M);
+      Result := StrPEqualNoAsciiCaseB(P, PByteChar(B), M);
+    end;
+end;
+
+function StrEndsWithNoAsciiCaseU(const A, B: UnicodeString): Boolean;
+var
+  L, M : NativeInt;
+  P : PWideChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PWideChar(A);
+      Inc(P, L - M);
+      Result := StrPEqualNoAsciiCaseW(P, PWideChar(B), M);
+    end;
+end;
+
+function StrEndsWithNoAsciiCase(const A, B: String): Boolean;
+var
+  L, M : NativeInt;
+  P : PChar;
+begin
+  L := Length(A);
+  M := Length(B);
+  if L < M then
+    Result := False
+  else
+    begin
+      P := PChar(A);
+      Inc(P, L - M);
+      Result := StrPEqualNoAsciiCase(P, PChar(B), M);
+    end;
+end;
+
+function StrPosB(const S, M: RawByteString): Int32;
+begin
+  Result := LocateMemB(Pointer(S)^, Length(S), Pointer(M)^, Length(M));
+end;
+
+function StrPosU(const S, M: UnicodeString): Int32;
+begin
+  Result := LocateMemW(Pointer(S)^, Length(S), Pointer(M)^, Length(M));
+end;
+
+function StrPos(const S, M: String): Int32;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := StrPosU(S, M);
+  {$ELSE}
+  Result := StrPosB(S, M);
+  {$ENDIF}
+end;
+
+function StrPosNoAsciiCaseB(const S, M: RawByteString): Int32;
+begin
+  Result := LocateMemNoAsciiCaseB(Pointer(S)^, Length(S), Pointer(M)^, Length(M));
+end;
+
+function StrPosNoAsciiCaseU(const S, M: UnicodeString): Int32;
+begin
+  Result := LocateMemNoAsciiCaseW(Pointer(S)^, Length(S), Pointer(M)^, Length(M));
+end;
+
+function StrPosNoAsciiCase(const S, M: String): Int32;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := StrPosNoAsciiCaseU(S, M);
+  {$ELSE}
+  Result := StrPosNoAsciiCaseB(S, M);
+  {$ENDIF}
+end;
+
+{$IFDEF SupportAnsiString}
+function StrAsciiUpperCaseA(const S: AnsiString): AnsiString;
+var
+  U : Boolean;
+  P : PAnsiChar;
+  Q : PAnsiChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : AnsiChar;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := P^;
+      if B in ['a'..'z'] then
+        begin
+          B := AnsiChar(Ord(B) - 32);
+          if not U then
+            begin
+              UniqueString(Result);
+              U := True;
+              Q := Pointer(Result);
+              Inc(Q, I);
+            end;
+          Q^ := B;
+        end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+{$ENDIF}
+
+function StrAsciiUpperCaseB(const S: RawByteString): RawByteString;
+var
+  U : Boolean;
+  P : PByteChar;
+  Q : PByteChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : Byte;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := Ord(P^);
+      if B in [Ord('a')..Ord('z')] then
+        begin
+          Dec(B, 32);
+          if not U then
+            begin
+              {$IFDEF SupportAnsiString}
+              UniqueString(AnsiString(Result));
+              {$ELSE}
+              Result := Copy(S, 1, L);
+              {$ENDIF}
+              U := True;
+              Q := Pointer(Result);
+              Inc(Q, I);
+            end;
+          Q^ := ByteChar(B);
+        end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+
+function StrAsciiUpperCaseU(const S: UnicodeString): UnicodeString;
+var
+  U : Boolean;
+  P : PWideChar;
+  Q : PWideChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : Word16;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := Ord(P^);
+      case B of
+        Ord('a')..Ord('z') :
+          begin
+            Dec(B, 32);
+            if not U then
+              begin
+                UniqueString(Result);
+                U := True;
+                Q := Pointer(Result);
+                Inc(Q, I);
+              end;
+            Q^ := WideChar(B);
+          end;
+      end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+
+function StrAsciiUpperCase(const S: String): String;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := StrAsciiUpperCaseU(S);
+  {$ELSE}
+  Result := StrAsciiUpperCaseB(S);
+  {$ENDIF}
+end;
+
+{$IFDEF SupportAnsiString}
+function StrAsciiLowerCaseA(const S: AnsiString): AnsiString;
+var
+  U : Boolean;
+  P : PAnsiChar;
+  Q : PAnsiChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : AnsiChar;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := P^;
+      if B in ['A'..'Z'] then
+        begin
+          B := AnsiChar(Ord(B) + 32);
+          if not U then
+            begin
+              UniqueString(Result);
+              U := True;
+              Q := Pointer(Result);
+              Inc(Q, I);
+            end;
+          Q^ := B;
+        end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+{$ENDIF}
+
+function StrAsciiLowerCaseB(const S: RawByteString): RawByteString;
+var
+  U : Boolean;
+  P : PByteChar;
+  Q : PByteChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : Byte;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := Ord(P^);
+      if B in [Ord('A')..Ord('Z')] then
+        begin
+          Inc(B, 32);
+          if not U then
+            begin
+              {$IFDEF SupportAnsiString}
+              UniqueString(AnsiString(Result));
+              {$ELSE}
+              Result := Copy(S, 1, L);
+              {$ENDIF}
+              U := True;
+              Q := Pointer(Result);
+              Inc(Q, I);
+            end;
+          Q^ := ByteChar(B);
+        end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+
+function StrAsciiLowerCaseU(const S: UnicodeString): UnicodeString;
+var
+  U : Boolean;
+  P : PWideChar;
+  Q : PWideChar;
+  L : NativeInt;
+  I : NativeInt;
+  B : Word16;
+begin
+  Result := S;
+  U := False;
+  P := Pointer(S);
+  Q := Pointer(Result);
+  L := Length(S);
+  for I := 0 to L - 1 do
+    begin
+      B := Ord(P^);
+      case B of
+        Ord('A')..Ord('Z') :
+          begin
+            Inc(B, 32);
+            if not U then
+              begin
+                UniqueString(Result);
+                U := True;
+                Q := Pointer(Result);
+                Inc(Q, I);
+              end;
+            Q^ := WideChar(B);
+          end;
+      end;
+      Inc(P);
+      Inc(Q);
+    end;
+end;
+
+function StrAsciiLowerCase(const S: String): String;
+begin
+  {$IFDEF StringIsUnicode}
+  Result := StrAsciiLowerCaseU(S);
+  {$ELSE}
+  Result := StrAsciiLowerCaseB(S);
+  {$ENDIF}
 end;
 
 
@@ -1968,7 +3803,7 @@ begin
     Result := crEqual;
 end;
 
-function Compare(const I1, I2: Extended): TCompareResult;
+function Compare(const I1, I2: Double): TCompareResult;
 begin
   if I1 < I2 then
     Result := crLess else
@@ -2050,7 +3885,7 @@ begin
     Result := 0;
 end;
 
-function Sgn(const A: Extended): Integer;
+function Sgn(const A: Double): Integer;
 begin
   if A < 0 then
     Result := -1 else
@@ -4138,30 +5973,6 @@ begin
   Result := Pointer(BaseStrToUInt(S, 4, V));
 end;
 
-{$IFDEF SupportInterface}
-{$IFDEF SupportAnsiString}
-function InterfaceToStrA(const I: IInterface): AnsiString;
-begin
-  Result := UIntToBaseA(NativeUInt(I), NativeWordSize * 2, 16, True);
-end;
-{$ENDIF}
-
-function InterfaceToStrB(const I: IInterface): RawByteString;
-begin
-  Result := UIntToBaseB(NativeUInt(I), NativeWordSize * 2, 16, True);
-end;
-
-function InterfaceToStrU(const I: IInterface): UnicodeString;
-begin
-  Result := UIntToBaseU(NativeUInt(I), NativeWordSize * 2, 16, True);
-end;
-
-function InterfaceToStr(const I: IInterface): String;
-begin
-  Result := UIntToBase(NativeUInt(I), NativeWordSize * 2, 16, True);
-end;
-{$ENDIF}
-
 function ObjectClassName(const O: TObject): String;
 begin
   if not Assigned(O) then
@@ -4484,342 +6295,6 @@ end;
 
 
 {                                                                              }
-{ Memory                                                                       }
-{                                                                              }
-procedure FillMem(var Buf; const Count: NativeInt; const Value: Byte);
-begin
-  FillChar(Buf, Count, Value);
-end;
-
-procedure ZeroMem(var Buf; const Count: NativeInt);
-begin
-  FillChar(Buf, Count, #0);
-end;
-
-procedure GetZeroMem(var P: Pointer; const Size: NativeInt);
-begin
-  GetMem(P, Size);
-  ZeroMem(P^, Size);
-end;
-
-procedure MoveMem(const Source; var Dest; const Count: NativeInt);
-begin
-  Move(Source, Dest, Count);
-end;
-
-function EqualMem64(const Buf1; const Buf2; const Count: NativeInt): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
-var
-  P : Pointer;
-  Q : Pointer;
-begin
-  P := @Buf1;
-  Q := @Buf2;
-  case Count of
-    1 : Result := PByte(P)^ = PByte(Q)^;
-    2 : Result := PWord16(P)^ = PWord16(Q)^;
-    3 : begin
-          Result := PWord16(P)^ = PWord16(Q)^;
-          if Result then
-            begin
-              Inc(PWord16(P));
-              Inc(PWord16(Q));
-              Result := PByte(P)^ = PByte(Q)^;
-            end;
-        end;
-    4 : Result := PWord32(P)^ = PWord32(Q)^;
-    5 : begin
-          Result := PWord32(P)^ = PWord32(Q)^;
-          if Result then
-            begin
-              Inc(PWord32(P));
-              Inc(PWord32(Q));
-              Result := PByte(P)^ = PByte(Q)^;
-            end;
-        end;
-    6 : begin
-          Result := PWord32(P)^ = PWord32(Q)^;
-          if Result then
-            begin
-              Inc(PWord32(P));
-              Inc(PWord32(Q));
-              Result := PWord16(P)^ = PWord16(Q)^;
-            end;
-        end;
-    7 : begin
-          Result := PWord32(P)^ = PWord32(Q)^;
-          if Result then
-            begin
-              Inc(PWord32(P));
-              Inc(PWord32(Q));
-              Result := PWord16(P)^ = PWord16(Q)^;
-              if Result then
-                begin
-                  Inc(PWord16(P));
-                  Inc(PWord16(Q));
-                  Result := PByte(P)^ = PByte(Q)^;
-                end;
-            end;
-        end;
-    8 : Result := PWord64(P)^ = PWord64(Q)^;
-  else
-    Result := True;
-  end;
-end;
-
-function EqualMem(const Buf1; const Buf2; const Count: NativeInt): Boolean;
-var
-  P : PNativeUInt;
-  Q : PNativeUInt;
-  D : NativeInt;
-begin
-  if Count <= 0 then
-    begin
-      Result := True;
-      exit;
-    end;
-  P := @Buf1;
-  Q := @Buf2;
-  if P = Q then
-    begin
-      Result := True;
-      exit;
-    end;
-  if Count <= 8 then
-    begin
-      Result := EqualMem64(P^, Q^, Count);
-      exit;
-    end;
-  {$IFDEF CPU_64}
-  D := Count shr 3;
-  {$ELSE}{$IFDEF CPU_32}
-  D := Count shr 2;
-  {$ELSE}
-  D := Count div SizeOf(NativeInt);
-  {$ENDIF}{$ENDIF}
-  while D > 0 do
-    if P^ = Q^ then
-      begin
-        Inc(P);
-        Inc(Q);
-        Dec(D);
-      end
-    else
-      begin
-        Result := False;
-        exit;
-      end;
-  D := Count and (SizeOf(NativeInt) - 1);
-  if D > 0 then
-    begin
-      Assert(D < SizeOf(NativeInt));
-      Result := EqualMem64(P^, Q^, D);
-    end
-  else
-    Result := True;
-end;
-
-function EqualMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Boolean;
-var
-  P, Q : Pointer;
-  I    : NativeInt;
-  C, D : Byte;
-begin
-  if Count <= 0 then
-    begin
-      Result := True;
-      exit;
-    end;
-  P := @Buf1;
-  Q := @Buf2;
-  if P = Q then
-    begin
-      Result := True;
-      exit;
-    end;
-  for I := 1 to Count do
-    begin
-      C := PByte(P)^;
-      D := PByte(Q)^;
-      if C in [Ord('A')..Ord('Z')] then
-        C := C or 32;
-      if D in [Ord('A')..Ord('Z')] then
-        D := D or 32;
-      if C = D then
-        begin
-          Inc(PByte(P));
-          Inc(PByte(Q));
-        end
-      else
-        begin
-          Result := False;
-          exit;
-        end;
-    end;
-  Result := True;
-end;
-
-function CompareMem(const Buf1; const Buf2; const Count: NativeInt): Integer;
-var
-  P, Q : Pointer;
-  I    : NativeInt;
-  C, D : Byte;
-begin
-  if Count <= 0 then
-    begin
-      Result := 0;
-      exit;
-    end;
-  P := @Buf1;
-  Q := @Buf2;
-  if P = Q then
-    begin
-      Result := 0;
-      exit;
-    end;
-  for I := 1 to Count do
-    begin
-      C := PByte(P)^;
-      D := PByte(Q)^;
-      if C = D then
-        begin
-          Inc(PByte(P));
-          Inc(PByte(Q));
-        end
-      else
-        begin
-          if C < D then
-            Result := -1
-          else
-            Result := 1;
-          exit;
-        end;
-    end;
-  Result := 0;
-end;
-
-function CompareMemNoAsciiCase(const Buf1; const Buf2; const Count: NativeInt): Integer;
-var P, Q : Pointer;
-    I    : Integer;
-    C, D : Byte;
-begin
-  if Count <= 0 then
-    begin
-      Result := 0;
-      exit;
-    end;
-  P := @Buf1;
-  Q := @Buf2;
-  if P = Q then
-    begin
-      Result := 0;
-      exit;
-    end;
-  for I := 1 to Count do
-    begin
-      C := PByte(P)^;
-      D := PByte(Q)^;
-      if C in [Ord('A')..Ord('Z')] then
-        C := C or 32;
-      if D in [Ord('A')..Ord('Z')] then
-        D := D or 32;
-      if C = D then
-        begin
-          Inc(PByte(P));
-          Inc(PByte(Q));
-        end
-      else
-        begin
-          if C < D then
-            Result := -1
-          else
-            Result := 1;
-          exit;
-        end;
-    end;
-  Result := 0;
-end;
-
-function LocateMem(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
-var
-  P, Q : PByte;
-  I    : NativeInt;
-begin
-  if (Size1 <= 0) or (Size2 <= 0) or (Size2 > Size1) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  for I := 0 to Size1 - Size2 do
-    begin
-      P := @Buf1;
-      Inc(P, I);
-      Q := @Buf2;
-      if P = Q then
-        begin
-          Result := I;
-          exit;
-        end;
-      if EqualMem(P^, Q^, Size2) then
-        begin
-          Result := I;
-          exit;
-        end;
-    end;
-  Result := -1;
-end;
-
-function LocateMemNoAsciiCase(const Buf1; const Size1: NativeInt; const Buf2; const Size2: NativeInt): NativeInt;
-var
-  P, Q : PByte;
-  I    : NativeInt;
-begin
-  if (Size1 <= 0) or (Size2 <= 0) or (Size2 > Size1) then
-    begin
-      Result := -1;
-      exit;
-    end;
-  for I := 0 to Size1 - Size2 do
-    begin
-      P := @Buf1;
-      Inc(P, I);
-      Q := @Buf2;
-      if P = Q then
-        begin
-          Result := I;
-          exit;
-        end;
-      if EqualMemNoAsciiCase(P^, Q^, Size2) then
-        begin
-          Result := I;
-          exit;
-        end;
-    end;
-  Result := -1;
-end;
-
-procedure ReverseMem(var Buf; const Size: NativeInt);
-var
-  I : NativeInt;
-  P : PByte;
-  Q : PByte;
-  T : Byte;
-begin
-  P := @Buf;
-  Q := P;
-  Inc(Q, Size - 1);
-  for I := 1 to Size div 2 do
-    begin
-      T := P^;
-      P^ := Q^;
-      Q^ := T;
-      Inc(P);
-      Dec(Q);
-    end;
-end;
-
-
-
-{                                                                              }
 { FreeAndNil                                                                   }
 {                                                                              }
 procedure FreeAndNil(var Obj);
@@ -4952,7 +6427,7 @@ begin
   if L > N then
     Result := 1
   else
-    Result := CompareMem(Pointer(A)^, Pointer(B)^, L);
+    Result := CompareMemB(Pointer(A)^, Pointer(B)^, L);
 end;
 
 function BytesEqual(const A, B: TBytes): Boolean;
@@ -4984,20 +6459,103 @@ begin
   Assert(Sizeof(Int32Rec) = Sizeof(Int32), 'Int32Rec');
 
   // Min / Max
-  Assert(MinInt(-1, 1) = -1, 'MinI');
-  Assert(MaxInt(-1, 1) = 1, 'MaxI');
-  Assert(MinCrd(1, 2) = 1, 'MinC');
-  Assert(MaxCrd(1, 2) = 2, 'MaxC');
-  Assert(MaxCrd($FFFFFFFF, 0) = $FFFFFFFF, 'MaxC');
-  Assert(MinCrd($FFFFFFFF, 0) = 0, 'MinC');
+  Assert(MinInt(-1, 1) = -1);
+  Assert(MaxInt(-1, 1) = 1);
+  Assert(MinUInt(1, 2) = 1);
+  Assert(MaxUInt(1, 2) = 2);
+  Assert(MaxUInt($FFFFFFFF, 0) = $FFFFFFFF);
+  Assert(MinUInt($FFFFFFFF, 0) = 0);
 
-  // Bouded
-  Assert(Int32Bounded(10, 5, 12) = 10,                            'Bounded');
-  Assert(Int32Bounded(3, 5, 12) = 5,                              'Bounded');
-  Assert(Int32Bounded(15, 5, 12) = 12,                            'Bounded');
-  Assert(Int32BoundedByte(256) = 255,                             'BoundedByte');
-  Assert(Int32BoundedWord(-5) = 0,                                'BoundedWord');
-  Assert(Int64BoundedWord32($100000000) = $FFFFFFFF,              'BoundedWord');
+  Assert(MinNatInt(-1, 1) = -1);
+  Assert(MaxNatInt(-1, 1) = 1);
+  Assert(MinNatUInt(1, 2) = 1);
+  Assert(MaxNatUInt(1, 2) = 2);
+  Assert(MaxNatUInt($FFFFFFFF, 0) = $FFFFFFFF);
+  Assert(MinNatUInt($FFFFFFFF, 0) = 0);
+
+  // IsInRange8
+  Assert(IsIntInUInt8Range(2));
+  Assert(IsIntInUInt8Range(0));
+  Assert(IsIntInUInt8Range($FF));
+  Assert(not IsIntInUInt8Range(-1));
+  Assert(not IsIntInUInt8Range($100));
+
+  Assert(IsIntInInt8Range(2));
+  Assert(IsIntInInt8Range(0));
+  Assert(IsIntInInt8Range(-1));
+  Assert(IsIntInInt8Range($7F));
+  Assert(IsIntInInt8Range(-$80));
+  Assert(not IsIntInInt8Range($FF));
+  Assert(not IsIntInInt8Range($80));
+  Assert(not IsIntInInt8Range(-$81));
+
+  Assert(IsUIntInUInt8Range(2));
+  Assert(IsUIntInUInt8Range(0));
+  Assert(IsUIntInUInt8Range($FF));
+  Assert(not IsUIntInUInt8Range($100));
+
+  Assert(IsUIntInInt8Range(2));
+  Assert(IsUIntInInt8Range(0));
+  Assert(IsUIntInInt8Range($7F));
+  Assert(not IsUIntInInt8Range($FF));
+  Assert(not IsUIntInInt8Range($80));
+  Assert(not IsUIntInInt8Range($100));
+
+  // IsInRange16
+  Assert(IsIntInUInt16Range(2));
+  Assert(IsIntInUInt16Range(0));
+  Assert(IsIntInUInt16Range($FFFF));
+  Assert(not IsIntInUInt16Range(-1));
+  Assert(not IsIntInUInt16Range($10000));
+
+  Assert(IsIntInInt16Range(2));
+  Assert(IsIntInInt16Range(0));
+  Assert(IsIntInInt16Range(-1));
+  Assert(IsIntInInt16Range($7FFF));
+  Assert(IsIntInInt16Range(-$8000));
+  Assert(not IsIntInInt16Range($FFFF));
+  Assert(not IsIntInInt16Range($8000));
+  Assert(not IsIntInInt16Range(-$8001));
+
+  Assert(IsUIntInUInt16Range(2));
+  Assert(IsUIntInUInt16Range(0));
+  Assert(IsUIntInUInt16Range($FFFF));
+  Assert(not IsUIntInUInt16Range($10000));
+
+  Assert(IsUIntInInt16Range(2));
+  Assert(IsUIntInInt16Range(0));
+  Assert(IsUIntInInt16Range($7FFF));
+  Assert(not IsUIntInInt16Range($FFFF));
+  Assert(not IsUIntInInt16Range($8000));
+  Assert(not IsUIntInInt16Range($10000));
+
+  // IsInRange32
+  Assert(IsIntInUInt32Range(2));
+  Assert(IsIntInUInt32Range(0));
+  Assert(IsIntInUInt32Range($FFFFFFFF));
+  Assert(not IsIntInUInt32Range(-1));
+  Assert(not IsIntInUInt32Range($100000000));
+
+  Assert(IsIntInInt32Range(2));
+  Assert(IsIntInInt32Range(0));
+  Assert(IsIntInInt32Range(-1));
+  Assert(IsIntInInt32Range($7FFFFFFF));
+  Assert(IsIntInInt32Range(-$80000000));
+  Assert(not IsIntInInt32Range($FFFFFFFF));
+  Assert(not IsIntInInt32Range($80000000));
+  Assert(not IsIntInInt32Range(-$80000001));
+
+  Assert(IsUIntInUInt32Range(2));
+  Assert(IsUIntInUInt32Range(0));
+  Assert(IsUIntInUInt32Range($FFFFFFFF));
+  Assert(not IsUIntInUInt32Range($100000000));
+
+  Assert(IsUIntInInt32Range(2));
+  Assert(IsUIntInInt32Range(0));
+  Assert(IsUIntInInt32Range($7FFFFFFF));
+  Assert(not IsUIntInInt32Range($FFFFFFFF));
+  Assert(not IsUIntInInt32Range($80000000));
+  Assert(not IsUIntInInt32Range($100000000));
 
   // Swap
   A := $11; B := $22;
@@ -5079,10 +6637,10 @@ end;
 
 procedure Test_IntStr;
 var I : Int64;
-    U : UInt64;
     W : Word32;
-    L : Integer;
     {$IFDEF SupportAnsiString}
+    L : Integer;
+    U : UInt64;
     A : AnsiString;
     {$ENDIF}
 begin
@@ -5424,13 +6982,11 @@ end;
 
 procedure Test_Memory;
 var I, J : Integer;
-    {$IFDEF SupportAnsiString}
-    A, B : AnsiString;
-    {$ENDIF}
+    A, B : RawByteString;
+    C, D : UnicodeString;
 begin
-  {$IFDEF SupportAnsiString}
-  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-  B := ToAnsiString('0123456789ABC                       ');
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789ABC                       ');
   Assert(EqualMem(A[1], B[1], 0));
   Assert(EqualMem(A[1], B[1], 1));
   Assert(EqualMem(A[1], B[1], 13));
@@ -5448,43 +7004,123 @@ begin
   for I := 14 to Length(A) do
     Assert(not EqualMem(A[I], B[I], Length(A) - I + 1));
 
-  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-  B := ToAnsiString('0123456789ABC                       ');
-  Assert(CompareMem(A[1], B[1], 0) = 0);
-  Assert(CompareMem(A[1], B[1], -1) = 0);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789ABC                       ');
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 0));
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 1));
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 13));
+  Assert(EqualMemNoAsciiCaseB(A[13], B[13], 1));
+  Assert(not EqualMemNoAsciiCaseB(A[1], B[1], 14));
+  Assert(not EqualMemNoAsciiCaseB(A[13], B[13], 2));
+  Assert(not EqualMemNoAsciiCaseB(A[14], B[14], 1));
+  Assert(EqualMemNoAsciiCaseB(A[14], B[14], 0));
   for I := 1 to 13 do
-    Assert(CompareMem(A[1], B[1], I) = 0);
-  Assert(CompareMem(A[1], B[1], 14) > 0);
-  Assert(CompareMem(A[1], B[1], Length(A)) > 0);
-
+    Assert(EqualMemNoAsciiCaseB(A[1], B[1], I));
   for I := 1 to 13 do
-    Assert(CompareMem(B[1], A[1], I) = 0);
-  Assert(CompareMem(B[1], A[1], 14) < 0);
-  Assert(CompareMem(B[1], A[1], Length(A)) < 0);
+    Assert(EqualMemNoAsciiCaseB(A[I], B[I], 14 - I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMemNoAsciiCaseB(A[1], B[1], I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMemNoAsciiCaseB(A[I], B[I], Length(A) - I + 1));
 
-  Assert(CompareMem(A[1], A[1], 0) = 0);
-  Assert(CompareMem(A[1], A[1], 1) = 0);
-  Assert(CompareMem(A[1], A[1], Length(A)) = 0);
-  Assert(CompareMem(A[1], A[2], 1) < 0);
-  Assert(CompareMem(A[2], A[1], 1) > 0);
-  Assert(CompareMem(A[1], A[2], 0) = 0);
-  Assert(CompareMem(A[1], A[2], -1) = 0);
-  Assert(CompareMem(Pointer(A), Pointer(A), 1) = 0);
-  Assert(CompareMem(Pointer(A), Pointer(A), Length(A)) = 0);
+  A := ToRawByteString('0123456789AbCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789aBc                       ');
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 0));
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 1));
+  Assert(EqualMemNoAsciiCaseB(A[1], B[1], 13));
+  Assert(EqualMemNoAsciiCaseB(A[13], B[13], 1));
+  Assert(not EqualMemNoAsciiCaseB(A[1], B[1], 14));
+  Assert(not EqualMemNoAsciiCaseB(A[13], B[13], 2));
+  Assert(not EqualMemNoAsciiCaseB(A[14], B[14], 1));
+  Assert(EqualMemNoAsciiCaseB(A[14], B[14], 0));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseB(A[1], B[1], I));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseB(A[I], B[I], 14 - I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMemNoAsciiCaseB(A[1], B[1], I));
+  for I := 14 to Length(A) do
+    Assert(not EqualMemNoAsciiCaseB(A[I], B[I], Length(A) - I + 1));
 
-  A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-  B := ToAnsiString('0123456789ABCDE                     ');
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789ABC                       ');
+  Assert(CompareMemB(A[1], B[1], 0) = 0);
+  Assert(CompareMemB(A[1], B[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemB(A[1], B[1], I) = 0);
+  Assert(CompareMemB(A[1], B[1], 14) > 0);
+  Assert(CompareMemB(A[1], B[1], Length(A)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemB(B[1], A[1], I) = 0);
+  Assert(CompareMemB(B[1], A[1], 14) < 0);
+  Assert(CompareMemB(B[1], A[1], Length(A)) < 0);
+  Assert(CompareMemB(A[1], A[1], 0) = 0);
+  Assert(CompareMemB(A[1], A[1], 1) = 0);
+  Assert(CompareMemB(A[1], A[1], Length(A)) = 0);
+  Assert(CompareMemB(A[1], A[2], 1) < 0);
+  Assert(CompareMemB(A[2], A[1], 1) > 0);
+  Assert(CompareMemB(A[1], A[2], 0) = 0);
+  Assert(CompareMemB(A[1], A[2], -1) = 0);
+  Assert(CompareMemB(Pointer(A), Pointer(A), 1) = 0);
+  Assert(CompareMemB(Pointer(A), Pointer(A), Length(A)) = 0);
+
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789ABC                       ');
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseB(A[1], B[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], 14) > 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], Length(A)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseB(B[1], A[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseB(B[1], A[1], 14) < 0);
+  Assert(CompareMemNoAsciiCaseB(B[1], A[1], Length(A)) < 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], 1) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], Length(A)) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], 1) < 0);
+  Assert(CompareMemNoAsciiCaseB(A[2], A[1], 1) > 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], -1) = 0);
+  Assert(CompareMemNoAsciiCaseB(Pointer(A), Pointer(A), 1) = 0);
+  Assert(CompareMemNoAsciiCaseB(Pointer(A), Pointer(A), Length(A)) = 0);
+
+  A := ToRawByteString('0123456789AbCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789aBc                       ');
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseB(A[1], B[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], 14) > 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], B[1], Length(A)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseB(B[1], A[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseB(B[1], A[1], 14) < 0);
+  Assert(CompareMemNoAsciiCaseB(B[1], A[1], Length(A)) < 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], 1) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[1], Length(A)) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], 1) < 0);
+  Assert(CompareMemNoAsciiCaseB(A[2], A[1], 1) > 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], 0) = 0);
+  Assert(CompareMemNoAsciiCaseB(A[1], A[2], -1) = 0);
+  Assert(CompareMemNoAsciiCaseB(Pointer(A), Pointer(A), 1) = 0);
+  Assert(CompareMemNoAsciiCaseB(Pointer(A), Pointer(A), Length(A)) = 0);
+
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0123456789ABCDE                     ');
   for I := 1 to 15 do
     Assert(EqualMem(A[1], B[1], I));
   Assert(not EqualMem(A[1], B[1], 16));
   for I := 1 to 15 do
-    Assert(CompareMem(A[1], B[1], I) = 0);
-  Assert(CompareMem(A[1], B[1], 16) > 0);
+    Assert(CompareMemB(A[1], B[1], I) = 0);
+  Assert(CompareMemB(A[1], B[1], 16) > 0);
 
   for I := -1 to 33 do
     begin
-      A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
-      B := ToAnsiString('                                    ');
+      A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      B := ToRawByteString('                                    ');
       if I > 0 then
         Assert(not EqualMem(A[1], B[1], I),  'EqualMem');
       MoveMem(A[1], B[1], I);
@@ -5514,21 +7150,21 @@ begin
       Assert(EqualMem(A[1], B[1], J),        'EqualMem');
     end;
 
-  B := ToAnsiString('1234567890');
+  B := ToRawByteString('1234567890');
   MoveMem(B[1], B[3], 4);
-  Assert(B = ToAnsiString('1212347890'), 'MoveMem');
+  Assert(B = ToRawByteString('1212347890'), 'MoveMem');
   MoveMem(B[3], B[2], 4);
-  Assert(B = ToAnsiString('1123447890'), 'MoveMem');
+  Assert(B = ToRawByteString('1123447890'), 'MoveMem');
   MoveMem(B[1], B[3], 2);
-  Assert(B = ToAnsiString('1111447890'), 'MoveMem');
+  Assert(B = ToRawByteString('1111447890'), 'MoveMem');
   MoveMem(B[5], B[7], 3);
-  Assert(B = ToAnsiString('1111444470'), 'MoveMem');
+  Assert(B = ToRawByteString('1111444470'), 'MoveMem');
   MoveMem(B[9], B[10], 1);
-  Assert(B = ToAnsiString('1111444477'), 'MoveMem');
+  Assert(B = ToRawByteString('1111444477'), 'MoveMem');
 
   for I := -1 to 33 do
     begin
-      A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
       ZeroMem(A[1], I);
       for J := 1 to I do
         Assert(A[J] = AnsiChar(0),              'ZeroMem');
@@ -5540,7 +7176,7 @@ begin
 
   for I := -1 to 33 do
     begin
-      A := ToAnsiString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+      A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
       FillMem(A[1], I, Ord('!'));
       for J := 1 to I do
         Assert(A[J] = AnsiChar(Ord('!')),       'FillMem');
@@ -5549,7 +7185,216 @@ begin
       for J := MaxInt(I + 1, 11) to 36 do
         Assert(A[J] = AnsiChar(65 + J - 11),    'FillMem');
     end;
-  {$ENDIF}
+
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0123456789ABC                       ');
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 0));
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 1));
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 13));
+  Assert(EqualMemNoAsciiCaseW(C[13], D[13], 1));
+  Assert(not EqualMemNoAsciiCaseW(C[1], D[1], 14));
+  Assert(not EqualMemNoAsciiCaseW(C[13], D[13], 2));
+  Assert(not EqualMemNoAsciiCaseW(C[14], D[14], 1));
+  Assert(EqualMemNoAsciiCaseW(C[14], D[14], 0));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseW(C[1], D[1], I));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseW(C[I], D[I], 14 - I));
+  for I := 14 to Length(C) do
+    Assert(not EqualMemNoAsciiCaseW(C[1], D[1], I));
+  for I := 14 to Length(C) do
+    Assert(not EqualMemNoAsciiCaseW(C[I], D[I], Length(C) - I + 1));
+
+  C := ToUnicodeString('0123456789AbCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0123456789aBc                       ');
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 0));
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 1));
+  Assert(EqualMemNoAsciiCaseW(C[1], D[1], 13));
+  Assert(EqualMemNoAsciiCaseW(C[13], D[13], 1));
+  Assert(not EqualMemNoAsciiCaseW(C[1], D[1], 14));
+  Assert(not EqualMemNoAsciiCaseW(C[13], D[13], 2));
+  Assert(not EqualMemNoAsciiCaseW(C[14], D[14], 1));
+  Assert(EqualMemNoAsciiCaseW(C[14], D[14], 0));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseW(C[1], D[1], I));
+  for I := 1 to 13 do
+    Assert(EqualMemNoAsciiCaseW(C[I], D[I], 14 - I));
+  for I := 14 to Length(C) do
+    Assert(not EqualMemNoAsciiCaseW(C[1], D[1], I));
+  for I := 14 to Length(C) do
+    Assert(not EqualMemNoAsciiCaseW(C[I], D[I], Length(C) - I + 1));
+
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0123456789ABC                       ');
+  Assert(CompareMemW(C[1], D[1], 0) = 0);
+  Assert(CompareMemW(C[1], D[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemW(C[1], D[1], I) = 0);
+  Assert(CompareMemW(C[1], D[1], 14) > 0);
+  Assert(CompareMemW(C[1], D[1], Length(C)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemW(D[1], C[1], I) = 0);
+  Assert(CompareMemW(D[1], C[1], 14) < 0);
+  Assert(CompareMemW(D[1], C[1], Length(C)) < 0);
+  Assert(CompareMemW(C[1], C[1], 0) = 0);
+  Assert(CompareMemW(C[1], C[1], 1) = 0);
+  Assert(CompareMemW(C[1], C[1], Length(C)) = 0);
+  Assert(CompareMemW(C[1], C[2], 1) < 0);
+  Assert(CompareMemW(C[2], C[1], 1) > 0);
+  Assert(CompareMemW(C[1], C[2], 0) = 0);
+  Assert(CompareMemW(C[1], C[2], -1) = 0);
+  Assert(CompareMemW(Pointer(C), Pointer(C), 1) = 0);
+  Assert(CompareMemW(Pointer(C), Pointer(C), Length(C)) = 0);
+
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0123456789ABC                       ');
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseW(C[1], D[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], 14) > 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], Length(C)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseW(D[1], C[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseW(D[1], C[1], 14) < 0);
+  Assert(CompareMemNoAsciiCaseW(D[1], C[1], Length(C)) < 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], 1) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], Length(C)) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], 1) < 0);
+  Assert(CompareMemNoAsciiCaseW(C[2], C[1], 1) > 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], -1) = 0);
+  Assert(CompareMemNoAsciiCaseW(Pointer(C), Pointer(C), 1) = 0);
+  Assert(CompareMemNoAsciiCaseW(Pointer(C), Pointer(C), Length(C)) = 0);
+
+  C := ToUnicodeString('0123456789AbCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0123456789aBc                       ');
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], -1) = 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseW(C[1], D[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], 14) > 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], D[1], Length(C)) > 0);
+  for I := 1 to 13 do
+    Assert(CompareMemNoAsciiCaseW(D[1], C[1], I) = 0);
+  Assert(CompareMemNoAsciiCaseW(D[1], C[1], 14) < 0);
+  Assert(CompareMemNoAsciiCaseW(D[1], C[1], Length(C)) < 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], 1) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[1], Length(C)) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], 1) < 0);
+  Assert(CompareMemNoAsciiCaseW(C[2], C[1], 1) > 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], 0) = 0);
+  Assert(CompareMemNoAsciiCaseW(C[1], C[2], -1) = 0);
+  Assert(CompareMemNoAsciiCaseW(Pointer(C), Pointer(C), 1) = 0);
+  Assert(CompareMemNoAsciiCaseW(Pointer(C), Pointer(C), Length(C)) = 0);
+
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABC');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCC');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 0);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('Z');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 35);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('z');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCDEFGHIJKLMNOPQ');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCDEFGHIJKLMNOPq');
+  Assert(LocateMemB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABC');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCC');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = -1);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('0');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 0);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('Z');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 35);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('z');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 35);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCDEFGHIJKLMNOPQ');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('ABCDEFGHIJKLMNOPq');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+  A := ToRawByteString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  B := ToRawByteString('aBc');
+  Assert(LocateMemNoAsciiCaseB(Pointer(A)^, Length(A), Pointer(B)^, Length(B)) = 10);
+
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABC');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCC');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 0);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('Z');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 35);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('z');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCDEFGHIJKLMNOPQ');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCDEFGHIJKLMNOPq');
+  Assert(LocateMemW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABC');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCC');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = -1);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('0');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 0);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('Z');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 35);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('z');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 35);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCDEFGHIJKLMNOPQ');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('ABCDEFGHIJKLMNOPq');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
+  C := ToUnicodeString('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  D := ToUnicodeString('aBc');
+  Assert(LocateMemNoAsciiCaseW(Pointer(C)^, Length(C), Pointer(D)^, Length(D)) = 10);
 end;
 
 {$IFDEF ImplementsStringRefCount}
@@ -5584,9 +7429,79 @@ begin
 end;
 {$ENDIF}
 
+procedure Test_String;
+var
+  S : RawByteString;
+  T : RawByteString;
+  A : UnicodeString;
+  B : UnicodeString;
+begin
+  S := ToRawByteString('');
+  T := StrAsciiUpperCaseB(S);
+  Assert(T = '');
+
+  S := ToRawByteString('1234567890AbCdefGhiJklmNopQRStuvWXyz');
+  T := StrAsciiUpperCaseB(S);
+  Assert(T = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+  S := ToRawByteString('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  S := Copy(S, 1, Length(S));
+  T := StrAsciiUpperCaseB(S);
+  Assert(T = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  Assert(Pointer(T) = Pointer(S));
+
+
+  S := ToRawByteString('');
+  T := StrAsciiLowerCaseB(S);
+  Assert(T = '');
+
+  S := ToRawByteString('1234567890AbCdefGhiJklmNopQRStuvWXyz');
+  T := StrAsciiLowerCaseB(S);
+  Assert(T = '1234567890abcdefghijklmnopqrstuvwxyz');
+  S := ToRawByteString('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+  S := ToRawByteString('1234567890abcdefghijklmnopqrstuvwxyz');
+  S := Copy(S, 1, Length(S));
+  T := StrAsciiLowerCaseB(S);
+  Assert(T = '1234567890abcdefghijklmnopqrstuvwxyz');
+  Assert(Pointer(T) = Pointer(S));
+
+
+  A := ToUnicodeString('');
+  B := StrAsciiUpperCaseU(A);
+  Assert(B = '');
+
+  A := ToUnicodeString('1234567890AbCdefGhiJklmNopQRStuvWXyz');
+  B := StrAsciiUpperCaseU(A);
+  Assert(B = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+  A := ToUnicodeString('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  A := Copy(A, 1, Length(A));
+  B := StrAsciiUpperCaseU(A);
+  Assert(B = '1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+  Assert(Pointer(A) = Pointer(B));
+
+
+  A := ToUnicodeString('');
+  B := StrAsciiLowerCaseU(A);
+  Assert(B = '');
+
+  A := ToUnicodeString('1234567890AbCdefGhiJklmNopQRStuvWXyz');
+  B := StrAsciiLowerCaseU(A);
+  Assert(B = '1234567890abcdefghijklmnopqrstuvwxyz');
+  A := ToUnicodeString('1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+
+  A := ToUnicodeString('1234567890abcdefghijklmnopqrstuvwxyz');
+  A := Copy(A, 1, Length(A));
+  B := StrAsciiLowerCaseU(A);
+  Assert(B = '1234567890abcdefghijklmnopqrstuvwxyz');
+  Assert(Pointer(A) = Pointer(B));
+end;
+
 procedure Test;
 begin
   {$IFDEF CPU_INTEL386}
+  {$WARNINGS OFF}
   Set8087CW(Default8087CW);
   {$ENDIF}
   Test_Misc;
@@ -5596,12 +7511,11 @@ begin
   {$IFDEF ImplementsStringRefCount}
   Test_StringRefCount;
   {$ENDIF}
+  Test_String;
 end;
 {$ENDIF}
 
 
 
 end.
-
-
 
