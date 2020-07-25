@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStrings.pas                                           }
-{   File version:     5.71                                                     }
+{   File version:     5.73                                                     }
 {   Description:      String utility functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
@@ -114,6 +114,9 @@
 {   2018/08/11  5.69  Removed dependency on flcCharSet.                        }
 {   2018/08/12  5.70  Removed WideString functions and CLR code.               }
 {   2018/08/14  5.71  ByteChar changes.                                        }
+{   2020/06/09  5.72  Include some excluded RawByteString functions when       }
+{                     AnsiString is not supported.                             }
+{   2020/07/25  5.73  Remove dependancy on flcAscii unit.                      }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -789,6 +792,7 @@ function  StrBetweenCharA(const S: AnsiString;
           const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): AnsiString; overload;
+{$ENDIF}
 
 function  StrBetweenCharB(const S: RawByteString;
           const FirstDelim, SecondDelim: ByteChar;
@@ -798,7 +802,6 @@ function  StrBetweenCharB(const S: RawByteString;
           const FirstDelim, SecondDelim: ByteCharSet;
           const FirstOptional: Boolean = False;
           const SecondOptional: Boolean = False): RawByteString; overload;
-{$ENDIF}
 
 function  StrBetweenCharU(const S: UnicodeString;
           const FirstDelim, SecondDelim: WideChar;
@@ -830,6 +833,7 @@ function  StrBetweenA(const S: AnsiString;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True;
           const SecondDelimAsciiCaseSensitive: Boolean = True): AnsiString; overload;
+{$ENDIF}
 
 function  StrBetweenB(const S: RawByteString;
           const FirstDelim: RawByteString; const SecondDelim: ByteCharSet;
@@ -842,7 +846,6 @@ function  StrBetweenB(const S: RawByteString;
           const SecondOptional: Boolean = False;
           const FirstDelimAsciiCaseSensitive: Boolean = True;
           const SecondDelimAsciiCaseSensitive: Boolean = True): RawByteString; overload;
-{$ENDIF}
 
 function  StrBetweenU(const S: UnicodeString;
           const FirstDelim: UnicodeString; const SecondDelim: ByteCharSet;
@@ -1249,12 +1252,14 @@ function  StrCharUnescapeA(const S: AnsiString; const EscPrefix: AnsiString;
           const C: array of AnsiChar; const Replace: array of AnsiString;
           const PrefixAsciiCaseSensitive: Boolean = True;
           const AlwaysDropPrefix: Boolean = True): AnsiString;
+{$ENDIF}
 
 function  StrCharUnescapeU(const S: UnicodeString; const EscPrefix: UnicodeString;
           const C: array of WideChar; const Replace: array of UnicodeString;
           const PrefixAsciiCaseSensitive: Boolean = True;
           const AlwaysDropPrefix: Boolean = True): UnicodeString;
 
+{$IFDEF SupportAnsiString}
 function  StrCStyleEscapeA(const S: AnsiString): AnsiString;
 function  StrCStyleUnescapeA(const S: AnsiString): AnsiString;
 {$ENDIF}
@@ -1402,8 +1407,7 @@ implementation
 
 uses
   { Fundamentals }
-  flcUtils,
-  flcASCII;
+  flcUtils;
 
 
 
@@ -1627,7 +1631,7 @@ begin
   if AsciiCaseSensitive then
     Result := B in A
   else
-    Result := (AsciiUpCaseB(B) in A) or (AsciiLowCaseB(B) in A);
+    Result := (CharAsciiUpCaseB(B) in A) or (CharAsciiLowCaseB(B) in A);
 end;
 
 function CharSetMatchCharW(const A: ByteCharSet; const B: WideChar; const AsciiCaseSensitive: Boolean): Boolean;
@@ -1638,8 +1642,8 @@ begin
     if AsciiCaseSensitive then
       Result := ByteChar(Ord(B)) in A
     else
-      Result := (AsciiUpCaseB(ByteChar(Ord(B))) in A) or
-                (AsciiLowCaseB(ByteChar(Ord(B))) in A);
+      Result := (CharAsciiUpCaseB(ByteChar(Ord(B))) in A) or
+                (CharAsciiLowCaseB(ByteChar(Ord(B))) in A);
 end;
 
 function CharSetMatchChar(const A: ByteCharSet; const B: Char; const AsciiCaseSensitive: Boolean): Boolean;
@@ -1652,8 +1656,8 @@ begin
     if AsciiCaseSensitive then
       Result := ByteChar(Ord(B)) in A
     else
-      Result := (AsciiUpCaseB(ByteChar(Ord(B))) in A) or
-                (AsciiLowCaseB(ByteChar(Ord(B))) in A);
+      Result := (CharAsciiUpCaseB(ByteChar(Ord(B))) in A) or
+                (CharAsciiLowCaseB(ByteChar(Ord(B))) in A);
 end;
 
 function StrPMatchB(const A, B: PByteChar; const Len: Integer): Boolean;
@@ -6527,6 +6531,7 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeA(S, I + 1, J - 1);
 end;
+{$ENDIF}
 
 function StrBetweenCharB(const S: RawByteString;
     const FirstDelim, SecondDelim: ByteChar;
@@ -6563,7 +6568,6 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeB(S, I + 1, J - 1);
 end;
-{$ENDIF}
 
 function StrBetweenCharU(const S: UnicodeString;
     const FirstDelim, SecondDelim: WideChar;
@@ -6677,6 +6681,7 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeA(S, I, J - 1);
 end;
+{$ENDIF}
 
 function StrBetweenB(const S: RawByteString; const FirstDelim: RawByteString;
     const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
@@ -6717,7 +6722,6 @@ begin
       J := Length(S) + 1;
   Result := CopyRangeB(S, I, J - 1);
 end;
-{$ENDIF}
 
 function StrBetweenU(const S: UnicodeString; const FirstDelim: UnicodeString;
     const SecondDelim: ByteCharSet; const FirstOptional: Boolean;
@@ -10196,9 +10200,9 @@ begin
       else
         HexStr := Word32ToHexB(Ord(S[I]), 1);
       if UpperHex then
-        AsciiConvertUpperB(HexStr)
+        HexStr := StrAsciiUpperCaseB(HexStr)
       else
-        AsciiConvertLowerB(HexStr);
+        HexStr := StrAsciiLowerCaseB(HexStr);
       Result := Result + CopyRangeB(S, J, I - 1) +
                 EscPrefix + HexStr + EscSuffix;
       J := I + 1;
