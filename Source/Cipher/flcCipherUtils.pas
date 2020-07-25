@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherUtils.pas                                       }
-{   File version:     5.02                                                     }
+{   File version:     5.03                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
 {   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
@@ -38,6 +38,7 @@
 {                                                                              }
 {   2007/01/05  4.01  Initial version                                          }
 {   2016/01/09  5.02  Revised for Fundamentals 5.                              }
+{   2020/07/07  5.03  NativeInt and String type changes.                       }
 {                                                                              }
 {******************************************************************************}
 
@@ -82,9 +83,11 @@ type
 {                                                                              }
 { Secure clear                                                                 }
 {                                                                              }
-procedure SecureClear(var Buffer; const BufferSize: Integer);
+procedure SecureClearBuf(var Buffer; const BufferSize: NativeInt);
 procedure SecureClearBytes(var B: TBytes);
-procedure SecureClearStr(var S: RawByteString);
+procedure SecureClearStrB(var S: RawByteString);
+procedure SecureClearStrU(var S: UnicodeString);
+procedure SecureClearStr(var S: String); inline;
 
 
 
@@ -105,10 +108,10 @@ end;
 
 {                                                                              }
 { Secure clear helper function                                                 }
-{   Securely clears a piece of memory before it is released to help prevent    }
+{   Clears a piece of memory before it is released to help prevent             }
 {   sensitive information from being exposed.                                  }
 {                                                                              }
-procedure SecureClear(var Buffer; const BufferSize: Integer);
+procedure SecureClearBuf(var Buffer; const BufferSize: NativeInt);
 begin
   if BufferSize <= 0 then
     exit;
@@ -117,18 +120,41 @@ end;
 
 procedure SecureClearBytes(var B: TBytes);
 begin
-  SecureClear(Pointer(B)^, Length(B));
+  SecureClearBuf(Pointer(B)^, Length(B));
   B := nil;
 end;
 
-procedure SecureClearStr(var S: RawByteString);
-var L : Integer;
+procedure SecureClearStrB(var S: RawByteString);
+var
+  L : NativeInt;
 begin
   L := Length(S);
   if L = 0 then
     exit;
-  SecureClear(S[1], L);
+  if StringRefCount(S) > 0 then
+    SecureClearBuf(Pointer(S)^, L);
   SetLength(S, 0);
+end;
+
+procedure SecureClearStrU(var S: UnicodeString);
+var
+  L : NativeInt;
+begin
+  L := Length(S);
+  if L = 0 then
+    exit;
+  if StringRefCount(S) > 0 then
+    SecureClearBuf(Pointer(S)^, L * SizeOf(WideChar));
+  SetLength(S, 0);
+end;
+
+procedure SecureClearStr(var S: String);
+begin
+  {$IFDEF StringIsUnicode}
+  SecureClearStrU(S);
+  {$ELSE}
+  SecureClearStrB(S);
+  {$ENDIF}
 end;
 
 
