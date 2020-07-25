@@ -200,7 +200,7 @@ end;
 
 procedure AESContextFinalise(var Context: TAESContext);
 begin
-  SecureClear(Context, SizeOf(Context));
+  SecureClearBuf(Context, SizeOf(Context));
 end;
 
 

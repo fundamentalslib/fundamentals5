@@ -59,6 +59,7 @@
 {                                                                              }
 { Todo:                                                                        }
 { - Split out tests                                                            }
+{ - Remove RC2                                                                 }
 {******************************************************************************}
 
 {.DEFINE Cipher_SupportRSA}
@@ -623,7 +624,7 @@ begin
       XORBuffer(@B[0], F, CipherBlockSize);
       CipherFunc(CipherContext, @B[0], L);
       Move(B[0], P^, L);
-      SecureClear(B[0], CipherBlockSize);
+      SecureClearBuf(B[0], CipherBlockSize);
     end;
 end;
 
@@ -661,8 +662,8 @@ begin
       XORBuffer(@C[0], @B[0], CipherBlockSize);
       Move(C[0], P^, L);
     end;
-  SecureClear(B[0], CipherBlockSize);
-  SecureClear(C[0], CipherBlockSize);
+  SecureClearBuf(B[0], CipherBlockSize);
+  SecureClearBuf(C[0], CipherBlockSize);
 end;
 
 { CFB - Cipher FeedBack                                                        }
@@ -692,7 +693,7 @@ begin
       Dec(L);
       Inc(P);
     end;
-  SecureClear(B[0], CipherBlockSize);
+  SecureClearBuf(B[0], CipherBlockSize);
 end;
 
 procedure CFBDecode(
@@ -723,7 +724,7 @@ begin
       Dec(L);
       Inc(P);
     end;
-  SecureClear(B[0], CipherBlockSize);
+  SecureClearBuf(B[0], CipherBlockSize);
 end;
 
 { OFB - Output FeedBack                                                        }
@@ -753,7 +754,7 @@ begin
       Dec(L);
       Inc(P);
     end;
-  SecureClear(B[0], CipherBlockSize);
+  SecureClearBuf(B[0], CipherBlockSize);
 end;
 
 procedure OFBDecode(
@@ -782,7 +783,7 @@ begin
       Dec(L);
       Inc(P);
     end;
-  SecureClear(B[0], CipherBlockSize);
+  SecureClearBuf(B[0], CipherBlockSize);
 end;
 
 
@@ -1121,7 +1122,7 @@ begin
   if Assigned(C) then
     if Assigned(C^.FinaliseFunc) then
       C^.FinaliseFunc(@State.Context);
-  SecureClear(State, SizeOf(State));
+  SecureClearBuf(State, SizeOf(State));
 end;
 
 function Encrypt(const Cipher: TCipherType; const Mode: TCipherMode;
@@ -1240,7 +1241,7 @@ begin
   if Assigned(C) then
     if Assigned(C^.FinaliseFunc) then
       C^.FinaliseFunc(@State.Context);
-  SecureClear(State, SizeOf(State));
+  SecureClearBuf(State, SizeOf(State));
 end;
 
 function Decrypt(const Cipher: TCipherType; const Mode: TCipherMode;

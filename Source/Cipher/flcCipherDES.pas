@@ -326,7 +326,7 @@ begin
   // Split KP into C0 and D0 (28 bits each)
   C[0] := (K[0] and $FFFFFFF0) shr 4;
   D[0] := ((K[0] and $0000000F) shl 24) or ((K[1] and $FFFFFF00) shr 8);
-  SecureClear(K, Sizeof(K));
+  SecureClearBuf(K, Sizeof(K));
   // Generate C1..C16 and D1..D16 using shift table
   for I := 1 to 16 do
     begin
@@ -345,9 +345,9 @@ begin
         J := 17 - I;
       Context[J] := DESPC2Permutation(E);
     end;
-  SecureClear(C, Sizeof(C));
-  SecureClear(D, Sizeof(D));
-  SecureClear(E, Sizeof(E));
+  SecureClearBuf(C, Sizeof(C));
+  SecureClearBuf(D, Sizeof(D));
+  SecureClearBuf(E, Sizeof(E));
 end;
 
 {$R-,Q-}
@@ -457,7 +457,7 @@ begin
   // Split IP into L0 and R0 (32 bits each)
   L[0] := IP[3] or (IP[2] shl 8) or (IP[1] shl 16) or (IP[0] shl 24);
   R[0] := IP[7] or (IP[6] shl 8) or (IP[5] shl 16) or (IP[4] shl 24);
-  SecureClear(IP, Sizeof(IP));
+  SecureClearBuf(IP, Sizeof(IP));
   // Generate L1..L16 and R1..R16
   for I := 1 to 16 do
     begin
@@ -467,8 +467,8 @@ begin
   // Combine R16L16 (64 bits)
   P[0] := R[16];
   P[1] := L[16];
-  SecureClear(L, Sizeof(L));
-  SecureClear(R, Sizeof(R));
+  SecureClearBuf(L, Sizeof(L));
+  SecureClearBuf(R, Sizeof(R));
   // Apply IP-1 permutation to R16L16 to get result (64 bits)
   FillChar(Block, Sizeof(TDESBlock), 0);
   IH := 0;
@@ -485,7 +485,7 @@ begin
       if P[N shr 5] and (1 shl (31 - (N and $1F))) <> 0 then
         IPP^ := IPP^ or (1 shl (7 - IL));
     end;
-  SecureClear(P, Sizeof(P));
+  SecureClearBuf(P, Sizeof(P));
 end;
 
 
