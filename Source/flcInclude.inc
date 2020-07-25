@@ -138,8 +138,8 @@
 {   CharIsWide          - Default Char type is WideChar (2 bytes).             }
 {   StringIsAnsi        - Default String type is AnsiString.                   }
 {   StringIsUnicode     - Default String type is UnicodeString.                }
-{   ExtendedIs80Bits    - Extended type has 80 bit (10 byte) precision.        }
 {   ExtendedIsDouble    - Extended type is Double.                             }
+{   ExtendedIs80Bits    - Extended type has 80 bit (10 byte) precision.        }
 {   ExtendedIs16Bytes   - Extended type is 16 bytes.                           }
 {   TBytesDeclared      - System defines TBytes type.                          }
 {   ObjectARC           - Objects has Automatic Reference Countinging (ARC).   }
