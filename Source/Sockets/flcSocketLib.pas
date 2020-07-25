@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocketLib.pas                                         }
-{   File version:     5.22                                                     }
+{   File version:     5.23                                                     }
 {   Description:      Platform independent socket library.                     }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
@@ -58,6 +58,7 @@
 {   2018/09/09  5.20  Poll function.                                           }
 {   2018/09/24  5.21  OSX changes.                                             }
 {   2019/12/26  5.22  Socket TcpNoDelay option.                                }
+{   2020/07/13  5.23  SocketReuseAddr option.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -688,6 +689,9 @@ procedure SetSocketLinger(const SocketHandle: TSocketHandle;
 function  GetSocketBroadcast(const SocketHandle: TSocketHandle): Boolean;
 procedure SetSocketBroadcast(const SocketHandle: TSocketHandle;
           const Broadcast: Boolean);
+function  GetSocketReuseAddr(const SocketHandle: TSocketHandle): Boolean;
+procedure SetSocketReuseAddr(const SocketHandle: TSocketHandle;
+          const ReuseAddr: Boolean);
 {$IFDEF SOCKETLIB_WIN}
 function  GetSocketMulticastTTL(const SocketHandle: TSocketHandle): Integer;
 procedure SetSocketMulticastTTL(const SocketHandle: TSocketHandle; const TTL: Integer);
@@ -3026,6 +3030,25 @@ begin
   Opt := Broadcast;
   if SocketSetSockOpt(SocketHandle, SOL_SOCKET, SO_BROADCAST, @Opt, Sizeof(Opt)) < 0 then
     raise ESocketLib.Create('Socket broadcast option not set', SocketGetLastError);
+end;
+
+function GetSocketReuseAddr(const SocketHandle: TSocketHandle): Boolean;
+var Opt : LongBool;
+    OptLen : Int32;
+begin
+  OptLen := Sizeof(Opt);
+  if SocketGetSockOpt(SocketHandle, SOL_SOCKET, SO_REUSEADDR, @Opt, OptLen) < 0 then
+    raise ESocketLib.Create('Socket reuse-address option not available', SocketGetLastError);
+  Result := Opt;
+end;
+
+procedure SetSocketReuseAddr(const SocketHandle: TSocketHandle;
+          const ReuseAddr: Boolean);
+var Opt : LongBool;
+begin
+  Opt := ReuseAddr;
+  if SocketSetSockOpt(SocketHandle, SOL_SOCKET, SO_REUSEADDR, @Opt, Sizeof(Opt)) < 0 then
+    raise ESocketLib.Create('Socket reuse-address option not set', SocketGetLastError);
 end;
 
 {$IFDEF SOCKETLIB_WIN}

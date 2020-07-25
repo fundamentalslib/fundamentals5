@@ -143,6 +143,7 @@ const
   SO_RCVTIMEO = Posix.SysSocket.SO_RCVTIMEO;
   SO_SNDTIMEO = Posix.SysSocket.SO_SNDTIMEO;
   SO_BROADCAST = Posix.SysSocket.SO_BROADCAST;
+  SO_REUSEADDR = Posix.SysSocket.SO_REUSEADDR;
   SO_LINGER = Posix.SysSocket.SO_LINGER;
   SO_RCVBUF = Posix.SysSocket.SO_RCVBUF;
   SO_SNDBUF = Posix.SysSocket.SO_SNDBUF;

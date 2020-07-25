@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcSocket.pas                                            }
-{   File version:     5.11                                                     }
+{   File version:     5.12                                                     }
 {   Description:      Platform independent socket class.                       }
 {                                                                              }
 {   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
@@ -47,6 +47,7 @@
 {   2018/07/11  5.09  Type changes for Win64.                                  }
 {   2019/01/01  5.10  Cache local and remote addresses.                        }
 {   2019/04/14  5.11  Check closed socket.                                     }
+{   2020/07/13  5.12  ReuseAddr option.                                        }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -217,12 +218,14 @@ type
     procedure SetReceiveTimeout(const TimeoutUs: Integer);
     function  GetSendTimeout: Integer;
     procedure SetSendTimeout(const TimeoutUs: Integer);
-    function  GetReceiveBufferSize: Integer;
-    procedure SetReceiveBufferSize(const BufferSize: Integer);
-    function  GetSendBufferSize: Integer;
-    procedure SetSendBufferSize(const BufferSize: Integer);
+    function  GetReceiveBufferSize: Int32;
+    procedure SetReceiveBufferSize(const BufferSize: Int32);
+    function  GetSendBufferSize: Int32;
+    procedure SetSendBufferSize(const BufferSize: Int32);
     function  GetBroadcastEnabled: Boolean;
     procedure SetBroadcastEnabled(const BroadcastEnabled: Boolean);
+    function  GetReuseAddress: Boolean;
+    procedure SetReuseAddress(const ReuseAddress: Boolean);
     function  GetTcpNoDelayEnabled: Boolean;
     procedure SetTcpNoDelayEnabled(const TcpNoDelayEnabled: Boolean);
 
@@ -266,10 +269,11 @@ type
 
     property  ReceiveTimeout: Integer read GetReceiveTimeout write SetReceiveTimeout;
     property  SendTimeout: Integer read GetSendTimeout write SetSendTimeout;
-    property  ReceiveBufferSize: Integer read GetReceiveBufferSize write SetReceiveBufferSize;
-    property  SendBufferSize: Integer read GetSendBufferSize write SetSendBufferSize;
+    property  ReceiveBufferSize: Int32 read GetReceiveBufferSize write SetReceiveBufferSize;
+    property  SendBufferSize: Int32 read GetSendBufferSize write SetSendBufferSize;
 
     property  BroadcastEnabled: Boolean read GetBroadcastEnabled write SetBroadcastEnabled;
+    property  ReuseAddress: Boolean read GetReuseAddress write SetReuseAddress;
     procedure GetLingerOption(var LingerOption: Boolean; var LingerTimeSec: Integer);
     procedure SetLingerOption(const LingerOption: Boolean; const LingerTimeSec: Integer = 0);
     property  TcpNoDelayEnabled: Boolean read GetTcpNoDelayEnabled write SetTcpNoDelayEnabled;
@@ -773,14 +777,14 @@ begin
   SetSocketSendTimeout(FSocketHandle, TimeoutUs);
 end;
 
-function TSysSocket.GetReceiveBufferSize: Integer;
+function TSysSocket.GetReceiveBufferSize: Int32;
 begin
   if FSocketHandle = INVALID_SOCKETHANDLE then
     raise ESysSocket.Create(SError_SocketClosed);
   Result := GetSocketReceiveBufferSize(FSocketHandle);
 end;
 
-procedure TSysSocket.SetReceiveBufferSize(const BufferSize: Integer);
+procedure TSysSocket.SetReceiveBufferSize(const BufferSize: Int32);
 begin
   {$IFDEF SOCKET_DEBUG}
   Log(sltDebug, 'SetReceiveBufferSize:BufferSize=%db', [BufferSize]);
@@ -790,14 +794,14 @@ begin
   SetSocketReceiveBufferSize(FSocketHandle, BufferSize);
 end;
 
-function TSysSocket.GetSendBufferSize: Integer;
+function TSysSocket.GetSendBufferSize: Int32;
 begin
   if FSocketHandle = INVALID_SOCKETHANDLE then
     raise ESysSocket.Create(SError_SocketClosed);
   Result := GetSocketSendBufferSize(FSocketHandle);
 end;
 
-procedure TSysSocket.SetSendBufferSize(const BufferSize: Integer);
+procedure TSysSocket.SetSendBufferSize(const BufferSize: Int32);
 begin
   {$IFDEF SOCKET_DEBUG}
   Log(sltDebug, 'SetSendBufferSize:BufferSize=%db', [BufferSize]);
@@ -822,6 +826,23 @@ begin
   if FSocketHandle = INVALID_SOCKETHANDLE then
     raise ESysSocket.Create(SError_SocketClosed);
   SetSocketBroadcast(FSocketHandle, BroadcastEnabled);
+end;
+
+function TSysSocket.GetReuseAddress: Boolean;
+begin
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  Result := GetSocketReuseAddr(FSocketHandle);
+end;
+
+procedure TSysSocket.SetReuseAddress(const ReuseAddress: Boolean);
+begin
+  {$IFDEF SOCKET_DEBUG}
+  Log(sltDebug, 'SetReuseAddress:Enabled=%d', [Ord(ReuseAddress)]);
+  {$ENDIF}
+  if FSocketHandle = INVALID_SOCKETHANDLE then
+    raise ESysSocket.Create(SError_SocketClosed);
+  SetSocketReuseAddr(FSocketHandle, ReuseAddress);
 end;
 
 procedure TSysSocket.GetLingerOption(var LingerOption: Boolean; var LingerTimeSec: Integer);
@@ -1577,7 +1598,7 @@ begin
     Assert(T.SendBufferSize > 0);
 
     R := True; W := True; E := True;
-    Assert(S.Select(200, R, W, E));
+    Assert(S.Select(400, R, W, E));
     Assert(R and not W and not E);
 
     S.Accept(C, A);
