@@ -1,7 +1,7 @@
 {******************************************************************************}
 {                                                                              }
 {   File name:        flcInclude.inc                                           }
-{   File updated:     2020/07/03                                               }
+{   File updated:     2020/07/30                                               }
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   Github:           https://github.com/fundamentalslib                       }
@@ -1226,6 +1226,12 @@
     {$UNDEF SupportWideString}
     {$UNDEF SupportShortString}
   {$ENDIF}
+  {$IFDEF OS_LINUX64}
+    {$UNDEF LongWordIs32Bits}
+    {$UNDEF LongIntIs32Bits}
+    {$DEFINE LongWordIs64Bits}
+    {$DEFINE LongIntIs64Bits}
+  {$ENDIF}
   {$IFDEF OS_IOS64}
     {$UNDEF LongWordIs32Bits}
     {$UNDEF LongIntIs32Bits}
@@ -1253,6 +1259,12 @@
 {$IFDEF DELPHI10_4_UP}
   {$DEFINE SupportAnsiChar}
   {$DEFINE SupportAnsiString}
+  {$IFDEF OS_ANDROID64}
+    {$UNDEF LongWordIs32Bits}
+    {$UNDEF LongIntIs32Bits}
+    {$DEFINE LongWordIs64Bits}
+    {$DEFINE LongIntIs64Bits}
+  {$ENDIF}
 {$ENDIF}
 
 
