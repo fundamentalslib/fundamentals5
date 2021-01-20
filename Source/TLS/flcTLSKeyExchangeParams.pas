@@ -272,8 +272,11 @@ implementation
 uses
   { Utils }
 
-  flcHash,
   flcHugeInt,
+
+  { Crypto }
+
+  flcCryptoHash,
 
   { TLS }
 

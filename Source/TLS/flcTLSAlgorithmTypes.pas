@@ -46,6 +46,9 @@ unit flcTLSAlgorithmTypes;
 
 interface
 
+uses
+  flcStdTypes;
+
 
 
 {                                                                              }

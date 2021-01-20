@@ -186,11 +186,12 @@ uses
   { Utils }
 
   flcStdTypes,
-  flcHash,
 
-  { Cipher }
+  { Crypto }
 
-  flcCipherRandom,
+  flcCryptoUtils,
+  flcCryptoHash,
+  flcCryptoRandom,
 
   { TLS }
 
@@ -479,7 +480,7 @@ begin
           Key, KeySize,
           BufMAC, BufMACSize,
           Digest, DigestSize);
-      SecureClear(BufMAC, BufMACSize);
+      SecureClearBuf(BufMAC, BufMACSize);
     end
   else
     raise ETLSError.Create(TLSError_InvalidParameter);

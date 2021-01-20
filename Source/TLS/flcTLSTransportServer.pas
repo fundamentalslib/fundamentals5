@@ -64,11 +64,11 @@ uses
 
   { X509 }
 
-  flcX509Certificate,
+  flcCertificateX509,
 
   { PEM }
 
-  flcPEM,
+  flcCertificatePEM,
 
   { TLS }
 
@@ -299,17 +299,21 @@ implementation
 
 uses
   { System }
+
   SysUtils,
 
   { Utils }
+
   flcBase64,
   flcHugeInt,
 
-  { Cipher }
-  flcCipherUtils,
-  flcCipherRandom,
+  { Crypto }
+
+  flcCryptoUtils,
+  flcCryptoRandom,
 
   { TLS }
+
   flcTLSErrors,
   flcTLSSessionID,
   flcTLSCipher;
@@ -682,7 +686,7 @@ begin
         Assert(FPreMasterSecret <> '');
         FMasterSecret := TLSMasterSecret(FProtocolVersion, FPreMasterSecret,
             FClientHelloRandomStr, FServerHelloRandomStr);
-        SecureClearStr(FPreMasterSecret);
+        SecureClearStrB(FPreMasterSecret);
 
         GenerateTLSKeys(FProtocolVersion,
             FCipherSpecNew.CipherSuiteDetails.HashInfo^.KeyLength,
@@ -1078,7 +1082,7 @@ end;
 
 procedure TTLSServer.AllocateSessionID(var SessionID: RawByteString);
 begin
-  SessionID := SecureRandomStrA(TLSSessionIDMaxLen);
+  SessionID := SecureRandomStrB(TLSSessionIDMaxLen);
 end;
 
 procedure TTLSServer.DoStart;

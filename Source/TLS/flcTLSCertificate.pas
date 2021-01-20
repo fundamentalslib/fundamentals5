@@ -49,7 +49,8 @@ interface
 uses
   { Utils }
 
-  flcX509Certificate,
+  flcStdTypes,
+  flcCertificateX509,
 
   { Cipher }
 
@@ -88,7 +89,7 @@ implementation
 uses
   { Utils }
 
-  flcASN1,
+  flcEncodingASN1,
 
   { TLS }
 

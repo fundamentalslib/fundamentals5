@@ -85,9 +85,9 @@ uses
 
   SysUtils,
 
-  { Cipher }
+  { Crypto }
 
-  flcCipherRandom;
+  flcCryptoRandom;
 
 
 

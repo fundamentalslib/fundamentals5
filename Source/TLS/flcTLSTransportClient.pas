@@ -66,7 +66,7 @@ uses
 
   { X509 }
 
-  flcX509Certificate,
+  flcCertificateX509,
 
   { TLS }
 
@@ -209,11 +209,11 @@ uses
   { Utils }
 
   flcHugeInt,
-  flcASN1,
 
-  { Cipher }
+  { Crypto }
 
-  flcCipherUtils,
+  flcEncodingASN1,
+  flcCryptoUtils,
 
   { TLS }
 
@@ -248,7 +248,7 @@ begin
       FDHState := nil;
     end;
   RSAPublicKeyFinalise(FServerRSAPublicKey);
-  SecureClearStr(FMasterSecret);
+  SecureClearStrB(FMasterSecret);
   inherited Destroy;
 end;
 
@@ -580,7 +580,7 @@ begin
         Assert(FPreMasterSecretStr <> '');
         FMasterSecret := TLSMasterSecret(FProtocolVersion, FPreMasterSecretStr,
             FClientHelloRandomStr, FServerHelloRandomStr);
-        SecureClearStr(FPreMasterSecretStr);
+        SecureClearStrB(FPreMasterSecretStr);
 
         GenerateTLSKeys(FProtocolVersion,
             FCipherSpecNew.CipherSuiteDetails.HashInfo^.KeyLength,

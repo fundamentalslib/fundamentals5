@@ -50,6 +50,8 @@
 {   www.mozilla.org/projects/security/pki/nss/ssl/traces/trc-clnt-ex.html      }
 {   RFC 4492 - Elliptic Curve Cryptography (ECC) Cipher Suites                 }
 {                                                                              }
+{  See TLS 1.3:                                                                }
+{  http://commandlinefanatic.com/cgi-bin/showarticle.cgi?article=art080        }
 {******************************************************************************}
 
 //  -----------------------------------------------------  -------------------------------------------
@@ -75,7 +77,7 @@
 
 {$DEFINE TLS_TEST_LOG_TO_CONSOLE}
 
-{$DEFINE Cipher_SupportEC}
+{.DEFINE Cipher_SupportEC}
 
 unit flcTLSTests;
 
@@ -105,9 +107,9 @@ uses
   flcStdTypes,
   flcBase64,
   flcStrings,
-  flcPEM,
-  flcASN1,
-  flcX509Certificate,
+  flcCertificatePEM,
+  flcTestEncodingASN1,
+  flcCertificateX509,
   flcHugeInt,
 
   { Cipher }
@@ -303,9 +305,7 @@ end;
 
 procedure Test_Units_Dependencies;
 begin
-  flcPEM.Test;
-  flcASN1.Test;
-  flcX509Certificate.Test;
+  flcTestEncodingASN1.Test;
 
   flcHugeInt.Test;
 

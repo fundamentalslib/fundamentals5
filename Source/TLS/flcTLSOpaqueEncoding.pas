@@ -45,8 +45,11 @@ unit flcTLSOpaqueEncoding;
 
 interface
 
+uses
+  flcStdTypes;
 
 
+  
 function EncodeTLSWord16(var Buffer; const Size: Integer; const AVal: Integer): Integer;
 function DecodeTLSWord16(const Buffer; const Size: Integer; var AVal: Integer): Integer;
 

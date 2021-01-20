@@ -238,7 +238,7 @@ uses
 
   { Cipher }
 
-  flcCipherUtils,
+  flcCryptoUtils,
 
   { TLS }
 
@@ -295,13 +295,13 @@ end;
 
 destructor TTLSConnection.Destroy;
 begin
-  SecureClearStr(FEncMACKey);
-  SecureClearStr(FEncCipherKey);
-  SecureClearStr(FEncIV);
-  SecureClearStr(FDecMACKey);
-  SecureClearStr(FDecCipherKey);
-  SecureClearStr(FDecIV);
-  SecureClearStr(FVerifyHandshakeData);
+  SecureClearStrB(FEncMACKey);
+  SecureClearStrB(FEncCipherKey);
+  SecureClearStrB(FEncIV);
+  SecureClearStrB(FDecMACKey);
+  SecureClearStrB(FDecCipherKey);
+  SecureClearStrB(FDecIV);
+  SecureClearStrB(FVerifyHandshakeData);
   TLSBufferFinalise(FOutBuf);
   TLSBufferFinalise(FInBuf);
   inherited Destroy;
@@ -796,7 +796,7 @@ begin
       if IsFinishedState then
          exit;
     end;
-  SecureClear(PlainBuf, SizeOf(PlainBuf));
+  SecureClearBuf(PlainBuf, SizeOf(PlainBuf));
 end;
 
 procedure TTLSConnection.ProcessTransportLayerReceivedData(const Buffer; const Size: Integer);

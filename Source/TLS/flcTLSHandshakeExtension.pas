@@ -122,7 +122,11 @@ begin
   Dec(N, 2);
   if N < 0 then
     raise ETLSError.Create(TLSError_InvalidBuffer);
+  {$IFDEF DELPHI7}
+  EncodeTLSWord16(P^, N, Ord(tlsetSignature_algorithms));
+  {$ELSE}
   EncodeTLSWord16(P^, N, Ord(TTLSExtensionType.tlsetSignature_algorithms));
+  {$ENDIF}
   Inc(P, 2);
 
   C := Length(SignAndHashAlgos);

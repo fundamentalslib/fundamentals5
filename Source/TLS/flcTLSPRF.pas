@@ -95,9 +95,9 @@ procedure Test;
 implementation
 
 uses
-  { Utils }
+  { Crypto }
 
-  flcHash,
+  flcCryptoHash,
 
   { TLS }
 

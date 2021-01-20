@@ -123,8 +123,11 @@ procedure GenerateFinalTLSKeys(
 uses
   { Utils }
 
-  flcHash,
   flcStrings,
+
+  { Crypto }
+
+  flcCryptoHash,
 
   { TLS }
 

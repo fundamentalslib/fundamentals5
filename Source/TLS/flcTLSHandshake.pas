@@ -338,11 +338,11 @@ uses
   { Utils }
 
   flcStrings,
-  flcHash,
 
-  { Cipher }
+  { Crypto }
 
-  flcCipherRandom,
+  flcCryptoHash,
+  flcCryptoRandom,
 
   { TLS }
 
@@ -541,10 +541,10 @@ begin
         Inc(P);
       end;
   // extensions
-  {
   if IsTLS12(ClientHello.ProtocolVersion) then
     if SignRSA then
       begin
+        {
         SetLength(ClientHello.SignAndHashAlgos, 5);
         ClientHello.SignAndHashAlgos[0].Hash := tlshaSHA1;
         ClientHello.SignAndHashAlgos[0].Signature := tlssaRSA;
@@ -559,8 +559,8 @@ begin
         ClientHello.ExtensionsPresent := True;
         L := EncodeTLSClientHelloExtension_SignatureAlgorithms(P^, N, ClientHello);
         Dec(N, L);
+        }
       end;
-    }
   Result := Size - N;
 end;
 

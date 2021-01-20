@@ -45,8 +45,11 @@ unit flcTLSSessionID;
 
 interface
 
+uses
+  flcStdTypes;
 
 
+  
 {                                                                              }
 { SessionID                                                                    }
 {                                                                              }
