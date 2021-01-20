@@ -131,7 +131,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              const AValue: TObject); inline;
+              const AValue: TObject); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -145,10 +145,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              out AItem: PStrObjMapItem): Boolean; inline;
+              out AItem: PStrObjMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: String;
-              out AItem: PStrObjMapItem): Boolean; inline;
+              out AItem: PStrObjMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: String): PStrObjMapItem;
 
     function  IterateGetNext(var AIterator: TStrObjMapIterator): PStrObjMapItem;
@@ -260,7 +260,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              const AValue: TObject); inline;
+              const AValue: TObject); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -274,10 +274,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              out AItem: PIntObjMapItem): Boolean; inline;
+              out AItem: PIntObjMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: Int64;
-              out AItem: PIntObjMapItem): Boolean; inline;
+              out AItem: PIntObjMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: Int64): PIntObjMapItem;
 
     function  IterateGetNext(var AIterator: TIntObjMapIterator): PIntObjMapItem;
@@ -385,7 +385,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              const AValue: Int64); inline;
+              const AValue: Int64); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -399,10 +399,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              out AItem: PStrIntMapItem): Boolean; inline;
+              out AItem: PStrIntMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: String;
-              out AItem: PStrIntMapItem): Boolean; inline;
+              out AItem: PStrIntMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: String): PStrIntMapItem;
 
     function  IterateGetNext(var AIterator: TStrIntMapIterator): PStrIntMapItem;
@@ -496,7 +496,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              const AValue: Int64); inline;
+              const AValue: Int64); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -510,10 +510,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              out AItem: PIntIntMapItem): Boolean; inline;
+              out AItem: PIntIntMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: Int64;
-              out AItem: PIntIntMapItem): Boolean; inline;
+              out AItem: PIntIntMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: Int64): PIntIntMapItem;
 
     function  IterateGetNext(var AIterator: TIntIntMapIterator): PIntIntMapItem;
@@ -606,7 +606,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              const AValue: String); inline;
+              const AValue: String); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -620,10 +620,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              out AItem: PStrStrMapItem): Boolean; inline;
+              out AItem: PStrStrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: String;
-              out AItem: PStrStrMapItem): Boolean; inline;
+              out AItem: PStrStrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: String): PStrStrMapItem;
 
     function  IterateGetNext(var AIterator: TStrStrMapIterator): PStrStrMapItem;
@@ -717,7 +717,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              const AValue: String); inline;
+              const AValue: String); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -731,10 +731,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              out AItem: PIntStrMapItem): Boolean; inline;
+              out AItem: PIntStrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: Int64;
-              out AItem: PIntStrMapItem): Boolean; inline;
+              out AItem: PIntStrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: Int64): PIntStrMapItem;
 
     function  IterateGetNext(var AIterator: TIntStrMapIterator): PIntStrMapItem;
@@ -827,7 +827,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              const AValue: Pointer); inline;
+              const AValue: Pointer); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -841,10 +841,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: String;
-              out AItem: PStrPtrMapItem): Boolean; inline;
+              out AItem: PStrPtrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: String;
-              out AItem: PStrPtrMapItem): Boolean; inline;
+              out AItem: PStrPtrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: String): PStrPtrMapItem;
 
     function  IterateGetNext(var AIterator: TStrPtrMapIterator): PStrPtrMapItem;
@@ -938,7 +938,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              const AValue: Pointer); inline;
+              const AValue: Pointer); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -952,10 +952,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: Int64;
-              out AItem: PIntPtrMapItem): Boolean; inline;
+              out AItem: PIntPtrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: Int64;
-              out AItem: PIntPtrMapItem): Boolean; inline;
+              out AItem: PIntPtrMapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: Int64): PIntPtrMapItem;
 
     function  IterateGetNext(var AIterator: TIntPtrMapIterator): PIntPtrMapItem;
@@ -1085,7 +1085,7 @@ end;
 
 { Helper functions }
 
-function mapSameStringKey(const AStr1, AStr2: String; const ACaseSensitive: Boolean): Boolean; inline;
+function mapSameStringKey(const AStr1, AStr2: String; const ACaseSensitive: Boolean): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if ACaseSensitive then
     Result := AStr1 = AStr2
@@ -1111,7 +1111,7 @@ const
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapStrObjSlotRemoveItem(var ASlt: TStrObjHashListSlot; const AItmIdx: Int32); inline;
+procedure mapStrObjSlotRemoveItem(var ASlt: TStrObjHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -1813,7 +1813,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapIntObjSlotRemoveItem(var ASlt: TIntObjHashListSlot; const AItmIdx: Int32); inline;
+procedure mapIntObjSlotRemoveItem(var ASlt: TIntObjHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -2509,7 +2509,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapStrIntSlotRemoveItem(var ASlt: TStrIntHashListSlot; const AItmIdx: Int32); inline;
+procedure mapStrIntSlotRemoveItem(var ASlt: TStrIntHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -3083,7 +3083,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapIntIntSlotRemoveItem(var ASlt: TIntIntHashListSlot; const AItmIdx: Int32); inline;
+procedure mapIntIntSlotRemoveItem(var ASlt: TIntIntHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -3651,7 +3651,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapStrStrSlotRemoveItem(var ASlt: TStrStrHashListSlot; const AItmIdx: Int32); inline;
+procedure mapStrStrSlotRemoveItem(var ASlt: TStrStrHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -4227,7 +4227,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapIntStrSlotRemoveItem(var ASlt: TIntStrHashListSlot; const AItmIdx: Int32); inline;
+procedure mapIntStrSlotRemoveItem(var ASlt: TIntStrHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -4797,7 +4797,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapStrPtrSlotRemoveItem(var ASlt: TStrPtrHashListSlot; const AItmIdx: Int32); inline;
+procedure mapStrPtrSlotRemoveItem(var ASlt: TStrPtrHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;
@@ -5371,7 +5371,7 @@ end;
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure mapIntPtrSlotRemoveItem(var ASlt: TIntPtrHashListSlot; const AItmIdx: Int32); inline;
+procedure mapIntPtrSlotRemoveItem(var ASlt: TIntPtrHashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;

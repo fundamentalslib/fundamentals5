@@ -1,6 +1,7 @@
 { 2020/07/05  0.01  Move tests from flcDatastucts unit. }
 { 2020/07/07  0.02  Tests for String and Object arrays. }
 
+{$INCLUDE ../../flcInclude.inc}
 {$INCLUDE flcTest_Include.inc}
 
 unit flcTest_DataStructArrays;
@@ -24,7 +25,7 @@ uses
 
 procedure Test_1_Int32Array;
 var
-  I : NativeInt;
+  I : Int32;
   F : TInt32Array;
 begin
   F := TInt32Array.Create;
@@ -85,7 +86,7 @@ end;
 
 procedure Test_1_Int64Array;
 var
-  I : NativeInt;
+  I : Int32;
   F : TInt64Array;
 begin
   F := TInt64Array.Create;
@@ -146,28 +147,28 @@ end;
 
 procedure Test_1_UInt32Array;
 var
-  I : NativeUInt;
+  I : Int32;
   F : TUInt32Array;
 begin
   F := TUInt32Array.Create;
   for I := 0 to 16384 do
-    Assert(F.Add(I) = NativeInt(I),  'Array.Add');
+    Assert(F.Add(I) = I,  'Array.Add');
   Assert(F.Count = 16385, 'Array.Count');
   for I := 0 to 16384 do
-    Assert(F[I] = I,      'Array.GetItem');
+    Assert(F[I] = UInt32(I), 'Array.GetItem');
   for I := 0 to 16384 do
     F[I] := I + 1;
   for I := 0 to 16384 do
-    Assert(F[I] = I + 1,  'Array.SetItem');
+    Assert(F[I] = UInt32(I) + 1, 'Array.SetItem');
   F.Delete(0, 1);
   Assert(F.Count = 16384, 'Array.Delete');
   for I := 0 to 16383 do
-    Assert(F[I] = I + 2,  'Array.Delete');
+    Assert(F[I] = UInt32(I) + 2, 'Array.Delete');
   F.Insert(0, 2);
   F[0] := 0;
   F[1] := 1;
   for I := 0 to 16384 do
-    Assert(F[I] = I,      'Array.Insert');
+    Assert(F[I] = UInt32(I), 'Array.Insert');
   Assert(F.GetIndex(16382) = 16382);
 
   F.Count := 4;
@@ -207,7 +208,7 @@ end;
 
 procedure Test_1_UInt64Array;
 var
-  I : NativeUInt;
+  I : Int32;
   F : TUInt64Array;
 begin
   F := TUInt64Array.Create;
@@ -268,7 +269,7 @@ end;
 
 procedure Test_1_UnicodeStringArray;
 var
-  I : NativeUInt;
+  I : Int32;
   F : TUnicodeStringArray;
 begin
   F := TUnicodeStringArray.Create;
@@ -334,7 +335,7 @@ end;
 
 procedure Test_1_RawByteStringArray;
 var
-  I : NativeUInt;
+  I : Int32;
   F : TRawByteStringArray;
 begin
   F := TRawByteStringArray.Create;
@@ -396,7 +397,7 @@ end;
 procedure Test_1_ObjectArray;
 var
   O : array[0..16385] of TObject;
-  I : NativeUInt;
+  I : Int32;
   F : TObjectArray;
 begin
   for I := 0 to 16385 do

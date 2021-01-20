@@ -132,7 +132,7 @@ type
     procedure AddToSlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: %2%;
-              const AValue: %5%); inline;
+              const AValue: %5%); {$IFDEF UseInline}inline;{$ENDIF}
     procedure ExpandSlots(const ANewSlotCount: Int64);
 
     function  LocateItemIndexBySlot(
@@ -146,10 +146,10 @@ type
     function  LocateItemBySlot(
               const ASlotIdx: Int32;
               const AHash: Word32; const AKey: %2%;
-              out AItem: P%1%MapItem): Boolean; inline;
+              out AItem: P%1%MapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  LocateItem(
               const AKey: %2%;
-              out AItem: P%1%MapItem): Boolean; inline;
+              out AItem: P%1%MapItem): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
     function  RequireItem(const AKey: %2%): P%1%MapItem;
 
     function  IterateGetNext(var AIterator: T%1%MapIterator): P%1%MapItem;
@@ -304,7 +304,7 @@ end;
 
 { Helper functions }
 
-function mapSameStringKey(const AStr1, AStr2: String; const ACaseSensitive: Boolean): Boolean; inline;
+function mapSameStringKey(const AStr1, AStr2: String; const ACaseSensitive: Boolean): Boolean; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if ACaseSensitive then
     Result := AStr1 = AStr2
@@ -331,7 +331,7 @@ const
 {$IFOPT Q+}{$DEFINE QOn}{$Q-}{$ELSE}{$UNDEF QOn}{$ENDIF}
 {$IFOPT R+}{$DEFINE ROn}{$R-}{$ELSE}{$UNDEF ROn}{$ENDIF}
 
-procedure map%1%SlotRemoveItem(var ASlt: T%1%HashListSlot; const AItmIdx: Int32); inline;
+procedure map%1%SlotRemoveItem(var ASlt: T%1%HashListSlot; const AItmIdx: Int32); {$IFDEF UseInline}inline;{$ENDIF}
 var
   Idx  : Int32;
   Cnt  : Int32;

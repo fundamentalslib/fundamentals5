@@ -391,13 +391,17 @@ type
 type
   TIntegerArray = TInt32Array;
 
+{$IFNDEF SupportNativeInt}
+type
+  TNativeIntArray = TInt32Array;
+{$ELSE}
 {$IFDEF NativeIntIs32Bits}
 type
   TNativeIntArray = TInt32Array;
 {$ELSE}{$IFDEF NativeIntIs64Bits}
 type
   TNativeIntArray = TInt64Array;
-{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}
 
 type
   TIntArray = TInt64Array;
@@ -645,13 +649,17 @@ type
   TUInt32Array = TWord32Array;
   TUInt64Array = TWord64Array;
 
+{$IFNDEF SupportNativeUInt}
+type
+  TNativeUIntArray = TUInt32Array;
+{$ELSE}
 {$IFDEF NativeUIntIs32Bits}
 type
   TNativeUIntArray = TUInt32Array;
 {$ELSE}{$IFDEF NativeUIntIs64Bits}
 type
   TNativeUIntArray = TUInt64Array;
-{$ENDIF}{$ENDIF}
+{$ENDIF}{$ENDIF}{$ENDIF}
 
 type
   TNativeWordArray = TNativeUIntArray;
@@ -1231,7 +1239,7 @@ implementation
 {                                                                              }
 { Utility functions                                                            }
 {                                                                              }
-function MinNatInt(const A, B: NativeInt): NativeInt; inline;
+function MinNatInt(const A, B: NativeInt): NativeInt; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if A < B then
     Result := A
@@ -1239,7 +1247,7 @@ begin
     Result := B;
 end;
 
-function MaxNatInt(const A, B: NativeInt): NativeInt; inline;
+function MaxNatInt(const A, B: NativeInt): NativeInt; {$IFDEF UseInline}inline;{$ENDIF}
 begin
   if A > B then
     Result := A
