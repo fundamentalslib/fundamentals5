@@ -11,12 +11,12 @@ Includes:
 * Huge Word, Huge Integer
 * Decimal (Decimal32, Decimal64, Decimal128, HugeDecimal and signed decimals)
 * Random number generators
-* Ciphers (symmetric: AES, DES, RC2, RC4; asymmetric: RSA, Diffie-Hellman)
-* Data structures (array and dictionary classes)
+* Cryptographic (Symmetric: AES, DES, RC2, RC4; Asymmetric: RSA, Diffie-Hellman, Elliptic Curve)
+* Data structures (array, dictionary and map classes)
 * Mathematics (Rational number, complex number, vector, matrix, statistics)
 * JSON parser
 * Google protocol buffer parser, utilities and Pascal code generator
-* Socket library (cross platform - Windows and Linux)
+* Socket library (cross platform - Windows, Linux, OSX, iOS, Android)
 * TLS Client
 * TLS Server
 * TCP Client
