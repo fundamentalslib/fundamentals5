@@ -18,8 +18,10 @@
   {$DEFINE HTTP_TEST_LOG_TO_CONSOLE}
   {$DEFINE HTTPSERVER_TEST}
   {$DEFINE HTTPCLIENT_TEST}
-  {.DEFINE HTTPCLIENT_TEST_WEB1}
-  {.DEFINE HTTPCLIENT_TEST_WEB2}
+
+  {$DEFINE HTTPCLIENT_TEST_WEB1}
+  {$DEFINE HTTPCLIENT_TEST_WEB2}
+
   {$DEFINE HTTPCLIENTSERVER_TEST}
   {$IFDEF HTTP_TLS}
     {$DEFINE HTTPCLIENTSERVER_TEST_HTTPS}
@@ -181,13 +183,13 @@ var H : TF5HTTPClient;
     Assert(H.Active);
     repeat
       Sleep(10);
-    until H.State in [hcsStopping, hcsConnectFailed, hcsConnected_Ready];
-    Assert(H.State = hcsConnected_Ready);
+    until H.State in [hcsStopping, hcsConnectFailed, hcsConnectedReady];
+    Assert(H.State = hcsConnectedReady);
     Sleep(100);
     H.Request;
     repeat
       Sleep(10);
-    until H.State in [hcsStopping, hcsConnectFailed, hcsResponseComplete, hcsResponseCompleteAndClosing, hcsConnected_Ready];
+    until H.State in [hcsStopping, hcsConnectFailed, hcsResponseComplete, hcsResponseCompleteAndClosing, hcsConnectedReady];
     Assert(H.State = hcsResponseComplete);
     H.Active := False;
     Assert(not H.Active);
@@ -222,7 +224,7 @@ var H : TF5HTTPClient;
 
 begin
   T := THTTPClientTestObj.Create;
-  H := TF5HTTPClient.Create(nil);
+  H := TF5HTTPClient.Create;
   try
     H.OnLog := T.HTTPClientLog;
     H.UserAgent := 'Experimental';
@@ -330,7 +332,7 @@ var
 begin
   Tst := THTTPClientServerTestObj.Create;
   Srv := TF5HTTPServer.Create(nil);
-  Cln := TF5HTTPClient.Create(nil);
+  Cln := TF5HTTPClient.Create;
   try
     Srv.OnLog := Tst.HTTPServerLog;
     Cln.OnLog := Tst.HTTPClientLog;

@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHTTPServer.pas                                        }
-{   File version:     5.06                                                     }
+{   File version:     5.07                                                     }
 {   Description:      HTTP server.                                             }
 {                                                                              }
 {   Copyright:        Copyright (c) 2011-2020, David J Butler                  }
@@ -42,6 +42,7 @@
 {   2011/06/25  0.04  HTTPS.                                                   }
 {   2015/03/12  0.05  Improvements.                                            }
 {   2016/01/09  5.06  Revised for Fundamentals 5.                              }
+{   2020/09/21  5.07  Request and Response object wrappers.                    }
 {                                                                              }
 {******************************************************************************}
 
@@ -66,6 +67,7 @@ uses
 
   { TCP }
 
+  flcTCPUtils,
   flcTCPConnection,
   flcTCPServer,
 
@@ -139,10 +141,10 @@ type
     FState                 : THTTPServerClientState;
     FHTTPParser            : THTTPParser;
 
-    FRequest               : THTTPRequest;
+    FRequestObj            : THTTPRequestObj;
     FRequestContentReader  : THTTPContentReader;
 
-    FResponse              : THTTPResponse;
+    FResponseObj           : THTTPResponseObj;
     FResponseContentWriter : THTTPContentWriter;
     FResponseReady         : Boolean;
 
@@ -212,7 +214,8 @@ type
     function  GetRequestHasContent: Boolean;
     function  GetRequestContentType: RawByteString;
 
-    function  GetRequestRecordPtr: PHTTPRequest;
+    function  GetRequestRecord: THTTPRequestRec;
+    function  GetRequestRecordPtr: PHTTPRequestRec;
 
     function  GetResponseCode: Integer;
     procedure SetResponseCode(const AResponseCode: Integer);
@@ -221,7 +224,9 @@ type
     function  GetResponseContentType: RawByteString;
     procedure SetResponseContentType(const AResponseContentType: RawByteString);
 
-    function  GetResponseRecordPtr: PHTTPResponse;
+    function  GetResponseRecordPtr: PHTTPResponseRec;
+    function  GetResponseRecord: THTTPResponseRec;
+    procedure SetResponseRecord(const AValue: THTTPResponseRec);
 
     function  GetRequestContentStream: TStream;
     procedure SetRequestContentStream(const ARequestContentStream: TStream);
@@ -253,8 +258,8 @@ type
     property  RemoteAddr: TSocketAddr read GetRemoteAddr;
     property  RemoteAddrStr: String read GetRemoteAddrStr;
 
-    property  RequestRecord: THTTPRequest read FRequest;
-    property  RequestRecordPtr: PHTTPRequest read GetRequestRecordPtr;
+    property  RequestRecord: THTTPRequestRec read GetRequestRecord;
+    property  RequestRecordPtr: PHTTPRequestRec read GetRequestRecordPtr;
 
     property  RequestMethod: RawByteString read GetRequestMethod;
     property  RequestURI: RawByteString read GetRequestURI;
@@ -267,8 +272,8 @@ type
     property  RequestContentFileName: String read GetRequestContentFileName write SetRequestContentFileName;
     property  RequestContentReceivedSize: Int64 read GetRequestContentReceivedSize;
 
-    property  ResponseRecord: THTTPResponse read FResponse write FResponse;
-    property  ResponseRecordPtr: PHTTPResponse read GetResponseRecordPtr;
+    property  ResponseRecord: THTTPResponseRec read GetResponseRecord write SetResponseRecord;
+    property  ResponseRecordPtr: PHTTPResponseRec read GetResponseRecordPtr;
 
     property  ResponseCode: Integer read GetResponseCode write SetResponseCode;
     property  ResponseMsg: RawByteString read GetResponseMsg write SetResponseMsg;
@@ -567,8 +572,8 @@ begin
   FLock := TCriticalSection.Create;
   FState := hscsInit;
 
-  InitHTTPRequest(FRequest);
-  InitHTTPResponse(FResponse);
+  FRequestObj := THTTPRequestObj.Create;
+  FResponseObj := THTTPResponseObj.Create;
 
   FHTTPParser := THTTPParser.Create;
 
@@ -588,6 +593,8 @@ destructor THTTPServerClient.Destroy;
 begin
   FreeAndNil(FResponseContentWriter);
   FreeAndNil(FRequestContentReader);
+  FreeAndNil(FResponseObj);
+  FreeAndNil(FRequestObj);
   FreeAndNil(FHTTPParser);
   FreeAndNil(FLock);
   inherited Destroy;
@@ -671,7 +678,7 @@ procedure THTTPServerClient.TriggerRequestHeader;
 begin
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'RequestHeader:');
-  Log(sltDebug, String(HTTPRequestToStr(FRequest)));
+  Log(sltDebug, String(FRequestObj.GetString));
   {$ENDIF}
 
   Assert(Assigned(FHTTPServer));
@@ -736,7 +743,7 @@ begin
   if FState = hscsAwaitingRequest then
     ReadRequestHeader;
   if FState = hscsReceivedRequestHeader then
-    if FRequest.HasContent then
+    if FRequestObj.RecPtr^.HasContent then
       begin
         InitRequestContent;
         SetState(hscsReceivingContent);
@@ -846,7 +853,7 @@ end;
 
 procedure THTTPServerClient.ClearResponse;
 begin
-  ClearHTTPResponse(FResponse);
+  FResponseObj.Clear;
   FResponseReady := False;
   FResponseContentWriter.Clear;
   FResponseContentWriter.Mechanism := hctmNone;
@@ -873,10 +880,10 @@ begin
   Log(sltDebug, 'RequestHeader:%db', [HdrLen]);
   {$ENDIF}
 
-  ClearHTTPRequest(FRequest);
+  FRequestObj.Clear;
   FHTTPParser.SetTextBuf(HdrBuf[0], HdrLen);
-  FHTTPParser.ParseRequest(FRequest);
-  if not FRequest.HeaderComplete then
+  FHTTPParser.ParseRequest(FRequestObj.RecPtr^);
+  if not FRequestObj.RecPtr^.HeaderComplete then
     begin
       {$IFDEF HTTP_DEBUG}
       Log(sltDebug, 'RequestHeader:BadFormat:ClosingConnection');
@@ -899,7 +906,7 @@ end;
 
 procedure THTTPServerClient.InitRequestContent;
 begin
-  FRequestContentReader.InitReader(FRequest.Header.CommonHeaders);
+  FRequestContentReader.InitReader(FRequestObj.RecPtr^.Header.CommonHeaders);
 end;
 
 procedure THTTPServerClient.ReadRequestContent;
@@ -938,18 +945,17 @@ begin
   Log(sltDebug, 'InitResponse');
   {$ENDIF}
 
-  FResponse.StartLine.Version := FRequest.StartLine.Version;
-  if FRequest.StartLine.Version.Version = hvHTTP11 then
-    case FRequest.Header.CommonHeaders.Connection.Value of
-      hcfClose     : FResponse.Header.CommonHeaders.Connection.Value := hcfClose;
-      hcfKeepAlive : FResponse.Header.CommonHeaders.Connection.Value := hcfKeepAlive;
+  FResponseObj.RecPtr^.StartLine.Version := FRequestObj.RecPtr^.StartLine.Version;
+  if FRequestObj.HTTPVersion = hvHTTP11 then
+    case FRequestObj.HeaderConnection of
+      hcfClose     : FResponseObj.HeaderConnection := hcfClose;
+      hcfKeepAlive : FResponseObj.HeaderConnection := hcfKeepAlive;
     end;
 
-  FResponse.Header.CommonHeaders.Date.Value := hdDateTime;
-  FResponse.Header.CommonHeaders.Date.DateTime := Now;
+  FResponseObj.HeaderDate := Now;
 
   if FHTTPServer.FServerName <> '' then
-    FResponse.Header.FixedHeaders[hntServer] := FHTTPServer.FServerName;
+    FResponseObj.RecPtr^.Header.FixedHeaders[hntServer] := FHTTPServer.FServerName;
 end;
 
 procedure THTTPServerClient.PrepareResponse;
@@ -959,8 +965,8 @@ begin
   {$ENDIF}
 
   TriggerPrepareResponse;
-  if FResponse.StartLine.Msg = hslmNone then
-    FResponse.StartLine.Msg := HTTPResponseCodeToStartLineMessage(FResponse.StartLine.Code);
+  if FResponseObj.RecPtr^.StartLine.Msg = hslmNone then
+    FResponseObj.RecPtr^.StartLine.Msg := HTTPResponseCodeToStartLineMessage(FResponseObj.RecPtr^.StartLine.Code);
 end;
 
 procedure THTTPServerClient.InitResponseContent;
@@ -973,8 +979,7 @@ begin
     B := 0
   else
     B := ContentLen;
-  FResponse.Header.CommonHeaders.ContentLength.Value := hcltByteCount;
-  FResponse.Header.CommonHeaders.ContentLength.ByteCount := B;
+  FResponseObj.ContentLengthBytes := B;
 
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, Format('InitResponseContent:%d:%db:%db', [Ord(HasContent), ContentLen, B]));
@@ -1005,14 +1010,15 @@ begin
   InitResponseContent;
 
   SetState(hscsSendingResponseHeader);
-  ResponseHdr := HTTPResponseToStr(FResponse);
+  ResponseHdr := FResponseObj.GetString;
 
   {$IFDEF HTTP_DEBUG}
   Log(sltDebug, 'ResponseHeader:');
   Log(sltDebug, String(ResponseHdr));
   {$ENDIF}
 
-  SendStr(HTTPResponseToStr(FResponse));
+
+  SendStr(FResponseObj.GetString);
   SetState(hscsSendingContent);
   SendResponseContent;
   if not FResponseContentWriter.ContentComplete then
@@ -1028,9 +1034,9 @@ begin
 
   TriggerResponseComplete;
 
-  if (FRequest.StartLine.Version.Version = hvHTTP10) or
-     (FRequest.Header.CommonHeaders.Connection.Value = hcfClose) or
-     (FResponse.Header.CommonHeaders.Connection.Value = hcfClose) then
+  if (FRequestObj.HTTPVersion = hvHTTP10) or
+     (FRequestObj.HeaderConnection = hcfClose) or
+     (FResponseObj.HeaderConnection = hcfClose) then
     begin
       {$IFDEF HTTP_DEBUG}
       Log(sltDebug, 'SetResponseComplete:ConnectionClose');
@@ -1043,75 +1049,89 @@ end;
 
 function THTTPServerClient.GetRequestMethod: RawByteString;
 begin
-  Result := HTTPMethodToStr(FRequest.StartLine.Method);
+  Result := HTTPMethodToStr(FRequestObj.RecPtr^.StartLine.Method);
 end;
 
 function THTTPServerClient.GetRequestURI: RawByteString;
 begin
-  Result := FRequest.StartLine.URI;
+  Result := FRequestObj.RecPtr^.StartLine.URI;
 end;
 
 function THTTPServerClient.GetRequestHost: RawByteString;
 begin
-  Result := FRequest.Header.FixedHeaders[hntHost];
+  Result := UTF8Encode(FRequestObj.HeaderHost);
 end;
 
 function THTTPServerClient.GetRequestCookie: RawByteString;
 begin
-  Result := HTTPCookieFieldValueToStr(FRequest.Header.Cookie);
+  Result := HTTPCookieFieldValueToStr(FRequestObj.RecPtr^.Header.Cookie);
 end;
 
 function THTTPServerClient.GetRequestHasContent: Boolean;
 begin
-  Result := FRequest.HasContent;
+  Result := FRequestObj.RecPtr^.HasContent;
 end;
 
 function THTTPServerClient.GetRequestContentType: RawByteString;
 begin
-  Result := HTTPContentTypeValueToStr(FRequest.Header.CommonHeaders.ContentType);
+  Result := HTTPContentTypeValueToStr(FRequestObj.RecPtr^.Header.CommonHeaders.ContentType);
 end;
 
-function THTTPServerClient.GetRequestRecordPtr: PHTTPRequest;
+function THTTPServerClient.GetRequestRecord: THTTPRequestRec;
 begin
-  Result := @FRequest;
+  Result := FRequestObj.RecPtr^;
+end;
+
+function THTTPServerClient.GetRequestRecordPtr: PHTTPRequestRec;
+begin
+  Result := FRequestObj.RecPtr;
 end;
 
 function THTTPServerClient.GetResponseCode: Integer;
 begin
-  Result := FResponse.StartLine.Code;
+  Result := FResponseObj.RecPtr^.StartLine.Code;
 end;
 
 procedure THTTPServerClient.SetResponseCode(const AResponseCode: Integer);
 begin
-  FResponse.StartLine.Code := AResponseCode;
+  FResponseObj.RecPtr^.StartLine.Code := AResponseCode;
 end;
 
 function THTTPServerClient.GetResponseMsg: RawByteString;
 begin
-  Result := FResponse.StartLine.CustomMsg;
+  Result := FResponseObj.RecPtr^.StartLine.CustomMsg;
 end;
 
 procedure THTTPServerClient.SetResponseMsg(const AResponseMsg: RawByteString);
 begin
-  FResponse.StartLine.Msg := hslmCustom;
-  FResponse.StartLine.CustomMsg := AResponseMsg;
+  FResponseObj.RecPtr^.StartLine.Msg := hslmCustom;
+  FResponseObj.RecPtr^.StartLine.CustomMsg := AResponseMsg;
 end;
 
 function THTTPServerClient.GetResponseContentType: RawByteString;
 begin
-  Result := HTTPContentTypeValueToStr(FResponse.Header.CommonHeaders.ContentType);
+  Result := HTTPContentTypeValueToStr(FResponseObj.RecPtr^.Header.CommonHeaders.ContentType);
 end;
 
 procedure THTTPServerClient.SetResponseContentType(
           const AResponseContentType: RawByteString);
 begin
-  FResponse.Header.CommonHeaders.ContentType.Value := hctCustomString;
-  FResponse.Header.CommonHeaders.ContentType.CustomStr := AResponseContentType;
+  FResponseObj.ContentTypeString := AResponseContentType;
 end;
 
-function THTTPServerClient.GetResponseRecordPtr: PHTTPResponse;
+function THTTPServerClient.GetResponseRecordPtr: PHTTPResponseRec;
 begin
-  Result := @FResponse;
+  Result := FResponseObj.RecPtr;
+end;
+
+function THTTPServerClient.GetResponseRecord: THTTPResponseRec;
+begin
+  Result := FResponseObj.RecPtr^;
+end;
+
+procedure THTTPServerClient.SetResponseRecord(const AValue: THTTPResponseRec);
+begin
+  FResponseObj.RecPtr^ := AValue;
 end;
 
 function THTTPServerClient.GetRequestContentStream: TStream;

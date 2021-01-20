@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHTTPUtils.pas                                         }
-{   File version:     5.12                                                     }
+{   File version:     5.13                                                     }
 {   Description:      HTTP utilities.                                          }
 {                                                                              }
 {   Copyright:        Copyright (c) 2011-2020, David J Butler                  }
@@ -48,6 +48,7 @@
 {   2015/03/14  0.10  RawByteString changes.                                   }
 {   2016/01/09  5.11  Revised for Fundamentals 5.                              }
 {   2019/07/29  5.12  SendContent fix.                                         }
+{   2020/09/21  5.13  Request and Response object wrappers.                    }
 {                                                                              }
 { References:                                                                  }
 {                                                                              }
@@ -512,13 +513,13 @@ type
   end;
   PHTTPRequestHeader = ^THTTPRequestHeader;
 
-  THTTPRequest = record
+  THTTPRequestRec = record
     StartLine      : THTTPRequestStartLine;
     Header         : THTTPRequestHeader;
     HeaderComplete : Boolean;
     HasContent     : Boolean;
   end;
-  PHTTPRequest = ^THTTPRequest;
+  PHTTPRequestRec = ^THTTPRequestRec;
 
 
 
@@ -586,13 +587,13 @@ type
   end;
   PHTTPResponseHeader = ^THTTPResponseHeader;
 
-  THTTPResponse = record
+  THTTPResponseRec = record
     StartLine      : THTTPResponseStartLine;
     Header         : THTTPResponseHeader;
     HeaderComplete : Boolean;
     HasContent     : Boolean;
   end;
-  PHTTPResponse = ^THTTPResponse;
+  PHTTPResponseRec = ^THTTPResponseRec;
 
 
 
@@ -648,8 +649,8 @@ function HTTPResponseCodeToStartLineMessage(const ResponseCode: Integer): THTTPR
 
 function  HTTPMessageHasContent(const H: THTTPCommonHeaders): Boolean;
 
-procedure InitHTTPRequest(var A: THTTPRequest);
-procedure InitHTTPResponse(var A: THTTPResponse);
+procedure InitHTTPRequest(var A: THTTPRequestRec);
+procedure InitHTTPResponse(var A: THTTPResponseRec);
 
 procedure ClearHTTPVersion(var A: THTTPVersion);
 procedure ClearHTTPContentLength(var A: THTTPContentLength);
@@ -669,10 +670,10 @@ procedure ClearHTTPCookieField(var A: THTTPCookieField);
 procedure ClearHTTPMethod(var A: THTTPMethod);
 procedure ClearHTTPRequestStartLine(var A: THTTPRequestStartLine);
 procedure ClearHTTPRequestHeader(var A: THTTPRequestHeader);
-procedure ClearHTTPRequest(var A: THTTPRequest);
+procedure ClearHTTPRequest(var A: THTTPRequestRec);
 procedure ClearHTTPResponseStartLine(var A: THTTPResponseStartLine);
 procedure ClearHTTPResponseHeader(var A: THTTPResponseHeader);
-procedure ClearHTTPResponse(var A: THTTPResponse);
+procedure ClearHTTPResponse(var A: THTTPResponseRec);
 
 type
   THTTPStringOption = (hsoNone);
@@ -707,19 +708,19 @@ procedure BuildStrHTTPCookieField(const A: THTTPCookieField; const B: TRawByteSt
 procedure BuildStrHTTPMethod(const A: THTTPMethod; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 procedure BuildStrHTTPRequestStartLine(const A: THTTPRequestStartLine; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 procedure BuildStrHTTPRequestHeader(const A: THTTPRequestHeader; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-procedure BuildStrHTTPRequest(const A: THTTPRequest; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
+procedure BuildStrHTTPRequest(const A: THTTPRequestRec; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 procedure BuildStrHTTPResponseCookieFieldArray(const A: THTTPSetCookieFieldArray; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 procedure BuildStrHTTPResponseStartLine(const A: THTTPResponseStartLine; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 procedure BuildStrHTTPResponseHeader(const A: THTTPResponseHeader; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-procedure BuildStrHTTPResponse(const A: THTTPResponse; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
+procedure BuildStrHTTPResponse(const A: THTTPResponseRec; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 
 function  HTTPContentTypeValueToStr(const A: THTTPContentType): RawByteString;
 function  HTTPSetCookieFieldValueToStr(const A: THTTPSetCookieField): RawByteString;
 function  HTTPCookieFieldValueToStr(const A: THTTPCookieField): RawByteString;
 function  HTTPMethodToStr(const A: THTTPMethod): RawByteString;
 
-function  HTTPRequestToStr(const A: THTTPRequest): RawByteString;
-function  HTTPResponseToStr(const A: THTTPResponse): RawByteString;
+function  HTTPRequestToStr(const A: THTTPRequestRec): RawByteString;
+function  HTTPResponseToStr(const A: THTTPResponseRec): RawByteString;
 
 
 
@@ -846,13 +847,13 @@ type
     function  ParseRequestStartLine(var StartLine: THTTPRequestStartLine): Boolean;
     function  ParseRequestHeaderValue(const HeaderName: THTTPHeaderNameEnum; const HeaderPtr: Pointer): Boolean;
     function  ParseRequestHeader(var Header: THTTPRequestHeader): Boolean;
-    function  ParseRequestContent(var Request: THTTPRequest): Boolean;
+    function  ParseRequestContent(var Request: THTTPRequestRec): Boolean;
 
     procedure ParseResponseCode(var Code: Integer);
     function  ParseResponseStartLine(var StartLine: THTTPResponseStartLine): Boolean;
     function  ParseResponseHeaderValue(const HeaderName: THTTPHeaderNameEnum; const HeaderPtr: Pointer): Boolean;
     function  ParseResponseHeader(var Header: THTTPResponseHeader): Boolean;
-    function  ParseResponseContent(var Response: THTTPResponse): Boolean;
+    function  ParseResponseContent(var Response: THTTPResponseRec): Boolean;
 
   public
     constructor Create;
@@ -861,12 +862,12 @@ type
     procedure SetTextBuf(const Buf; const BufSize: Integer);
     procedure SetTextStr(const S: RawByteString);
 
-    procedure ParseRequest(var Request: THTTPRequest);
-    procedure ParseResponse(var Response: THTTPResponse);
+    procedure ParseRequest(var Request: THTTPRequestRec);
+    procedure ParseResponse(var Response: THTTPResponseRec);
   end;
 
-procedure HTTPParseRequest(var Request: THTTPRequest; const Buf; const BufSize: Integer);
-procedure HTTPParseResponse(var Response: THTTPResponse; const Buf; const BufSize: Integer);
+procedure HTTPParseRequest(var Request: THTTPRequestRec; const Buf; const BufSize: Integer);
+procedure HTTPParseResponse(var Response: THTTPResponseRec; const Buf; const BufSize: Integer);
 
 
 
@@ -876,10 +877,10 @@ type
   THTTPContentDecoder = class;
 
   THTTPContentDecoderReadProc = function (const Sender: THTTPContentDecoder;
-      var Buf; const Size: Integer): Integer of object;
+      var Buf; const Size: Int32): Int32 of object;
   THTTPContentDecoderProc = procedure (const Sender: THTTPContentDecoder) of object;
   THTTPContentDecoderContentProc = procedure (const Sender: THTTPContentDecoder;
-      const Buf; const Size: Integer) of object;
+      const Buf; const Size: Int32) of object;
 
   THTTPContentDecoderContentType = (
       crctFixedSize,
@@ -919,16 +920,16 @@ type
     procedure Log(const LogMsg: String); overload;
     procedure Log(const LogMsg: String; const LogArgs: array of const); overload;
 
-    procedure TriggerContentBuffer(const Buf; const Size: Integer);
+    procedure TriggerContentBuffer(const Buf; const Size: Int32);
     procedure TriggerContentComplete;
     procedure TriggerTrailer(const Hdr: RawByteString);
 
     procedure ProcessFixedSize;
     procedure ProcessUnsized;
-    function  ProcessChunked_FillBuf(const Size: Integer): Boolean;
-    function  ProcessChunked_FillBufBlock(const Size: Integer): Boolean;
-    function  ProcessChunked_FillBufToCRLF(const BlockSize: Integer): Integer;
-    function  ProcessChunked_ReadStrToCRLF(const BlockSize: Integer; var Str: RawByteString): Boolean;
+    function  ProcessChunked_FillBuf(const Size: Int32): Boolean;
+    function  ProcessChunked_FillBufBlock(const Size: Int32): Boolean;
+    function  ProcessChunked_FillBufToCRLF(const BlockSize: Int32): Integer;
+    function  ProcessChunked_ReadStrToCRLF(const BlockSize: Int32; var Str: RawByteString): Boolean;
     function  ProcessChunked_ExpectCRLF: Boolean;
     function  ProcessChunked_BufferCRLFPosition: Integer;
     function  ProcessChunked_ReadHeader(var HdrStr: RawByteString; var ChunkSize: Int64): Boolean;
@@ -970,9 +971,9 @@ type
   THTTPContentReader = class;
 
   THTTPContentReaderReadProc = function (const Sender: THTTPContentReader;
-      var Buf; const Size: Integer): Integer of object;
+      var Buf; const Size: Int32): Integer of object;
   THTTPContentReaderContentProc = procedure (const Sender: THTTPContentReader;
-      const Buffer; const Size: Integer) of object;
+      const Buffer; const Size: Int32) of object;
   THTTPContentReaderProc = procedure (const Sender: THTTPContentReader) of object;
 
   THTTPContentReaderLogEvent = procedure (const Sender: THTTPContentReader;
@@ -1102,6 +1103,91 @@ type
 
 
 {                                                                              }
+{ THTTPRequestObj                                                              }
+{                                                                              }
+type
+  THTTPRequestObj = class
+  private
+  protected
+    FRequestRec : THTTPRequestRec;
+
+    function  GetRecPtr: PHTTPRequestRec;
+
+    function  GetHTTPVersion: THTTPVersionEnum;
+    procedure SetHTTPVersion(const AValue: THTTPVersionEnum);
+    function  GetRequestMethod: THTTPMethodEnum;
+    procedure SetRequestMethod(const AValue: THTTPMethodEnum);
+    function  GetHeaderHost: String;
+    procedure SetHeaderHost(const AValue: String);
+    function  GetHeaderDate: TDateTime;
+    procedure SetHeaderDate(const AValue: TDateTime);
+    function  GetHeaderConnection: THTTPConnectionFieldEnum;
+    procedure SetHeaderConnection(const AValue: THTTPConnectionFieldEnum);
+    function  GetContentLengthBytes: Int64;
+    procedure SetContentLengthBytes(const AValue: Int64);
+    function  GetContentTypeString: RawByteString;
+    procedure SetContentTypeString(const AValue: RawByteString);
+
+  public
+    constructor Create; overload;
+    constructor Create(const Rec: THTTPRequestRec); overload;
+
+    property  RecPtr: PHTTPRequestRec read GetRecPtr;
+
+    procedure Clear;
+    function  GetString: RawByteString;
+
+    property  HTTPVersion: THTTPVersionEnum read GetHTTPVersion write SetHTTPVersion;
+    property  RequestMethod: THTTPMethodEnum read GetRequestMethod write SetRequestMethod;
+    property  HeaderHost: String read GetHeaderHost write SetHeaderHost;
+    property  HeaderDate: TDateTime read GetHeaderDate write SetHeaderDate;
+    property  HeaderConnection: THTTPConnectionFieldEnum read GetHeaderConnection write SetHeaderConnection;
+    property  ContentLengthBytes: Int64 read GetContentLengthBytes write SetContentLengthBytes;
+    property  ContentTypeString: RawByteString read GetContentTypeString write SetContentTypeString;
+  end;
+
+
+
+{                                                                              }
+{ THTTPResponseObj                                                             }
+{                                                                              }
+type
+  THTTPResponseObj = class
+  protected
+    FResponseRec : THTTPResponseRec;
+
+    function  GetRecPtr: PHTTPResponseRec;
+
+    function  GetHTTPVersion: THTTPVersionEnum;
+    procedure SetHTTPVersion(const AValue: THTTPVersionEnum);
+    function  GetHeaderDate: TDateTime;
+    procedure SetHeaderDate(const AValue: TDateTime);
+    function  GetHeaderConnection: THTTPConnectionFieldEnum;
+    procedure SetHeaderConnection(const AValue: THTTPConnectionFieldEnum);
+    function  GetContentLengthBytes: Int64;
+    procedure SetContentLengthBytes(const AValue: Int64);
+    function  GetContentTypeString: RawByteString;
+    procedure SetContentTypeString(const AValue: RawByteString);
+
+  public
+    constructor Create; overload;
+    constructor Create(const Rec: THTTPResponseRec); overload;
+
+    property  RecPtr: PHTTPResponseRec read GetRecPtr;
+
+    procedure Clear;
+    function  GetString: RawByteString;
+
+    property  HTTPVersion: THTTPVersionEnum read GetHTTPVersion write SetHTTPVersion;
+    property  HeaderDate: TDateTime read GetHeaderDate write SetHeaderDate;
+    property  HeaderConnection: THTTPConnectionFieldEnum read GetHeaderConnection write SetHeaderConnection;
+    property  ContentLengthBytes: Int64 read GetContentLengthBytes write SetContentLengthBytes;
+    property  ContentTypeString: RawByteString read GetContentTypeString write SetContentTypeString;
+  end;
+
+
+
+{                                                                              }
 { Tests                                                                        }
 {                                                                              }
 {$IFDEF HTTP_TEST}
@@ -1114,7 +1200,7 @@ implementation
 
 uses
   { Fundamentals }
-  flcDateTime;
+  flcDateTimeZone;
 
 
 
@@ -1321,7 +1407,8 @@ procedure AddCustomHeader(
           var CustomHeaders: THTTPCustomHeaders;
           const HeaderName: RawByteString;
           const HeaderValue: RawByteString);
-var L : Integer;
+var
+  L : NativeInt;
 begin
   L := Length(CustomHeaders);
   SetLength(CustomHeaders, L + 1);
@@ -1345,14 +1432,14 @@ end;
 
 { Structure initialise }
 
-procedure InitHTTPRequest(var A: THTTPRequest);
+procedure InitHTTPRequest(var A: THTTPRequestRec);
 begin
-  FillChar(A, SizeOf(THTTPRequest), 0);
+  FillChar(A, SizeOf(THTTPRequestRec), 0);
 end;
 
-procedure InitHTTPResponse(var A: THTTPResponse);
+procedure InitHTTPResponse(var A: THTTPResponseRec);
 begin
-  FillChar(A, SizeOf(THTTPResponse), 0);
+  FillChar(A, SizeOf(THTTPResponseRec), 0);
 end;
 
 
@@ -1464,7 +1551,8 @@ begin
 end;
 
 procedure ClearHTTPFixedHeaders(var A: THTTPFixedHeaders);
-var I : THTTPHeaderNameEnum;
+var
+  I : THTTPHeaderNameEnum;
 begin
   for I := Low(THTTPHeaderNameEnum) to High(THTTPHeaderNameEnum) do
     A[I] := '';
@@ -1505,7 +1593,7 @@ begin
   ClearHTTPDateField(A.IfUnmodifiedSince);
 end;
 
-procedure ClearHTTPRequest(var A: THTTPRequest);
+procedure ClearHTTPRequest(var A: THTTPRequestRec);
 begin
   ClearHTTPRequestStartLine(A.StartLine);
   ClearHTTPRequestHeader(A.Header);
@@ -1532,7 +1620,7 @@ begin
   ClearHTTPAgeField(A.Age);
 end;
 
-procedure ClearHTTPResponse(var A: THTTPResponse);
+procedure ClearHTTPResponse(var A: THTTPResponseRec);
 begin
   ClearHTTPResponseStartLine(A.StartLine);
   ClearHTTPResponseHeader(A.Header);
@@ -1590,8 +1678,9 @@ begin
 end;
 
 procedure BuildStrHTTPContentTypeValue(const A: THTTPContentType; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var S : RawByteString;
-    I, L : Integer;
+var
+  S : RawByteString;
+  I, L : Integer;
 begin
   case A.Value of
     hctNone : exit;
@@ -1655,10 +1744,11 @@ begin
 end;
 
 procedure BuildStrHTTPDateFieldValue(const A: THTTPDateField; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var T : TDateTime;
-    Z : RawByteString;
-    Ye, Mo, Da, DOW : Word;
-    Ho, Mi, Se, S1 : Word;
+var
+  T : TDateTime;
+  Z : RawByteString;
+  Ye, Mo, Da, DOW : Word;
+  Ho, Mi, Se, S1 : Word;
 begin
   case A.Value of
     hdNone : ;
@@ -1676,7 +1766,7 @@ begin
       end;
     hdDateTime :
       begin
-        T := LocalTimeToGMTTime(A.DateTime);
+        T := LocalDateTimeToUT(A.DateTime);
         DecodeDateFully(T, Ye, Mo, Da, DOW);
         DecodeTime(T, Ho, Mi, Se, S1);
         BuildStrRFCDateTime(
@@ -1775,7 +1865,8 @@ begin
 end;
 
 procedure BuildStrHTTPContentEncodingField(const A: THTTPContentEncodingField; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var I : Integer;
+var
+  I : Integer;
 begin
   if A.Value = hcefNone then
     exit;
@@ -1813,8 +1904,9 @@ begin
 end;
 
 procedure BuildStrHTTPFixedHeaders(const A: THTTPFixedHeaders; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var I : THTTPHeaderNameEnum;
-    S : RawByteString;
+var
+  I : THTTPHeaderNameEnum;
+  S : RawByteString;
 begin
   for I := Low(THTTPHeaderNameEnum) to High(THTTPHeaderNameEnum) do
     begin
@@ -1844,7 +1936,8 @@ begin
 end;
 
 procedure BuildStrHTTPSetCookieFieldValue(const A: THTTPSetCookieField; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var L : Integer;
+var
+  L : Integer;
 
   procedure BuildParam(const F: RawByteString);
   begin
@@ -1861,8 +1954,9 @@ var L : Integer;
     B.Append(V);
   end;
 
-var I : Integer;
-    S : RawByteString;
+var
+  I : NativeInt;
+  S : RawByteString;
 begin
   case A.Value of
     hscoNone    : ;
@@ -1903,8 +1997,9 @@ begin
 end;
 
 procedure BuildStrHTTPCookieFieldValue(const A: THTTPCookieField; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var I : Integer;
-    EntryP : PHTTPCookieFieldEntry;
+var
+  I : Integer;
+  EntryP : PHTTPCookieFieldEntry;
 begin
   case A.Value of
     hcoNone : ;
@@ -1984,7 +2079,7 @@ begin
   BuildStrHTTPIfUnmodifiedSince(A.IfUnmodifiedSince, B, P);
 end;
 
-procedure BuildStrHTTPRequest(const A: THTTPRequest; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
+procedure BuildStrHTTPRequest(const A: THTTPRequestRec; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 begin
   BuildStrHTTPRequestStartLine(A.StartLine, B, P);
   BuildStrHTTPRequestHeader(A.Header, B, P);
@@ -1992,7 +2087,8 @@ begin
 end;
 
 procedure BuildStrHTTPResponseCookieFieldArray(const A: THTTPSetCookieFieldArray; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
-var I : Integer;
+var
+  I : NativeInt;
 begin
   for I := 0 to Length(A) - 1 do
     begin
@@ -2028,7 +2124,7 @@ begin
   BuildStrHTTPAgeField(A.Age, B, P);
 end;
 
-procedure BuildStrHTTPResponse(const A: THTTPResponse; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
+procedure BuildStrHTTPResponse(const A: THTTPResponseRec; const B: TRawByteStringBuilder; const P: THTTPStringOptions);
 begin
   BuildStrHTTPResponseStartLine(A.StartLine, B, P);
   BuildStrHTTPResponseHeader(A.Header, B, P);
@@ -2036,7 +2132,8 @@ begin
 end;
 
 function HTTPContentTypeValueToStr(const A: THTTPContentType): RawByteString;
-var B : TRawByteStringBuilder;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2048,7 +2145,8 @@ begin
 end;
 
 function HTTPSetCookieFieldValueToStr(const A: THTTPSetCookieField): RawByteString;
-var B : TRawByteStringBuilder;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2060,7 +2158,8 @@ begin
 end;
 
 function HTTPCookieFieldValueToStr(const A: THTTPCookieField): RawByteString;
-var B : TRawByteStringBuilder;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2072,7 +2171,8 @@ begin
 end;
 
 function HTTPMethodToStr(const A: THTTPMethod): RawByteString;
-var B : TRawByteStringBuilder;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2083,8 +2183,9 @@ begin
   end;
 end;
 
-function HTTPRequestToStr(const A: THTTPRequest): RawByteString;
-var B : TRawByteStringBuilder;
+function HTTPRequestToStr(const A: THTTPRequestRec): RawByteString;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2095,8 +2196,9 @@ begin
   end;
 end;
 
-function HTTPResponseToStr(const A: THTTPResponse): RawByteString;
-var B : TRawByteStringBuilder;
+function HTTPResponseToStr(const A: THTTPResponseRec): RawByteString;
+var
+  B : TRawByteStringBuilder;
 begin
   B := TRawByteStringBuilder.Create;
   try
@@ -2113,7 +2215,8 @@ end;
 
 function GetHTTPCookieFieldEntryIndexByName(const A: THTTPCookieFieldEntryArray;
          const Name: RawByteString): Integer;
-var I : Integer;
+var
+  I : NativeInt;
 begin
   for I := 0 to Length(A) - 1 do
     if StrEqualNoAsciiCaseB(A[I].Name, Name) then
@@ -2126,7 +2229,8 @@ end;
 
 function GetHTTPCookieFieldEntryValueByName(const A: THTTPCookieFieldEntryArray;
          const Name: RawByteString; const Default: RawByteString): RawByteString;
-var I : Integer;
+var
+  I : NativeInt;
 begin
   I := GetHTTPCookieFieldEntryIndexByName(A, Name);
   if I < 0 then
@@ -2139,10 +2243,11 @@ procedure PrepareCookie(var A: THTTPCookieField;
           const B: THTTPSetCookieFieldArray;
           const Domain: RawByteString;
           const Secure: Boolean);
-var I, J, T, L : Integer;
-    F : PHTTPSetCookieField;
-    G : PHTTPSetCookieCustomField;
-    H : PHTTPCookieFieldEntry;
+var
+  I, J, T, L : Integer;
+  F : PHTTPSetCookieField;
+  G : PHTTPSetCookieCustomField;
+  H : PHTTPCookieFieldEntry;
 begin
   ClearHTTPCookieField(A);
   A.Value := hcoDecoded;
@@ -2182,8 +2287,9 @@ end;
 
 procedure HTTPSetCookieFieldAddCustomField(var A: THTTPSetCookieField;
           const Name, Value : RawByteString);
-var L : Integer;
-    P : PHTTPSetCookieCustomField;
+var
+  L : NativeInt;
+  P : PHTTPSetCookieCustomField;
 begin
   L := Length(A.CustomFields);
   SetLength(A.CustomFields, L + 1);
@@ -2193,8 +2299,9 @@ begin
 end;
 
 function HTTPCustomHeadersAdd(var A: THTTPCustomHeaders): PHTTPCustomHeader;
-var L : Integer;
-    P : PHTTPCustomHeader;
+var
+  L : NativeInt;
+  P : PHTTPCustomHeader;
 begin
   L := Length(A);
   SetLength(A, L + 1);
@@ -2203,7 +2310,8 @@ begin
 end;
 
 function HTTPCustomHeadersAdd(var A: THTTPCustomHeaders; const FieldName: RawByteString): PHTTPCustomHeader;
-var P : PHTTPCustomHeader;
+var
+  P : PHTTPCustomHeader;
 begin
   P := HTTPCustomHeadersAdd(A);
   P^.FieldName := FieldName;
@@ -2211,7 +2319,8 @@ begin
 end;
 
 function HTTPCustomHeadersAdd(var A: THTTPCustomHeaders; const FieldName, FieldValue: RawByteString): PHTTPCustomHeader;
-var P : PHTTPCustomHeader;
+var
+  P : PHTTPCustomHeader;
 begin
   P := HTTPCustomHeadersAdd(A, FieldName);
   P^.FieldValue := FieldValue;
@@ -2219,8 +2328,9 @@ begin
 end;
 
 function HTTPCustomHeadersGetByName(const A: THTTPCustomHeaders; const FieldName: RawByteString): PHTTPCustomHeader;
-var I : Integer;
-    P : PHTTPCustomHeader;
+var
+  I : NativeInt;
+  P : PHTTPCustomHeader;
 begin
   for I := 0 to Length(A) - 1 do
     begin
@@ -2239,7 +2349,8 @@ end;
 { Url encoded  }
 
 function HTTPUrlEncodedUnescapeStr(const S: RawByteString): RawByteString;
-var R : RawByteString;
+var
+  R : RawByteString;
 begin
   R := StrReplaceCharB('+', HTTP_Space, S);
   R := StrHexUnescapeB(R, '%');
@@ -2249,7 +2360,7 @@ end;
 procedure HTTPUrlEncodedDecode(const S: RawByteString; out Fields: THTTPUrlEncodedFieldArray);
 var
   FieldsStrArr : flcStdTypes.RawByteStringArray;
-  FieldCount, I : Integer;
+  FieldCount, I : NativeInt;
   FieldStr, Name, Value : RawByteString;
   FieldP : PHTTPUrlEncodedField;
 begin
@@ -2288,7 +2399,8 @@ end;
 
 function HTTPUrlEncodedFieldsGetStrByName(const Fields: THTTPUrlEncodedFieldArray;
          const Name: RawByteString; const Default: RawByteString): RawByteString;
-var F : PHTTPUrlEncodedField;
+var
+  F : PHTTPUrlEncodedField;
 begin
   F := HTTPUrlEncodedFieldsGetFieldPtrByName(Fields, Name);
   if Assigned(F) then
@@ -2299,7 +2411,8 @@ end;
 
 function HTTPUrlEncodedFieldsGetIntByName(const Fields: THTTPUrlEncodedFieldArray;
          const Name: RawByteString; const Default: Int64): Int64;
-var F : PHTTPUrlEncodedField;
+var
+  F : PHTTPUrlEncodedField;
 begin
   F := HTTPUrlEncodedFieldsGetFieldPtrByName(Fields, Name);
   if Assigned(F) then
@@ -2313,7 +2426,8 @@ end;
 { Content type }
 
 function HTTPWellKnownFileExtenstionToContentType(const Extension: RawByteString): THTTPContentTypeEnum;
-var R : THTTPContentTypeEnum;
+var
+  R : THTTPContentTypeEnum;
 begin
   if StrEqualNoAsciiCaseB(Extension, '.htm') or
      StrEqualNoAsciiCaseB(Extension, '.html') then
@@ -2402,8 +2516,9 @@ begin
 end;
 
 function THTTPParser.MatchCh(const C: ByteCharSet): Boolean;
-var N, F : Integer;
-    P : PByteChar;
+var
+  N, F : Integer;
+  P : PByteChar;
 begin
   if C = [] then
     begin
@@ -2423,9 +2538,10 @@ begin
 end;
 
 function THTTPParser.MatchStrAndCh(const S: RawByteString; const CaseSensitive: Boolean; const C: ByteCharSet): Boolean;
-var L, T, N, F : Integer;
-    P : PByteChar;
-    D : Boolean;
+var
+  L, T, N, F : Integer;
+  P : PByteChar;
+  D : Boolean;
 begin
   D := C <> [];
   L := Length(S);
@@ -2471,7 +2587,8 @@ begin
 end;
 
 function THTTPParser.SkipStrAndCh(const S: RawByteString; const DelimSet: ByteCharSet; const SkipDelim: Boolean; const CaseSensitive: Boolean): Boolean;
-var L : Integer;
+var
+  L : NativeInt;
 begin
   Result := MatchStrAndCh(S, CaseSensitive, DelimSet);
   if not Result then
@@ -2484,8 +2601,9 @@ begin
 end;
 
 function THTTPParser.SkipCh(const C: ByteCharSet): Boolean;
-var N, F : Integer;
-    P : PByteChar;
+var
+  N, F : Integer;
+  P : PByteChar;
 begin
   F := FBufPos;
   N := FBufSize - F;
@@ -2506,8 +2624,9 @@ begin
 end;
 
 function THTTPParser.SkipAllCh(const C: ByteCharSet): Boolean;
-var N, L, F : Integer;
-    P : PByteChar;
+var
+  N, L, F : Integer;
+  P : PByteChar;
 begin
   L := 0;
   F := FBufPos;
@@ -2533,9 +2652,10 @@ begin
 end;
 
 function THTTPParser.SkipToStr(const S: RawByteString; const CaseSensitive: Boolean): Boolean;
-var N, L, F, C : Integer;
-    P : PByteChar;
-    R, T : Boolean;
+var
+  N, L, F, C : Integer;
+  P : PByteChar;
+  R, T : Boolean;
 begin
   L := Length(S);
   F := FBufPos;
@@ -2572,7 +2692,8 @@ begin
 end;
 
 function THTTPParser.SkipLWS: Boolean;
-var R, T : Boolean;
+var
+  R, T : Boolean;
 begin
   R := False;
   repeat
@@ -2621,10 +2742,11 @@ begin
 end;
 
 function THTTPParser.ExtractTo(const C: ByteCharSet; var S: RawByteString; const SkipDelim: Boolean): AnsiChar;
-var N, L : Integer;
-    P, Q : PByteChar;
-    D : AnsiChar;
-    R : Boolean;
+var
+  N, L : Integer;
+  P, Q : PByteChar;
+  D : AnsiChar;
+  R : Boolean;
 begin
   P := FBufPtr;
   Inc(P, FBufPos);
@@ -2659,7 +2781,8 @@ begin
 end;
 
 function THTTPParser.ExtractInt(const Default: Int64): Int64;
-var S : RawByteString;
+var
+  S : RawByteString;
 begin
   S := ExtractAllCh(['0'..'9']);
   if not TryStringToInt64B(S, Result) then
@@ -2667,7 +2790,8 @@ begin
 end;
 
 function THTTPParser.ExtractIntTo(const C: ByteCharSet; const SkipDelim: Boolean; const Default: Int64): Int64;
-var S : RawByteString;
+var
+  S : RawByteString;
 begin
   ExtractTo(C, S, SkipDelim);
   if not TryStringToInt64B(S, Result) then
@@ -2730,8 +2854,9 @@ begin
 end;
 
 procedure THTTPParser.ParseHeaderValue(var HeaderValue: RawByteString);
-var S : RawByteString;
-    R : Boolean;
+var
+  S : RawByteString;
+  R : Boolean;
 begin
   S := '';
   R := False;
@@ -2927,8 +3052,9 @@ end;
 
 { Content-Encoding  = "Content-Encoding" ":" 1#content-coding }
 procedure THTTPParser.ParseContentEncoding(var Value: THTTPContentEncoding);
-var I, E : THTTPContentEncodingEnum;
-    S : RawByteString;
+var
+  I, E : THTTPContentEncodingEnum;
+  S : RawByteString;
 begin
   ClearHTTPContentEncoding(Value);
   E := hceNone;
@@ -2955,9 +3081,10 @@ begin
 end;
 
 procedure THTTPParser.ParseContentEncodingField(var Value: THTTPContentEncodingField);
-var E : THTTPContentEncoding;
-    L : Integer;
-    R : Boolean;
+var
+  E : THTTPContentEncoding;
+  L : Integer;
+  R : Boolean;
 begin
   ClearHTTPContentEncodingField(Value);
   L := 0;
@@ -2979,7 +3106,8 @@ begin
 end;
 
 function THTTPParser.ParseCommonHeaderValue(const HeaderName: THTTPHeaderNameEnum; var Headers: THTTPCommonHeaders): Boolean;
-var R : Boolean;
+var
+  R : Boolean;
 begin
   R := True;
   case HeaderName of
@@ -3010,11 +3138,12 @@ type
     scsfMaxAge);
 
 procedure THTTPParser.ParseSetCookieField(var SetCookie: THTTPSetCookieField);
-var R : Boolean;
-    F : THTTPSetCookieSubField;
-    FieldName : RawByteString;
-    FieldValue : RawByteString;
-    L : Integer;
+var
+  R : Boolean;
+  F : THTTPSetCookieSubField;
+  FieldName : RawByteString;
+  FieldValue : RawByteString;
+  L : Integer;
 begin
   ClearHTTPSetCookieField(SetCookie);
   SetCookie.Value := hscoDecoded;
@@ -3075,11 +3204,12 @@ begin
 end;
 
 procedure THTTPParser.ParseCookieField(var Cookie: THTTPCookieField);
-var FieldName : RawByteString;
-    FieldValue : RawByteString;
-    FieldHasValue : Boolean;
-    L : Integer;
-    FieldEntryP : PHTTPCookieFieldEntry;
+var
+  FieldName : RawByteString;
+  FieldValue : RawByteString;
+  FieldHasValue : Boolean;
+  L : Integer;
+  FieldEntryP : PHTTPCookieFieldEntry;
 begin
   ClearHTTPCookieField(Cookie);
   Cookie.Value := hcoDecoded;
@@ -3143,8 +3273,9 @@ begin
 end;
 
 function THTTPParser.ParseRequestHeaderValue(const HeaderName: THTTPHeaderNameEnum; const HeaderPtr: Pointer): Boolean;
-var Hdr : PHTTPRequestHeader;
-    R : Boolean;
+var
+  Hdr : PHTTPRequestHeader;
+  R : Boolean;
 begin
   Hdr := HeaderPtr;
   R := True;
@@ -3159,9 +3290,10 @@ begin
 end;
 
 function THTTPParser.ParseRequestHeader(var Header: THTTPRequestHeader): Boolean;
-var R : Boolean;
-    N : THTTPHeaderName;
-    V : RawByteString;
+var
+  R : Boolean;
+  N : THTTPHeaderName;
+  V : RawByteString;
 begin
   repeat
     ParseHeader(ParseRequestHeaderValue, @Header, Header.CommonHeaders, N, V);
@@ -3175,7 +3307,7 @@ begin
   Result := R;
 end;
 
-function THTTPParser.ParseRequestContent(var Request: THTTPRequest): Boolean;
+function THTTPParser.ParseRequestContent(var Request: THTTPRequestRec): Boolean;
 begin
   Result := Request.HeaderComplete;
   if not Result then
@@ -3184,8 +3316,9 @@ begin
 end;
 
 procedure THTTPParser.ParseRequestMethod(var Method: THTTPMethod);
-var I : THTTPMethodEnum;
-    S : RawByteString;
+var
+  I : THTTPMethodEnum;
+  S : RawByteString;
 begin
   ClearHTTPMethod(Method);
   for I := Low(THTTPMethodEnum) to High(THTTPMethodEnum) do
@@ -3217,8 +3350,9 @@ begin
   Result := SkipCRLF;
 end;
 
-procedure THTTPParser.ParseRequest(var Request: THTTPRequest);
+procedure THTTPParser.ParseRequest(var Request: THTTPRequestRec);
 begin
+  FillChar(Request, SizeOf(Request), 0);
   ParseRequestStartLine(Request.StartLine);
   Request.HeaderComplete := ParseRequestHeader(Request.Header);
   Request.HasContent := ParseRequestContent(Request);
@@ -3249,9 +3383,10 @@ begin
 end;
 
 function THTTPParser.ParseResponseHeaderValue(const HeaderName: THTTPHeaderNameEnum; const HeaderPtr: Pointer): Boolean;
-var Hdr : PHTTPResponseHeader;
-    R : Boolean;
-    L : Integer;
+var
+  Hdr : PHTTPResponseHeader;
+  R : Boolean;
+  L : Integer;
 begin
   Hdr := HeaderPtr;
   R := True;
@@ -3272,9 +3407,10 @@ begin
 end;
 
 function THTTPParser.ParseResponseHeader(var Header: THTTPResponseHeader): Boolean;
-var R : Boolean;
-    N : THTTPHeaderName;
-    V : RawByteString;
+var
+  R : Boolean;
+  N : THTTPHeaderName;
+  V : RawByteString;
 begin
   repeat
     ParseHeader(ParseResponseHeaderValue, @Header, Header.CommonHeaders, N, V);
@@ -3288,7 +3424,7 @@ begin
   Result := R;
 end;
 
-function THTTPParser.ParseResponseContent(var Response: THTTPResponse): Boolean;
+function THTTPParser.ParseResponseContent(var Response: THTTPResponseRec): Boolean;
 begin
   Result := Response.HeaderComplete;
   if not Result then
@@ -3296,8 +3432,9 @@ begin
   Result := ParseContent(Response.Header.CommonHeaders);
 end;
 
-procedure THTTPParser.ParseResponse(var Response: THTTPResponse);
+procedure THTTPParser.ParseResponse(var Response: THTTPResponseRec);
 begin
+  FillChar(Response, SizeOf(Response), 0);
   ParseResponseStartLine(Response.StartLine);
   Response.HeaderComplete := ParseResponseHeader(Response.Header);
   Response.HasContent := ParseResponseContent(Response);
@@ -3307,8 +3444,9 @@ end;
 
 { Helpers }
 
-procedure HTTPParseRequest(var Request: THTTPRequest; const Buf; const BufSize: Integer);
-var P : THTTPParser;
+procedure HTTPParseRequest(var Request: THTTPRequestRec; const Buf; const BufSize: Integer);
+var
+  P : THTTPParser;
 begin
   P := THTTPParser.Create;
   try
@@ -3319,8 +3457,9 @@ begin
   end;
 end;
 
-procedure HTTPParseResponse(var Response: THTTPResponse; const Buf; const BufSize: Integer);
-var P : THTTPParser;
+procedure HTTPParseResponse(var Response: THTTPResponseRec; const Buf; const BufSize: Integer);
+var
+  P : THTTPParser;
 begin
   P := THTTPParser.Create;
   try
@@ -3409,7 +3548,7 @@ begin
   FContentComplete := False;
 end;
 
-procedure THTTPContentDecoder.TriggerContentBuffer(const Buf; const Size: Integer);
+procedure THTTPContentDecoder.TriggerContentBuffer(const Buf; const Size: Int32);
 begin
   {$IFDEF HTTP_DEBUG}
   Log('ContentBuffer:%db', [Size]);
@@ -3435,10 +3574,10 @@ const
   ContentBlockSize = 65536;
 var
   Buf         : array[0..ContentBlockSize - 1] of Byte;
-  BufSize     : Integer;
+  BufSize     : Int32;
   GotContent  : Boolean;
   ContentLeft : Int64;
-  ContentSize : Integer;
+  ContentSize : Int32;
 begin
   ContentLeft := FContentSize - FContentReceived;
   repeat
@@ -3467,7 +3606,7 @@ const
 var
   Buf         : array[0..ContentBlockSize - 1] of Byte;
   GotContent  : Boolean;
-  ContentSize : Integer;
+  ContentSize : Int32;
 begin
   repeat
     ContentSize := FReadProc(self, Buf[0], ContentBlockSize);
@@ -3480,10 +3619,10 @@ begin
   until not GotContent;
 end;
 
-function THTTPContentDecoder.ProcessChunked_FillBuf(const Size: Integer): Boolean;
+function THTTPContentDecoder.ProcessChunked_FillBuf(const Size: Int32): Boolean;
 var
   P : Pointer;
-  L, N : Integer;
+  L, N : Int32;
 begin
   L := TCPBufferUsed(FChunkBuf);
   {$IFDEF HTTP_DEBUG}
@@ -3505,10 +3644,10 @@ begin
     end;
 end;
 
-function THTTPContentDecoder.ProcessChunked_FillBufBlock(const Size: Integer): Boolean;
+function THTTPContentDecoder.ProcessChunked_FillBufBlock(const Size: Int32): Boolean;
 var
   P : Pointer;
-  L : Integer;
+  L : Int32;
 begin
   {$IFDEF HTTP_DEBUG}
   Log('Chunk:FillBufBlock:Size:%db', [Size]);
@@ -3527,8 +3666,9 @@ begin
     Result := False;
 end;
 
-function THTTPContentDecoder.ProcessChunked_FillBufToCRLF(const BlockSize: Integer): Integer;
-var I : Integer;
+function THTTPContentDecoder.ProcessChunked_FillBufToCRLF(const BlockSize: Int32): Integer;
+var
+  I : Int32;
 begin
   I := ProcessChunked_BufferCRLFPosition;
   if I < 0 then
@@ -3543,8 +3683,10 @@ begin
   Result := I;
 end;
 
-function THTTPContentDecoder.ProcessChunked_ReadStrToCRLF(const BlockSize: Integer; var Str: RawByteString): Boolean;
-var I : Integer;
+function THTTPContentDecoder.ProcessChunked_ReadStrToCRLF(const BlockSize: Int32;
+         var Str: RawByteString): Boolean;
+var
+  I : Int32;
 begin
   I := ProcessChunked_FillBufToCRLF(BlockSize);
   if I < 0 then
@@ -3564,7 +3706,8 @@ begin
 end;
 
 function THTTPContentDecoder.ProcessChunked_ExpectCRLF: Boolean;
-var P : PByteChar;
+var
+  P : PByteChar;
 begin
   Result := ProcessChunked_FillBuf(2);
   if not Result then
@@ -3580,9 +3723,10 @@ begin
 end;
 
 function THTTPContentDecoder.ProcessChunked_BufferCRLFPosition: Integer;
-var P : Pointer;
-    A, B : PByte;
-    L, I : Integer;
+var
+  P : Pointer;
+  A, B : PByte;
+  L, I : Int32;
 begin
   L := TCPBufferPeekPtr(FChunkBuf, P);
   A := P;
@@ -3650,7 +3794,7 @@ function THTTPContentDecoder.ProcessChunked_Content: Boolean;
 const
   ContentBlockSize = 32768;
 var
-  L : Integer;
+  L : Int32;
   BufPtr : Pointer;
   ChunkLeft : Int64;
 begin
@@ -3745,7 +3889,8 @@ end;
        trailer        = *(entity-header CRLF)
 }
 procedure THTTPContentDecoder.ProcessChunked;
-var R : Boolean;
+var
+  R : Boolean;
 begin
   repeat
     case FChunkState of
@@ -3951,8 +4096,9 @@ end;
 // Returns 0 if content specified and length is zero
 // Returns -1 if content not specified
 procedure THTTPContentWriter.InitContent(out HasContent: Boolean; out ContentLength: Int64);
-var R : Boolean;
-    L : Int64;
+var
+  R : Boolean;
+  L : Int64;
 begin
   {$IFDEF HTTP_DEBUG}
   Log('InitContent:Mechanism=%d', [Ord(FMechanism)]);
@@ -4076,8 +4222,215 @@ end;
 
 
 
+{ THTTPRequestObj }
+
+constructor THTTPRequestObj.Create;
+begin
+  inherited Create;
+  FillChar(FRequestRec, SizeOf(FRequestRec), 0);
+end;
+
+constructor THTTPRequestObj.Create(const Rec: THTTPRequestRec);
+begin
+  inherited Create;
+  FRequestRec := Rec;
+end;
+
+function THTTPRequestObj.GetRecPtr: PHTTPRequestRec;
+begin
+  Result := @FRequestRec;
+end;
+
+procedure THTTPRequestObj.Clear;
+begin
+  ClearHTTPRequest(FRequestRec);
+end;
+
+function THTTPRequestObj.GetString: RawByteString;
+begin
+  Result := HTTPRequestToStr(FRequestRec);
+end;
+
+function THTTPRequestObj.GetHTTPVersion: THTTPVersionEnum;
+begin
+  Result := FRequestRec.StartLine.Version.Version;
+end;
+
+procedure THTTPRequestObj.SetHTTPVersion(const AValue: THTTPVersionEnum);
+begin
+  FRequestRec.StartLine.Version.Version := AValue;
+end;
+
+function THTTPRequestObj.GetRequestMethod: THTTPMethodEnum;
+begin
+  Result := FRequestRec.StartLine.Method.Value;
+end;
+
+procedure THTTPRequestObj.SetRequestMethod(const AValue: THTTPMethodEnum);
+begin
+  FRequestRec.StartLine.Method.Value := AValue;
+end;
+
+function THTTPRequestObj.GetHeaderHost: String;
+begin
+  Result := UTF8ToUnicodeString(FRequestRec.Header.FixedHeaders[hntHost]);
+end;
+
+procedure THTTPRequestObj.SetHeaderHost(const AValue: String);
+begin
+  FRequestRec.Header.FixedHeaders[hntHost] := UTF8Encode(AValue);
+end;
+
+function THTTPRequestObj.GetHeaderDate: TDateTime;
+begin
+  if FRequestRec.Header.CommonHeaders.Date.Value = hdDateTime then
+    Result := FRequestRec.Header.CommonHeaders.Date.DateTime
+  else
+    Result := 0.0;
+end;
+
+procedure THTTPRequestObj.SetHeaderDate(const AValue: TDateTime);
+begin
+  FRequestRec.Header.CommonHeaders.Date.Value := hdDateTime;
+  FRequestRec.Header.CommonHeaders.Date.DateTime := AValue;
+end;
+
+function THTTPRequestObj.GetHeaderConnection: THTTPConnectionFieldEnum;
+begin
+  Result := FRequestRec.Header.CommonHeaders.Connection.Value;
+end;
+
+procedure THTTPRequestObj.SetHeaderConnection(const AValue: THTTPConnectionFieldEnum);
+begin
+  FRequestRec.Header.CommonHeaders.Connection.Value := AValue;
+end;
+
+function THTTPRequestObj.GetContentLengthBytes: Int64;
+begin
+  if FRequestRec.Header.CommonHeaders.ContentLength.Value = hcltByteCount then
+    Result := FRequestRec.Header.CommonHeaders.ContentLength.ByteCount
+  else
+    Result := -1;
+end;
+
+procedure THTTPRequestObj.SetContentLengthBytes(const AValue: Int64);
+begin
+  FRequestRec.Header.CommonHeaders.ContentLength.Value := hcltByteCount;
+  FRequestRec.Header.CommonHeaders.ContentLength.ByteCount := AValue;
+end;
+
+function THTTPRequestObj.GetContentTypeString: RawByteString;
+begin
+  if FRequestRec.Header.CommonHeaders.ContentType.Value = hctCustomString then
+    Result := FRequestRec.Header.CommonHeaders.ContentType.CustomStr
+  else
+    Result := HTTP_ContentTypeStr[FRequestRec.Header.CommonHeaders.ContentType.Value];
+end;
+
+procedure THTTPRequestObj.SetContentTypeString(const AValue: RawByteString);
+begin
+  FRequestRec.Header.CommonHeaders.ContentType.Value := hctCustomString;
+  FRequestRec.Header.CommonHeaders.ContentType.CustomStr := AValue;
+end;
+
+
+
+{ THTTPResponseObj }
+
+constructor THTTPResponseObj.Create;
+begin
+  inherited Create;
+  FillChar(FResponseRec, SizeOf(FResponseRec), 0);
+end;
+
+constructor THTTPResponseObj.Create(const Rec: THTTPResponseRec);
+begin
+  inherited Create;
+  FResponseRec := Rec;
+end;
+
+function THTTPResponseObj.GetRecPtr: PHTTPResponseRec;
+begin
+  Result := @FResponseRec;
+end;
+
+procedure THTTPResponseObj.Clear;
+begin
+  ClearHTTPResponse(FResponseRec);
+end;
+
+function THTTPResponseObj.GetString: RawByteString;
+begin
+  Result := HTTPResponseToStr(FResponseRec);
+end;
+
+function THTTPResponseObj.GetHTTPVersion: THTTPVersionEnum;
+begin
+  Result := FResponseRec.StartLine.Version.Version;
+end;
+
+procedure THTTPResponseObj.SetHTTPVersion(const AValue: THTTPVersionEnum);
+begin
+  FResponseRec.StartLine.Version.Version := AValue;
+end;
+
+function THTTPResponseObj.GetHeaderDate: TDateTime;
+begin
+  if FResponseRec.Header.CommonHeaders.Date.Value = hdDateTime then
+    Result := FResponseRec.Header.CommonHeaders.Date.DateTime
+  else
+    Result := 0.0;
+end;
+
+procedure THTTPResponseObj.SetHeaderDate(const AValue: TDateTime);
+begin
+  FResponseRec.Header.CommonHeaders.Date.Value := hdDateTime;
+  FResponseRec.Header.CommonHeaders.Date.DateTime := Now;
+end;
+
+function THTTPResponseObj.GetHeaderConnection: THTTPConnectionFieldEnum;
+begin
+  Result := FResponseRec.Header.CommonHeaders.Connection.Value;
+end;
+
+procedure THTTPResponseObj.SetHeaderConnection(const AValue: THTTPConnectionFieldEnum);
+begin
+  FResponseRec.Header.CommonHeaders.Connection.Value := AValue;
+end;
+
+function THTTPResponseObj.GetContentLengthBytes: Int64;
+begin
+  if FResponseRec.Header.CommonHeaders.ContentLength.Value = hcltByteCount then
+    Result := FResponseRec.Header.CommonHeaders.ContentLength.ByteCount
+  else
+    Result := -1;
+end;
+
+procedure THTTPResponseObj.SetContentLengthBytes(const AValue: Int64);
+begin
+  FResponseRec.Header.CommonHeaders.ContentLength.Value := hcltByteCount;
+  FResponseRec.Header.CommonHeaders.ContentLength.ByteCount := AValue;
+end;
+
+function THTTPResponseObj.GetContentTypeString: RawByteString;
+begin
+  if FResponseRec.Header.CommonHeaders.ContentType.Value = hctCustomString then
+    Result := FResponseRec.Header.CommonHeaders.ContentType.CustomStr
+  else
+    Result := HTTP_ContentTypeStr[FResponseRec.Header.CommonHeaders.ContentType.Value];
+end;
+
+procedure THTTPResponseObj.SetContentTypeString(const AValue: RawByteString);
+begin
+  FResponseRec.Header.CommonHeaders.ContentType.Value := hctCustomString;
+  FResponseRec.Header.CommonHeaders.ContentType.CustomStr := AValue;
+end;
+
+
+
+
 {                                                                              }
-{ Tests                                                                        }
+{ Test                                                                         }
 {                                                                              }
 {$IFDEF HTTP_TEST}
 {$ASSERTIONS ON}
@@ -4143,8 +4496,8 @@ const
 procedure Test_Parser;
 var P : THTTPParser;
     S : RawByteString;
-    R : THTTPRequest;
-    T : THTTPResponse;
+    R : THTTPRequestRec;
+    T : THTTPResponseRec;
 begin
   InitHTTPRequest(R);
   InitHTTPResponse(T);
@@ -4286,7 +4639,7 @@ begin
     R.StartLine.URI := '/';
     R.StartLine.Version.Version := hvHTTP11;
     R.Header.CommonHeaders.Date.Value := hdDateTime;
-    R.Header.CommonHeaders.Date.DateTime := GMTTimeToLocalTime(EncodeDate(2011, 6, 12) + EncodeTime(16, 15, 56, 0));
+    R.Header.CommonHeaders.Date.DateTime := UTToLocalDateTime(EncodeDate(2011, 6, 12) + EncodeTime(16, 15, 56, 0));
     R.Header.FixedHeaders[hntHost] := 'abc';
     R.Header.Cookie.Value := hcoDecoded;
     SetLength(R.Header.Cookie.Entries, 1);
@@ -4306,7 +4659,7 @@ begin
     T.StartLine.Code := 200;
     T.StartLine.Msg := hslmOK;
     T.Header.CommonHeaders.Date.Value := hdDateTime;
-    T.Header.CommonHeaders.Date.DateTime := GMTTimeToLocalTime(EncodeDate(2011, 6, 12) + EncodeTime(16, 15, 56, 0));
+    T.Header.CommonHeaders.Date.DateTime := UTToLocalDateTime(EncodeDate(2011, 6, 12) + EncodeTime(16, 15, 56, 0));
     T.Header.FixedHeaders[hntServer] := 'abc';
     S := HTTPResponseToStr(T);
     Assert(S =

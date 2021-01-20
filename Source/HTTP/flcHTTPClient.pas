@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcHTTPClient.pas                                        }
-{   File version:     5.12                                                     }
+{   File version:     5.17                                                     }
 {   Description:      HTTP client.                                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2009-2018, David J Butler                  }
+{   Copyright:        Copyright (c) 2009-2020, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -48,8 +48,19 @@
 {   2013/03/24  4.10  SetRequestContentWwwFormUrlEncodedField method.          }
 {   2015/05/05  4.11  RawByteString changes.                                   }
 {   2016/01/09  5.12  Revised for Fundamentals 5.                              }
+{   2020/07/25  5.13  Remove SynchronisedEvents option.                        }
+{   2020/07/25  5.14  Remove TComponent base class.                            }
+{   2020/07/25  5.15  Change event order: Active, Start, Stop, Inactive.       }
+{   2020/07/25  5.16  WaitReadyForRequest and WaitForRequestComplete.          }
+{   2020/09/21  5.17  Request and Response object wrappers.                    }
 {                                                                              }
 {******************************************************************************}
+
+{ Todo: }
+{ - State manegement }
+{ - Wait for Connect: Test }
+{ - Wait for Complete: Test }
+{ - Log types: share with TCP server }
 
 {$INCLUDE flcHTTP.inc}
 
@@ -82,50 +93,60 @@ uses
 type
   THTTPClientLogType = (
     cltDebug,
+    cltParameter,
     cltInfo,
-    cltError);
+    cltError
+    );
 
   THTTPClientAddressFamily = (
     cafIP4,
-    cafIP6);
+    cafIP6
+    );
 
   THTTPClientMethod = (
     cmGET,
     cmPOST,
-    cmCustom);
+    cmCustom
+    );
 
   THTTPKeepAliveOption = (
     kaDefault,
     kaKeepAlive,
-    kaClose);
+    kaClose
+    );
 
   {$IFDEF HTTP_TLS}
   THTTPSClientOption = (
     csoDontUseSSL3,
     csoDontUseTLS10,
     csoDontUseTLS11,
-    csoDontUseTLS12);
+    csoDontUseTLS12
+    );
 
   THTTPSClientOptions = set of THTTPSClientOption;
   {$ENDIF}
 
   TF5HTTPClientState = (
     hcsInit,
-    hcsStarting,
-    hcsStopping,
-    hcsStopped,
-    hcsConnectFailed,
-    hcsConnected_Ready,
-    hcsSendingRequest,
-    hcsSendingContent,
-    hcsAwaitingResponse,
-    hcsReceivedResponse,
-    hcsReceivingContent,
-    hcsResponseComplete,
-    hcsResponseCompleteAndClosing,
-    hcsResponseCompleteAndClosed,
-    hcsRequestInterruptedAndClosed,
-    hcsRequestFailed);
+    hcsStarting,                          { Starting }
+                                          { Connecting }
+    hcsConnectFailed,                     { ReadyFailed }
+    hcsConnectedReady,                    { Ready }
+    hcsSendingRequest,                    { RequestBusy }
+    hcsSendingContent,                    { RequestBusy }
+    hcsAwaitingResponse,                  { RequestBusy }
+    hcsReceivedResponse,                  { RequestBusy }
+    hcsReceivingContent,                  { RequestBusy }
+    hcsResponseComplete,                  { RequestComplete -> Ready }
+    hcsResponseCompleteAndClosing,        { RequestComplete -> Closing}
+    hcsResponseCompleteAndClosed,         { RequestComplete -> Closed }
+    hcsRequestInterruptedAndClosed,       { RequestFail -> Closed }
+    hcsRequestFailed,                     { RequestFail -> Closed }
+                                          { Closing }
+                                          { Closed }
+    hcsStopping,                          { Stopping }
+    hcsStopped                            { Stopped }
+    );
 
   TF5HTTPClient = class;
 
@@ -136,23 +157,19 @@ type
   THTTPClientStateEvent = procedure (Client: TF5HTTPClient; State: TF5HTTPClientState) of object;
   THTTPClientContentEvent = procedure (Client: TF5HTTPClient; const Buf; const Size: Integer) of object;
 
-  TF5HTTPClient = class(TComponent)
+  TF5HTTPClient = class
   protected
-    FSynchronisedEvents : Boolean;
-    
     // event handlers
     FOnLog                     : THTTPClientLogEvent;
     FOnStateChange             : THTTPClientStateEvent;
-    FOnStart                   : THTTPClientEvent;
-    FOnStop                    : THTTPClientEvent;
     FOnActive                  : THTTPClientEvent;
-    FOnInactive                : THTTPClientEvent;
+    FOnStart                   : THTTPClientEvent;
     FOnResponseHeader          : THTTPClientEvent;
     FOnResponseContentBuffer   : THTTPClientContentEvent;
     FOnResponseContentComplete : THTTPClientEvent;
     FOnResponseComplete        : THTTPClientEvent;
-    FOnThreadWait              : THTTPClientEvent;
-    FOnMainThreadWait          : THTTPClientEvent;
+    FOnStop                    : THTTPClientEvent;
+    FOnInactive                : THTTPClientEvent;
 
     // host
     FAddressFamily : THTTPClientAddressFamily;
@@ -191,43 +208,36 @@ type
     FUserTag    : NativeInt;
 
     // state
-    FLock              : TCriticalSection;
-    FState             : TF5HTTPClientState;
-    FErrorMsg          : String;
-    FActive            : Boolean;
-    FActivateOnLoaded  : Boolean;
-    FViaHTTPProxy      : Boolean;
-    FTCPClient         : TF5TCPClient;
-    FHTTPParser        : THTTPParser;
-    FInRequest         : Boolean;
-    FInDoStart         : Boolean;
-    FInDoStop          : Boolean;
+    FLock                 : TCriticalSection;
+    FState                : TF5HTTPClientState;
+    FErrorMsg             : String;
+    FActive               : Boolean;
+    FIsStopping           : Boolean;
+    FViaHTTPProxy         : Boolean;
+    FTCPClient            : TF5TCPClient;
+    FHTTPParser           : THTTPParser;
+    FInRequest            : Boolean;
+    FReadyEvent           : TSimpleEvent;
+    FRequestCompleteEvent : TSimpleEvent;
     
-    FRequestPending     : Boolean;
-    FRequest            : THTTPRequest;
-    FRequestHasContent  : Boolean;
+    FRequestPending    : Boolean;
+    FRequestObj        : THTTPRequestObj;
+    FRequestHasContent : Boolean;
 
-    FResponse               : THTTPResponse;
+    FResponseObj            : THTTPResponseObj;
     FResponseCode           : Integer;
     FResponseCookies        : TStrings;
     FResponseContentReader  : THTTPContentReader;
     FResponseRequireClose   : Boolean;
-    FResponseContentBufPtr  : Pointer;
-    FResponseContentBufSize : Integer;
-    FSyncLogType            : THTTPClientLogType;
-    FSyncLogMsg             : String;
-    FSyncLogLevel           : Integer;
 
     procedure Init; virtual;
     procedure InitDefaults; virtual;
 
-    procedure Loaded; override;
-
-    procedure Synchronize(const SyncProc: TSyncProc);
-
-    procedure SyncLog;
     procedure Log(const LogType: THTTPClientLogType; const Msg: String; const Level: Integer = 0); overload;
     procedure Log(const LogType: THTTPClientLogType; const Msg: String; const Args: array of const; const Level: Integer = 0); overload;
+    procedure LogDebug(const Msg: String; const Level: Integer = 0); overload;
+    procedure LogDebug(const Msg: String; const Args: array of const; const Level: Integer = 0); overload;
+    procedure LogParameter(const Msg: String; const Args: array of const; const Level: Integer = 0);
 
     procedure Lock;
     procedure Unlock;
@@ -241,73 +251,63 @@ type
     function  IsBusyWithRequest: Boolean;
     procedure CheckNotBusyWithRequest;
 
-    procedure SetSynchronisedEvents(const SynchronisedEvents: Boolean);
-
-    procedure SetAddressFamily(const AddressFamily: THTTPClientAddressFamily);
-    procedure SetHost(const Host: String);
-    procedure SetPort(const Port: String);
-    function  GetPortInt: Integer;
-    procedure SetPortInt(const PortInt: Integer);
+    procedure SetAddressFamily(const AAddressFamily: THTTPClientAddressFamily);
+    procedure SetHost(const AHost: String);
+    procedure SetPort(const APort: String);
+    function  GetPortInt: Int32;
+    procedure SetPortInt(const APortInt: Int32);
 
     {$IFDEF HTTP_TLS}
     procedure SetUseHTTPS(const UseHTTPS: Boolean);
     procedure SetHTTPSOptions(const HTTPSOptions: THTTPSClientOptions);
     {$ENDIF}
 
-    procedure SetUseHTTPProxy(const UseHTTPProxy: Boolean);
-    procedure SetHTTPProxyHost(const HTTPProxyHost: String);
-    procedure SetHTTPProxyPort(const HTTPProxyPort: String);
+    procedure SetUseHTTPProxy(const AUseHTTPProxy: Boolean);
+    procedure SetHTTPProxyHost(const AHTTPProxyHost: String);
+    procedure SetHTTPProxyPort(const AHTTPProxyPort: String);
 
-    procedure SetMethod(const Method: THTTPClientMethod);
-    procedure SetMethodCustom(const MethodCustom: RawByteString);
-    procedure SetURI(const URI: RawByteString);
+    procedure SetMethod(const AMethod: THTTPClientMethod);
+    procedure SetMethodCustom(const AMethodCustom: RawByteString);
+    procedure SetURI(const AURI: RawByteString);
 
-    procedure SetUserAgent(const UserAgent: RawByteString);
-    procedure SetKeepAlive(const KeepAlive: THTTPKeepAliveOption);
-    procedure SetReferer(const Referer: RawByteString);
-    procedure SetAuthorization(const Authorization: RawByteString);
+    procedure SetUserAgent(const AUserAgent: RawByteString);
+    procedure SetKeepAlive(const AKeepAlive: THTTPKeepAliveOption);
+    procedure SetReferer(const AReferer: RawByteString);
+    procedure SetAuthorization(const AAuthorization: RawByteString);
 
-    function  GetCustomHeaderByName(const FieldName: RawByteString): PHTTPCustomHeader;
-    function  AddCustomHeader(const FieldName: RawByteString): PHTTPCustomHeader;
-    function  GetCustomHeader(const FieldName: RawByteString): RawByteString;
-    procedure SetCustomHeader(const FieldName: RawByteString; const FieldValue: RawByteString);
+    function  GetCustomHeaderByName(const AFieldName: RawByteString): PHTTPCustomHeader;
+    function  AddCustomHeader(const AFieldName: RawByteString): PHTTPCustomHeader;
+    function  GetCustomHeader(const AFieldName: RawByteString): RawByteString;
+    procedure SetCustomHeader(const AFieldName: RawByteString; const AFieldValue: RawByteString);
 
-    procedure SetRequestContentType(const RequestContentType: RawByteString);
+    procedure SetRequestContentType(const ARequestContentType: RawByteString);
     function  GetRequestContentMechanism: THTTPContentWriterMechanism;
-    procedure SetRequestContentMechanism(const RequestContentMechanism: THTTPContentWriterMechanism);
+    procedure SetRequestContentMechanism(const ARequestContentMechanism: THTTPContentWriterMechanism);
     function  GetRequestContentStr: RawByteString;
-    procedure SetRequestContentStr(const RequestContentStr: RawByteString);
+    procedure SetRequestContentStr(const ARequestContentStr: RawByteString);
     function  GetRequestContentStream: TStream;
-    procedure SetRequestContentStream(const RequestContentStream: TStream);
+    procedure SetRequestContentStream(const ARequestContentStream: TStream);
     function  GetRequestContentFileName: String;
-    procedure SetRequestContentFileName(const RequestContentFileName: String);
+    procedure SetRequestContentFileName(const ARequestContentFileName: String);
 
     function  GetResponseContentMechanism: THTTPContentReaderMechanism;
-    procedure SetResponseContentMechanism(const ResponseContentMechanism: THTTPContentReaderMechanism);
+    procedure SetResponseContentMechanism(const AResponseContentMechanism: THTTPContentReaderMechanism);
     function  GetResponseContentFileName: String;
-    procedure SetResponseContentFileName(const ResponseContentFileName: String);
+    procedure SetResponseContentFileName(const AResponseContentFileName: String);
     function  GetResponseContentStream: TStream;
-    procedure SetResponseContentStream(const ResponseContentStream: TStream);
+    procedure SetResponseContentStream(const AResponseContentStream: TStream);
 
-    procedure SyncTriggerStateChanged;
-    procedure SyncTriggerStart;
-    procedure SyncTriggerStop;
-    procedure SyncTriggerActive;
-    procedure SyncTriggerInactive;
-    procedure SyncTriggerResponseHeader;
-    procedure SyncTriggerResponseContentBuffer;
-    procedure SyncTriggerResponseContentComplete;
-    procedure SyncTriggerResponseComplete;
+    procedure LogTriggerException(const TriggerName: String; const E: Exception);
 
     procedure TriggerStateChanged;
-    procedure TriggerStart;
-    procedure TriggerStop;
     procedure TriggerActive;
-    procedure TriggerInactive;
+    procedure TriggerStart;
     procedure TriggerResponseHeader;
     procedure TriggerResponseContentBuffer(const Buf; const BufSize: Integer);
     procedure TriggerResponseContentComplete;
     procedure TriggerResponseComplete;
+    procedure TriggerStop;
+    procedure TriggerInactive;
 
     procedure ProcessResponseHeader;
     procedure SetResponseComplete;
@@ -326,13 +326,22 @@ type
     procedure TCPClientRead(Client: TF5TCPClient);
     procedure TCPClientWrite(Client: TF5TCPClient);
     procedure TCPClientClose(Client: TF5TCPClient);
-    procedure TCPClientMainThreadWait(Client: TF5TCPClient);
-    procedure TCPClientThreadWait(Client: TF5TCPClient);
 
     procedure ResetRequest;
 
     procedure SetErrorMsg(const ErrorMsg: String);
     procedure SetRequestFailedFromException(const E: Exception);
+
+    procedure StartTCPClient;
+    procedure ClientStart;
+
+    procedure StopTCPClient;
+    procedure ClientStop;
+
+    procedure ClientSetActive;
+    procedure ClientSetInactive;
+
+    procedure SetActive(const AActive: Boolean);
 
     function  InitRequestContent(out HasContent: Boolean): Int64;
     procedure FinaliseRequestContent;
@@ -362,42 +371,30 @@ type
     procedure ReadResponseContent;
     procedure ReadResponse;
 
-    procedure DoStartTCPClient;
-    procedure DoStart;
-    procedure DoStopTCPClient;
-    procedure DoStop;
-    procedure SetActive(const Active: Boolean);
+    function  GetResponseRecord: THTTPResponseRec;
 
     function  GetResponseContentStr: RawByteString;
 
-    procedure Wait;
-
   public
-    constructor Create(AOwner: TComponent); override;
+    constructor Create;
     destructor Destroy; override;
 
-    // When SynchronisedEvents is set, events handlers are called in the main thread
-    // through the TThread.Synchronise mechanism. If not set, events handlers may
-    // be called from any thread. In this case event handler should handle their
-    // own synchronisation if required.
-    property  SynchronisedEvents: Boolean read FSynchronisedEvents write SetSynchronisedEvents default False;
-    
     property  OnLog: THTTPClientLogEvent read FOnLog write FOnLog;
 
     property  OnStateChange: THTTPClientStateEvent read FOnStateChange write FOnStateChange;
-    property  OnStart: THTTPClientEvent read FOnStart write FOnStart;
-    property  OnStop: THTTPClientEvent read FOnStop write FOnStop;
     property  OnActive: THTTPClientEvent read FOnActive write FOnActive;
-    property  OnInactive: THTTPClientEvent read FOnInactive write FOnInactive;
+    property  OnStart: THTTPClientEvent read FOnStart write FOnStart;
     property  OnResponseHeader: THTTPClientEvent read FOnResponseHeader write FOnResponseHeader;
     property  OnResponseContentBuffer: THTTPClientContentEvent read FOnResponseContentBuffer write FOnResponseContentBuffer;
     property  OnResponseContentComplete: THTTPClientEvent read FOnResponseContentComplete write FOnResponseContentComplete;
     property  OnResponseComplete: THTTPClientEvent read FOnResponseComplete write FOnResponseComplete;
+    property  OnStop: THTTPClientEvent read FOnStop write FOnStop;
+    property  OnInactive: THTTPClientEvent read FOnInactive write FOnInactive;
 
     property  AddressFamily: THTTPClientAddressFamily read FAddressFamily write SetAddressFamily default cafIP4;
     property  Host: String read FHost write SetHost;
     property  Port: String read FPort write SetPort;
-    property  PortInt: Integer read GetPortInt write SetPortInt;
+    property  PortInt: Int32 read GetPortInt write SetPortInt;
 
     {$IFDEF HTTP_TLS}
     property  UseHTTPS: Boolean read FUseHTTPS write SetUseHTTPS default False;
@@ -434,35 +431,29 @@ type
 
     property  State: TF5HTTPClientState read GetState;
     property  StateStr: String read GetStateStr;
+    property  ErrorMsg: String read FErrorMsg;
+
     property  Active: Boolean read FActive write SetActive default False;
+    procedure Start;
+    procedure Stop;
 
     procedure Request;
+
     function  RequestIsBusy: Boolean;
     function  RequestIsSuccess: Boolean;
 
-    property  ErrorMsg: String read FErrorMsg;
+    property  ResponseRecord: THTTPResponseRec read GetResponseRecord;
 
-    property  ResponseRecord: THTTPResponse read FResponse;
     property  ResponseCode: Integer read FResponseCode;
     property  ResponseCookies: TStrings read FResponseCookies;
     property  ResponseContentStr: RawByteString read GetResponseContentStr;
 
+    function  WaitReadyForRequest(const Timeout: Integer): Boolean;
+    function  WaitForRequestComplete(const Timeout: Integer): Boolean;
+
     property  UserObject: TObject read FUserObject write FUserObject;
     property  UserData: Pointer read FUserData write FUserData;
     property  UserTag: NativeInt read FUserTag write FUserTag;
-
-    // Blocking helpers
-    // These functions will block until a result is available or timeout expires.
-    // When blocking occurs in the main thread, OnMainThreadWait is called.
-    // When blocking occurs in another thread, OnThreadWait is called.
-    // Usually the handler for OnMainThreadWait calls Application.ProcessMessages.
-    // Note:
-    // These functions should not be called from this object's event handlers.
-    function  WaitForConnect(const Timeout: Integer): Boolean;
-    function  WaitRequestNotBusy(const Timeout: Integer): Boolean;
-
-    property  OnThreadWait: THTTPClientEvent read FOnThreadWait write FOnThreadWait;
-    property  OnMainThreadWait: THTTPClientEvent read FOnMainThreadWait write FOnMainThreadWait;
   end;
 
   EHTTPClient = class(Exception);
@@ -478,8 +469,8 @@ type
     FItemOwner : Boolean;
     FList : array of TF5HTTPClient;
 
-    function  GetCount: Integer;
-    function  GetItem(const Idx: Integer): TF5HTTPClient;
+    function  GetCount: NativeInt;
+    function  GetItem(const Idx: NativeInt): TF5HTTPClient;
 
   protected
     function  CreateNew: TF5HTTPClient; virtual;
@@ -489,12 +480,12 @@ type
     destructor Destroy; override;
 
     property  ItemOwner: Boolean read FItemOwner;
-    property  Count: Integer read GetCount;
-    property  Item[const Idx: Integer]: TF5HTTPClient read GetItem; default;
-    function  Add(const Item: TF5HTTPClient): Integer;
+    property  Count: NativeInt read GetCount;
+    property  Item[const Idx: NativeInt]: TF5HTTPClient read GetItem; default;
+    function  Add(const Item: TF5HTTPClient): NativeInt;
     function  AddNew: TF5HTTPClient;
-    function  GetItemIndex(const Item: TF5HTTPClient): Integer;
-    procedure RemoveByIndex(const Idx: Integer);
+    function  GetItemIndex(const Item: TF5HTTPClient): NativeInt;
+    procedure RemoveByIndex(const Idx: NativeInt);
     function  Remove(const Item: TF5HTTPClient): Boolean;
     procedure Clear;
   end;
@@ -503,73 +494,9 @@ type
 
 
 
-{                                                                              }
-{ Component                                                                    }
-{                                                                              }
-type
-  TfclHTTPClient = class(TF5HTTPClient)
-  published
-    property  SynchronisedEvents;
-
-    property  OnLog;
-
-    property  OnStateChange;
-    property  OnStart;
-    property  OnStop;
-    property  OnActive;
-    property  OnInactive;
-    property  OnResponseHeader;
-    property  OnResponseContentBuffer;
-    property  OnResponseContentComplete;
-    property  OnResponseComplete;
-
-    property  AddressFamily;
-    property  Host;
-    property  Port;
-    property  PortInt;
-
-    {$IFDEF HTTP_TLS}
-    property  UseHTTPS;
-    property  HTTPSOptions;
-    {$ENDIF}
-
-    property  UseHTTPProxy;
-    property  HTTPProxyHost;
-    property  HTTPProxyPort;
-
-    property  Method;
-    property  MethodCustom;
-    property  URI;
-
-    property  UserAgent;
-    property  KeepAlive;
-    property  Referer;
-    property  Cookie;
-    property  Authorization;
-
-    property  RequestContentType;
-    property  RequestContentMechanism;
-    property  RequestContentStr;
-    property  RequestContentFileName;
-
-    property  ResponseContentMechanism;
-    property  ResponseContentFileName;
-
-    property  Active;
-  end;
-
-{$IFDEF HTTPCLIENT_CUSTOM}
-  {$INCLUDE cHTTPClientIntf.inc}
-{$ENDIF}
-
-
-
 implementation
 
 uses
-  {$IFDEF HTTPCLIENT_CUSTOM}
-    {$INCLUDE cHTTPClientUses.inc}
-  {$ENDIF}
   { Fundamentals }
   flcBase64,
   flcStringBuilder,
@@ -596,15 +523,38 @@ const
   HTTPCLIENT_ResponseHeader_Delim    = #13#10#13#10;
   HTTPCLIENT_ResponseHeader_DelimLen = Length(HTTPCLIENT_ResponseHeader_Delim);
 
-  HTTPCLIENT_UserAgent = 'Mozilla/5.0 (compatible; Fundamentals/4.0)';
+  HTTPCLIENT_Default_UserAgent =
+      'Mozilla/5.0 (compatible; ' +
+      {$IFDEF WIN64}
+      'Windows NT 10.0; Win64; x64; ' +
+      {$ELSE}{$IFDEF WIN32}
+      'Win32; ' +
+      {$ELSE}{$IFDEF LINUX}
+      'Linux; ' +
+      {$ELSE}{$IFDEF IOS}
+      'iOS; ' +
+      {$ELSE}{$IFDEF ANDROID}
+      'Android; ' +
+      {$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}{$ENDIF}
+      'FCL-HTTP/5.0) ' +
+      'AppleWebKit/537.36 (KHTML, like Gecko) ' +
+      {$IFDEF OS_MOBILE}
+      'Mobile ' +
+      {$ENDIF}
+      'Safari/537.36 ' +
+      'Fundamentals/5.0 (HTTP' +
+      {$IFDEF TLS}
+      '; HTTPS' +
+      {$ENDIF}
+      ')';
 
-  HTTP4ClientState_All = [
+  HTTP5ClientState_All = [
     hcsInit,
     hcsStarting,
     hcsStopping,
     hcsStopped,
     hcsConnectFailed,
-    hcsConnected_Ready,
+    hcsConnectedReady,
     hcsSendingRequest,
     hcsSendingContent,
     hcsAwaitingResponse,
@@ -617,7 +567,7 @@ const
     hcsRequestFailed
   ];
 
-  HTTP4ClientState_BusyWithRequest = [
+  HTTP5ClientState_BusyWithRequest = [
     hcsSendingRequest,
     hcsSendingContent,
     hcsAwaitingResponse,
@@ -625,7 +575,7 @@ const
     hcsReceivingContent
   ];
 
-  HTTP4ClientState_Closed = [
+  HTTP5ClientState_Closed = [
     hcsInit,
     hcsStopped,
     hcsConnectFailed,
@@ -633,7 +583,7 @@ const
     hcsRequestInterruptedAndClosed
   ];
 
-  HTTPClientState_ResponseComplete = [
+  HTTP5ClientState_ResponseComplete = [
     hcsResponseComplete,
     hcsResponseCompleteAndClosing,
     hcsResponseCompleteAndClosed
@@ -647,6 +597,8 @@ const
 const
   SError_NotAllowedWhileActive          = 'Operation not allowed while active';
   SError_NotAllowedWhileBusyWithRequest = 'Operation not allowed while busy with request';
+  SError_NotActive                      = 'Not active';
+  SError_NotConnected                   = 'Not connected';
 
   SError_MethodNotSet     = 'Method not set';
   SError_URINotSet        = 'URI not set';
@@ -656,8 +608,6 @@ const
   SClientState : array[TF5HTTPClientState] of String = (
       'Initialise',
       'Starting',
-      'Stopping',
-      'Stopped',
       'ConnectFailed',
       'Connected',
       'SendingRequest',
@@ -669,7 +619,9 @@ const
       'ResponseCompleteAndClosing',
       'ResponseCompleteAndClosed',
       'RequestInterruptedAndClosed',
-      'RequestFailed'
+      'RequestFailed',
+      'Stopping',
+      'Stopped'
       );
 
 
@@ -677,43 +629,56 @@ const
 {                                                                              }
 { THTTPClient                                                                  }
 {                                                                              }
-constructor TF5HTTPClient.Create(AOwner: TComponent);
+constructor TF5HTTPClient.Create;
 begin
-  inherited Create(AOwner);
+  inherited Create;
   Init;
 end;
 
 procedure TF5HTTPClient.Init;
 begin
   FLock := TCriticalSection.Create;
+
+  FReadyEvent := TSimpleEvent.Create;
+  FReadyEvent.ResetEvent;
+
+  FRequestCompleteEvent := TSimpleEvent.Create;
+  FRequestCompleteEvent.ResetEvent;
+
   FResponseCookies := TStringList.Create;
+
   FHTTPParser := THTTPParser.Create;
+
   FRequestContentWriter := THTTPContentWriter.Create(
       ContentWriterWriteProc);
   FRequestContentWriter.OnLog := ContentWriterLog;
+
   FResponseContentReader := THTTPContentReader.Create(
       ContentReaderReadProc,
       ContentReaderContentProc,
       ContentReaderCompleteProc);
   FResponseContentReader.OnLog := ContentReaderLog;
+
   FState := hcsInit;
-  FActivateOnLoaded := False;
-  InitHTTPRequest(FRequest);
-  InitHTTPResponse(FResponse);
+
+  FRequestObj := THTTPRequestObj.Create;
+  FResponseObj := THTTPResponseObj.Create;
+
   InitDefaults;
 end;
 
 procedure TF5HTTPClient.InitDefaults;
 begin
-  FSynchronisedEvents := False;
   FMethod := cmGET;
   FPort := HTTPCLIENT_PORT_STR;
+
   {$IFDEF HTTP_TLS}
   FUseHTTPS := False;
   FHTTPSOptions := [];
   {$ENDIF}
+
   FUseHTTPProxy := False;
-  FUserAgent := HTTPCLIENT_UserAgent;
+  FUserAgent := HTTPCLIENT_Default_UserAgent;
   FRequestContentWriter.Mechanism := hctmString;
   FResponseContentReader.Mechanism := hcrmEvent;
   FUserObject := nil;
@@ -732,47 +697,18 @@ begin
   FreeAndNil(FResponseContentReader);
   FreeAndNil(FHTTPParser);
   FreeAndNil(FResponseCookies);
+  FreeAndNil(FResponseObj);
+  FreeAndNil(FRequestObj);
+  FreeAndNil(FRequestCompleteEvent);
+  FreeAndNil(FReadyEvent);
   FreeAndNil(FLock);
   inherited Destroy;
-end;
-
-procedure TF5HTTPClient.Loaded;
-begin
-  inherited Loaded;
-  if FActivateOnLoaded then
-    DoStart;
-end;
-
-procedure TF5HTTPClient.Synchronize(const SyncProc: TSyncProc);
-begin
-  {$IFDEF DELPHI6_DOWN}
-  if GetCurrentThreadID = MainThreadID then
-    SyncProc;
-  {$ELSE}
-  TThread.Synchronize(nil, SyncProc);
-  {$ENDIF}
-end;
-
-procedure TF5HTTPClient.SyncLog;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnLog) then
-    FOnLog(self, FSyncLogType, FSyncLogMsg, FSyncLogLevel);
 end;
 
 procedure TF5HTTPClient.Log(const LogType: THTTPClientLogType; const Msg: String; const Level: Integer);
 begin
   if Assigned(FOnLog) then
-    if FSynchronisedEvents {$IFDEF MSWIN} and (GetCurrentThreadID <> MainThreadID) {$ENDIF} then
-      begin
-        FSyncLogType := LogType;
-        FSyncLogMsg := Msg;
-        FSyncLogLevel := Level;
-        Synchronize(SyncLog);
-      end
-    else
-      FOnLog(self, LogType, Msg, Level);
+    FOnLog(self, LogType, Msg, Level);
 end;
 
 procedure TF5HTTPClient.Log(const LogType: THTTPClientLogType; const Msg: String; const Args: array of const; const Level: Integer);
@@ -780,16 +716,33 @@ begin
   Log(LogType, Format(Msg, Args), Level);
 end;
 
+procedure TF5HTTPClient.LogDebug(const Msg: String; const Level: Integer); {$IFDEF UseInline}inline;{$ENDIF}
+begin
+  {$IFDEF HTTP_DEBUG}
+  Log(cltDebug, Msg, Level);
+  {$ENDIF}
+end;
+
+procedure TF5HTTPClient.LogDebug(const Msg: String; const Args: array of const; const Level: Integer);
+begin
+  {$IFDEF HTTP_DEBUG}
+  Log(cltDebug, Msg, Args, Level);
+  {$ENDIF}
+end;
+
+procedure TF5HTTPClient.LogParameter(const Msg: String; const Args: array of const; const Level: Integer = 0);
+begin
+  Log(cltParameter, Msg, Args, Level);
+end;
+
 procedure TF5HTTPClient.Lock;
 begin
-  if Assigned(FLock) then
-    FLock.Acquire;
+  FLock.Acquire;
 end;
 
 procedure TF5HTTPClient.Unlock;
 begin
-  if Assigned(FLock) then
-    FLock.Release;
+  FLock.Release;
 end;
 
 function TF5HTTPClient.GetState: TF5HTTPClientState;
@@ -803,8 +756,23 @@ begin
 end;
 
 function TF5HTTPClient.GetStateStr: String;
+var
+  St : String;
 begin
-  Result := SClientState[GetState];
+  Lock;
+  try
+    St := SClientState[FState];
+    if FErrorMsg <> '' then
+      if FState in [
+          hcsStopped,
+          hcsConnectFailed,
+          hcsRequestInterruptedAndClosed,
+          hcsRequestFailed] then
+        St := St + ': ' + FErrorMsg;
+  finally
+    Unlock;
+  end;
+  Result := St;
 end;
 
 procedure TF5HTTPClient.SetState(const State: TF5HTTPClientState);
@@ -821,9 +789,8 @@ end;
 
 procedure TF5HTTPClient.CheckNotActive;
 begin
-  if not (csDesigning in ComponentState) then
-    if FActive then
-      raise EHTTPClient.Create(SError_NotAllowedWhileActive);
+  if FActive then
+    raise EHTTPClient.Create(SError_NotAllowedWhileActive);
 end;
 
 function TF5HTTPClient.IsBusyStarting: Boolean;
@@ -835,69 +802,62 @@ function TF5HTTPClient.IsBusyWithRequest: Boolean;
 begin
   Result := False;
   if FActive then
-    if FState in HTTP4ClientState_BusyWithRequest then
+    if FState in HTTP5ClientState_BusyWithRequest then
       Result := True
     else
-    if FRequestPending and (FState in [hcsStarting, hcsConnected_Ready]) then
+    if FRequestPending and (FState in [hcsStarting, hcsConnectedReady]) then
       Result := True;
 end;
 
 procedure TF5HTTPClient.CheckNotBusyWithRequest;
 begin
-  if not (csDesigning in ComponentState) and not (csLoading in ComponentState) then
-    begin
-      Lock;
-      try
-        if IsBusyWithRequest then
-          raise EHTTPClient.Create(SError_NotAllowedWhileBusyWithRequest);
-      finally
-        Unlock;
-      end;
-    end;
+  Lock;
+  try
+    if IsBusyWithRequest then
+      raise EHTTPClient.Create(SError_NotAllowedWhileBusyWithRequest);
+  finally
+    Unlock;
+  end;
 end;
 
-procedure TF5HTTPClient.SetSynchronisedEvents(const SynchronisedEvents: Boolean);
+procedure TF5HTTPClient.SetAddressFamily(const AAddressFamily: THTTPClientAddressFamily);
 begin
-  if SynchronisedEvents = FSynchronisedEvents then
-    exit;
-  CheckNotActive;
-  FSynchronisedEvents := SynchronisedEvents;
-end;
-
-procedure TF5HTTPClient.SetAddressFamily(const AddressFamily: THTTPClientAddressFamily);
-begin
-  if AddressFamily = FAddressFamily then
+  if AAddressFamily = FAddressFamily then
     exit;
   CheckNotBusyWithRequest;
-  FAddressFamily := AddressFamily;
+  FAddressFamily := AAddressFamily;
 end;
 
-procedure TF5HTTPClient.SetHost(const Host: String);
+procedure TF5HTTPClient.SetHost(const AHost: String);
 begin
-  if Host = FHost then
+  if AHost = FHost then
     exit;
   CheckNotBusyWithRequest;
-  FHost := Host;
+  FHost := AHost;
+
+  LogParameter('Host:%s', [AHost]);
 end;
 
-procedure TF5HTTPClient.SetPort(const Port: String);
+procedure TF5HTTPClient.SetPort(const APort: String);
 begin
-  if Port = FPort then
+  if APort = FPort then
     exit;
   CheckNotBusyWithRequest;
-  FPort := Port;
+  FPort := APort;
+
+  LogParameter('Port:%s', [APort]);
 end;
 
-function TF5HTTPClient.GetPortInt: Integer;
+function TF5HTTPClient.GetPortInt: Int32;
 begin
   Result := StrToIntDef(FPort, -1);
 end;
 
-procedure TF5HTTPClient.SetPortInt(const PortInt: Integer);
+procedure TF5HTTPClient.SetPortInt(const APortInt: Int32);
 begin
-  if (PortInt <= 0) or (PortInt >= $FFFF) then
+  if (APortInt <= 0) or (APortInt >= $FFFF) then
     raise EHTTPClient.Create(SError_InvalidParameter);
-  SetPort(IntToStr(PortInt));
+  SetPort(IntToStr(APortInt));
 end;
 
 {$IFDEF HTTP_TLS}
@@ -907,6 +867,8 @@ begin
     exit;
   CheckNotBusyWithRequest;
   FUseHTTPS := UseHTTPS;
+
+  LogParameter('UseHTTPS:%d', [Ord(UseHTTPS)]);
 end;
 
 procedure TF5HTTPClient.SetHTTPSOptions(const HTTPSOptions: THTTPSClientOptions);
@@ -918,84 +880,90 @@ begin
 end;
 {$ENDIF}
 
-procedure TF5HTTPClient.SetUseHTTPProxy(const UseHTTPProxy: Boolean);
+procedure TF5HTTPClient.SetUseHTTPProxy(const AUseHTTPProxy: Boolean);
 begin
-  if UseHTTPProxy = FUseHTTPProxy then
+  if AUseHTTPProxy = FUseHTTPProxy then
     exit;
   CheckNotBusyWithRequest;
-  FUseHTTPProxy := UseHTTPProxy;
+  FUseHTTPProxy := AUseHTTPProxy;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyHost(const HTTPProxyHost: String);
+procedure TF5HTTPClient.SetHTTPProxyHost(const AHTTPProxyHost: String);
 begin
-  if HTTPProxyHost = FHTTPProxyHost then
+  if AHTTPProxyHost = FHTTPProxyHost then
     exit;
   CheckNotBusyWithRequest;
-  FHTTPProxyHost := HTTPProxyHost;
+  FHTTPProxyHost := AHTTPProxyHost;
 end;
 
-procedure TF5HTTPClient.SetHTTPProxyPort(const HTTPProxyPort: String);
+procedure TF5HTTPClient.SetHTTPProxyPort(const AHTTPProxyPort: String);
 begin
-  if HTTPProxyPort = FHTTPProxyPort then
+  if AHTTPProxyPort = FHTTPProxyPort then
     exit;
   CheckNotBusyWithRequest;
-  FHTTPProxyPort := HTTPProxyPort;
+  FHTTPProxyPort := AHTTPProxyPort;
 end;
 
-procedure TF5HTTPClient.SetMethod(const Method: THTTPClientMethod);
+procedure TF5HTTPClient.SetMethod(const AMethod: THTTPClientMethod);
 begin
-  if Method = FMethod then
+  if AMethod = FMethod then
     exit;
   CheckNotBusyWithRequest;
-  FMethod := Method;
+  FMethod := AMethod;
 end;
 
-procedure TF5HTTPClient.SetMethodCustom(const MethodCustom: RawByteString);
+procedure TF5HTTPClient.SetMethodCustom(const AMethodCustom: RawByteString);
 begin
-  if MethodCustom = FMethodCustom then
+  if AMethodCustom = FMethodCustom then
     exit;
   CheckNotBusyWithRequest;
-  FMethodCustom := MethodCustom;
+  FMethodCustom := AMethodCustom;
 end;
 
-procedure TF5HTTPClient.SetURI(const URI: RawByteString);
+procedure TF5HTTPClient.SetURI(const AURI: RawByteString);
 begin
-  if URI = FURI then
+  if AURI = FURI then
     exit;
   CheckNotBusyWithRequest;
-  FURI := URI;
+  FURI := AURI;
+
+  LogParameter('URI:%s', [AURI]);
 end;
 
-procedure TF5HTTPClient.SetUserAgent(const UserAgent: RawByteString);
+procedure TF5HTTPClient.SetUserAgent(const AUserAgent: RawByteString);
 begin
-  if UserAgent = FUserAgent then
+  if AUserAgent = FUserAgent then
     exit;
   CheckNotBusyWithRequest;
-  FUserAgent := UserAgent;
+  FUserAgent := AUserAgent;
+
+  LogParameter('UserAgent:%s', [AUserAgent]);
 end;
 
-procedure TF5HTTPClient.SetKeepAlive(const KeepAlive: THTTPKeepAliveOption);
+procedure TF5HTTPClient.SetKeepAlive(const AKeepAlive: THTTPKeepAliveOption);
 begin
-  if KeepAlive = FKeepAlive then
+  if AKeepAlive = FKeepAlive then
     exit;
   CheckNotBusyWithRequest;
-  FKeepAlive := KeepAlive;
+  FKeepAlive := AKeepAlive;
 end;
 
-procedure TF5HTTPClient.SetReferer(const Referer: RawByteString);
+procedure TF5HTTPClient.SetReferer(const AReferer: RawByteString);
 begin
-  if Referer = FReferer then
+  if AReferer = FReferer then
     exit;
   CheckNotBusyWithRequest;
-  FReferer := Referer;
+  FReferer := AReferer;
+
+  LogParameter('Referer:%s', [AReferer]);
 end;
 
-procedure TF5HTTPClient.SetAuthorization(const Authorization: RawByteString);
+procedure TF5HTTPClient.SetAuthorization(const AAuthorization: RawByteString);
 begin
-  if Authorization = FAuthorization then
+  if AAuthorization = FAuthorization then
     exit;
   CheckNotBusyWithRequest;
-  FAuthorization := Authorization;
+  FAuthorization := AAuthorization;
 end;
 
 procedure TF5HTTPClient.SetBasicAuthorization(const Username, Password: RawByteString);
@@ -1003,50 +971,57 @@ begin
   SetAuthorization('Basic ' + MIMEBase64Encode(Username + ':' + Password));
 end;
 
-function TF5HTTPClient.GetCustomHeaderByName(const FieldName: RawByteString): PHTTPCustomHeader;
+function TF5HTTPClient.GetCustomHeaderByName(const AFieldName: RawByteString): PHTTPCustomHeader;
 begin
-  Result := HTTPCustomHeadersGetByName(FCustomHeaders, FieldName);
+  Result := HTTPCustomHeadersGetByName(FCustomHeaders, AFieldName);
 end;
 
-function TF5HTTPClient.AddCustomHeader(const FieldName: RawByteString): PHTTPCustomHeader;
-var P : PHTTPCustomHeader;
+function TF5HTTPClient.AddCustomHeader(const AFieldName: RawByteString): PHTTPCustomHeader;
+var
+  P : PHTTPCustomHeader;
 begin
-  Assert(FieldName <> '');
+  Assert(AFieldName <> '');
   P := HTTPCustomHeadersAdd(FCustomHeaders);
-  P^.FieldName := FieldName;
+  P^.FieldName := AFieldName;
   Result := P;
 end;
 
-function TF5HTTPClient.GetCustomHeader(const FieldName: RawByteString): RawByteString;
-var P : PHTTPCustomHeader;
+function TF5HTTPClient.GetCustomHeader(const AFieldName: RawByteString): RawByteString;
+var
+  P : PHTTPCustomHeader;
 begin
-  P := GetCustomHeaderByName(FieldName);
+  P := GetCustomHeaderByName(AFieldName);
   if Assigned(P) then
     Result := P^.FieldValue
   else
     Result := '';
 end;
 
-procedure TF5HTTPClient.SetCustomHeader(const FieldName: RawByteString; const FieldValue: RawByteString);
-var P : PHTTPCustomHeader;
+procedure TF5HTTPClient.SetCustomHeader(const AFieldName: RawByteString; const AFieldValue: RawByteString);
+var
+  P : PHTTPCustomHeader;
 begin
-  P := GetCustomHeaderByName(FieldName);
+  P := GetCustomHeaderByName(AFieldName);
   if Assigned(P) then
-    if StrEqualNoAsciiCaseB(FieldValue, P^.FieldValue) then
+    if StrEqualNoAsciiCaseB(AFieldValue, P^.FieldValue) then
       exit;
   CheckNotBusyWithRequest;
   if not Assigned(P) then
-    P := AddCustomHeader(FieldName);
+    P := AddCustomHeader(AFieldName);
   Assert(Assigned(P));
-  P^.FieldValue := FieldValue;
+  P^.FieldValue := AFieldValue;
+
+  LogParameter('HTTP-Header:%s=%s', [AFieldName, AFieldValue]);
 end;
 
-procedure TF5HTTPClient.SetRequestContentType(const RequestContentType: RawByteString);
+procedure TF5HTTPClient.SetRequestContentType(const ARequestContentType: RawByteString);
 begin
-  if RequestContentType = FRequestContentType then
+  if ARequestContentType = FRequestContentType then
     exit;
   CheckNotBusyWithRequest;
-  FRequestContentType := RequestContentType;
+  FRequestContentType := ARequestContentType;
+
+  LogParameter('Request-ContentType:%s', [ARequestContentType]);
 end;
 
 function TF5HTTPClient.GetRequestContentMechanism: THTTPContentWriterMechanism;
@@ -1054,12 +1029,12 @@ begin
   Result := FRequestContentWriter.Mechanism;
 end;
 
-procedure TF5HTTPClient.SetRequestContentMechanism(const RequestContentMechanism: THTTPContentWriterMechanism);
+procedure TF5HTTPClient.SetRequestContentMechanism(const ARequestContentMechanism: THTTPContentWriterMechanism);
 begin
-  if RequestContentMechanism = FRequestContentWriter.Mechanism then
+  if ARequestContentMechanism = FRequestContentWriter.Mechanism then
     exit;
   CheckNotBusyWithRequest;
-  FRequestContentWriter.Mechanism := RequestContentMechanism;
+  FRequestContentWriter.Mechanism := ARequestContentMechanism;
 end;
 
 function TF5HTTPClient.GetRequestContentStr: RawByteString;
@@ -1067,12 +1042,12 @@ begin
   Result := FRequestContentWriter.ContentString;
 end;
 
-procedure TF5HTTPClient.SetRequestContentStr(const RequestContentStr: RawByteString);
+procedure TF5HTTPClient.SetRequestContentStr(const ARequestContentStr: RawByteString);
 begin
-  if RequestContentStr = FRequestContentWriter.ContentString then
+  if ARequestContentStr = FRequestContentWriter.ContentString then
     exit;
   CheckNotBusyWithRequest;
-  FRequestContentWriter.ContentString := RequestContentStr;
+  FRequestContentWriter.ContentString := ARequestContentStr;
 end;
 
 function TF5HTTPClient.GetRequestContentStream: TStream;
@@ -1080,12 +1055,12 @@ begin
   Result := FRequestContentWriter.ContentStream;
 end;
 
-procedure TF5HTTPClient.SetRequestContentStream(const RequestContentStream: TStream);
+procedure TF5HTTPClient.SetRequestContentStream(const ARequestContentStream: TStream);
 begin
-  if RequestContentStream = FRequestContentWriter.ContentStream then
+  if ARequestContentStream = FRequestContentWriter.ContentStream then
     exit;
   CheckNotBusyWithRequest;
-  FRequestContentWriter.ContentStream := RequestContentStream;
+  FRequestContentWriter.ContentStream := ARequestContentStream;
 end;
 
 function TF5HTTPClient.GetRequestContentFileName: String;
@@ -1093,16 +1068,17 @@ begin
   Result := FRequestContentWriter.ContentFileName;
 end;
 
-procedure TF5HTTPClient.SetRequestContentFileName(const RequestContentFileName: String);
+procedure TF5HTTPClient.SetRequestContentFileName(const ARequestContentFileName: String);
 begin
-  if RequestContentFileName = FRequestContentWriter.ContentFileName then
+  if ARequestContentFileName = FRequestContentWriter.ContentFileName then
     exit;
   CheckNotBusyWithRequest;
-  FRequestContentWriter.ContentFileName := RequestContentFileName;
+  FRequestContentWriter.ContentFileName := ARequestContentFileName;
 end;
 
 procedure TF5HTTPClient.SetRequestContentWwwFormUrlEncodedField(const FieldName, FieldValue: RawByteString);
-var Req, S : RawByteString;
+var
+  Req, S : RawByteString;
 begin
   Req := GetRequestContentStr;
   if Req <> '' then
@@ -1120,12 +1096,12 @@ begin
   Result := FResponseContentReader.Mechanism;
 end;
 
-procedure TF5HTTPClient.SetResponseContentMechanism(const ResponseContentMechanism: THTTPContentReaderMechanism);
+procedure TF5HTTPClient.SetResponseContentMechanism(const AResponseContentMechanism: THTTPContentReaderMechanism);
 begin
-  if ResponseContentMechanism = FResponseContentReader.Mechanism then
+  if AResponseContentMechanism = FResponseContentReader.Mechanism then
     exit;
   CheckNotBusyWithRequest;
-  FResponseContentReader.Mechanism := ResponseContentMechanism;
+  FResponseContentReader.Mechanism := AResponseContentMechanism;
 end;
 
 function TF5HTTPClient.GetResponseContentFileName: String;
@@ -1133,12 +1109,12 @@ begin
   Result := FResponseContentReader.ContentFileName;
 end;
 
-procedure TF5HTTPClient.SetResponseContentFileName(const ResponseContentFileName: String);
+procedure TF5HTTPClient.SetResponseContentFileName(const AResponseContentFileName: String);
 begin
-  if ResponseContentFileName = FResponseContentReader.ContentFileName then
+  if AResponseContentFileName = FResponseContentReader.ContentFileName then
     exit;
   CheckNotBusyWithRequest;
-  FResponseContentReader.ContentFileName := ResponseContentFileName;
+  FResponseContentReader.ContentFileName := AResponseContentFileName;
 end;
 
 function TF5HTTPClient.GetResponseContentStream: TStream;
@@ -1146,211 +1122,160 @@ begin
   Result := FResponseContentReader.ContentStream;
 end;
 
-procedure TF5HTTPClient.SetResponseContentStream(const ResponseContentStream: TStream);
+procedure TF5HTTPClient.SetResponseContentStream(const AResponseContentStream: TStream);
 begin
-  if ResponseContentStream = FResponseContentReader.ContentStream then
+  if AResponseContentStream = FResponseContentReader.ContentStream then
     exit;
   CheckNotBusyWithRequest;
-  FResponseContentReader.ContentStream := ResponseContentStream;
+  FResponseContentReader.ContentStream := AResponseContentStream;
 end;
 
-procedure TF5HTTPClient.SyncTriggerStateChanged;
+procedure TF5HTTPClient.LogTriggerException(const TriggerName: String; const E: Exception);
 begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStateChange) then
-    FOnStateChange(self, FState);
-end;
-
-procedure TF5HTTPClient.SyncTriggerStart;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStart) then
-    FOnStart(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerStop;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStop) then
-    FOnStop(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerActive;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnActive) then
-    FOnActive(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerInactive;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnInactive) then
-    FOnInactive(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerResponseHeader;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnResponseHeader) then
-    FOnResponseHeader(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerResponseContentBuffer;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnResponseContentBuffer) then
-    FOnResponseContentBuffer(self, FResponseContentBufPtr^, FResponseContentBufSize);
-end;
-
-procedure TF5HTTPClient.SyncTriggerResponseContentComplete;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnResponseContentComplete) then
-    FOnResponseContentComplete(self);
-end;
-
-procedure TF5HTTPClient.SyncTriggerResponseComplete;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnResponseComplete) then
-    FOnResponseComplete(self);
+  Log(cltError, 'Trigger%s.Error:Error=%s:%s', [TriggerName, E.ClassName, E.Message]);
 end;
 
 procedure TF5HTTPClient.TriggerStateChanged;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'State:%s', [GetStateStr]);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('State=%s', [GetStateStr]);
   {$ENDIF}
+
   if Assigned(FOnStateChange) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerStateChanged)
-    else
+    try
       FOnStateChange(self, FState);
-end;
-
-procedure TF5HTTPClient.TriggerStart;
-begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'Start');
-  {$ENDIF}
-  if Assigned(FOnStart) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerStart)
-    else
-      FOnStart(self);
-end;
-
-procedure TF5HTTPClient.TriggerStop;
-begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'Stop');
-  {$ENDIF}
-  if Assigned(FOnStop) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerStop)
-    else
-      FOnStop(self);
+    except
+      on E : Exception do LogTriggerException('StateChanged', E);
+    end;
 end;
 
 procedure TF5HTTPClient.TriggerActive;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'Active');
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('Active');
   {$ENDIF}
+
   if Assigned(FOnActive) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerActive)
-    else
+    try
       FOnActive(self);
+    except
+      on E : Exception do LogTriggerException('Active', E);
+    end;
 end;
 
-procedure TF5HTTPClient.TriggerInactive;
+procedure TF5HTTPClient.TriggerStart;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'Inactive');
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('Start');
   {$ENDIF}
-  if Assigned(FOnInactive) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerInactive)
-    else
-      FOnInactive(self);
+
+  if Assigned(FOnStart) then
+    try
+      FOnStart(self);
+    except
+      on E : Exception do LogTriggerException('Start', E);
+    end;
 end;
 
 procedure TF5HTTPClient.TriggerResponseHeader;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ResponseHeader:'#13#10'%s', [HTTPResponseToStr(FResponse)]);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ResponseHeader:'#13#10'%s',
+      [Copy(FResponseObj.GetString, 1, 128)]);
   {$ENDIF}
+
   if Assigned(FOnResponseHeader) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerResponseHeader)
-    else
+    try
       FOnResponseHeader(self);
+    except
+      on E : Exception do LogTriggerException('ResponseHeader', E);
+    end;
 end;
 
 procedure TF5HTTPClient.TriggerResponseContentBuffer(const Buf; const BufSize: Integer);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentBuffer:%db', [BufSize]);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentBuffer:%db', [BufSize]);
   {$ENDIF}
+
   if Assigned(FOnResponseContentBuffer) then
-    if FSynchronisedEvents then
-      begin
-        FResponseContentBufPtr := @Buf;
-        FResponseContentBufSize := BufSize;
-        Synchronize(SyncTriggerResponseContentBuffer);
-      end
-    else
+    try
       FOnResponseContentBuffer(self, Buf, BufSize);
+    except
+      on E : Exception do LogTriggerException('ResponseContentBuffer', E);
+    end;
 end;
 
 procedure TF5HTTPClient.TriggerResponseContentComplete;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentComplete');
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentComplete');
   {$ENDIF}
+
   if Assigned(FOnResponseContentComplete) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerResponseContentComplete)
-    else
+    try
       FOnResponseContentComplete(self);
+    except
+      on E : Exception do LogTriggerException('ResponseContentComplete', E);
+    end;
 end;
 
 procedure TF5HTTPClient.TriggerResponseComplete;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ResponseComplete');
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ResponseComplete');
   {$ENDIF}
+
   if Assigned(FOnResponseComplete) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerResponseComplete)
-    else
+    try
       FOnResponseComplete(self);
+    except
+      on E : Exception do LogTriggerException('ResponseComplete', E);
+    end;
+end;
+
+procedure TF5HTTPClient.TriggerStop;
+begin
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('Stop');
+  {$ENDIF}
+
+  if Assigned(FOnStop) then
+    try
+      FOnStop(self);
+    except
+      on E : Exception do LogTriggerException('Stop', E);
+    end;
+end;
+
+procedure TF5HTTPClient.TriggerInactive;
+begin
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('Inactive');
+  {$ENDIF}
+
+  if Assigned(FOnInactive) then
+    try
+      FOnInactive(self);
+    except
+      on E : Exception do LogTriggerException('Inactive', E);
+    end;
 end;
 
 procedure TF5HTTPClient.ProcessResponseHeader;
-var L, I : Integer;
-    B : TRawByteStringBuilder;
+var
+  L, I : Integer;
+  B : TRawByteStringBuilder;
 begin
-  FResponseCode := FResponse.StartLine.Code;
+  FResponseCode := FResponseObj.RecPtr^.StartLine.Code;
   B := TRawByteStringBuilder.Create;
   try
-    L := Length(FResponse.Header.SetCookies);
+    L := Length(FResponseObj.RecPtr^.Header.SetCookies);
     FResponseCookies.Clear;
     for I := 0 to L - 1 do
       begin
         B.Clear;
-        BuildStrHTTPSetCookieFieldValue(FResponse.Header.SetCookies[I], B, []);
+        BuildStrHTTPSetCookieFieldValue(FResponseObj.RecPtr^.Header.SetCookies[I], B, []);
         {$IFDEF StringIsUnicode}
         FResponseCookies.Add(B.AsString);
         {$ELSE}
@@ -1358,11 +1283,11 @@ begin
         {$ENDIF}
       end;
     FResponseRequireClose :=
-      ( (FResponse.StartLine.Version.Version = hvHTTP10) and
-        (FResponse.Header.CommonHeaders.Connection.Value = hcfNone)
+      ( (FResponseObj.HTTPVersion = hvHTTP10) and
+        (FResponseObj.HeaderConnection = hcfNone)
       )
       or
-      ( FResponse.Header.CommonHeaders.Connection.Value = hcfClose );
+      ( FResponseObj.HeaderConnection = hcfClose );
   finally
     B.Free;
   end;
@@ -1381,6 +1306,8 @@ begin
   SetState(hcsResponseComplete);
   TriggerResponseComplete;
 
+  FRequestCompleteEvent.SetEvent;
+
   if FResponseRequireClose then
     begin
       SetState(hcsResponseCompleteAndClosing);
@@ -1394,6 +1321,9 @@ begin
 
   SetState(hcsResponseComplete);
   TriggerResponseComplete;
+
+  FRequestCompleteEvent.SetEvent;
+
   SetState(hcsResponseCompleteAndClosed);
 end;
 
@@ -1416,7 +1346,8 @@ end;
 
 procedure TF5HTTPClient.InitTCPClient;
 {$IFDEF HTTP_TLS}
-var TLSOpt : TTCPClientTLSOptions;
+var
+  TLSOpt : TTCPClientTLSOptions;
 {$ENDIF}
 begin
   FTCPClient := TF5TCPClient.Create(nil);
@@ -1431,12 +1362,9 @@ begin
     FTCPClient.OnRead := TCPClientRead;
     FTCPClient.OnWrite := TCPClientWrite;
     FTCPClient.OnClose := TCPClientClose;
-    FTCPClient.OnMainThreadWait := TCPClientMainThreadWait;
-    FTCPClient.OnThreadWait := TCPClientThreadWait;
     {$IFDEF TCPCLIENT_SOCKS}
     FTCPClient.SocksEnabled := False;
     {$ENDIF}
-    FTCPClient.SynchronisedEvents := False;
     {$IFDEF HTTP_TLS}
     FTCPClient.TLSEnabled := FUseHTTPS;
     TLSOpt := [];
@@ -1462,8 +1390,8 @@ end;
 
 procedure TF5HTTPClient.TCPClientLog(Client: TF5TCPClient; LogType: TTCPClientLogType; Msg: String; LogLevel: Integer);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP:%s', [Msg], LogLevel + 1);
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP.%s', [Msg], LogLevel + 1);
   {$ENDIF}
 end;
 
@@ -1473,41 +1401,47 @@ end;
 
 procedure TF5HTTPClient.TCPClientStateChanged(Client: TF5TCPClient; State: TTCPClientState);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_StateChange:%s', [Client.StateStr]);
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_StateChanged.State=%s', [Client.StateStr]);
   {$ENDIF}
 end;
 
 procedure TF5HTTPClient.TCPClientError(Client: TF5TCPClient; ErrorMsg: String; ErrorCode: Integer);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Error:%d:%s', [ErrorCode, ErrorMsg]);
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Error.Error=%d:%s', [ErrorCode, ErrorMsg]);
   {$ENDIF}
 end;
 
 procedure TF5HTTPClient.TCPClientConnected(Client: TF5TCPClient);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Connected');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Connected');
   {$ENDIF}
 end;
 
 procedure TF5HTTPClient.TCPClientConnectFailed(Client: TF5TCPClient);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_ConnectFailed');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_ConnectFailed');
   {$ENDIF}
+
   SetErrorMsg(Client.ErrorMessage);
   SetState(hcsConnectFailed);
+  FReadyEvent.SetEvent;
+  FRequestCompleteEvent.SetEvent;
 end;
 
 procedure TF5HTTPClient.TCPClientReady(Client: TF5TCPClient);
-var ReqPending : Boolean;
+var
+  ReqPending : Boolean;
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Ready');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Ready');
   {$ENDIF}
-  SetState(hcsConnected_Ready);
+
+  SetState(hcsConnectedReady);
+  FReadyEvent.SetEvent;
   Lock;
   try
     ReqPending := FRequestPending;
@@ -1534,24 +1468,28 @@ end;
 
 procedure TF5HTTPClient.TCPClientRead(Client: TF5TCPClient);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Read');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Read');
   {$ENDIF}
   ReadResponse;
 end;
 
 procedure TF5HTTPClient.TCPClientWrite(Client: TF5TCPClient);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Write');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Write');
   {$ENDIF}
 end;
 
 procedure TF5HTTPClient.TCPClientClose(Client: TF5TCPClient);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'TCP_Close');
+  {$IFDEF HTTP_LOG_DEBUG_TCP}
+  LogDebug('TCP_Close');
   {$ENDIF}
+
+  FReadyEvent.SetEvent;
+  FRequestCompleteEvent.SetEvent;
+
   case FState of
     hcsInit,
     hcsStopping,
@@ -1571,7 +1509,7 @@ begin
       SetState(hcsRequestInterruptedAndClosed);
 
     hcsReceivedResponse :
-      if not FResponse.HasContent and FResponseRequireClose then
+      if not FResponseObj.RecPtr^.HasContent and FResponseRequireClose then
         SetResponseCompleteThenClosed
       else
         SetState(hcsRequestInterruptedAndClosed);
@@ -1584,18 +1522,6 @@ begin
   end;
 end;
 
-procedure TF5HTTPClient.TCPClientMainThreadWait(Client: TF5TCPClient);
-begin
-  if Assigned(FOnMainThreadWait) then
-    FOnMainThreadWait(self);
-end;
-
-procedure TF5HTTPClient.TCPClientThreadWait(Client: TF5TCPClient);
-begin
-  if Assigned(FOnThreadWait) then
-    FOnThreadWait(self);
-end;
-
 procedure TF5HTTPClient.SetErrorMsg(const ErrorMsg: String);
 begin
   FErrorMsg := ErrorMsg;
@@ -1605,6 +1531,129 @@ procedure TF5HTTPClient.SetRequestFailedFromException(const E: Exception);
 begin
   SetErrorMsg(E.Message);
   SetState(hcsRequestFailed);
+end;
+
+procedure TF5HTTPClient.ClientStart;
+begin
+  Lock;
+  try
+    if not FActive or
+      (FState in [
+        hcsStarting,
+        hcsConnectedReady,
+        hcsSendingRequest,
+        hcsSendingContent,
+        hcsAwaitingResponse,
+        hcsReceivedResponse,
+        hcsReceivingContent,
+        hcsResponseComplete,
+        hcsRequestFailed]) then
+      exit;
+  finally
+    Unlock;
+  end;
+
+  FReadyEvent.ResetEvent;
+  FRequestCompleteEvent.ResetEvent;
+
+  TriggerStart;
+
+  SetState(hcsStarting);
+
+  StartTCPClient;
+end;
+
+procedure TF5HTTPClient.StopTCPClient;
+begin
+  Assert(Assigned(FTCPClient));
+  FTCPClient.Stop;
+end;
+
+procedure TF5HTTPClient.ClientStop;
+begin
+  Lock;
+  try
+    if not FActive or
+      (FState in [
+        hcsInit,
+        hcsStopping,
+        hcsStopped]) then
+      exit;
+  finally
+    Unlock;
+  end;
+  TriggerStop;
+
+  SetState(hcsStopping);
+
+  try
+    StopTCPClient;
+  except
+    on E : Exception do
+      Log(cltError, 'TCP client stop error:Error=%s', [E.Message]);
+  end;
+
+  SetState(hcsStopped);
+end;
+
+procedure TF5HTTPClient.ClientSetActive;
+begin
+  Lock;
+  try
+    if FActive then
+      exit;
+    FActive := True;
+  finally
+    Unlock;
+  end;
+  TriggerActive;
+
+  ClientStart;
+end;
+
+procedure TF5HTTPClient.ClientSetInactive;
+begin
+  Lock;
+  try
+    if not FActive or FIsStopping then
+      exit;
+    FIsStopping := True;
+  finally
+    Unlock;
+  end;
+
+  ClientStop;
+
+  Lock;
+  try
+    FIsStopping := False;
+    FActive := False;
+  finally
+    Unlock;
+  end;
+
+  FReadyEvent.SetEvent;
+  FRequestCompleteEvent.SetEvent;
+
+  TriggerInactive;
+end;
+
+procedure TF5HTTPClient.SetActive(const AActive: Boolean);
+begin
+  if AActive then
+    ClientSetActive
+  else
+    ClientSetInactive;
+end;
+
+procedure TF5HTTPClient.Start;
+begin
+  ClientSetActive;
+end;
+
+procedure TF5HTTPClient.Stop;
+begin
+  ClientSetInactive;
 end;
 
 function TF5HTTPClient.InitRequestContent(out HasContent: Boolean): Int64;
@@ -1621,7 +1670,7 @@ end;
 
 procedure TF5HTTPClient.InitResponseContent;
 begin
-  FResponseContentReader.InitReader(FResponse.Header.CommonHeaders);
+  FResponseContentReader.InitReader(FResponseObj.RecPtr^.Header.CommonHeaders);
 end;
 
 procedure TF5HTTPClient.HandleResponseContent(const Buf; const Size: Integer);
@@ -1634,8 +1683,8 @@ end;
 
 procedure TF5HTTPClient.ContentWriterLog(const Sender: THTTPContentWriter; const LogMsg: String);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentWriter:%s', [LogMsg], 1);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentWriter.%s', [LogMsg], 1);
   {$ENDIF}
 end;
 
@@ -1647,8 +1696,8 @@ end;
 
 procedure TF5HTTPClient.ContentReaderLog(const Sender: THTTPContentReader; const LogMsg: String; const LogLevel: Integer);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentReader:%s', [LogMsg], LogLevel + 1);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentReader.%s', [LogMsg], LogLevel + 1);
   {$ENDIF}
 end;
 
@@ -1658,26 +1707,29 @@ begin
   Assert(FState in [hcsReceivingContent]);
   //
   Result := FTCPClient.Connection.Read(Buf, Size);
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentReader_Read:%db:%db', [Size, Result]);
+
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentReader_Read:%db:%db', [Size, Result]);
   {$ENDIF}
 end;
 
 procedure TF5HTTPClient.ContentReaderContentProc(const Sender: THTTPContentReader;
     const Buf; const Size: Integer);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentReader_Content:%db', [Size]);
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentReader_Content:%db', [Size]);
   {$ENDIF}
+
   TriggerResponseContentBuffer(Buf, Size);
   HandleResponseContent(Buf, Size);
 end;
 
 procedure TF5HTTPClient.ContentReaderCompleteProc(const Sender: THTTPContentReader);
 begin
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'ContentReader_Complete');
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('ContentReader_Complete');
   {$ENDIF}
+
   FinaliseResponseContent(True);
   TriggerResponseContentComplete;
   SetResponseComplete;
@@ -1699,11 +1751,13 @@ begin
       HTTPCLIENT_ResponseHeader_MaxSize);
   if HdrLen < 0 then
     exit;
-  ClearHTTPResponse(FResponse);
+
+  FResponseObj.Clear;
   FHTTPParser.SetTextBuf(HdrBuf[0], HdrLen);
-  FHTTPParser.ParseResponse(FResponse);
-  if not FResponse.HeaderComplete then
+  FHTTPParser.ParseResponse(FResponseObj.RecPtr^);
+  if not FResponseObj.RecPtr^.HeaderComplete then
     exit;
+
   FTCPClient.Connection.Discard(HdrLen);
   SetState(hcsReceivedResponse);
   ProcessResponseHeader;
@@ -1723,13 +1777,14 @@ begin
   Assert(FState in [
       hcsAwaitingResponse, hcsReceivedResponse, hcsReceivingContent,
       hcsResponseComplete, hcsResponseCompleteAndClosing, hcsResponseCompleteAndClosed,
-      hcsRequestInterruptedAndClosed]);
+      hcsRequestInterruptedAndClosed,
+      hcsRequestFailed]);
 
   try
     if FState = hcsAwaitingResponse then
       ReadResponseHeader;
     if FState = hcsReceivedResponse then
-      if FResponse.HasContent then
+      if FResponseObj.RecPtr^.HasContent then
         begin
           InitResponseContent;
           SetState(hcsReceivingContent);
@@ -1744,104 +1799,33 @@ begin
   end;
 end;
 
-procedure TF5HTTPClient.DoStartTCPClient;
+procedure TF5HTTPClient.StartTCPClient;
 begin
   InitTCPClient;
+
   FViaHTTPProxy := FUseHTTPProxy and (FHTTPProxyHost <> '');
+
   Assert(Assigned(FTCPClient));
   FTCPClient.Start;
 end;
 
-procedure TF5HTTPClient.DoStart;
-begin
-  Lock;
-  try
-    if FInDoStart then
-      exit;
-    FInDoStart := True;
-  finally
-    Unlock;
-  end;
-  try
-    TriggerStart;
-    SetState(hcsStarting);
-    DoStartTCPClient;
-    FActive := True;
-    TriggerActive;
-  finally
-    Lock;
-    try
-      FInDoStart := False;
-    finally
-      Unlock;
-    end;
-  end;
-end;
-
-procedure TF5HTTPClient.DoStopTCPClient;
-begin
-  Assert(Assigned(FTCPClient));
-  FTCPClient.Stop;
-end;
-
-procedure TF5HTTPClient.DoStop;
-begin
-  Lock;
-  try
-    if FInDoStart then
-      exit;
-    FInDoStop := True;
-  finally
-    Unlock;
-  end;
-  try
-    TriggerStop;
-    SetState(hcsStopping);
-    DoStopTCPClient;
-    SetState(hcsStopped);
-    FActive := False;
-    TriggerInactive;
-  finally
-    Lock;
-    try
-      FInDoStop := False;
-    finally
-      Unlock;
-    end;
-  end;
-end;
-
-procedure TF5HTTPClient.SetActive(const Active: Boolean);
-begin
-  if Active = FActive then
-    exit;
-  if csDesigning in ComponentState then
-    FActive := Active else
-  if csLoading in ComponentState then
-    FActivateOnLoaded := Active
-  else
-    if Active then
-      DoStart
-    else
-      DoStop;
-end;
-
 procedure TF5HTTPClient.PrepareHTTPRequest;
-var C : THTTPConnectionFieldEnum;
-    R : Boolean;
-    L : Int64;
+var
+  C : THTTPConnectionFieldEnum;
+  R : Boolean;
+  L : Int64;
 begin
-  ClearHTTPRequest(FRequest);
+  FRequestObj.Clear;
 
   case FMethod of
-    cmGET    : FRequest.StartLine.Method.Value := hmGET;
-    cmPOST   : FRequest.StartLine.Method.Value := hmPOST;
+    cmGET    : FRequestObj.RequestMethod := hmGET;
+    cmPOST   : FRequestObj.RequestMethod := hmPOST;
     cmCustom :
       begin
         if FMethodCustom = '' then
           raise EHTTPClient.Create(SError_MethodNotSet);
-        FRequest.StartLine.Method.Value := hmCustom;
-        FRequest.StartLine.Method.Custom := FMethodCustom;
+        FRequestObj.RequestMethod := hmCustom;
+        FRequestObj.RecPtr^.StartLine.Method.Custom := FMethodCustom;
       end;
   else
     raise EHTTPClient.Create(SError_MethodNotSet);
@@ -1849,11 +1833,10 @@ begin
 
   if FURI = '' then
     raise EHTTPClient.Create(SError_URINotSet);
-  FRequest.StartLine.URI := FURI;
+  FRequestObj.RecPtr^.StartLine.URI := FURI;
 
-  FRequest.StartLine.Version.Version := hvHTTP11;
-  FRequest.Header.CommonHeaders.Date.Value := hdDateTime;
-  FRequest.Header.CommonHeaders.Date.DateTime := Now;
+  FRequestObj.HTTPVersion := hvHTTP11;
+  FRequestObj.HeaderDate := Now;
 
   case FKeepAlive of
     kaKeepAlive : C := hcfKeepAlive;
@@ -1863,31 +1846,29 @@ begin
   end;
   if C <> hcfNone then
     if FViaHTTPProxy then
-      FRequest.Header.CommonHeaders.ProxyConnection.Value := C
+      FRequestObj.RecPtr^.Header.CommonHeaders.ProxyConnection.Value := C
     else
-      FRequest.Header.CommonHeaders.Connection.Value := C;
+      FRequestObj.RecPtr^.Header.CommonHeaders.Connection.Value := C;
 
-  FRequest.Header.FixedHeaders[hntHost] := UTF8Encode(FHost);
-  FRequest.Header.FixedHeaders[hntUserAgent] := FUserAgent;
-  FRequest.Header.FixedHeaders[hntReferer] := FReferer;
-  FRequest.Header.FixedHeaders[hntAuthorization] := FAuthorization;
+  FRequestObj.HeaderHost := FHost;
+  FRequestObj.RecPtr^.Header.FixedHeaders[hntUserAgent] := FUserAgent;
+  FRequestObj.RecPtr^.Header.FixedHeaders[hntReferer] := FReferer;
+  FRequestObj.RecPtr^.Header.FixedHeaders[hntAuthorization] := FAuthorization;
 
   if FCookie <> '' then
     begin
-      FRequest.Header.Cookie.Value := hcoCustom;
-      FRequest.Header.Cookie.Custom := FCookie;
+      FRequestObj.RecPtr^.Header.Cookie.Value := hcoCustom;
+      FRequestObj.RecPtr^.Header.Cookie.Custom := FCookie;
     end;
 
-  FRequest.Header.CustomHeaders := FCustomHeaders;
+  FRequestObj.RecPtr^.Header.CustomHeaders := FCustomHeaders;
 
   if FRequestContentType <> '' then
     begin
-      FRequest.Header.CommonHeaders.ContentType.Value := hctCustomString;
-      FRequest.Header.CommonHeaders.ContentType.CustomStr := FRequestContentType;
+      FRequestObj.ContentTypeString := FRequestContentType;
       L := InitRequestContent(R);
       Assert(L >= 0);
-      FRequest.Header.CommonHeaders.ContentLength.Value := hcltByteCount;
-      FRequest.Header.CommonHeaders.ContentLength.ByteCount := L;
+      FRequestObj.ContentLengthBytes := L;
       FRequestHasContent := True;
     end
   else
@@ -1896,9 +1877,10 @@ end;
 
 function TF5HTTPClient.GetHTTPRequestStr: RawByteString;
 begin
-  Result := HTTPRequestToStr(FRequest);
-  {$IFDEF HTTP_DEBUG}
-  Log(cltDebug, 'RequestHeader:%db'#13#10'%s', [Length(Result), Result]);
+  Result := FRequestObj.GetString;
+
+  {$IFDEF HTTP_LOG_DEBUG}
+  LogDebug('RequestHeader:%db'#13#10'%s', [Length(Result), Copy(Result, 1, 160)]);
   {$ENDIF}
 end;
 
@@ -1912,8 +1894,8 @@ end;
 
 procedure TF5HTTPClient.SendRequest;
 begin
-  Assert(FState in [hcsConnected_Ready, hcsResponseComplete, hcsResponseCompleteAndClosing]);
-  //
+  Assert(FState in [hcsConnectedReady, hcsResponseComplete, hcsResponseCompleteAndClosing]);
+
   SetState(hcsSendingRequest);
   SendStr(GetHTTPRequestStr);
   if FRequestHasContent then
@@ -1928,7 +1910,7 @@ end;
 procedure TF5HTTPClient.ResetRequest;
 begin
   FErrorMsg := '';
-  ClearHTTPResponse(FResponse);
+  FResponseObj.Clear;
   FResponseCode := 0;
   FResponseCookies.Clear;
   FResponseContentReader.Reset;
@@ -1936,10 +1918,11 @@ begin
 end;
 
 procedure TF5HTTPClient.Request;
-var R_IsStarting : Boolean;
-    R_Ready : Boolean;
-    R_Connect : Boolean;
-    R_IsActive : Boolean;
+var
+  R_IsStarting : Boolean;
+  R_Ready : Boolean;
+  R_Connect : Boolean;
+  R_IsActive : Boolean;
 begin
   Lock;
   try
@@ -1949,7 +1932,7 @@ begin
     FInRequest := True;
     R_IsActive := FActive;
     R_IsStarting := IsBusyStarting;
-    R_Ready := FState in [hcsConnected_Ready, hcsResponseComplete];
+    R_Ready := FState in [hcsConnectedReady, hcsResponseComplete];
     R_Connect := not R_IsStarting and not R_Ready;
     // initialise new request
     ResetRequest;
@@ -1963,11 +1946,11 @@ begin
       begin
         if R_IsActive then
           begin
-            DoStopTCPClient;
-            DoStartTCPClient;
+            StopTCPClient;
+            StartTCPClient;
           end
         else
-          DoStart;
+          ClientSetActive;
       end
     else
     if R_Ready then
@@ -1994,7 +1977,12 @@ end;
 
 function TF5HTTPClient.RequestIsSuccess: Boolean;
 begin
-  Result := GetState in HTTPClientState_ResponseComplete;
+  Result := GetState in HTTP5ClientState_ResponseComplete;
+end;
+
+function TF5HTTPClient.GetResponseRecord: THTTPResponseRec;
+begin
+  Result := FResponseObj.RecPtr^;
 end;
 
 function TF5HTTPClient.GetResponseContentStr: RawByteString;
@@ -2002,67 +1990,88 @@ begin
   Result := FResponseContentReader.ContentString;
 end;
 
-procedure TF5HTTPClient.Wait;
+function TF5HTTPClient.WaitReadyForRequest(const Timeout: Integer): Boolean;
+var
+  T : Int32;
 begin
-  {$IFDEF OS_MSWIN}
-  if GetCurrentThreadID = MainThreadID then
-    begin
-      if Assigned(OnMainThreadWait) then
-        FOnMainThreadWait(self);
-    end
-  else
-    begin
-      if Assigned(FOnThreadWait) then
-        FOnThreadWait(self);
-    end;
-  {$ELSE}
-  if Assigned(FOnThreadWait) then
-    FOnThreadWait(self);
-  {$ENDIF}
-  Sleep(5);
-end;
-
-function TF5HTTPClient.WaitForConnect(const Timeout: Integer): Boolean;
-var T : LongWord;
-    R : Boolean;
-begin
-  T := TCPGetTick;
+  T := Timeout;
   repeat
     Lock;
     try
-      R := FActive;
-      if not R then
-        break;
-      R := FTCPClient.IsConnected;
-      if R then
-        break;
-      if FTCPClient.State in [csClosed, csStopped] then
-        break;
+      if not FActive then
+        raise EHTTPClient.Create(SError_NotActive);
+      if FState in [
+          hcsConnectFailed,
+          hcsRequestInterruptedAndClosed,
+          hcsRequestFailed,
+          hcsStopping,
+          hcsStopped] then
+        raise EHTTPClient.Create(SError_NotConnected);
+      if FState in [
+          hcsConnectedReady,
+          hcsSendingRequest,
+          hcsSendingContent,
+          hcsAwaitingResponse,
+          hcsReceivedResponse,
+          hcsReceivingContent,
+          hcsResponseComplete,
+          hcsResponseCompleteAndClosing] then
+        begin
+          Result := True;
+          exit;
+        end;
     finally
       Unlock;
     end;
-    if TCPTickDelta(T, TCPGetTick) >= TimeOut then
-      break;
-    Wait;
-  until false;
-  Result := R;
+    case FReadyEvent.WaitFor(200) of
+      wrSignaled  : ;
+      wrTimeout   : ;
+      wrAbandoned : break;
+      wrError     : break;
+    end;
+    if Timeout > 0 then
+      Dec(T, 200);
+  until T <= 0;
+  Result := False;
 end;
 
-function TF5HTTPClient.WaitRequestNotBusy(const Timeout: Integer): Boolean;
-var T : LongWord;
-    R : Boolean;
+function TF5HTTPClient.WaitForRequestComplete(const Timeout: Integer): Boolean;
+var
+  T : Int32;
 begin
-  T := TCPGetTick;
+  T := Timeout;
   repeat
-    R := not RequestIsBusy;
-    if R then
-      break;
-    if TCPTickDelta(T, TCPGetTick) >= TimeOut then
-      break;
-    Wait;
-  until false;
-  Result := R;
+    Lock;
+    try
+      if not FActive then
+        raise EHTTPClient.Create(SError_NotActive);
+      if FState in [
+          hcsConnectFailed,
+          hcsRequestInterruptedAndClosed,
+          hcsRequestFailed,
+          hcsResponseComplete,
+          hcsResponseCompleteAndClosing,
+          hcsStopping,
+          hcsStopped] then
+        begin
+          Result := True;
+          exit;
+        end;
+    finally
+      Unlock;
+    end;
+    case FReadyEvent.WaitFor(200) of
+      wrSignaled  : ;
+      wrTimeout   : ;
+      wrAbandoned : break;
+      wrError     : break;
+    end;
+    if Timeout > 0 then
+      Dec(T, 200);
+  until T <= 0;
+  Result := False;
 end;
+
 
 
 
@@ -2077,7 +2086,7 @@ end;
 
 destructor THTTPClientCollection.Destroy;
 var
-  I : Integer;
+  I : NativeInt;
 begin
   if FItemOwner then
     for I := Length(FList) - 1 downto 0 do
@@ -2085,12 +2094,12 @@ begin
   inherited Destroy;
 end;
 
-function THTTPClientCollection.GetCount: Integer;
+function THTTPClientCollection.GetCount: NativeInt;
 begin
   Result := Length(FList);
 end;
 
-function THTTPClientCollection.GetItem(const Idx: Integer): TF5HTTPClient;
+function THTTPClientCollection.GetItem(const Idx: NativeInt): TF5HTTPClient;
 begin
   Assert(Idx >= 0);
   Assert(Idx < Length(FList));
@@ -2098,9 +2107,9 @@ begin
   Result := FList[Idx];
 end;
 
-function THTTPClientCollection.Add(const Item: TF5HTTPClient): Integer;
+function THTTPClientCollection.Add(const Item: TF5HTTPClient): NativeInt;
 var
-  L : Integer;
+  L : NativeInt;
 begin
   Assert(Assigned(Item));
 
@@ -2112,7 +2121,7 @@ end;
 
 function THTTPClientCollection.CreateNew: TF5HTTPClient;
 begin
-  Result := TF5HTTPClient.Create(nil);
+  Result := TF5HTTPClient.Create;
 end;
 
 function THTTPClientCollection.AddNew: TF5HTTPClient;
@@ -2129,9 +2138,9 @@ begin
   Result := C;
 end;
 
-function THTTPClientCollection.GetItemIndex(const Item: TF5HTTPClient): Integer;
+function THTTPClientCollection.GetItemIndex(const Item: TF5HTTPClient): NativeInt;
 var
-  I : Integer;
+  I : NativeInt;
 begin
   for I := 0 to Length(FList) - 1 do
     if FList[I] = Item then
@@ -2142,9 +2151,10 @@ begin
   Result := -1;
 end;
 
-procedure THTTPClientCollection.RemoveByIndex(const Idx: Integer);
+procedure THTTPClientCollection.RemoveByIndex(const Idx: NativeInt);
 var
-  L, I : Integer;
+  L : NativeInt;
+  I : NativeInt;
   T : TF5HTTPClient;
 begin
   L := Length(FList);
@@ -2160,7 +2170,7 @@ end;
 
 function THTTPClientCollection.Remove(const Item: TF5HTTPClient): Boolean;
 var
-  I : Integer;
+  I : NativeInt;
 begin
   I := GetItemIndex(Item);
   if I >= 0 then
@@ -2174,17 +2184,13 @@ end;
 
 procedure THTTPClientCollection.Clear;
 var
-  I : Integer;
+  I : NativeInt;
 begin
   if FItemOwner then
     for I := Length(FList) - 1 downto 0 do
       FreeAndNil(FList[I]);
   FList := nil;
 end;
-
-{$IFDEF HTTPCLIENT_CUSTOM}
-  {$INCLUDE cHTTPClientImpl.inc}
-{$ENDIF}
 
 
 
