@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcStdTypes.pas                                          }
-{   File version:     5.07                                                     }
+{   File version:     5.08                                                     }
 {   Description:      Standard type definitions.                               }
 {                                                                              }
-{   Copyright:        Copyright (c) 2000-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2000-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -41,11 +41,12 @@
 {   2020/03/30  5.05  Add NativeWord.                                          }
 {   2020/06/02  5.06  UInt arrays.                                             }
 {   2020/06/09  5.07  Define PAnsiChar when not supported.                     }
+{   2020/09/11  5.08  Define dynamic arrays TBytesArray and TDateTimeArray.    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 2010-10.4 Win32/Win64        5.06  2020/06/02                       }
-{   Delphi 10.2 Linux64                 5.06  2020/06/02                       }
+{   Delphi 7-10.4 Win32/Win64           5.08  2020/09/11                       }
+{   Delphi 10.2 Linux64                 5.08  2020/09/11                       }
 {   FreePascal 3.0.4 Win64              5.06  2020/06/02                       }
 {                                                                              }
 {******************************************************************************}
@@ -55,12 +56,6 @@
 {$IFDEF FREEPASCAL}
   {$WARNINGS OFF}
   {$HINTS OFF}
-{$ENDIF}
-
-{$IFDEF DEBUG}
-{$IFDEF TEST}
-  {$DEFINE STDTYPES_TEST}
-{$ENDIF}
 {$ENDIF}
 
 unit flcStdTypes;
@@ -77,43 +72,68 @@ uses
 { Integer types                                                                }
 {                                                                              }
 type
-  Int8      = ShortInt;
-  Int16     = SmallInt;
-  {$IFDEF SupportFixedInt}
-  Int32     = FixedInt;
-  {$ELSE}
-  Int32     = LongInt;
-  {$ENDIF}
+  Word8  = Byte;
 
-  UInt8     = Byte;
-  UInt16    = Word;
+  Word16Rec = packed record
+    case Integer of
+      0 : (ByteLo : Byte;
+           ByteHi : Byte);
+      1 : (Bytes  : array[0..1] of Byte);
+  end;
+  PWord16Rec = ^Word16Rec;
+
+  Word16 = Word;
+
+  Word32Rec = packed record
+    case Integer of
+      0 : (Word16Lo : Word16;
+           Word16Hi : Word16);
+      1 : (Word16s  : array[0..1] of Word16);
+      2 : (Bytes    : array[0..3] of Byte);
+  end;
+  PWord32Rec = ^Word32Rec;
+
   {$IFDEF SupportFixedUInt}
-  UInt32    = FixedUInt;
+  Word32 = FixedUInt;
   {$ELSE}
-  UInt32    = LongWord;
+  Word32 = LongWord;
   {$ENDIF}
+
+  Word64Rec = packed record
+    case Integer of
+      0 : (Word32Lo : Word32;
+           Word32Hi : Word32);
+      1 : (Word16s  : array[0..3] of Word16);
+      2 : (Bytes    : array[0..7] of Byte);
+  end;
+  PWord64Rec = ^Word64Rec;
+
+  {$IFDEF SupportUInt64}
+  Word64 = UInt64;
+  {$ELSE}
+  Word64 = type Int64;
+  {$ENDIF}
+
+  UInt8  = Byte;
+  UInt16 = Word16;
+  UInt32 = Word32;
   {$IFNDEF SupportUInt64}
-  UInt64    = type Int64;
+  UInt64 = Word64;
   {$ENDIF}
 
-  Word8     = UInt8;
-  Word16    = UInt16;
-  Word32    = UInt32;
-  Word64    = UInt64;
+  UInt16Rec = Word16Rec;
+  UInt32Rec = Word32Rec;
+  UInt64Rec = Word64Rec;
 
-  {$IFNDEF SupportNativeInt}
-  {$IFDEF CPU_X86_64}
-  NativeInt   = type Int64;
+  Int16Rec = type Word16Rec;
+  Int32Rec = type Word32Rec;
+
+  Int8 = ShortInt;
+  Int16 = SmallInt;
+  {$IFDEF SupportFixedInt}
+  Int32 = FixedInt;
   {$ELSE}
-  NativeInt   = type Int32;
-  {$ENDIF}
-  PNativeInt  = ^NativeInt;
-  {$ENDIF}
-  {$IFDEF FREEPASCAL}
-  PNativeInt  = ^NativeInt;
-  {$ENDIF}
-  {$IFDEF DELPHI2010}
-  PNativeInt  = ^NativeInt;
+  Int32 = LongInt;
   {$ENDIF}
 
   {$IFNDEF SupportNativeUInt}
@@ -131,6 +151,21 @@ type
   PNativeUInt = ^NativeUInt;
   {$ENDIF}
 
+  {$IFNDEF SupportNativeInt}
+  {$IFDEF CPU_X86_64}
+  NativeInt  = type Int64;
+  {$ELSE}
+  NativeInt  = type Int32;
+  {$ENDIF}
+  PNativeInt = ^NativeInt;
+  {$ENDIF}
+  {$IFDEF FREEPASCAL}
+  PNativeInt = ^NativeInt;
+  {$ENDIF}
+  {$IFDEF DELPHI2010}
+  PNativeInt = ^NativeInt;
+  {$ENDIF}
+
   NativeWord = NativeUInt;
   PNativeWord = ^NativeWord;
 
@@ -145,10 +180,6 @@ type
   PInt64      = ^Int64;
   {$ENDIF}
 
-  PInt8     = ^Int8;
-  PInt16    = ^Int16;
-  PInt32    = ^Int32;
-
   PWord8    = ^Word8;
   PWord16   = ^Word16;
   PWord32   = ^Word32;
@@ -159,19 +190,9 @@ type
   PUInt32   = ^UInt32;
   PUInt64   = ^UInt64;
 
-  Int16Rec = packed record
-    case Integer of
-      0 : (Lo, Hi : Byte);
-      1 : (Bytes  : array[0..1] of Byte);
-  end;
-
-  Int32Rec = packed record
-    case Integer of
-      0 : (Lo, Hi : Word);
-      1 : (Words  : array[0..1] of Word);
-      2 : (Bytes  : array[0..3] of Byte);
-  end;
-  PInt32Rec = ^Int32Rec;
+  PInt8     = ^Int8;
+  PInt16    = ^Int16;
+  PInt32    = ^Int32;
 
 const
   MinByte       = Low(Byte);
@@ -486,7 +507,7 @@ type
 {                                                                              }
 {$IFNDEF TBytesDeclared}
 type
-  TBytes = array of Bytes;
+  TBytes = array of Byte;
 {$ENDIF}
 
 
@@ -535,6 +556,8 @@ type
   InterfaceArray = array of IInterface;
   ByteCharSetArray = array of ByteCharSet;
   ByteSetArray = array of ByteSet;
+  TBytesArray = array of TBytes;
+  TDateTimeArray = array of TDateTime;
 
 
 
@@ -657,103 +680,7 @@ type
 
 
 
-{$IFDEF STDTYPES_TEST}
-procedure Test;
-{$ENDIF}
-
-
-
 implementation
-
-
-
-{$IFDEF STDTYPES_TEST}
-{$ASSERTIONS ON}
-procedure Test;
-begin
-  Assert(SizeOf(Int8) = 1);
-  Assert(SizeOf(Int16) = 2);
-  Assert(SizeOf(Int32) = 4);
-  Assert(SizeOf(Int64) = 8);
-
-  Assert(SizeOf(UInt8) = 1);
-  Assert(SizeOf(UInt16) = 2);
-  Assert(SizeOf(UInt32) = 4);
-  Assert(SizeOf(UInt64) = 8);
-
-  Assert(SizeOf(UInt8) = SizeOf(Word8));
-  Assert(SizeOf(UInt16) = SizeOf(Word16));
-  Assert(SizeOf(UInt32) = SizeOf(Word32));
-  Assert(SizeOf(UInt64) = SizeOf(Word64));
-
-  Assert(SizeOf(Integer) = 4);
-  Assert(SizeOf(Cardinal) = 4);
-
-  {$IFDEF LongWordIs32Bits}
-  Assert(SizeOf(LongWord) = 4);
-  {$ENDIF}
-  {$IFDEF LongWordIs64Bits}
-  Assert(SizeOf(LongWord) = 8);
-  {$ENDIF}
-
-  {$IFDEF LongIntIs32Bits}
-  Assert(SizeOf(LongInt) = 4);
-  {$ENDIF}
-  {$IFDEF LongIntIs64Bits}
-  Assert(SizeOf(LongInt) = 8);
-  {$ENDIF}
-
-  {$IFDEF NativeIntIs32Bits}
-  Assert(SizeOf(NativeInt) = 4);
-  {$ENDIF}
-  {$IFDEF NativeIntIs64Bits}
-  Assert(SizeOf(NativeInt) = 8);
-  {$ENDIF}
-
-  {$IFDEF NativeUIntIs32Bits}
-  Assert(SizeOf(NativeUInt) = 4);
-  {$ENDIF}
-  {$IFDEF NativeUIntIs64Bits}
-  Assert(SizeOf(NativeUInt) = 8);
-  {$ENDIF}
-
-  Assert(SizeOf(ByteChar) = 1);
-  Assert(SizeOf(WideChar) = 2);
-
-  {$IFDEF CharIsWide}
-  Assert(SizeOf(Char) = 2);
-  {$ENDIF}
-  {$IFDEF CharIsAnsi}
-  Assert(SizeOf(Char) = 1);
-  {$ENDIF}
-
-  {$IFDEF StringIsUnicode}
-  Assert(SizeOf(Char) = 2);
-  {$ENDIF}
-  {$IFDEF StringIsAnsi}
-  Assert(SizeOf(Char) = 1);
-  {$ENDIF}
-
-  Assert(SizeOf(Double) = 8);
-
-  {$IFDEF ExtendedIsDouble}
-  Assert(SizeOf(Extended) = SizeOf(Double));
-  {$ENDIF}
-  {$IFDEF ExtendedIs80Bits}
-  Assert(SizeOf(Extended) = 10);
-  {$ENDIF}
-  {$IFDEF ExtendedIs16Bytes}
-  Assert(SizeOf(Extended) = 16);
-  {$ENDIF}
-
-  {$IFDEF FloatIsDouble}
-  Assert(SizeOf(Float) = SizeOf(Double));
-  {$ENDIF}
-  {$IFDEF FloatIsExtended}
-  Assert(SizeOf(Float) = SizeOf(Extended));
-  {$ENDIF}
-end;
-{$ENDIF}
 
 
 
