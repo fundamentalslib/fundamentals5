@@ -385,10 +385,10 @@ begin
   if Msg = WM_SOCKET then
     begin
       // dispatch socket messages to socket object
-      {$IFDEF DELPHI7_DOWN}
-      Socket := TSysSocket(GetWindowLong(WindowHandle, 0));
-      {$ELSE}
+      {$IFDEF DELPHI2009_UP}
       Socket := TSysSocket(GetWindowLongPtr(WindowHandle, 0));
+      {$ELSE}
+      Socket := TSysSocket(GetWindowLong(WindowHandle, 0));
       {$ENDIF}
       Assert(TObject(Socket) is TSysSocket);
       if Assigned(Socket) then
@@ -475,10 +475,10 @@ begin
   if Result = 0 then
     raise ESysSocket.CreateFmt(SWindowHandleAllocationFailed, []);
   // associate instance pointer with window handle
-  {$IFDEF DELPHI7_DOWN}
-  SetWindowLong(Result, 0, NativeInt(Instance));
-  {$ELSE}
+  {$IFDEF DELPHI2009_UP}
   SetWindowLongPtr(Result, 0, NativeInt(Instance));
+  {$ELSE}
+  SetWindowLong(Result, 0, NativeInt(Instance));
   {$ENDIF}
 end;
 {$ENDIF}

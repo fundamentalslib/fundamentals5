@@ -1790,7 +1790,7 @@ procedure LoadSocketLibrary;
 
   // Use the system to load the dynamically linked socket library file.
   // Returns True on success.
-  function LoadLibrary(const LibraryName: AnsiString): Boolean;
+  function LoadLibrary(const LibraryName: RawByteString): Boolean;
   begin
     SocketLibraryHandle := Windows.LoadLibraryA(PAnsiChar(LibraryName));
     Result := (SocketLibraryHandle > HINSTANCE_ERROR);
@@ -1928,7 +1928,7 @@ begin
   Windows.FreeLibrary(H);
 end;
 
-procedure GetSocketProc(const ProcName: AnsiString; var Proc: Pointer);
+procedure GetSocketProc(const ProcName: RawByteString; var Proc: Pointer);
 begin
   LibLock;
   try
