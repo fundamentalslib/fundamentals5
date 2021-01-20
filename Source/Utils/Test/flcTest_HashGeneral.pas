@@ -1,6 +1,7 @@
 { 2020/07/20  0.01  Moved tests from flcHashGeneral. }
 { 2020/07/25  0.02  Tests for fclHash1, fclHash2, fclHash3. }
 
+{$INCLUDE ../../flcInclude.inc}
 {$INCLUDE flcTest_Include.inc}
 
 unit flcTest_HashGeneral;
@@ -24,7 +25,7 @@ implementation
 
 procedure Test;
 var
-  I : Int64;
+  I : NativeInt;
 begin
   Assert(CalcChecksum32B('') = 0);
   Assert(CalcChecksum32B('A') = 65);
@@ -77,6 +78,7 @@ begin
   Assert(fclHash1String32B('what do ya want for nothing?') = 3292967299);
   Assert(fclHash1String32B('Fundamentals') = 2327973033);
 
+  {$IFNDEF DELPHI7}
   Assert(fclHash1String64B('') = 14695981039346656037);
   Assert(fclHash1String64B('what do ya want for nothing?') = 2306439892974478467);
   Assert(fclHash1String64B('Fundamentals') = 11045497405042532233);
@@ -136,6 +138,7 @@ begin
   Assert(fclHash3String32('Fundamentals', False) = fclHash3String32('fundamentals', False));
   Assert(fclHash3String64('Fundamentals', True) <> fclHash3String64('fundamentals', True));
   Assert(fclHash3String64('Fundamentals', False) = fclHash3String64('fundamentals', False));
+  {$ENDIF}
 
   for I := 1 to $100FF do
     Assert(fclHash3String32('0') <> fclHash3String32(IntToStr(I)));

@@ -5,7 +5,7 @@
 {   File version:     5.20                                                     }
 {   Description:      General hashing functions                                }
 {                                                                              }
-{   Copyright:        Copyright (c) 1999-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 1999-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -58,8 +58,8 @@
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 2010-10.4 Win32/Win64        5.14  2020/06/02                       }
-{   Delphi 10.2-10.4 Linux64            5.14  2020/06/02                       }
+{   Delphi XE2-10.4 Win32/Win64         5.20  2020/09/21                       }
+{   Delphi XE2-10.4 Linux64             5.20  2020/09/21                       }
 {   FreePascal 3.0.4 Win64              5.14  2020/06/02                       }
 {                                                                              }
 { Definitions:                                                                 }
@@ -358,15 +358,15 @@ end;
 {$ELSE}
 function CalcChecksum32(const Buf; const BufSize: NativeInt): Word32;
 var
-  I : NativeInt;
-  P : PByte;
+  Idx : NativeInt;
+  Ptr : PByte;
 begin
   Result := 0;
-  P := @Buf;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  for Idx := 1 to BufSize do
     begin
-      Inc(Result, P^);
-      Inc(P);
+      Inc(Result, Ptr^);
+      Inc(Ptr);
     end;
 end;
 {$ENDIF}
@@ -434,33 +434,33 @@ end;
 {$ELSE}
 function XOR32Buf(const Buf; const BufSize: NativeInt): Word32;
 var
-  I : NativeInt;
-  L : Byte;
-  P : PByte;
+  Idx  : NativeInt;
+  Bits : Byte;
+  Ptr  : PByte;
 begin
   Result := 0;
-  L := 0;
-  P := @Buf;
-  for I := 1 to BufSize do
+  Bits := 0;
+  Ptr := @Buf;
+  for Idx := 1 to BufSize do
     begin
-      Result := Result xor (Byte(P^) shl L);
-      Inc(L, 8);
-      if L = 32 then
-        L := 0;
-      Inc(P);
+      Result := Result xor (Byte(Ptr^) shl Bits);
+      Inc(Bits, 8);
+      if Bits = 32 then
+        Bits := 0;
+      Inc(Ptr);
     end;
 end;
 {$ENDIF}
 
 function CalcXOR8(const Buf; const BufSize: NativeInt): Byte;
 var
-  L : Word32;
+  Hash : Word32;
 begin
-  L := XOR32Buf(Buf, BufSize);
-  Result := Byte(L) xor
-            Byte(L shr 8) xor
-            Byte(L shr 16) xor
-            Byte(L shr 24);
+  Hash := XOR32Buf(Buf, BufSize);
+  Result := Byte(Hash) xor
+            Byte(Hash shr 8) xor
+            Byte(Hash shr 16) xor
+            Byte(Hash shr 24);
 end;
 
 function CalcXOR8(const Buf: RawByteString): Byte;
@@ -470,11 +470,11 @@ end;
 
 function CalcXOR16(const Buf; const BufSize: NativeInt): Word16;
 var
-  L : Word32;
+  Hash : Word32;
 begin
-  L := XOR32Buf(Buf, BufSize);
-  Result := Word16(L) xor
-            Word16(L shr 16);
+  Hash := XOR32Buf(Buf, BufSize);
+  Result := Word16(Hash) xor
+            Word16(Hash shr 16);
 end;
 
 function CalcXOR16(const Buf: RawByteString): Word16;
@@ -539,15 +539,15 @@ end;
 
 function CRC16Buf(const CRC16: Word16; const Buf; const BufSize: NativeInt): Word16;
 var
-  I : NativeInt;
-  P : PByte;
+  Idx : NativeInt;
+  Ptr : PByte;
 begin
   Result := CRC16;
-  P := @Buf;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  for Idx := 1 to BufSize do
     begin
-      Result := CRC16Byte(Result, P^);
-      Inc(P);
+      Result := CRC16Byte(Result, Ptr^);
+      Inc(Ptr);
     end;
 end;
 
@@ -578,15 +578,17 @@ var
   CRC32Poly      : Word32 = $EDB88320;
 
 procedure InitCRC32Table;
-var I, J : Byte;
-    R    : Word32;
+var
+  I, J : Byte;
+  R    : Word32;
 begin
   for I := $00 to $FF do
     begin
       R := I;
       for J := 8 downto 1 do
         if R and 1 <> 0 then
-          R := (R shr 1) xor CRC32Poly else
+          R := (R shr 1) xor CRC32Poly
+        else
           R := R shr 1;
       CRC32Table[I] := R;
     end;
@@ -613,37 +615,37 @@ end;
 
 function CRC32Buf(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
 var
-  P : PByte;
-  I : NativeInt;
+  Ptr : PByte;
+  Idx : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  P := @Buf;
+  Ptr := @Buf;
   Result := CRC32;
-  for I := 1 to BufSize do
+  for Idx := 1 to BufSize do
     begin
-      Result := CalcCRC32Byte(Result, P^);
-      Inc(P);
+      Result := CalcCRC32Byte(Result, Ptr^);
+      Inc(Ptr);
     end;
 end;
 
 function CRC32BufNoCase(const CRC32: Word32; const Buf; const BufSize: NativeInt): Word32;
 var
-  P : PByte;
-  I : NativeInt;
-  C : Byte;
+  Ptr : PByte;
+  Idx : NativeInt;
+  C   : Byte;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  P := @Buf;
+  Ptr := @Buf;
   Result := CRC32;
-  for I := 1 to BufSize do
+  for Idx := 1 to BufSize do
     begin
-      C := P^;
+      C := Ptr^;
       if C in [Ord('A')..Ord('Z')] then
         C := C or 32;
       Result := CalcCRC32Byte(Result, C);
-      Inc(P);
+      Inc(Ptr);
     end;
 end;
 
@@ -694,21 +696,21 @@ end;
 function Adler32Buf(const Adler32: Word32; const Buf; const BufSize: NativeInt): Word32;
 var
   A, B : Word32;
-  P    : PByte;
-  I    : NativeInt;
+  Ptr  : PByte;
+  Idx  : NativeInt;
 begin
   A := Adler32 and $0000FFFF;
   B := Adler32 shr 16;
-  P := @Buf;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  for Idx := 1 to BufSize do
   begin
-    Inc(A, P^);
+    Inc(A, Ptr^);
     Inc(B, A);
     if A >= Adler32Mod then
       Dec(A, Adler32Mod);
     if B >= Adler32Mod then
       Dec(B, Adler32Mod);
-    Inc(P);
+    Inc(Ptr);
   end;
   Result := A or (B shl 16);
 end;
@@ -736,16 +738,16 @@ end;
 
 function ELFBuf(const Digest: Word32; const Buf; const BufSize: NativeInt): Word32;
 var
-  I : NativeInt;
-  P : PByte;
-  X : Word32;
+  Idx : NativeInt;
+  Ptr : PByte;
+  X   : Word32;
 begin
   Result := Digest;
-  P := @Buf;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  for Idx := 1 to BufSize do
     begin
-      Result := (Result shl 4) + P^;
-      Inc(P);
+      Result := (Result shl 4) + Ptr^;
+      Inc(Ptr);
       X := Result and $F0000000;
       if X <> 0 then
         Result := Result xor (X shr 24);
@@ -770,34 +772,34 @@ end;
 {                                                                              }
 function IsValidISBN(const S: RawByteString): Boolean;
 var
-  I, L, M, D, C : Integer;
-  P : PByte;
+  Idx, Len, M, D, C : Integer;
+  Ptr : PByte;
 begin
-  L := Length(S);
-  if L < 10 then // too few digits
+  Len := Length(S);
+  if Len < 10 then // too few digits
     begin
       Result := False;
       exit;
     end;
   M := 10;
   C := 0;
-  P := Pointer(S);
-  for I := 1 to L do
+  Ptr := Pointer(S);
+  for Idx := 1 to Len do
     begin
-      if (P^ in [Ord('0')..Ord('9')]) or ((M = 1) and (P^ in [Ord('x'), Ord('X')])) then
+      if (Ptr^ in [Ord('0')..Ord('9')]) or ((M = 1) and (Ptr^ in [Ord('x'), Ord('X')])) then
         begin
           if M = 0 then // too many digits
             begin
               Result := False;
               exit;
             end;
-          if P^ in [Ord('x'), Ord('X')] then
+          if Ptr^ in [Ord('x'), Ord('X')] then
             D := 10 else
-            D := P^ - Ord('0');
+            D := Ptr^ - Ord('0');
           Inc(C, M * D);
           Dec(M);
         end;
-      Inc(P);
+      Inc(Ptr);
     end;
   if M > 0 then // too few digits
     begin
@@ -813,26 +815,27 @@ end;
 { LUHN checksum                                                                }
 {                                                                              }
 function IsValidLUHN(const S: RawByteString): Boolean;
-var P : PByte;
-    I, L, M, C, D : Integer;
-    R : Boolean;
+var
+  Ptr : PByte;
+  Idx, Len, M, C, D : Integer;
+  R : Boolean;
 begin
-  L := Length(S);
-  if L = 0 then
+  Len := Length(S);
+  if Len = 0 then
     begin
       Result := False;
       exit;
     end;
-  P := Pointer(S);
-  Inc(P, L - 1);
+  Ptr := Pointer(S);
+  Inc(Ptr, Len - 1);
   C := 0;
   M := 0;
   R := False;
-  for I := 1 to L do
+  for Idx := 1 to Len do
     begin
-      if P^ in [Ord('0')..Ord('9')] then
+      if Ptr^ in [Ord('0')..Ord('9')] then
         begin
-          D := P^ - Ord('0');
+          D := Ptr^ - Ord('0');
           if R then
             begin
               D := D * 2;
@@ -842,7 +845,7 @@ begin
           Inc(M);
           R := not R;
         end;
-      Dec(P);
+      Dec(Ptr);
     end;
   Result := (M >= 1) and (C mod 10 = 0);
 end;
@@ -854,34 +857,34 @@ end;
 {                                                                              }
 function KnuthMultHash8(const V: Word32): Byte;
 var
-  H : Word64;
+  Hash : Word64;
 begin
-  H := Word64(V) * 2654435761;
-  Result := Byte(H shr 24);
+  Hash := Word64(V) * 2654435761;
+  Result := Byte(Hash shr 24);
 end;
 
 function KnuthMultHash16(const V: Word32): Word16;
 var
-  H : Word64;
+  Hash : Word64;
 begin
-  H := Word64(V) * 2654435761;
-  Result := Word16(H shr 16);
+  Hash := Word64(V) * 2654435761;
+  Result := Word16(Hash shr 16);
 end;
 
 function KnuthMultHash24(const V: Word32): Word32;
 var
-  H : Word64;
+  Hash : Word64;
 begin
-  H := Word64(V) * 2654435761;
-  Result := Word16(H shr 8);
+  Hash := Word64(V) * 2654435761;
+  Result := Word16(Hash shr 8);
 end;
 
 function KnuthMultHash32(const V: Word32): Word32;
 var
-  H : Word64;
+  Hash : Word64;
 begin
-  H := Word64(V) * 2654435761;
-  Result := Word32(H);
+  Hash := Word64(V) * 2654435761;
+  Result := Word32(Hash);
 end;
 
 
@@ -891,38 +894,43 @@ end;
 {                                                                              }
 function FowlerNollVoHash1a32Buf(const Buf; const BufSize: NativeInt): Word32;
 var
-  P : PByte;
-  I : NativeInt;
-  H : Word32;
-  M : Word64;
+  Ptr : PByte;
+  Idx : NativeInt;
+  Hsh : Word32;
+  M   : Word64;
 begin
-  P := @Buf;
-  H := 2166136261;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  Hsh := 2166136261;
+  for Idx := 1 to BufSize do
     begin
-      H := H xor P^;
-      M := H * 16777619;
-      H := Word32(M);
-      Inc(P);
+      Hsh := Hsh xor Ptr^;
+      M := Hsh * 16777619;
+      Hsh := Word32(M);
+      Inc(Ptr);
     end;
-  Result := H;
+  Result := Hsh;
 end;
 
 function FowlerNollVoHash1a64Buf(const Buf; const BufSize: NativeInt): Word64;
 var
-  P : PByte;
-  I : NativeInt;
-  H : Word64;
+  Ptr : PByte;
+  Idx : NativeInt;
+  Hsh : Word64;
 begin
-  P := @Buf;
-  H := 14695981039346656037;
-  for I := 1 to BufSize do
+  Ptr := @Buf;
+  {$IFDEF DELPHI7}
+  Int64Rec(Hsh).Lo := $84222325;
+  Int64Rec(Hsh).Hi := $CBF29CE4;
+  {$ELSE}
+  Hsh := 14695981039346656037;
+  {$ENDIF}
+  for Idx := 1 to BufSize do
     begin
-      H := H xor P^;
-      H := Word64(H * Word64(1099511628211));
-      Inc(P);
+      Hsh := Hsh xor Ptr^;
+      Hsh := Word64(Hsh * Word64(1099511628211));
+      Inc(Ptr);
     end;
-  Result := H;
+  Result := Hsh;
 end;
 
 function FowlerNollVoHash1a32Int32(const Value: Int32): Word32;
@@ -1026,78 +1034,78 @@ end;
 
 function fclHash2String32(const AStr: String; const AAsciiCaseSensitive: Boolean): Word32;
 var
-  H : Word32;
-  C : PChar;
-  L : NativeInt;
-  A : Word32;
-  I : NativeInt;
-  F : Word32;
-  G : Word32;
+  Hash : Word32;
+  PtrS : PChar;
+  Len  : NativeInt;
+  Idx  : NativeInt;
+  A    : Word32;
+  F    : Word32;
+  G    : Word32;
 begin
-  H := $5A1F7304;
-  L := Length(AStr);
-  A := Word32(L);
-  H := H xor Word32(A shl 4)
+  Hash := $5A1F7304;
+  Len := Length(AStr);
+  A := Word32(Len);
+  Hash := Hash xor Word32(A shl 4)
          xor Word32(A shl 11)
          xor Word32(A shl 21)
          xor Word32(A shl 26);
-  C := Pointer(AStr);
-  for I := 1 to L do
+  PtrS := Pointer(AStr);
+  for Idx := 1 to Len do
     begin
-      F := Ord(C^);
+      F := Ord(PtrS^);
       if not AAsciiCaseSensitive then
         if (F >= Ord('a')) and (F <= Ord('z')) then
           Dec(F, 32);
-      A := Word32(I);
+      A := Word32(Idx);
       F := F xor (F shl 7)
              xor Word32(A shl 5)
              xor Word32(A shl 12);
       F := F xor (F shl 19)
              xor (F shr 13);
       G := Word32(Word32(F * 69069) + 1);
-      H := H xor G;
-      H := Word32(Word32(H shl 5) xor (H shr 27));
-      Inc(C);
+      Hash := Hash xor G;
+      Hash := Word32(Word32(Hash shl 5) xor (Hash shr 27));
+      Inc(PtrS);
     end;
-  Result := H;
+  Result := Hash;
 end;
 
 function fclHash2String32B(const AStr: RawByteString; const AAsciiCaseSensitive: Boolean): Word32;
 var
-  H : Word32;
-  C : PByteChar;
-  L : NativeInt;
-  A : Word32;
-  I : NativeInt;
-  F : Word32;
-  G : Word32;
+  Hash : Word32;
+  PtrS : PByteChar;
+  Len  : NativeInt;
+  A    : Word32;
+  Idx  : NativeInt;
+  F    : Word32;
+  G    : Word32;
 begin
-  H := $5A1F7304;
-  L := Length(AStr);
-  A := Word32(L);
-  H := H xor Word32(A shl 4)
+  Hash := $5A1F7304;
+  Len := Length(AStr);
+  A := Word32(Len);
+  Hash := Hash xor Word32(A shl 4)
          xor Word32(A shl 11)
          xor Word32(A shl 21)
          xor Word32(A shl 26);
-  C := Pointer(AStr);
-  for I := 1 to L do
+  PtrS := Pointer(AStr);
+  for Idx := 1 to Len do
     begin
-      F := Ord(C^);
+      F := Ord(PtrS^);
       if not AAsciiCaseSensitive then
         if (F >= Ord('a')) and (F <= Ord('z')) then
           Dec(F, 32);
-      A := Word32(I);
+      A := Word32(Idx);
       F := F xor (F shl 7)
              xor Word32(A shl 5)
              xor Word32(A shl 12);
       F := F xor (F shl 19)
              xor (F shr 13);
       G := Word32(Word32(F * 69069) + 1);
-      H := H xor G;
-      H := Word32(Word32(H shl 5) xor (H shr 27));
-      Inc(C);
+      Hash := Hash xor G;
+      Hash := Word32(Word32(Hash shl 5) xor (Hash shr 27));
+      Inc(PtrS);
     end;
-  Result := H;
+  Result := Hash;
 end;
 
 const
@@ -1122,54 +1130,54 @@ const
 // Collision free transformation: Each 64 bit input produces unique 64 bit output.
 function TransformHash(const Hash: Word64): Word64;
 var
-  H : Word64;
-  P : PByte;
-  I : Integer;
+  H   : Word64;
+  Ptr : PByte;
+  Idx : Integer;
 begin
   H := Hash;
-  P := @H;
-  for I := 0 to SizeOf(Word64) - 1 do
+  Ptr := @H;
+  for Idx := 0 to SizeOf(Word64) - 1 do
     begin
-      P^ := RC2Table[P^];
-      Inc(P);
+      Ptr^ := RC2Table[Ptr^];
+      Inc(Ptr);
     end;
   Result := H;
 end;
 
 function fclHash2String64(const AStr: String; const AAsciiCaseSensitive: Boolean): Word64;
 var
-  H : Word64;
-  L : Integer;
-  I : Integer;
-  C : WideChar;
-  D : Word64;
-  F : Word64;
+  Hash   : Word64;
+  Len    : NativeInt;
+  Idx    : NativeInt;
+  Ch     : Char;
+  D      : Word64;
+  F      : Word64;
   H1, H2 : Word32;
   T1, T2 : Word32;
 begin
-  H := $5A1F7301B3E05962;
-  L := Length(AStr);
-  for I := 1 to L do
+  Hash := $5A1F7301B3E05962;
+  Len := Length(AStr);
+  for Idx := 1 to Len do
     begin
-      C := AStr[I];
-      D := Ord(C);
+      Ch := AStr[Idx];
+      D := Ord(Ch);
       if not AAsciiCaseSensitive then
         if (D >= Ord('a')) and (D <= Ord('z')) then
           Dec(D, 32);
 
       F := D xor (D shl 16) xor (D shl 32) xor (D shl 48);
-      H := H xor F;
+      Hash := Hash xor F;
 
-      F := L xor (Word64(I) shl 18) xor (Word64(L) shl 28) xor (Word64(I) shl 31);
-      H := H xor F;
+      F := Len xor (Word64(Idx) shl 18) xor (Word64(Len) shl 28) xor (Word64(Idx) shl 31);
+      Hash := Hash xor F;
 
-      H := TransformHash(H);
+      Hash := TransformHash(Hash);
 
-      H1 := Word32(H shr 32);
-      H2 := Word32(H and $FFFFFFFF);
+      H1 := Word32(Hash shr 32);
+      H2 := Word32(Hash and $FFFFFFFF);
 
-      H1 := Word32(H1 + Word32(I) + Word32(D));
-      H2 := Word32(H2 + Word32(I) + Word32(L));
+      H1 := Word32(H1 + Word32(Idx) + Word32(D));
+      H2 := Word32(H2 + Word32(Idx) + Word32(Len));
 
       H1 := Word32(H1 * 73 + 1);
       H2 := Word32(H2 * 5 + 79);
@@ -1177,46 +1185,46 @@ begin
       T1 := Word32(H1 shl 11) xor (H1 shr 5) xor Word32(H2 shl 17) xor (H2 shr 19);
       T2 := Word32(H2 shl 7)  xor (H2 shr 3) xor Word32(H1 shl 15) xor (H1 shr 17);
 
-      H := (Word64(T1) shl 32) or T2;
+      Hash := (Word64(T1) shl 32) or T2;
     end;
 
-  Result := H;
+  Result := Hash;
 end;
 
 function fclHash2String64B(const AStr: RawByteString; const AAsciiCaseSensitive: Boolean): Word64;
 var
-  H : Word64;
-  L : Integer;
-  I : Integer;
-  C : ByteChar;
-  D : Word64;
-  F : Word64;
+  Hash   : Word64;
+  Len    : NativeInt;
+  Idx    : NativeInt;
+  C      : ByteChar;
+  D      : Word64;
+  F      : Word64;
   H1, H2 : Word32;
   T1, T2 : Word32;
 begin
-  H := $5A1F7301B3E05962;
-  L := Length(AStr);
-  for I := 1 to L do
+  Hash := $5A1F7301B3E05962;
+  Len := Length(AStr);
+  for Idx := 1 to Len do
     begin
-      C := AStr[I];
+      C := AStr[Idx];
       D := Ord(C);
       if not AAsciiCaseSensitive then
         if (D >= Ord('a')) and (D <= Ord('z')) then
           Dec(D, 32);
 
       F := D xor (D shl 16) xor (D shl 32) xor (D shl 48);
-      H := H xor F;
+      Hash := Hash xor F;
 
-      F := L xor (Word64(I) shl 18) xor (Word64(L) shl 28) xor (Word64(I) shl 31);
-      H := H xor F;
+      F := Len xor (Word64(Idx) shl 18) xor (Word64(Len) shl 28) xor (Word64(Idx) shl 31);
+      Hash := Hash xor F;
 
-      H := TransformHash(H);
+      Hash := TransformHash(Hash);
 
-      H1 := Word32(H shr 32);
-      H2 := Word32(H and $FFFFFFFF);
+      H1 := Word32(Hash shr 32);
+      H2 := Word32(Hash and $FFFFFFFF);
 
-      H1 := Word32(H1 + Word32(I) + Word32(D));
-      H2 := Word32(H2 + Word32(I) + Word32(L));
+      H1 := Word32(H1 + Word32(Idx) + Word32(D));
+      H2 := Word32(H2 + Word32(Idx) + Word32(Len));
 
       H1 := Word32(H1 * 73 + 1);
       H2 := Word32(H2 * 5 + 79);
@@ -1224,75 +1232,75 @@ begin
       T1 := Word32(H1 shl 11) xor (H1 shr 5) xor Word32(H2 shl 17) xor (H2 shr 19);
       T2 := Word32(H2 shl 7)  xor (H2 shr 3) xor Word32(H1 shl 15) xor (H1 shr 17);
 
-      H := (Word64(T1) shl 32) or T2;
+      Hash := (Word64(T1) shl 32) or T2;
     end;
 
-  Result := H;
+  Result := Hash;
 end;
 
 { FCL Hash3 }
 
 function fclHash3HashBuf32(const Buf; const BufSize: NativeInt): Word32;
 var
-  H : Word32;
-  P : PByte;
-  I : NativeInt;
+  Hash : Word32;
+  Ptr  : PByte;
+  Idx  : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  H := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufSize - 1 do
+  Hash := $FFFFFFFF;
+  Ptr := @Buf;
+  for Idx := 0 to BufSize - 1 do
     begin
-      H := CRC32Table[Byte(H) xor P^] xor (H shr 8);
-      Inc(P);
+      Hash := CRC32Table[Byte(Hash) xor Ptr^] xor (Hash shr 8);
+      Inc(Ptr);
     end;
-  Result := H;
+  Result := Hash;
 end;
 
 function fclHash3HashBufNoAsciiCase32B(const Buf; const BufSize: NativeInt): Word32;
 var
-  H : Word32;
-  P : PByte;
-  C : Byte;
-  I : NativeInt;
+  Hash : Word32;
+  Ptr  : PByte;
+  C    : Byte;
+  Idx  : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  H := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufSize - 1 do
+  Hash := $FFFFFFFF;
+  Ptr := @Buf;
+  for Idx := 0 to BufSize - 1 do
     begin
-      C := P^;
+      C := Ptr^;
       if (C >= Ord('a')) and (C <= Ord('z')) then
         Dec(C, 32);
-      H := CRC32Table[Byte(H) xor C] xor (H shr 8);
-      Inc(P);
+      Hash := CRC32Table[Byte(Hash) xor C] xor (Hash shr 8);
+      Inc(Ptr);
     end;
-  Result := H;
+  Result := Hash;
 end;
 
 function fclHash3HashBufNoAsciiCase32W(const Buf; const BufLength: NativeInt): Word32;
 var
-  H : Word32;
-  P : PWideChar;
-  C : Word16;
-  I : NativeInt;
+  Hash : Word32;
+  Ptr  : PWideChar;
+  Ch   : Word16;
+  Idx  : NativeInt;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  H := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufLength - 1 do
+  Hash := $FFFFFFFF;
+  Ptr := @Buf;
+  for Idx := 0 to BufLength - 1 do
     begin
-      C := Ord(P^);
-      if (C >= Ord('a')) and (C <= Ord('z')) then
-        Dec(C, 32);
-      H := CRC32Table[Byte(H) xor Byte(C)] xor (H shr 8);
-      H := CRC32Table[Byte(H) xor Byte(C shr 8)] xor (H shr 8);
-      Inc(P);
+      Ch := Ord(Ptr^);
+      if (Ch >= Ord('a')) and (Ch <= Ord('z')) then
+        Dec(Ch, 32);
+      Hash := CRC32Table[Byte(Hash) xor Byte(Ch)] xor (Hash shr 8);
+      Hash := CRC32Table[Byte(Hash) xor Byte(Ch shr 8)] xor (Hash shr 8);
+      Inc(Ptr);
     end;
-  Result := H;
+  Result := Hash;
 end;
 
 function fclHash3String32(const AStr: String; const AAsciiCaseSensitive: Boolean): Word32;
@@ -1313,34 +1321,34 @@ end;
 
 function fclHash3Integer32Int32(const Value: Int32): Word32;
 var
-  H : Word32;
+  Hash : Word32;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  H := $FFFFFFFF;
-  H := CRC32Table[Byte(H) xor Byte(Word32(Value))] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word32(Value) shr 8)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word32(Value) shr 16)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word32(Value) shr 24)] xor (H shr 8);
-  Result := H;
+  Hash := $FFFFFFFF;
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word32(Value))] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word32(Value) shr 8)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word32(Value) shr 16)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word32(Value) shr 24)] xor (Hash shr 8);
+  Result := Hash;
 end;
 
 function fclHash3Integer32Int64(const Value: Int64): Word32;
 var
-  H : Word32;
+  Hash : Word32;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
-  H := $FFFFFFFF;
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value))] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 8)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 16)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 24)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 32)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 40)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 48)] xor (H shr 8);
-  H := CRC32Table[Byte(H) xor Byte(Word64(Value) shr 56)] xor (H shr 8);
-  Result := H;
+  Hash := $FFFFFFFF;
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value))] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 8)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 16)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 24)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 32)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 40)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 48)] xor (Hash shr 8);
+  Hash := CRC32Table[Byte(Hash) xor Byte(Word64(Value) shr 56)] xor (Hash shr 8);
+  Result := Hash;
 end;
 
 function fclHash3Integer32NativeInt(const Value: NativeInt): Word32;
@@ -1361,101 +1369,101 @@ end;
 
 function fclHash3HashBuf64(const Buf; const BufSize: NativeInt): Word64;
 var
-  H1 : Word32;
-  H2 : Word32;
-  P : PByte;
-  C : Byte;
-  D : Byte;
-  I : NativeInt;
-  T1 : Word32;
-  T2 : Word32;
-  H : Word64;
+  H1   : Word32;
+  H2   : Word32;
+  Ptr  : PByte;
+  C    : Byte;
+  D    : Byte;
+  Idx  : NativeInt;
+  T1   : Word32;
+  T2   : Word32;
+  Hash : Word64;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
   H1 := $FFFFFFFF;
   H2 := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufSize - 1 do
+  Ptr := @Buf;
+  for Idx := 0 to BufSize - 1 do
     begin
-      C := P^;
+      C := Ptr^;
       H1 := CRC32Table[Byte(H1) xor C] xor (H1 shr 8);
-      D := not Byte(NativeInt(C) + I + BufSize);
+      D := not Byte(NativeInt(C) + Idx + BufSize);
       H2 := CRC32Table[Byte(H2) xor D] xor (H2 shr 8);
-      Inc(P);
+      Inc(Ptr);
     end;
   T1 := Word32(H1 shl 11) xor (H1 shr 5) xor Word32(H2 shl 17) xor (H2 shr 19);
   T2 := Word32(H2 shl 7)  xor (H2 shr 3) xor Word32(H1 shl 15) xor (H1 shr 17);
-  H := (Word64(T1) shl 32) or T2;
-  Result := H;
+  Hash := (Word64(T1) shl 32) or T2;
+  Result := Hash;
 end;
 
 function fclHash3HashBufNoAsciiCase64B(const Buf; const BufSize: NativeInt): Word64;
 var
-  H1 : Word32;
-  H2 : Word32;
-  P : PByte;
-  C : Byte;
-  D : Byte;
-  I : NativeInt;
-  T1 : Word32;
-  T2 : Word32;
-  H : Word64;
+  H1   : Word32;
+  H2   : Word32;
+  Ptr  : PByte;
+  C    : Byte;
+  D    : Byte;
+  Idx  : NativeInt;
+  T1   : Word32;
+  T2   : Word32;
+  Hash : Word64;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
   H1 := $FFFFFFFF;
   H2 := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufSize - 1 do
+  Ptr := @Buf;
+  for Idx := 0 to BufSize - 1 do
     begin
-      C := P^;
+      C := Ptr^;
       if (C >= Ord('a')) and (C <= Ord('z')) then
         Dec(C, 32);
       H1 := CRC32Table[Byte(H1) xor C] xor (H1 shr 8);
-      D := not Byte(NativeInt(C) + I + BufSize);
+      D := not Byte(NativeInt(C) + Idx + BufSize);
       H2 := CRC32Table[Byte(H2) xor D] xor (H2 shr 8);
-      Inc(P);
+      Inc(Ptr);
     end;
   T1 := Word32(H1 shl 11) xor (H1 shr 5) xor Word32(H2 shl 17) xor (H2 shr 19);
   T2 := Word32(H2 shl 7)  xor (H2 shr 3) xor Word32(H1 shl 15) xor (H1 shr 17);
-  H := (Word64(T1) shl 32) or T2;
-  Result := H;
+  Hash := (Word64(T1) shl 32) or T2;
+  Result := Hash;
 end;
 
 function fclHash3HashBufNoAsciiCase64W(const Buf; const BufSize: NativeInt): Word64;
 var
-  H1 : Word32;
-  H2 : Word32;
-  P : PWideChar;
-  C : Word16;
-  D : Word16;
-  I : NativeInt;
-  T1 : Word32;
-  T2 : Word32;
-  H : Word64;
+  H1   : Word32;
+  H2   : Word32;
+  Ptr  : PWideChar;
+  C    : Word16;
+  D    : Word16;
+  Idx  : NativeInt;
+  T1   : Word32;
+  T2   : Word32;
+  Hash : Word64;
 begin
   if not CRC32TableInit then
     InitCRC32Table;
   H1 := $FFFFFFFF;
   H2 := $FFFFFFFF;
-  P := @Buf;
-  for I := 0 to BufSize - 1 do
+  Ptr := @Buf;
+  for Idx := 0 to BufSize - 1 do
     begin
-      C := Ord(P^);
+      C := Ord(Ptr^);
       if (C >= Ord('a')) and (C <= Ord('z')) then
         Dec(C, 32);
       H1 := CRC32Table[Byte(H1) xor Byte(C)] xor (H1 shr 8);
       H1 := CRC32Table[Byte(H1) xor Byte(C shr 8)] xor (H1 shr 8);
-      D := not Byte(NativeInt(C) + I + BufSize);
+      D := not Byte(NativeInt(C) + Idx + BufSize);
       H2 := CRC32Table[Byte(H2) xor Byte(D)] xor (H2 shr 8);
       H2 := CRC32Table[Byte(H2) xor Byte(D shr 8)] xor (H2 shr 8);
-      Inc(P);
+      Inc(Ptr);
     end;
   T1 := Word32(H1 shl 11) xor (H1 shr 5) xor Word32(H2 shl 17) xor (H2 shr 19);
   T2 := Word32(H2 shl 7)  xor (H2 shr 3) xor Word32(H1 shl 15) xor (H1 shr 17);
-  H := (Word64(T1) shl 32) or T2;
-  Result := H;
+  Hash := (Word64(T1) shl 32) or T2;
+  Result := Hash;
 end;
 
 function fclHash3String64(const AStr: String; const AAsciiCaseSensitive: Boolean): Word64;
@@ -1488,8 +1496,6 @@ function fclHash3Pointer64(const Value: Pointer): Word64;
 begin
   Result := fclHash3Integer64NativeInt(NativeInt(Value));
 end;
-
-
 {$IFDEF QOn}{$Q+}{$ENDIF}
 {$IFDEF ROn}{$R+}{$ENDIF}
 
