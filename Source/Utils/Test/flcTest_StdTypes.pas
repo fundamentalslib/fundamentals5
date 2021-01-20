@@ -1,3 +1,4 @@
+{$INCLUDE ../../flcInclude.inc}
 {$INCLUDE flcTest_Include.inc}
 
 unit flcTest_StdTypes;
