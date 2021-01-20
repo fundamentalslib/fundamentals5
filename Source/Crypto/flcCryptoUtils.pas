@@ -1,11 +1,11 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcCipherRC4.pas                                         }
-{   File version:     5.06                                                     }
-{   Description:      RC4 cipher routines                                      }
+{   File name:        flcCryptoUtils.pas                                       }
+{   File version:     5.01                                                     }
+{   Description:      Crypto utils                                             }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -34,116 +34,103 @@
 {   Github:           https://github.com/fundamentalslib                       }
 {   E-mail:           fundamentals.library at gmail.com                        }
 {                                                                              }
-{ References:                                                                  }
-{                                                                              }
-{   * www.mozilla.org/projects/security/pki/nss/                               }
-{       draft-kaukonen-cipher-arcfour-03.txt                                   }
-{                                                                              }
 { Revision history:                                                            }
 {                                                                              }
-{   2007/01/05  4.01  Initial version.                                         }
+{   2020/12/29  5.01  Create flcCryptoUtils from Cipher units.                 }
 {                                                                              }
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcCrypto.inc}
 
-unit flcCipherRC4;
+unit flcCryptoUtils;
 
 interface
 
 uses
+  SysUtils,
+
   flcStdTypes;
 
-  
+
 
 {                                                                              }
-{ RC4                                                                          }
-{ Also known as Arcfour.                                                       }
+{ Secure memory clear                                                          }
+{   Used to clear keys and other sensitive data from memory.                   }
+{   Memory is overwritten with zeros before releasing reference.               }
 {                                                                              }
-type
-  TRC4SBox = packed array[Byte] of Byte;
-  TRC4Context = packed record
-    S  : TRC4SBox;
-    SI : Byte;
-    SJ : Byte;
-  end;
-  PRC4Context = ^TRC4Context;
-
-procedure RC4Init(const Key; const KeySize: Integer; var Context: TRC4Context);
-procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: NativeInt);
+procedure SecureClearBuf(var Buf; const BufSize: NativeInt);
+procedure SecureClearBytes(var B: TBytes);
+procedure SecureClearStrB(var S: RawByteString);
+procedure SecureClearStrU(var S: UnicodeString);
+procedure SecureClearStr(var S: String);
 
 
 
 implementation
 
+{$IFNDEF SupportStringRefCount}
 uses
-  { Cipher }
-  flcCipherUtils;
+  flcUtils;
+{$ENDIF}
 
 
-  
+
 {                                                                              }
-{ RC4                                                                          }
+{ Secure memory clear                                                          }
 {                                                                              }
-procedure RC4Init(const Key; const KeySize: Integer; var Context: TRC4Context);
-type
-  TRC4KeyBuffer = array[Byte] of Byte;
-  PRC4KeyBuffer = ^TRC4KeyBuffer;
-var I, J, T : Byte;
-    K       : PRC4KeyBuffer;
+procedure SecureClearBuf(var Buf; const BufSize: NativeInt);
 begin
-  // Validate parameters
-  if KeySize > 256 then
-    raise ECipher.Create(CipherError_InvalidKeySize, 'Maximum RC4 key length is 256');
-  if KeySize < 1 then
-    raise ECipher.Create(CipherError_InvalidKeySize, 'Minimum RC4 key length is 1');
-  // Prepare RC4 context
-  with Context do
-    begin
-      for I := 0 to 255 do
-        S[I] := I;
-      K := @Key;
-      J := 0;
-      for I := 0 to 255 do
-        begin
-          J := Byte(Byte(J + S[I]) + K^[I mod KeySize]);
-          T := S[I];
-          S[I] := S[J];
-          S[J] := T;
-        end;
-      SI := 0;
-      SJ := 0;
-    end;
+  if BufSize <= 0 then
+    exit;
+  FillChar(Buf, BufSize, #$00);
 end;
 
-procedure RC4Buffer(var Context: TRC4Context; var Buffer; const BufferSize: NativeInt);
+procedure SecureClearBytes(var B: TBytes);
 var
-  SI : Byte;
-  SJ : Byte;
-  P  : PByte;
-  F  : NativeInt;
-  T  : Byte;
-  U  : Byte;
+  L : NativeInt;
 begin
-  SI := Context.SI;
-  SJ := Context.SJ;
-  P := @Buffer;
-  for F := 0 to BufferSize - 1 do
-    begin
-      SI := Byte(SI + 1);
-      T := Context.S[SI];
-      SJ := Byte(SJ + T);
-      U := Context.S[SJ];
-      Context.S[SI] := U;
-      Context.S[SJ] := T;
-      T := Byte(T + U);
-      T := Context.S[T];
-      P^ := P^ xor T;
-      Inc(P);
-    end;
-  Context.SI := SI;
-  Context.SJ := SJ;
+  L := Length(B);
+  if L = 0 then
+    exit;
+  SecureClearBuf(Pointer(B)^, L);
+  SetLength(B, 0);
+end;
+
+procedure SecureClearStrB(var S: RawByteString);
+var
+  L : NativeInt;
+begin
+  L := Length(S);
+  if L = 0 then
+    exit;
+  if StringRefCount(S) > 0 then
+    SecureClearBuf(PByteChar(S)^, L);
+  SetLength(S, 0);
+end;
+
+procedure SecureClearStrU(var S: UnicodeString);
+var
+  L : NativeInt;
+begin
+  L := Length(S);
+  if L = 0 then
+    exit;
+  if StringRefCount(S) > 0 then
+    SecureClearBuf(PWideChar(S)^, L * SizeOf(WideChar));
+  S := '';
+end;
+
+procedure SecureClearStr(var S: String);
+var
+  L : NativeInt;
+begin
+  L := Length(S);
+  if L = 0 then
+    exit;
+  if StringRefCount(S) > 0 then
+    SecureClearBuf(PChar(S)^, L * SizeOf(Char));
+  S := '';
 end;
 
 

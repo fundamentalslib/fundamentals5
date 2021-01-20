@@ -3,9 +3,9 @@
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcCipherUtils.pas                                       }
 {   File version:     5.03                                                     }
-{   Description:      Cipher library                                           }
+{   Description:      Cipher utilities                                         }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -42,7 +42,8 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE flcCipher.inc}
+{$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
 unit flcCipherUtils;
 
@@ -69,6 +70,8 @@ const
   CipherError_InvalidBuffer     = 6;
   CipherError_InvalidData       = 7;
 
+
+
 type
   ECipher = class(Exception)
   protected
@@ -77,17 +80,6 @@ type
     constructor Create(const ErrorCode: Integer; const Msg: String);
     property ErrorCode: Integer read FErrorCode;
   end;
-
-
-
-{                                                                              }
-{ Secure clear                                                                 }
-{                                                                              }
-procedure SecureClearBuf(var Buffer; const BufferSize: NativeInt);
-procedure SecureClearBytes(var B: TBytes);
-procedure SecureClearStrB(var S: RawByteString);
-procedure SecureClearStrU(var S: UnicodeString);
-procedure SecureClearStr(var S: String); inline;
 
 
 
@@ -102,59 +94,6 @@ constructor ECipher.Create(const ErrorCode: Integer; const Msg: String);
 begin
   FErrorCode := ErrorCode;
   inherited Create(Msg);
-end;
-
-
-
-{                                                                              }
-{ Secure clear helper function                                                 }
-{   Clears a piece of memory before it is released to help prevent             }
-{   sensitive information from being exposed.                                  }
-{                                                                              }
-procedure SecureClearBuf(var Buffer; const BufferSize: NativeInt);
-begin
-  if BufferSize <= 0 then
-    exit;
-  FillChar(Buffer, BufferSize, $00);
-end;
-
-procedure SecureClearBytes(var B: TBytes);
-begin
-  SecureClearBuf(Pointer(B)^, Length(B));
-  B := nil;
-end;
-
-procedure SecureClearStrB(var S: RawByteString);
-var
-  L : NativeInt;
-begin
-  L := Length(S);
-  if L = 0 then
-    exit;
-  if StringRefCount(S) > 0 then
-    SecureClearBuf(Pointer(S)^, L);
-  SetLength(S, 0);
-end;
-
-procedure SecureClearStrU(var S: UnicodeString);
-var
-  L : NativeInt;
-begin
-  L := Length(S);
-  if L = 0 then
-    exit;
-  if StringRefCount(S) > 0 then
-    SecureClearBuf(Pointer(S)^, L * SizeOf(WideChar));
-  SetLength(S, 0);
-end;
-
-procedure SecureClearStr(var S: String);
-begin
-  {$IFDEF StringIsUnicode}
-  SecureClearStrU(S);
-  {$ELSE}
-  SecureClearStrB(S);
-  {$ENDIF}
 end;
 
 

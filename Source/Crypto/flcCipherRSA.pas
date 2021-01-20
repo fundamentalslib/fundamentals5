@@ -5,7 +5,7 @@
 {   File version:     5.11                                                     }
 {   Description:      RSA cipher routines                                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2008-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2008-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -56,7 +56,8 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE flcCipher.inc}
+{$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
 unit flcCipherRSA;
 
@@ -68,8 +69,8 @@ uses
 
   { Fundamentals }
   flcStdTypes,
-  flcHash,
-  flcHugeInt;
+  flcHugeInt,
+  flcCryptoHash;
 
 
 
@@ -325,7 +326,7 @@ function  RSACheckSignature(
 procedure Test;
 {$ENDIF}
 {$IFDEF OS_WIN}
-{$IFDEF CIPHER_PROFILE}
+{$IFDEF CRYPTO_PROFILE}
 procedure Profile;
 {$ENDIF}
 {$ENDIF}
@@ -337,7 +338,7 @@ implementation
 uses
   { System }
   {$IFDEF OS_WIN}
-  {$IFDEF CIPHER_PROFILE}
+  {$IFDEF CRYPTO_PROFILE}
   Windows,
   {$ENDIF}
   {$ENDIF}
@@ -1377,6 +1378,20 @@ end;
 
 { EMSA_PKCS1 }
 
+{$IFDEF DELPHI7}
+function GetRSAHashTypeDigestInfo(const HashType: TRSAHashType): TBytes;
+begin
+  case HashType of
+    rsahfMD5    : BytesInit(Result, [$30, $20, $30, $0c, $06, $08, $2a, $86, $48, $86, $f7, $0d, $02, $05, $05, $00, $04, $10]);
+    rsahfSHA1   : BytesInit(Result, [$30, $21, $30, $09, $06, $05, $2b, $0e, $03, $02, $1a, $05, $00, $04, $14]);
+    rsahfSHA256 : BytesInit(Result, [$30, $31, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $01, $05, $00, $04, $20]);
+    rsahfSHA384 : BytesInit(Result, [$30, $41, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $02, $05, $00, $04, $30]);
+    rsahfSHA512 : BytesInit(Result, [$30, $51, $30, $0d, $06, $09, $60, $86, $48, $01, $65, $03, $04, $02, $03, $05, $00, $04, $40]);
+  else
+    Result := nil;
+  end;
+end;
+{$ELSE}
 function GetRSAHashTypeDigestInfo(const HashType: TRSAHashType): TBytes;
 begin
   case HashType of
@@ -1389,6 +1404,8 @@ begin
     Result := nil;
   end;
 end;
+{$ENDIF}
+
 
 const
   RSAHashTypeDigestSize : array[TRSAHashType] of Int32 = (
@@ -1904,9 +1921,19 @@ end;
 {$ENDIF}
 
 {$IFDEF OS_WIN}
-{$IFDEF CIPHER_PROFILE}
+{$IFDEF CRYPTO_PROFILE}
+// Generate keys:
+//   1024 bit ~ 1s
+//   1280 bit ~ 2s 5s
+//   1536 bit ~ 3s
+//   1792 bit ~ 9s
+//   1920 bit ~ 9s
+//   2048 bit ~ 18s 18s
+//   2560 bit ~ 32s
+//   3072 bit ~ 35s 35s
+//   4096 bit ~ 88s 89s
 procedure Profile;
-const KeySize = 1024 + 512;
+const KeySize = 2048;
 var T : Word32;
     Pri, Pr2 : TRSAPrivateKey;
     Pub, Pu2 : TRSAPublicKey;

@@ -1,22 +1,28 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        flcCipher.inc                                            }
-{   Description:      Cipher library defines                                   }
+{   File name:        flcCrypto.inc                                            }
+{   Description:      Crypto library defines                                   }
 {                                                                              }
 {******************************************************************************}
 
 {.DEFINE DEBUG}
 {.DEFINE TEST}
+{.DEFINE PROFILE}
 
-{$INCLUDE ..\flcInclude.inc}
+{.DEFINE Cipher_SupportEC}
+{.DEFINE Cipher_SupportRSA}
 
 {$IFDEF DEBUG}
 {$IFDEF TEST}
+  {$DEFINE CRYPTO_TEST}
   {$DEFINE CIPHER_TEST}
 {$ENDIF}
+{$ENDIF}
+
+{$IFDEF DEBUG}
 {$IFDEF PROFILE}
-  {$DEFINE CIPHER_PROFILE}
+  {$DEFINE CRYPTO_PROFILE}
 {$ENDIF}
 {$ENDIF}
 

@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      Cipher Test                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -47,9 +47,8 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE flcCipher.inc}
-
-{$DEFINE Cipher_SupportEC}
+{$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
 unit flcCipherTest;
 
@@ -76,7 +75,7 @@ uses
 
   flcStdTypes,
   flcUtils,
-  flcCipherRandom,
+  flcCryptoRandom,
   flcCipherRC2,
   flcCipherAES,
   flcCipherDES,
@@ -456,11 +455,11 @@ begin
   Assert(Length(SecureRandomHexStr(513)) = 513);
   Assert(Length(SecureRandomHexStrU(513)) = 513);
 
-  Assert(Length(SecureRandomStrA(0)) = 0);
-  Assert(Length(SecureRandomStrA(1)) = 1);
-  Assert(Length(SecureRandomStrA(1023)) = 1023);
-  Assert(Length(SecureRandomStrA(1024)) = 1024);
-  Assert(Length(SecureRandomStrA(1025)) = 1025);
+  Assert(Length(SecureRandomStrB(0)) = 0);
+  Assert(Length(SecureRandomStrB(1)) = 1);
+  Assert(Length(SecureRandomStrB(1023)) = 1023);
+  Assert(Length(SecureRandomStrB(1024)) = 1024);
+  Assert(Length(SecureRandomStrB(1025)) = 1025);
 end;
 
 procedure Test;

@@ -1,12 +1,12 @@
 {******************************************************************************}
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
-{   File name:        cASN1.pas                                                }
-{   File version:     5.05                                                     }
+{   File name:        flcEncodingASN1.pas                                      }
+{   File version:     5.06                                                     }
 {   Description:      Abstract Syntax Notation One (ASN.1)                     }
 {                     BER (Basic Encoding Routines)                            }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -51,6 +51,7 @@
 {   2011/04/02  0.03  Compilable with Delphi 5.                                }
 {   2018/07/17  5.04  Revised for Fundamentals 5.                              }
 {   2018/08/12  5.05  String type changes.                                     }
+{   2020/06/08  5.06  Integer type changes.                                    }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -58,20 +59,12 @@
 {   Delphi 10.2-10.4 Linux64            5.05  2020/06/02                       }
 {   FreePascal 3.0.4 Win64              5.05  2020/06/02                       }
 {                                                                              }
-{ Todo:                                                                        }
-{ - Parser to str repr                                                         }
-{ - Parser to dom                                                              }
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
-{$IFDEF DEBUG}
-{$IFDEF TEST}
-  {$DEFINE ASN1_TEST}
-{$ENDIF}
-{$ENDIF}
-
-unit flcASN1;
+unit flcEncodingASN1;
 
 interface
 
@@ -144,12 +137,12 @@ const
 { Object identifiers  }
 
 type
-  TASN1ObjectIdentifier = array of Integer;
+  TASN1ObjectIdentifier = array of Int32;
 
-procedure ASN1OIDInit(var A: TASN1ObjectIdentifier; const B: array of Integer);
+procedure ASN1OIDInit(var A: TASN1ObjectIdentifier; const B: array of Int32);
 function  ASN1OIDToStrB(const A: TASN1ObjectIdentifier): RawByteString;
 function  ASN1OIDToStr(const A: TASN1ObjectIdentifier): String;
-function  ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Integer): Boolean;
+function  ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Int32): Boolean;
 
 
 
@@ -157,73 +150,73 @@ function  ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Integer
 
 const
   // PKCS-1
-  OID_PKCS_1         : array[0..5] of Integer = (1, 2,  840, 113549, 1,   1);
-  OID_RSA            : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  1);
-  OID_RSA_PKCS1_MD2  : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  2);
-  OID_RSA_PKCS1_MD5  : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  4);
-  OID_RSA_PKCS1_SHA1 : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  5);
-  OID_RSA_OAEP       : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  7);
-  OID_RSA_MGF1       : array[0..6] of Integer = (1, 2,  840, 113549, 1,   1,  8);
+  OID_PKCS_1         : array[0..5] of Int32 = (1, 2,  840, 113549, 1,   1);
+  OID_RSA            : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  1);
+  OID_RSA_PKCS1_MD2  : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  2);
+  OID_RSA_PKCS1_MD5  : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  4);
+  OID_RSA_PKCS1_SHA1 : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  5);
+  OID_RSA_OAEP       : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  7);
+  OID_RSA_MGF1       : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   1,  8);
 
   // PKCS#3
-  OID_PKCS_3         : array[0..5] of Integer = (1, 2,  840, 113549, 1,   3);
-  OID_DHKeyAgreement : array[0..6] of Integer = (1, 2,  840, 113549, 1,   3,  1);
+  OID_PKCS_3         : array[0..5] of Int32 = (1, 2,  840, 113549, 1,   3);
+  OID_DHKeyAgreement : array[0..6] of Int32 = (1, 2,  840, 113549, 1,   3,  1);
 
   // PKCS-9/Signatures/SMIME/alg
-  OID_PKCS_9         : array[0..5] of Integer = (1, 2,  840, 113549, 1,   9);
-  OID_3DES_wrap      : array[0..8] of Integer = (1, 2,  840, 113549, 1,   9,  16, 3, 6);
-  OID_RC2_wrap       : array[0..8] of Integer = (1, 2,  840, 113549, 1,   9,  16, 3, 7);
-  OID_HMAC_3DES_wrap : array[0..8] of Integer = (1, 2,  840, 113549, 1,   9,  16, 3, 11);
-  OID_HMAC_AES_wrap  : array[0..8] of Integer = (1, 2,  840, 113549, 1,   9,  16, 3, 12);
+  OID_PKCS_9         : array[0..5] of Int32 = (1, 2,  840, 113549, 1,   9);
+  OID_3DES_wrap      : array[0..8] of Int32 = (1, 2,  840, 113549, 1,   9,  16, 3, 6);
+  OID_RC2_wrap       : array[0..8] of Int32 = (1, 2,  840, 113549, 1,   9,  16, 3, 7);
+  OID_HMAC_3DES_wrap : array[0..8] of Int32 = (1, 2,  840, 113549, 1,   9,  16, 3, 11);
+  OID_HMAC_AES_wrap  : array[0..8] of Int32 = (1, 2,  840, 113549, 1,   9,  16, 3, 12);
 
   // PKCS#2
-  OID_MD2            : array[0..5] of Integer = (1, 2,  840, 113549, 2,   2);
-  OID_MD4            : array[0..5] of Integer = (1, 2,  840, 113549, 2,   4);
-  OID_MD5            : array[0..5] of Integer = (1, 2,  840, 113549, 2,   5);
-  OID_HMAC_SHA1      : array[0..5] of Integer = (1, 2,  840, 113549, 2,   7);
-  OID_HMAC_SHA224    : array[0..5] of Integer = (1, 2,  840, 113549, 2,   8);
-  OID_HMAC_SHA256    : array[0..5] of Integer = (1, 2,  840, 113549, 2,   9);
-  OID_HMAC_SHA384    : array[0..5] of Integer = (1, 2,  840, 113549, 2,   10);
-  OID_HMAC_SHA512    : array[0..5] of Integer = (1, 2,  840, 113549, 2,   11);
+  OID_MD2            : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   2);
+  OID_MD4            : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   4);
+  OID_MD5            : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   5);
+  OID_HMAC_SHA1      : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   7);
+  OID_HMAC_SHA224    : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   8);
+  OID_HMAC_SHA256    : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   9);
+  OID_HMAC_SHA384    : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   10);
+  OID_HMAC_SHA512    : array[0..5] of Int32 = (1, 2,  840, 113549, 2,   11);
 
   // rsadsi/encryptionalgorithm
-  OID_RC2_CBC        : array[0..5] of Integer = (1, 2,  840, 113549, 3,   2);
-  OID_RC2_ECB        : array[0..5] of Integer = (1, 2,  840, 113549, 3,   3);
-  OID_RC4            : array[0..5] of Integer = (1, 2,  840, 113549, 3,   4);
-  OID_RC4_MAC        : array[0..5] of Integer = (1, 2,  840, 113549, 3,   5);
-  OID_DES_CBC        : array[0..5] of Integer = (1, 2,  840, 113549, 3,   6);
-  OID_DES_EDE3_CBC   : array[0..5] of Integer = (1, 2,  840, 113549, 3,   7);
-  OID_RC5_CBC        : array[0..5] of Integer = (1, 2,  840, 113549, 3,   8);
-  OID_RC5_CBCPad     : array[0..5] of Integer = (1, 2,  840, 113549, 3,   9);
+  OID_RC2_CBC        : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   2);
+  OID_RC2_ECB        : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   3);
+  OID_RC4            : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   4);
+  OID_RC4_MAC        : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   5);
+  OID_DES_CBC        : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   6);
+  OID_DES_EDE3_CBC   : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   7);
+  OID_RC5_CBC        : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   8);
+  OID_RC5_CBCPad     : array[0..5] of Int32 = (1, 2,  840, 113549, 3,   9);
 
   // X9-57
-  OID_DSA            : array[0..5] of Integer = (1, 2,  840, 10040,  4,   1);
-  OID_DSA_SHA1       : array[0..5] of Integer = (1, 2,  840, 10040,  4,   3);
+  OID_DSA            : array[0..5] of Int32 = (1, 2,  840, 10040,  4,   1);
+  OID_DSA_SHA1       : array[0..5] of Int32 = (1, 2,  840, 10040,  4,   3);
 
   // secsig
-  OID_SHA1           : array[0..5] of Integer = (1, 3,  14,  3,      2,   26);
+  OID_SHA1           : array[0..5] of Int32 = (1, 3,  14,  3,      2,   26);
 
 
 
 { Encode }
 
-function ASN1EncodeLength(const Len: Integer): RawByteString;
+function ASN1EncodeLength(const Len: NativeInt): RawByteString;
 function ASN1EncodeObj(const TypeID: Byte; const Data: RawByteString): RawByteString;
 
 function ANS1EncodeEndOfContent: RawByteString;
 function ASN1EncodeNull: RawByteString;
 function ASN1EncodeBoolean(const A: Boolean): RawByteString;
-function ASN1EncodeDataInteger8(const A: ShortInt): RawByteString;
-function ASN1EncodeDataInteger16(const A: SmallInt): RawByteString;
+function ASN1EncodeDataInteger8(const A: Int8): RawByteString;
+function ASN1EncodeDataInteger16(const A: Int16): RawByteString;
 function ASN1EncodeDataInteger24(const A: Int32): RawByteString;
 function ASN1EncodeDataInteger32(const A: Int32): RawByteString;
 function ASN1EncodeDataInteger64(const A: Int64): RawByteString;
-function ASN1EncodeInteger8(const A: ShortInt): RawByteString;
-function ASN1EncodeInteger16(const A: SmallInt): RawByteString;
+function ASN1EncodeInteger8(const A: Int8): RawByteString;
+function ASN1EncodeInteger16(const A: Int16): RawByteString;
 function ASN1EncodeInteger24(const A: Int32): RawByteString;
 function ASN1EncodeInteger32(const A: Int32): RawByteString;
 function ASN1EncodeInteger64(const A: Int64): RawByteString;
-function ASN1EncodeIntegerBuf(const A; const Size: Integer): RawByteString;
+function ASN1EncodeIntegerBuf(const A; const Size: NativeInt): RawByteString;
 function ASN1EncodeIntegerBufStr(const A: RawByteString): RawByteString;
 function ASN1EncodeEnumerated(const A: Int64): RawByteString;
 function ASN1EncodeBitString(const A: RawByteString; const UnusedBits: Byte): RawByteString;
@@ -239,67 +232,58 @@ function ASN1EncodeUniversalString(const A: UnicodeString): RawByteString;
 function ASN1EncodeBMPString(const A: UnicodeString): RawByteString;
 function ASN1EncodeUTCTime(const A: TDateTime): RawByteString;
 function ASN1EncodeGeneralizedTime(const A: TDateTime): RawByteString;
-function ASN1EncodeOID(const OID: array of Integer): RawByteString;
+function ASN1EncodeOID(const OID: array of Int32): RawByteString;
 function ASN1EncodeSequence(const A: RawByteString): RawByteString;
 function ASN1EncodeSet(const A: RawByteString): RawByteString;
-function ASN1EncodeContextSpecific(const I: Integer; const A: RawByteString): RawByteString;
+function ASN1EncodeContextSpecific(const I: Int32; const A: RawByteString): RawByteString;
 
 
 
 { Decode }
 
-function ASN1DecodeLength(const Buf; const Size: Integer; var Len: Integer): Integer;
-function ASN1DecodeObjHeader(const Buf; const Size: Integer;
-         var TypeID: Byte; var Len: Integer; var Data: Pointer): Integer;
+function ASN1DecodeLength(const Buf; const Size: NativeInt; var Len: NativeInt): NativeInt;
+function ASN1DecodeObjHeader(const Buf; const Size: NativeInt;
+         var TypeID: Byte; var Len: NativeInt; var Data: Pointer): NativeInt;
 function ASN1TypeIsConstructedType(const TypeID: Byte): Boolean;
-function ASN1TypeIsContextSpecific(const TypeID: Byte; var Idx: Integer): Boolean;
+function ASN1TypeIsContextSpecific(const TypeID: Byte; var Idx: Int32): Boolean;
 
-function ASN1DecodeDataBoolean(const Buf; const Size: Integer; var A: Boolean): Integer;
-function ASN1DecodeDataInteger32(const Buf; const Size: Integer; var A: Int32): Integer;
-function ASN1DecodeDataInteger64(const Buf; const Size: Integer; var A: Int64): Integer;
-function ASN1DecodeDataIntegerBuf(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataBitString(const Buf; const Size: Integer; var A: RawByteString; var UnusedBits: Byte): Integer;
-function ASN1DecodeDataRawByteString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataOctetString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataIA5String(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataVisibleString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataNumericString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataPrintableString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataTeletexString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataUTF8String(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataUniversalString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataBMPString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-function ASN1DecodeDataOID(const Buf; const Size: Integer; var A: TASN1ObjectIdentifier): Integer;
-function ASN1DecodeDataUTCTime(const Buf; const Size: Integer; var A: TDateTime): Integer;
-function ASN1DecodeDataGeneralizedTime(const Buf; const Size: Integer; var A: TDateTime): Integer;
+function ASN1DecodeDataBoolean(const Buf; const Size: NativeInt; var A: Boolean): NativeInt;
+function ASN1DecodeDataInteger32(const Buf; const Size: NativeInt; var A: Int32): NativeInt;
+function ASN1DecodeDataInteger64(const Buf; const Size: NativeInt; var A: Int64): NativeInt;
+function ASN1DecodeDataIntegerBuf(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataBitString(const Buf; const Size: NativeInt; var A: RawByteString; var UnusedBits: Byte): NativeInt;
+function ASN1DecodeDataRawByteString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataOctetString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataIA5String(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataVisibleString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataNumericString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataPrintableString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataTeletexString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataUTF8String(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataUniversalString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataBMPString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeDataOID(const Buf; const Size: NativeInt; var A: TASN1ObjectIdentifier): NativeInt;
+function ASN1DecodeDataUTCTime(const Buf; const Size: NativeInt; var A: TDateTime): NativeInt;
+function ASN1DecodeDataGeneralizedTime(const Buf; const Size: NativeInt; var A: TDateTime): NativeInt;
 
-function ASN1DecodeBoolean(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: Boolean): Integer;
-function ASN1DecodeInteger32(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: Int32): Integer;
-function ASN1DecodeInteger64(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: Int64): Integer;
-function ASN1DecodeIntegerBuf(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: RawByteString): Integer;
-function ASN1DecodeBitString(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: RawByteString; var UnusedBits: Byte): Integer;
-function ASN1DecodeString(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: RawByteString): Integer;
-function ASN1DecodeOID(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: TASN1ObjectIdentifier): Integer;
-function ASN1DecodeTime(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: TDateTime): Integer;
+function ASN1DecodeBoolean(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: Boolean): NativeInt;
+function ASN1DecodeInteger32(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: Int32): NativeInt;
+function ASN1DecodeInteger64(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: Int64): NativeInt;
+function ASN1DecodeIntegerBuf(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeBitString(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: RawByteString; var UnusedBits: Byte): NativeInt;
+function ASN1DecodeString(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: RawByteString): NativeInt;
+function ASN1DecodeOID(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: TASN1ObjectIdentifier): NativeInt;
+function ASN1DecodeTime(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: TDateTime): NativeInt;
 
 type
   TASN1ParseProc =
-      procedure (const TypeID: Byte; const DataBuf; const DataSize: Integer;
-                 const ObjectIdx: Integer; const CallerData: NativeInt);
+      procedure (const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+                 const ObjectIdx: Int32; const CallerData: NativeInt);
 
 function ASN1Parse(
-         const Buf; const Size: Integer;
+         const Buf; const Size: NativeInt;
          const ParseProc: TASN1ParseProc;
-         const CallerData: NativeInt): Integer;
-
-
-
-{                                                                              }
-{ Test                                                                         }
-{                                                                              }
-{$IFDEF ASN1_TEST}
-procedure Test;
-{$ENDIF}
+         const CallerData: NativeInt): NativeInt;
 
 
 
@@ -327,50 +311,16 @@ const
 { Constants }
 
 const
-  MinInt8  = -128;
-  MaxInt8  = 127;
-  MinInt16 = -32768;
-  MaxInt16 = 32767;
   MinInt24 = -8388608;
   MaxInt24 = 8388607;
-  MinInt32 = Low(Int32); // -2147483648;
-  MaxInt32 = 2147483647;
-
-
-
-{ Types }
-
-{$IFDEF DELPHI5}
-type
-  PByte = ^Byte;
-{$ENDIF}
-
-
-
-{ Utilities }
-
-{$IFDEF DELPHI5}
-function TryStrToInt(const S: AnsiString; var I: Integer): Boolean;
-var Error : Integer;
-begin
-  Val(S, I, Error);
-  Result := Error = 0;
-end;
-
-function TryStrToInt64(const S: AnsiString; var I: Int64): Boolean;
-var Error : Integer;
-begin
-  Val(S, I, Error);
-  Result := Error = 0;
-end;
-{$ENDIF}
 
 
 
 { Object identifiers  }
 
-procedure ASN1OIDInit(var A: TASN1ObjectIdentifier; const B: array of Integer);
-var L, I : Integer;
+procedure ASN1OIDInit(var A: TASN1ObjectIdentifier; const B: array of Int32);
+var
+  L, I : NativeInt;
 begin
   L := Length(B);
   SetLength(A, L);
@@ -379,8 +329,9 @@ begin
 end;
 
 function ASN1OIDToStrB(const A: TASN1ObjectIdentifier): RawByteString;
-var I : Integer;
-    S : RawByteString;
+var
+  I : NativeInt;
+  S : RawByteString;
 begin
   SetLength(S, 0);
   for I := 0 to Length(A) - 1 do
@@ -393,8 +344,9 @@ begin
 end;
 
 function ASN1OIDToStr(const A: TASN1ObjectIdentifier): String;
-var I : Integer;
-    S : String;
+var
+  I : NativeInt;
+  S : String;
 begin
   SetLength(S, 0);
   for I := 0 to Length(A) - 1 do
@@ -406,8 +358,9 @@ begin
   Result := S;
 end;
 
-function ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Integer): Boolean;
-var L, M, I : Integer;
+function ASN1OIDEqual(const A: TASN1ObjectIdentifier; const B: array of Int32): Boolean;
+var
+  L, M, I : NativeInt;
 begin
   L := Length(A);
   M := Length(B);
@@ -424,7 +377,7 @@ end;
 
 { Encode }
 
-function ASN1EncodeLength_Short(const Len: Integer): RawByteString;
+function ASN1EncodeLength_Short(const Len: Int32): RawByteString;
 begin
   Assert(Len >= 0);
   Assert(Len <= 127);
@@ -433,9 +386,11 @@ begin
   Result := ByteChar(Len);
 end;
 
-function ASN1EncodeLength_Long(const Len: Integer): RawByteString;
-var N, I : Integer;
-    B : array[0..3] of Byte;
+function ASN1EncodeLength_Long(const Len: NativeInt): RawByteString;
+var
+  N : Int32;
+  I : NativeInt;
+  B : array[0..SizeOf(NativeInt) - 1] of Byte;
 begin
   Assert(Len >= 0);
 
@@ -443,6 +398,7 @@ begin
   N := 0;
   I := Len;
   repeat
+    Assert(N < SizeOf(NativeInt));
     B[N] := I mod $100;
     I := I div $100;
     Inc(N);
@@ -454,7 +410,7 @@ begin
     Result[2 + I] := AnsiChar(B[N - I - 1]);
 end;
 
-function ASN1EncodeLength(const Len: Integer): RawByteString;
+function ASN1EncodeLength(const Len: NativeInt): RawByteString;
 begin
   if Len < $80 then
     Result := ASN1EncodeLength_Short(Len)
@@ -488,13 +444,14 @@ begin
     Result := ASN1EncodeObj(ASN1_ID_BOOLEAN, #$00);
 end;
 
-function ASN1EncodeDataInteger8(const A: ShortInt): RawByteString;
+function ASN1EncodeDataInteger8(const A: Int8): RawByteString;
 begin
   Result := AnsiChar(Byte(A));
 end;
 
-function ASN1EncodeDataInteger16(const A: SmallInt): RawByteString;
-var D : RawByteString;
+function ASN1EncodeDataInteger16(const A: Int16): RawByteString;
+var
+  D : RawByteString;
 begin
   if (A >= MinInt8) and (A <= MaxInt8) then
     Result := ASN1EncodeDataInteger8(A)
@@ -507,7 +464,8 @@ begin
 end;
 
 function ASN1EncodeDataInteger24(const A: Int32): RawByteString;
-var D : RawByteString;
+var
+  D : RawByteString;
 begin
   if (A >= MinInt16) and (A <= MaxInt16) then
     Result := ASN1EncodeDataInteger16(A)
@@ -520,7 +478,8 @@ begin
 end;
 
 function ASN1EncodeDataInteger32(const A: Int32): RawByteString;
-var D : RawByteString;
+var
+  D : RawByteString;
 begin
   if (A >= MinInt24) and (A <= MaxInt24) then
     Result := ASN1EncodeDataInteger24(A)
@@ -533,10 +492,11 @@ begin
 end;
 
 function ASN1EncodeDataInteger64(const A: Int64): RawByteString;
-var D : RawByteString;
-    F : Byte;
-    B : array[0..7] of Byte;
-    I, L : Integer;
+var
+  D : RawByteString;
+  F : Byte;
+  B : array[0..7] of Byte;
+  I, L : Int32;
 begin
   Move(A, B[0], 8);
   if B[7] and $80 <> 0 then
@@ -559,12 +519,12 @@ begin
   Result := D;
 end;
 
-function ASN1EncodeInteger8(const A: ShortInt): RawByteString;
+function ASN1EncodeInteger8(const A: Int8): RawByteString;
 begin
   Result := ASN1EncodeObj(ASN1_ID_INTEGER, ASN1EncodeDataInteger8(A));
 end;
 
-function ASN1EncodeInteger16(const A: SmallInt): RawByteString;
+function ASN1EncodeInteger16(const A: Int16): RawByteString;
 begin
   Result := ASN1EncodeObj(ASN1_ID_INTEGER, ASN1EncodeDataInteger16(A));
 end;
@@ -584,8 +544,9 @@ begin
   Result := ASN1EncodeObj(ASN1_ID_INTEGER, ASN1EncodeDataInteger64(A));
 end;
 
-function ASN1EncodeIntegerBuf(const A; const Size: Integer): RawByteString;
-var D : RawByteString;
+function ASN1EncodeIntegerBuf(const A; const Size: NativeInt): RawByteString;
+var
+  D : RawByteString;
 begin
   Assert(Size > 0);
 
@@ -620,9 +581,10 @@ begin
 end;
 
 function ASN1EncodeInt32AsOctetString(const A: Int32): RawByteString;
-var S : RawByteString;
-    I : Integer;
-    F : Int32;
+var
+  S : RawByteString;
+  I : Int32;
+  F : Int32;
 begin
   SetLength(S, 4);
   F := A;
@@ -672,7 +634,8 @@ begin
 end;
 
 function ASN1EncodeBMPString(const A: UnicodeString): RawByteString;
-var S : RawByteString;
+var
+  S : RawByteString;
 begin
   S := UTF16ToEncodingU(TUCS2Codec, A);
   Result := ASN1EncodeObj(ASN1_ID_UNIVERSALSTRING, S);
@@ -708,8 +671,9 @@ type
     Enc : array[0..MAX_BER_OIDPart_Len - 1] of Byte;
   end;
 
-procedure ASN1BEREncodeOIDPart(const OIDPart: Integer; var Enc: TOIDPartEnc);
-var N, A, B, C : Integer;
+procedure ASN1BEREncodeOIDPart(const OIDPart: Int32; var Enc: TOIDPartEnc);
+var
+  N, A, B, C : Int32;
 begin
   N := 0;
   A := OIDPart;
@@ -728,12 +692,13 @@ begin
 end;
 
 // BER Encode OID
-function ASN1EncodeOID(const OID: array of Integer): RawByteString;
-var L, I, N, J, K : Integer;
-    A, B, C : Integer;
-    E : TOIDPartEnc;
-    Buf : array[0..MAX_BER_OID_Length - 1] of Byte;
-    S : RawByteString;
+function ASN1EncodeOID(const OID: array of Int32): RawByteString;
+var
+  L, I, N, J, K : NativeInt;
+  A, B, C : Int32;
+  E : TOIDPartEnc;
+  Buf : array[0..MAX_BER_OID_Length - 1] of Byte;
+  S : RawByteString;
 begin
   Result := '';
   L := Length(OID);
@@ -772,7 +737,7 @@ begin
   Result := ASN1EncodeObj(ASN1_ID_SET, A);
 end;
 
-function ASN1EncodeContextSpecific(const I: Integer; const A: RawByteString): RawByteString;
+function ASN1EncodeContextSpecific(const I: Int32; const A: RawByteString): RawByteString;
 begin
   Assert(I >= 0);
   Assert(I <= 31);
@@ -783,9 +748,10 @@ end;
 
 { Decode }
 
-function ASN1DecodeLength(const Buf; const Size: Integer; var Len: Integer): Integer;
-var P : PByte;
-    L, I : Byte;
+function ASN1DecodeLength(const Buf; const Size: NativeInt; var Len: NativeInt): NativeInt;
+var
+  P : PByte;
+  L, I : Byte;
 begin
   if Size <= 0 then
     raise EASN1.Create(SErr_DecodeError); // buffer too small
@@ -800,7 +766,7 @@ begin
   L := L and $7F;
   if Size < L + 1 then
     raise EASN1.Create(SErr_DecodeError); // buffer too small
-  if L > 3 then
+  if L >= SizeOf(NativeInt) then
     raise EASN1.Create(SErr_DecodeError); // size too big
   Len := 0;
   for I := 0 to L - 1 do
@@ -811,10 +777,11 @@ begin
   Result := L + 1;
 end;
 
-function ASN1DecodeObjHeader(const Buf; const Size: Integer;
-         var TypeID: Byte; var Len: Integer; var Data: Pointer): Integer;
-var P : PByte;
-    L : Integer;
+function ASN1DecodeObjHeader(const Buf; const Size: NativeInt;
+         var TypeID: Byte; var Len: NativeInt; var Data: Pointer): NativeInt;
+var
+  P : PByte;
+  L : NativeInt;
 begin
   Assert(Assigned(@Buf));
   if Size < 2 then
@@ -833,7 +800,7 @@ begin
   Result := TypeID and ASN1_ID_CONSTRUCTED <> 0;
 end;
 
-function ASN1TypeIsContextSpecific(const TypeID: Byte; var Idx: Integer): Boolean;
+function ASN1TypeIsContextSpecific(const TypeID: Byte; var Idx: Int32): Boolean;
 begin
   if TypeID and ASN1_ID_CONTEXT_SPECIFIC <> 0 then
     begin
@@ -847,7 +814,7 @@ begin
     end;
 end;
 
-function ASN1DecodeDataBoolean(const Buf; const Size: Integer; var A: Boolean): Integer;
+function ASN1DecodeDataBoolean(const Buf; const Size: NativeInt; var A: Boolean): NativeInt;
 begin
   if Size <> 1 then
     raise EASN1.Create(SErr_DecodeError);
@@ -855,11 +822,13 @@ begin
   Result := 1;
 end;
 
-function ASN1DecodeDataInteger32(const Buf; const Size: Integer; var A: Int32): Integer;
-var P : PByte;
-    L, I : Integer;
-    B : array[0..3] of Byte;
-    E : Byte;
+function ASN1DecodeDataInteger32(const Buf; const Size: NativeInt; var A: Int32): NativeInt;
+var
+  P : PByte;
+  L : NativeInt;
+  I : Int32;
+  B : array[0..3] of Byte;
+  E : Byte;
 begin
   P := @Buf;
   L := Size;
@@ -880,11 +849,13 @@ begin
   Result := L;
 end;
 
-function ASN1DecodeDataInteger64(const Buf; const Size: Integer; var A: Int64): Integer;
-var P : PByte;
-    L, I : Integer;
-    B : array[0..7] of Byte;
-    E : Byte;
+function ASN1DecodeDataInteger64(const Buf; const Size: NativeInt; var A: Int64): NativeInt;
+var
+  P : PByte;
+  L : NativeInt;
+  I : Int32;
+  B : array[0..7] of Byte;
+  E : Byte;
 begin
   P := @Buf;
   L := Size;
@@ -905,8 +876,9 @@ begin
   Result := L;
 end;
 
-function ASN1DecodeDataIntegerBuf(const Buf; const Size: Integer; var A: RawByteString): Integer;
-var L : Integer;
+function ASN1DecodeDataIntegerBuf(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+var
+  L : NativeInt;
 begin
   L := Size;
   SetLength(A, L);
@@ -915,10 +887,11 @@ begin
   Result := L;
 end;
 
-function ASN1DecodeDataBitString(const Buf; const Size: Integer; var A: RawByteString; var UnusedBits: Byte): Integer;
-var P : PByte;
-    L : Integer;
-    F : Byte;
+function ASN1DecodeDataBitString(const Buf; const Size: NativeInt; var A: RawByteString; var UnusedBits: Byte): NativeInt;
+var
+  P : PByte;
+  L : NativeInt;
+  F : Byte;
 begin
   P := @Buf;
   L := Size;
@@ -945,8 +918,9 @@ begin
   Result := L + 1;
 end;
 
-function ASN1DecodeDataRawByteString(const Buf; const Size: Integer; var A: RawByteString): Integer;
-var L : Integer;
+function ASN1DecodeDataRawByteString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
+var
+  L : NativeInt;
 begin
   L := Size;
   SetLength(A, L);
@@ -955,59 +929,60 @@ begin
   Result := L;
 end;
 
-function ASN1DecodeDataOctetString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataOctetString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataIA5String(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataIA5String(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataVisibleString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataVisibleString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataNumericString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataNumericString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataPrintableString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataPrintableString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataTeletexString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataTeletexString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataUTF8String(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataUTF8String(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   Result := ASN1DecodeDataRawByteString(Buf, Size, A);
 end;
 
-function ASN1DecodeDataUniversalString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataUniversalString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   A := UnicodeStringToUTF8String(EncodingToUTF16U(TUCS4LECodec, @Buf, Size));
   Result := Size;
 end;
 
-function ASN1DecodeDataBMPString(const Buf; const Size: Integer; var A: RawByteString): Integer;
+function ASN1DecodeDataBMPString(const Buf; const Size: NativeInt; var A: RawByteString): NativeInt;
 begin
   A := UnicodeStringToUTF8String(EncodingToUTF16U(TUCS2Codec, @Buf, Size));
   Result := Size;
 end;
 
-function ASN1DecodeOIDPart(const Buf; const Size: Integer; var Part: Integer): Integer;
-var P : PByte;
-    L, C : Integer;
-    A : Byte;
-    R : Boolean;
-    V : Int64;
+function ASN1DecodeOIDPart(const Buf; const Size: NativeInt; var Part: Int32): NativeInt;
+var
+  P : PByte;
+  L, C : NativeInt;
+  A : Byte;
+  R : Boolean;
+  V : Int64;
 begin
   P := @Buf;
   L := Size;
@@ -1031,11 +1006,12 @@ begin
   Result := Size - L;
 end;
 
-function ASN1DecodeDataOID(const Buf; const Size: Integer; var A: TASN1ObjectIdentifier): Integer;
-var P : PByte;
-    L, N, C, I : Integer;
-    F : Byte;
-    Parts : array[0..MAX_OID_Parts - 1] of Integer;
+function ASN1DecodeDataOID(const Buf; const Size: NativeInt; var A: TASN1ObjectIdentifier): NativeInt;
+var
+  P : PByte;
+  L, N, C, I : NativeInt;
+  F : Byte;
+  Parts : array[0..MAX_OID_Parts - 1] of Int32;
 begin
   P := @Buf;
   L := Size;
@@ -1062,9 +1038,10 @@ begin
   Result := Size - L;
 end;
 
-function ASN1DecodeDataUTCTime(const Buf; const Size: Integer; var A: TDateTime): Integer;
-var D : RawByteString;
-    YYYY, YY, MM, DD, HH, NN, SS : Integer;
+function ASN1DecodeDataUTCTime(const Buf; const Size: NativeInt; var A: TDateTime): NativeInt;
+var
+  D : RawByteString;
+  YYYY, YY, MM, DD, HH, NN, SS : Int32;
 begin
   if Size < 6 then
     raise EASN1.Create(SErr_DecodeError);
@@ -1098,9 +1075,10 @@ begin
   Result := Size;
 end;
 
-function ASN1DecodeDataGeneralizedTime(const Buf; const Size: Integer; var A: TDateTime): Integer;
-var D : RawByteString;
-    YYYY, MM, DD, HH, NN, SS : Integer;
+function ASN1DecodeDataGeneralizedTime(const Buf; const Size: NativeInt; var A: TDateTime): NativeInt;
+var
+  D : RawByteString;
+  YYYY, MM, DD, HH, NN, SS : Int32;
 begin
   if Size < 8 then
     raise EASN1.Create(SErr_DecodeError);
@@ -1130,8 +1108,9 @@ begin
   Result := Size;
 end;
 
-function ASN1DecodeBoolean(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: Boolean): Integer;
-var I : Int64;
+function ASN1DecodeBoolean(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: Boolean): NativeInt;
+var
+  I : Int64;
 begin
   case TypeID of
     ASN1_ID_BOOLEAN : Result := ASN1DecodeDataBoolean(DataBuf, DataSize, A);
@@ -1145,9 +1124,10 @@ begin
   end;
 end;
 
-function ASN1DecodeInteger32(const TypeID: Byte; const DataBuf; const DataSize: Integer;
-         var A: Int32): Integer;
-var I : Int64;
+function ASN1DecodeInteger32(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+         var A: Int32): NativeInt;
+var
+  I : Int64;
 begin
   Result := ASN1DecodeInteger64(TypeID, DataBuf, DataSize, I);
   if (I > High(Int32)) or (I < Low(Int32)) then
@@ -1155,9 +1135,10 @@ begin
   A := I;
 end;
 
-function ASN1DecodeInteger64(const TypeID: Byte; const DataBuf; const DataSize: Integer;
-         var A: Int64): Integer;
-var S : RawByteString;
+function ASN1DecodeInteger64(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+         var A: Int64): NativeInt;
+var
+  S : RawByteString;
 begin
   case TypeID of
     ASN1_ID_INTEGER      : Result := ASN1DecodeDataInteger64(DataBuf, DataSize, A);
@@ -1179,8 +1160,8 @@ begin
   end;
 end;
 
-function ASN1DecodeIntegerBuf(const TypeID: Byte; const DataBuf; const DataSize: Integer;
-         var A: RawByteString): Integer;
+function ASN1DecodeIntegerBuf(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+         var A: RawByteString): NativeInt;
 begin
   case TypeID of
     ASN1_ID_INTEGER : Result := ASN1DecodeDataIntegerBuf(DataBuf, DataSize, A);
@@ -1189,7 +1170,7 @@ begin
   end;
 end;
 
-function ASN1DecodeBitString(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: RawByteString; var UnusedBits: Byte): Integer;
+function ASN1DecodeBitString(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: RawByteString; var UnusedBits: Byte): NativeInt;
 begin
   case TypeID of
     ASN1_ID_BIT_STRING : Result := ASN1DecodeDataBitString(DataBuf, DataSize, A, UnusedBits);
@@ -1205,10 +1186,11 @@ type
   end;
   PStringParseData = ^TStringParseData;
 
-procedure StringParseProc(const TypeID: Byte; const DataBuf; const DataSize: Integer;
+procedure StringParseProc(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
           const ObjectIdx: Integer; const CallerData: NativeInt);
-var S : RawByteString;
-    D : PStringParseData;
+var
+  S : RawByteString;
+  D : PStringParseData;
 begin
   ASN1DecodeString(TypeID, DataBuf, DataSize, S);
   D := Pointer(CallerData);
@@ -1217,12 +1199,13 @@ begin
   D^.Str := D^.Str + S;
 end;
 
-function ASN1DecodeString(const TypeID: Byte; const DataBuf; const DataSize: Integer;
-         var A: RawByteString): Integer;
-var I : Int64;
-    B : TASN1ObjectIdentifier;
-    D : TStringParseData;
-    K : Byte;
+function ASN1DecodeString(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+         var A: RawByteString): NativeInt;
+var
+  I : Int64;
+  B : TASN1ObjectIdentifier;
+  D : TStringParseData;
+  K : Byte;
 begin
   if ASN1TypeIsConstructedType(TypeID) then
     begin
@@ -1257,8 +1240,8 @@ begin
     end;
 end;
 
-function ASN1DecodeOID(const TypeID: Byte; const DataBuf; const DataSize: Integer;
-         var A: TASN1ObjectIdentifier): Integer;
+function ASN1DecodeOID(const TypeID: Byte; const DataBuf; const DataSize: NativeInt;
+         var A: TASN1ObjectIdentifier): NativeInt;
 begin
   case TypeID of
     ASN1_ID_OBJECT_IDENTIFIER : Result := ASN1DecodeDataOID(DataBuf, DataSize, A);
@@ -1267,7 +1250,7 @@ begin
   end;
 end;
 
-function ASN1DecodeTime(const TypeID: Byte; const DataBuf; const DataSize: Integer; var A: TDateTime): Integer;
+function ASN1DecodeTime(const TypeID: Byte; const DataBuf; const DataSize: NativeInt; var A: TDateTime): NativeInt;
 begin
   case TypeID of
     ASN1_ID_UTCTIME         : Result := ASN1DecodeDataUTCTime(DataBuf, DataSize, A);
@@ -1277,13 +1260,14 @@ begin
   end;
 end;
 
-function ASN1Parse(const Buf; const Size: Integer; const ParseProc: TASN1ParseProc; const CallerData: NativeInt): Integer;
-var P : PByte;
-    L, N, T : Integer;
-    ObjIdx : Integer;
-    TypeID : Byte;
-    Len : Integer;
-    Data : Pointer;
+function ASN1Parse(const Buf; const Size: NativeInt; const ParseProc: TASN1ParseProc; const CallerData: NativeInt): NativeInt;
+var
+  P      : PByte;
+  L, N   : NativeInt;
+  ObjIdx : Int32;
+  TypeID : Byte;
+  Len    : NativeInt;
+  Data   : Pointer;
 begin
   P := @Buf;
   L := Size;
@@ -1300,117 +1284,17 @@ begin
   while L > 0 do
     begin
       N := ASN1DecodeObjHeader(P^, L, TypeID, Len, Data);
-      T := N + Len;
-      if T > L then
+      Inc(P, N);
+      Dec(L, N);
+      if Len > L then
         raise EASN1.Create(SErr_DecodeError); // invalid length encoded in header
+      Inc(P, Len);
+      Dec(L, Len);
       ParseProc(TypeID, Data^, Len, ObjIdx, CallerData);
-      Inc(P, T);
-      Dec(L, T);
       Inc(ObjIdx);
     end;
   Result := Size - L;
 end;
-
-
-
-{                                                                              }
-{ Test                                                                         }
-{                                                                              }
-{$IFDEF ASN1_TEST}
-{$ASSERTIONS ON}
-procedure TestParseProc(
-          const TypeID: Byte; const DataBuf; const DataSize: Integer;
-          const ObjectIdx: Integer; const CallerData: NativeInt);
-var I : Int64;
-    S : RawByteString;
-begin
-  case CallerData of
-    0 : case ObjectIdx of
-          0 : begin
-                Assert(TypeID = ASN1_ID_SEQUENCE);
-                Assert(ASN1Parse(DataBuf, DataSize, TestParseProc, 1) = DataSize);
-              end;
-        else
-          Assert(False);
-        end;
-    1 : case ObjectIdx of
-          0 : begin
-                Assert(TypeID = ASN1_ID_INTEGER);
-                ASN1DecodeInteger64(TypeID, DataBuf, DataSize, I);
-                Assert(I = 123);
-              end;
-          1 : begin
-                Assert(TypeID = ASN1_ID_PRINTABLESTRING);
-                ASN1DecodeString(TypeID, DataBuf, DataSize, S);
-                Assert(S = 'ABC');
-              end;
-        else
-          Assert(False);
-        end;
-  else
-    Assert(False);
-  end;
-end;
-
-procedure Test;
-var S : RawByteString;
-    L, I, J : Integer;
-    D : TASN1ObjectIdentifier;
-begin
-  Assert(ASN1EncodeLength(0) = #$00);
-  Assert(ASN1EncodeLength(1) = #$01);
-  Assert(ASN1EncodeLength($7F) = #$7F);
-  Assert(ASN1EncodeLength($80) = #$81#$80);
-  Assert(ASN1EncodeLength($FF) = #$81#$FF);
-  Assert(ASN1EncodeLength($100) = #$82#$01#$00);
-
-  Assert(ASN1EncodeOID(OID_3DES_wrap) = #$06#$0b#$2a#$86#$48#$86#$f7#$0d#$01#$09#$10#$03#$06);
-  Assert(ASN1EncodeOID(OID_RC2_wrap)  = #$06#$0b#$2a#$86#$48#$86#$f7#$0d#$01#$09#$10#$03#$07);
-
-  S := RawByteString(#$2a#$86#$48#$86#$f7#$0d#$01#$09#$10#$03#$06);
-  L := Length(S);
-  Assert(ASN1DecodeDataOID(S[1], L, D) = L);
-  Assert(Length(D) = 9);
-  Assert((D[0] = 1) and (D[1] = 2) and (D[2] = 840) and (D[3] = 113549) and
-         (D[4] = 1) and (D[5] = 9) and (D[6] = 16) and (D[7] = 3) and (D[8] = 6));
-  Assert(ASN1OIDToStrB(D) = '1.2.840.113549.1.9.16.3.6');
-
-  S := RawByteString(#$2a#$86#$48#$86#$f7#$0d#$03#$06);
-  L := Length(S);
-  Assert(ASN1DecodeDataOID(S[1], L, D) = L);
-  Assert(Length(D) = 6);
-  Assert((D[0] = 1) and (D[1] = 2) and (D[2] = 840) and (D[3] = 113549) and
-         (D[4] = 3) and (D[5] = 6));
-
-  Assert(ASN1EncodeInteger32(0) = #$02#$01#$00);
-  Assert(ASN1EncodeInteger32(1) = #$02#$01#$01);
-  Assert(ASN1EncodeInteger32(-1) = #$02#$01#$FF);
-  Assert(ASN1EncodeInteger32(-$80) = #$02#$01#$80);
-  Assert(ASN1EncodeInteger32(-$81) = #$02#$02#$7F#$FF);
-  Assert(ASN1EncodeInteger32(-$FF) = #$02#$02#$01#$FF);
-  Assert(ASN1EncodeInteger32($7F) = #$02#$01#$7F);
-  Assert(ASN1EncodeInteger32($80) = #$02#$02#$80#$00);
-  Assert(ASN1EncodeInteger32($FF) = #$02#$02#$FF#$00);
-
-  for I := -512 to 512 do
-    begin
-      S := ASN1EncodeInteger32(I);
-      Assert(S = ASN1EncodeInteger64(I));
-      L := Length(S);
-      Assert(ASN1DecodeDataInteger32(S[3], L - 2, J) = L - 2);
-      Assert(J = I);
-    end;
-
-  S :=
-    ASN1EncodeSequence(
-        ASN1EncodeInteger32(123) +
-        ASN1EncodePrintableString('ABC')
-        );
-  L := Length(S);
-  Assert(L > 0);
-  Assert(ASN1Parse(S[1], L, @TestParseProc, 0) = L);
-end;
-{$ENDIF}
 
 
 

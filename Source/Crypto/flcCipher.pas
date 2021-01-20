@@ -5,7 +5,7 @@
 {   File version:     5.11                                                     }
 {   Description:      Cipher library                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -62,9 +62,8 @@
 { - Remove RC2                                                                 }
 {******************************************************************************}
 
-{.DEFINE Cipher_SupportRSA}
-
-{$INCLUDE flcCipher.inc}
+{$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
 unit flcCipher;
 
@@ -268,10 +267,13 @@ implementation
 
 uses
   { Fundamentals }
+
   flcHugeInt,
 
-  { Cipher }
-  flcCipherRandom;
+  { Crypto }
+
+  flcCryptoUtils,
+  flcCryptoRandom;
 
 
 
@@ -514,7 +516,7 @@ var C : PRSAOAEP1024Context;
     B : array[0..127] of Byte;
 begin
   C := Context;
-  RSAEncrypt(rsaetOAEP, C^.PublicKey, Data, DataSize, B[0], SizeOf(B));
+  RSAEncrypt(rsaetRSAES_OAEP, C^.PublicKey, Data, DataSize, B[0], SizeOf(B));
   Move(B[0], Data^, 128);
 end;
 
@@ -523,7 +525,7 @@ var C : PRSAOAEP1024Context;
     B : array[0..127] of Byte;
 begin
   C := Context;
-  RSADecrypt(rsaetOAEP, C^.PrivateKey, Data, DataSize, B[0], SizeOf(B));
+  RSADecrypt(rsaetRSAES_OAEP, C^.PrivateKey, Data, DataSize, B[0], SizeOf(B));
   Move(B[0], Data^, 128);
 end;
 

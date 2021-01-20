@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      Diffie-Hellman (DH) cipher routines                      }
 {                                                                              }
-{   Copyright:        Copyright (c) 2010-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2010-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -64,7 +64,8 @@
 {   - Callbacks for slow operations                                            }
 {******************************************************************************}
 
-{$INCLUDE flcCipher.inc}
+{$INCLUDE ..\flcInclude.inc}
+{$INCLUDE flcCrypto.inc}
 
 unit flcCipherDH;
 
@@ -502,10 +503,10 @@ implementation
 
 uses
   { Fundamentals }
-  flcHash,
-  flcRandom,
-  flcASN1,
-  flcCipherRandom;
+  flcCryptoUtils,
+  flcCryptoHash,
+  flcCryptoRandom,
+  flcEncodingASN1;
 
 
 
@@ -516,7 +517,7 @@ procedure SecureClearHugeWord(var A: HugeWord);
 begin
   if (A.Alloc = 0) or not Assigned(A.Data) then
     exit;
-  SecureClear(A.Data^, A.Alloc * HugeWordElementSize);
+  SecureClearBuf(A.Data^, A.Alloc * HugeWordElementSize);
 end;
 
 procedure SecureHugeWordFinalise(var A: HugeWord);
