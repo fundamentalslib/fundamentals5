@@ -545,7 +545,6 @@ implementation
 
 uses
   { Fundamentals }
-  flcASCII,
   flcUtils,
   flcStrings,
   flcUTF,

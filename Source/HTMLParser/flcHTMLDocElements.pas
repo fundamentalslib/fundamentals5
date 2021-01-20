@@ -53,7 +53,12 @@ interface
 
 uses
   { System }
+  {$IFDEF DELPHIXE2_UP}
   UITypes,
+  {$ELSE}
+  Graphics,
+  Types,
+  {$ENDIF}
 
   { Fundamentals }
   flcStdTypes,

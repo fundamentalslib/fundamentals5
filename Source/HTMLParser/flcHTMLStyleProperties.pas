@@ -897,10 +897,12 @@ uses
   { System }
   {$IFDEF WindowsPlatform}
   {$IFDEF DELPHI6_UP}
-  Windows,
+  Windows
   {$ENDIF}
   {$ENDIF}
-  System.UITypes;
+  {$IFDEF DELPHIXE2_UP}
+  , System.UITypes
+  {$ENDIF};
 
 
 

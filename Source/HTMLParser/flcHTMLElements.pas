@@ -417,7 +417,6 @@ implementation
 
 uses
   { Fundamentals }
-  flcASCII,
   flcUtils,
   flcStrings;
 
@@ -569,7 +568,7 @@ begin
   for I := HTML_TAG_FirstID to HTML_TAG_LastID do
     begin
       Assert(htmlElementTable[I].Name <> '', 'Invalid name');
-      C := AsciiUpCaseB(AnsiChar(htmlElementTable[I].Name[1]));
+      C := CharAsciiUpCaseB(AnsiChar(htmlElementTable[I].Name[1]));
       Assert(C in ['A'..'Z'], 'Invalid name');
       if ElementHashIndex[C] = HTML_TAG_None then
         ElementHashIndex[C] := I;
@@ -749,7 +748,7 @@ begin
   for I := HTML_ATTR_FirstID to HTML_ATTR_LastID do
     begin
       Assert(htmlAttributeTable[I] <> '', 'Invalid name');
-      C := AsciiUpCaseB(AnsiChar(htmlAttributeTable[I][1]));
+      C := CharAsciiUpCaseB(AnsiChar(htmlAttributeTable[I][1]));
       Assert(C in ['A'..'Z'], 'Invalid name');
       if AttributeHashIndex[C] = HTML_ATTR_None then
         AttributeHashIndex[C] := I;

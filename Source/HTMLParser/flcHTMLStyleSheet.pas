@@ -57,7 +57,11 @@ uses
   Windows,
   {$ENDIF}
   SysUtils,
+  {$IFDEF DELPHIXE2_UP}
   System.UITypes,
+  {$ELSE}
+  Graphics,
+  {$ENDIF}
 
   { Fundamentals }
   flcStdTypes,

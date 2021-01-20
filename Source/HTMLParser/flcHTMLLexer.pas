@@ -354,7 +354,6 @@ uses
   SysUtils,
 
   { Fundamentals }
-  flcASCII,
   flcUtils,
   flcUTF,
   flcStrings,

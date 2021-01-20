@@ -56,9 +56,15 @@ unit flcHTMLProperties;
 
 interface
 
+{$IFDEF DELPHIXE2_UP}
 uses
   System.Types,
   System.UITypes;
+{$ELSE}
+uses
+  Types,
+  Graphics;
+{$ENDIF}
 
 
 
@@ -503,7 +509,6 @@ implementation
 uses
   flcStdTypes,
   flcUtils,
-  flcAscii,
   flcStrings,
   flcFloats;
 
@@ -576,8 +581,8 @@ begin
   // check 2-character suffix for unit
   if L > 2 then
     begin
-      C1 := AsciiLowCaseW(S[L - 1]);
-      C2 := AsciiLowCaseW(S[L]);
+      C1 := CharAsciiLowCaseW(S[L - 1]);
+      C2 := CharAsciiLowCaseW(S[L]);
       case C1 of
         'c' :
           case C2 of
@@ -1369,7 +1374,7 @@ begin
   FillChar(HTMLColorHashCount, Sizeof(HTMLColorHashCount), #0);
   for I := 0 to KnownHTMLColors - 1 do
     begin
-      C := AsciiUpCaseW(KnownHtmlColor[I].Name[1]);
+      C := CharAsciiUpCaseW(KnownHtmlColor[I].Name[1]);
       Assert(WideCharInCharSet(C, ['A'..'Z']), 'Invalid name');
       H := AnsiChar(C);
       if HTMLColorHashIndex[H] < 0 then
@@ -1386,7 +1391,7 @@ var I, J: Integer;
 begin
   if NameLen > 0 then
     begin
-      C := AsciiUpCaseW(Name^);
+      C := CharAsciiUpCaseW(Name^);
       if WideCharInCharSet(C, ['A'..'Z']) then
         begin
           if not HTMLColorHashInit then
@@ -1418,7 +1423,7 @@ function htmlResolveNamedColor(const Name: String; var Color: ThtmlRGBColor): Bo
 begin
   Result := htmlGetKnownColor(Name, Color.RGB);
   if not Result then
-    Color.Color := TColorRec.SysNone;
+    Color.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
 end;
 
 function htmlDecodeColor(const S: String): ThtmlColor;
@@ -1429,7 +1434,7 @@ begin
   if S = '' then // no value
     begin
       Result.ColorType := colorDefault;
-      Result.RGBColor.Color := TColorRec.SysNone;
+      Result.RGBColor.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
       Result.NamedColor := '';
     end else
   if S[1] = '#' then // hex #rrggbb value
@@ -1455,7 +1460,7 @@ begin
     end else // named value
     begin
       Result.ColorType := colorNamed;
-      Result.RGBColor.Color := TColorRec.SysNone;
+      Result.RGBColor.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
       Result.NamedColor := S;
     end;
 end;
@@ -1471,7 +1476,7 @@ begin
   if S = '' then // no value
     begin
       Result.ColorType := colorDefault;
-      Result.RGBColor.Color := TColorRec.SysNone;
+      Result.RGBColor.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
       Result.NamedColor := '';
       exit;
     end else
@@ -1524,7 +1529,7 @@ begin
     end;
   // named color
   Result.ColorType := colorNamed;
-  Result.RGBColor.Color := TColorRec.SysNone;
+  Result.RGBColor.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
   Result.NamedColor := S;
 end;
 
@@ -1535,9 +1540,9 @@ begin
       Result.RGB := Color.RGBColor.RGB;
     colorNamed:
       if not htmlResolveNamedColor(Color.NamedColor, Result) then
-        Result.Color := TColorRec.SysNone;
+        Result.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
   else
-    Result.Color := TColorRec.SysNone;
+    Result.Color := {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF};
   end;
 end;
 
@@ -1558,12 +1563,12 @@ end;
 
 function htmlDelphiColor(const Color: TColor): ThtmlRGBColor;
 begin
-  Result.Color := TColor(TColorRec.ColorToRGB(Color));
+  Result.Color := TColor({$IFDEF DELPHIXE2_UP}TColorRec.{$ENDIF}ColorToRGB(Color));
 end;
 
 function htmlEncodeRGBColor(const Color: ThtmlRGBColor): String;
 begin
-  if (Color.Color = TColorRec.SysNone) or (Color.RGB > $FFFFFF) then
+  if (Color.Color = {$IFDEF DELPHIXE2_UP}TColorRec.SysNone{$ELSE}clNone{$ENDIF}) or (Color.RGB > $FFFFFF) then
     Result := ''
   else
     Result := '#' + Word32toHexU(Color.RGB, 6);
