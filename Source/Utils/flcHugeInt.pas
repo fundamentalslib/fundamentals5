@@ -5,7 +5,7 @@
 {   File version:     5.33                                                     }
 {   Description:      HugeInt functions                                        }
 {                                                                              }
-{   Copyright:        Copyright (c) 2001-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2001-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     Redistribution and use in source and binary forms, with  }
 {                     or without modification, are permitted provided that     }
@@ -140,10 +140,10 @@ const
 
 type
   HugeWord = record
-    Used    : Integer;
-    Alloc   : Integer;
     Data    : Pointer;
-    InitBuf : array[0..HugeWordStaticBufferSize - 1] of HugeWordElement;
+    Used    : Int32;
+    Alloc   : Int32;
+    InitBuf : array[0..HugeWordStaticBufferSize + 4 - 1] of HugeWordElement;
   end;
   PHugeWord = ^HugeWord;
 
@@ -182,6 +182,7 @@ procedure HugeWordNormalise(var A: HugeWord);
 procedure HugeWordInitZero(out A: HugeWord); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeWordInitOne(out A: HugeWord);
 procedure HugeWordInitWord32(out A: HugeWord; const B: Word32);
+procedure HugeWordInitWord64(out A: HugeWord; const B: Word64);
 procedure HugeWordInitInt32(out A: HugeWord; const B: Int32);
 procedure HugeWordInitInt64(out A: HugeWord; const B: Int64);
 procedure HugeWordInitDouble(out A: HugeWord; const B: Double);
@@ -190,6 +191,7 @@ procedure HugeWordInitHugeWord(out A: HugeWord; const B: HugeWord);
 procedure HugeWordAssignZero(var A: HugeWord); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeWordAssignOne(var A: HugeWord); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeWordAssignWord32(var A: HugeWord; const B: Word32);
+procedure HugeWordAssignWord64(var A: HugeWord; const B: Word64);
 procedure HugeWordAssignInt32(var A: HugeWord; const B: Int32);
 procedure HugeWordAssignInt64(var A: HugeWord; const B: Int64);
 procedure HugeWordAssignDouble(var A: HugeWord; const B: Double);
@@ -208,6 +210,8 @@ function  HugeWordIsTwo(const A: HugeWord): Boolean; {$IFDEF UseInline}inline;{$
 function  HugeWordIsOdd(const A: HugeWord): Boolean;
 function  HugeWordIsEven(const A: HugeWord): Boolean;
 
+function  HugeWordIsWord8Range(const A: HugeWord): Boolean;
+function  HugeWordIsWord16Range(const A: HugeWord): Boolean;
 function  HugeWordIsWord32Range(const A: HugeWord): Boolean;
 function  HugeWordIsWord64Range(const A: HugeWord): Boolean;
 function  HugeWordIsWord128Range(const A: HugeWord): Boolean;
@@ -218,6 +222,7 @@ function  HugeWordIsInt128Range(const A: HugeWord): Boolean;
 function  HugeWordIsInt256Range(const A: HugeWord): Boolean;
 
 function  HugeWordToWord32(const A: HugeWord): Word32;
+function  HugeWordToWord64(const A: HugeWord): Word64;
 function  HugeWordToInt32(const A: HugeWord): Int32;
 function  HugeWordToInt64(const A: HugeWord): Int64;
 function  HugeWordToDouble(const A: HugeWord): Double;
@@ -270,13 +275,14 @@ function  HugeWordSubtract(var A: HugeWord; const B: HugeWord): Integer;
 procedure HugeWordDec(var A: HugeWord);
 
 procedure HugeWordMultiplyWord8(var A: HugeWord; const B: Byte);
-procedure HugeWordMultiplyWord16(var A: HugeWord; const B: Word);
+procedure HugeWordMultiplyWord16(var A: HugeWord; const B: Word16);
 procedure HugeWordMultiplyWord32(var A: HugeWord; const B: Word32);
 procedure HugeWordMultiply_Long_NN_Unsafe(var Res: HugeWord; const A, B: HugeWord);
 procedure HugeWordMultiply_Long_NN_Safe(var Res: HugeWord; const A, B: HugeWord);
 procedure HugeWordMultiply_Long_NN(var Res: HugeWord; const A, B: HugeWord);
 procedure HugeWordMultiply_Long(var Res: HugeWord; const A, B: HugeWord);
 procedure HugeWordMultiply_ShiftAdd(var Res: HugeWord; const A, B: HugeWord);
+procedure HugeWordMultiply_Karatsuba(var Res: HugeWord; const A, B: HugeWord);
 procedure HugeWordMultiply(var Res: HugeWord; const A, B: HugeWord); {$IFDEF UseInline}inline;{$ENDIF}
 
 procedure HugeWordSqr(var Res: HugeWord; const A: HugeWord);
@@ -342,6 +348,7 @@ procedure HugeIntInitZero(out A: HugeInt); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeIntInitOne(out A: HugeInt);
 procedure HugeIntInitMinusOne(out A: HugeInt);
 procedure HugeIntInitWord32(out A: HugeInt; const B: Word32);
+procedure HugeIntInitWord64(out A: HugeInt; const B: Word64);
 procedure HugeIntInitInt32(out A: HugeInt; const B: Int32);
 procedure HugeIntInitInt64(out A: HugeInt; const B: Int64);
 procedure HugeIntInitDouble(out A: HugeInt; const B: Double);
@@ -352,6 +359,7 @@ procedure HugeIntAssignZero(var A: HugeInt); {$IFDEF UseInline}inline;{$ENDIF}
 procedure HugeIntAssignOne(var A: HugeInt);
 procedure HugeIntAssignMinusOne(var A: HugeInt);
 procedure HugeIntAssignWord32(var A: HugeInt; const B: Word32);
+procedure HugeIntAssignWord64(var A: HugeInt; const B: Word64);
 procedure HugeIntAssignInt32(var A: HugeInt; const B: Int32);
 procedure HugeIntAssignInt64(var A: HugeInt; const B: Int64);
 procedure HugeIntAssignDouble(var A: HugeInt; const B: Double);
@@ -386,6 +394,7 @@ function  HugeIntAbsInPlace(var A: HugeInt): Boolean;
 function  HugeIntAbs(const A: HugeInt; var B: HugeWord): Boolean;
 
 function  HugeIntToWord32(const A: HugeInt): Word32;
+function  HugeIntToWord64(const A: HugeInt): Word64;
 function  HugeIntToInt32(const A: HugeInt): Int32;
 function  HugeIntToInt64(const A: HugeInt): Int64;
 
@@ -581,8 +590,10 @@ const
 
 {$IFDEF DELPHI}
 {$IFDEF CPU_X86_64}
+{$IFDEF OS_MSWIN}
 {$IFNDEF PurePascal}
   {$DEFINE Asm64}
+{$ENDIF}
 {$ENDIF}
 {$ENDIF}
 {$ENDIF}
@@ -939,6 +950,12 @@ begin
   HugeWordAssignWord32(A, B);
 end;
 
+procedure HugeWordInitWord64(out A: HugeWord; const B: Word64);
+begin
+  HugeWordInit(A);
+  HugeWordAssignWord64(A, B);
+end;
+
 procedure HugeWordInitInt32(out A: HugeWord; const B: Int32);
 begin
   HugeWordInit(A);
@@ -987,6 +1004,17 @@ begin
     begin
       HugeWordSetSize_NoZeroMem(A, 1);
       PWord32(A.Data)^ := B;
+    end;
+end;
+
+procedure HugeWordAssignWord64(var A: HugeWord; const B: Word64);
+begin
+  if B = 0 then
+    HugeWordAssignZero(A)
+  else
+    begin
+      HugeWordSetSize_NoZeroMem(A, 2);
+      PWord64(A.Data)^ := B;
     end;
 end;
 
@@ -1186,6 +1214,34 @@ begin
     Result := PWord32(A.Data)^ and 1 = 0;
 end;
 
+{ HugeWord Word8 range checking                                                }
+{   Pre:   A normalised                                                        }
+{   Post:  Result is True if A is in 8-bit word range                          }
+function HugeWordIsWord8Range(const A: HugeWord): Boolean;
+begin
+  if A.Used = 0 then
+    Result := True
+  else
+  if A.Used > 1 then
+    Result := False
+  else
+    Result := PWord32(A.Data)^ <= MaxByte;
+end;
+
+{ HugeWord Word16 range checking                                               }
+{   Pre:   A normalised                                                        }
+{   Post:  Result is True if A is in 16-bit word range                         }
+function HugeWordIsWord16Range(const A: HugeWord): Boolean;
+begin
+  if A.Used = 0 then
+    Result := True
+  else
+  if A.Used > 1 then
+    Result := False
+  else
+    Result := PWord32(A.Data)^ <= MaxWord16;
+end;
+
 { HugeWord Word32 range checking                                               }
 {   Pre:   A normalised                                                        }
 {   Post:  Result is True if A is in 32-bit word range                         }
@@ -1305,6 +1361,20 @@ begin
     Result := 0
   else
     Result := PWord32(A.Data)^;
+end;
+
+function HugeWordToWord64(const A: HugeWord): Word64;
+var L : Integer;
+begin
+  L := A.Used;
+  {$IFOPT R+}
+  if L > 2 then
+    RaiseRangeError;
+  {$ENDIF};
+  if L = 0 then
+    Result := 0
+  else
+    Result := PWord64(A.Data)^;
 end;
 
 function HugeWordToInt32(const A: HugeWord): Int32;
@@ -2156,8 +2226,64 @@ begin
 end;
 
 {$IFDEF _Asm64}
+// About 25% slower than the Pas64 version
 procedure HugeWordShl1(var A: HugeWord); assembler;
 asm
+    // rcx = @A
+    push    rsi
+    mov     rsi, rcx
+    xor     rcx, rcx
+    mov     ecx, [rsi + HugeWord.Used]
+    or      ecx, ecx
+    jz      @@fin1
+    push    rdi
+    push    rbx
+    mov     rdi, [rsi + HugeWord.Data]
+    xor     rbx, rbx
+    mov     rdx, rcx
+    shr     rdx, 3
+    and     rcx, 7
+    or      rdx, rdx
+    clc
+    jz      @@last1
+@@loop1:
+    lea     rax, [rdi + rbx * 4]
+    rcl     qword ptr [rax], 1
+    inc     rbx
+    inc     rbx
+    rcl     qword ptr [rax + 8], 1
+    inc     rbx
+    inc     rbx
+    rcl     qword ptr [rax + 16], 1
+    inc     rbx
+    inc     rbx
+    rcl     qword ptr [rax + 24], 1
+    inc     rbx
+    inc     rbx
+    dec     rdx
+    jnz     @@loop1
+@@last1:
+    inc     rcx
+    dec     rcx
+    jz      @@lastcarry
+@@loop2:
+    rcl     dword ptr [rdi + rbx * 4], 1
+    inc     rbx
+    dec     rcx
+    jnz     @@loop2
+@@lastcarry:
+    jnc     @@fin2
+    mov     rcx, rsi
+    mov     rdx, rbx
+    inc     rdx
+    call    HugeWordSetSize_NoZeroMem
+    mov     rdi, [rsi + HugeWord.Data]
+    mov     dword ptr [rdi + rbx * 4], 1
+@@fin2:
+    pop     rbx
+    pop     rdi
+@@fin1:
+    pop     rsi
 end;
 {$ELSE}
 {$IFDEF Pas64}
@@ -2195,13 +2321,12 @@ begin
     begin
       V := Q^;
       // A[I] := (A[I] shl 1) or (A[I - 1] shr 63)
-      // P^ := (P^ shl 1) or (Q^ shr 63);
       P^ := (W shl 1) or (V shr 63);
       W := V;
       Dec(P);
       Dec(Q);
     end;
-  // P^ := P^ shl 1; // A[0] := A[0] shl 1
+  // A[0] := A[0] shl 1
   W := W shl 1;
   if L and 1 = 1 then
     begin
@@ -2566,10 +2691,11 @@ end;
 {   Post:  A contains result of A + B                                          }
 {          A normalised                                                        }
 procedure HugeWordAddWord32(var A: HugeWord; const B: Word32);
-var L, I : Integer;
-    R    : Int64;
-    C    : Word32;
-    P    : PWord32;
+var
+  L, I : Integer;
+  R    : UInt64;
+  C    : Word32;
+  P    : PWord32;
 begin
   if B = 0 then
     exit;
@@ -2585,8 +2711,8 @@ begin
     begin
       R := C;
       Inc(R, P^);
-      P^ := Int64Rec(R).Lo;
-      C := Int64Rec(R).Hi;
+      P^ := Word32(R);
+      C := R shr 32;
       if C = 0 then
         exit;
       Inc(P);
@@ -2603,6 +2729,7 @@ end;
 {          A normalised                                                        }
 procedure HugeWordAdd(var A: HugeWord; const B: HugeWord);
 var L, M : Integer;
+    W32  : Word32;
     I    : Integer;
     R    : UInt64;
     P, Q : PWord32;
@@ -2610,10 +2737,22 @@ begin
   M := B.Used;
   if M = 0 then
     exit;
+  if M = 1 then
+    begin
+      HugeWordAddWord32(A, PWord32(B.Data)^);
+      exit;
+    end;
   L := A.Used;
   if L = 0 then
     begin
       HugeWordAssign(A, B);
+      exit;
+    end;
+  if L = 1 then
+    begin
+      W32 := PWord32(A.Data)^;
+      HugeWordAssign(A, B);
+      HugeWordAddWord32(A, W32);
       exit;
     end;
   if L < M then
@@ -2930,10 +3069,96 @@ end;
 {   Pre:   A and B normalised                                                  }
 {   Post:  Result contains A * B                                               }
 {          Result NOT normalised. Result has size of Length(A) + Length(B)     }
+procedure HugeWordMultiplyWord8_Long(var A: HugeWord; const B: Byte); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  I, L : Integer;
+  C    : Int64;
+  P    : PWord32;
+begin
+  L := A.Used;
+  Assert(L > 0);
+  Assert(B > 2);
+  P := A.Data;
+  C := Int64(P^) * B;
+  P^ := Word32(C);
+  for I := 1 to L - 1 do
+    begin
+      Inc(P);
+      C := C shr 32;
+      C := C + (Int64(P^) * B);
+      P^ := Word32(C);
+    end;
+  C := C shr 32;
+  if C > 0 then
+    begin
+      HugeWordSetSize(A, L + 1);
+      P := A.Data;
+      Inc(P, L);
+      P^ := Word32(C);
+    end;
+end;
+
+procedure HugeWordMultiplyWord16_Long(var A: HugeWord; const B: Word16); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  I, L : Integer;
+  C    : Int64;
+  P    : PWord32;
+begin
+  L := A.Used;
+  Assert(L > 0);
+  Assert(B > 2);
+  P := A.Data;
+  C := Int64(P^) * B;
+  P^ := Word32(C);
+  for I := 1 to L - 1 do
+    begin
+      Inc(P);
+      C := C shr 32;
+      C := C + (Int64(P^) * B);
+      P^ := Word32(C);
+    end;
+  C := C shr 32;
+  if C > 0 then
+    begin
+      HugeWordSetSize(A, L + 1);
+      P := A.Data;
+      Inc(P, L);
+      P^ := Word32(C);
+    end;
+end;
+
+procedure HugeWordMultiplyWord32_Long(var A: HugeWord; const B: Word32); {$IFDEF UseInline}inline;{$ENDIF}
+var
+  I, L : Integer;
+  C    : UInt64;
+  P    : PWord32;
+begin
+  L := A.Used;
+  Assert(L > 0);
+  Assert(B > 2);
+  P := A.Data;
+  C := UInt64(P^) * B;
+  P^ := Word32(C);
+  for I := 1 to L - 1 do
+    begin
+      Inc(P);
+      C := C shr 32;
+      C := C + (UInt64(P^) * B);
+      P^ := Word32(C);
+    end;
+  C := C shr 32;
+  if C > 0 then
+    begin
+      HugeWordSetSize(A, L + 1);
+      P := A.Data;
+      Inc(P, L);
+      P^ := Word32(C);
+    end;
+end;
+
 procedure HugeWordMultiplyWord8(var A: HugeWord; const B: Byte);
-var I, L : Integer;
-    C    : Int64;
-    P    : PWord32;
+var
+  L : Integer;
 begin
   L := A.Used;
   if L = 0 then
@@ -2950,32 +3175,12 @@ begin
       HugeWordShl1(A);
       exit;
     end;
-  P := A.Data;
-  C := Int64(P^) * B;
-  P^ := Int64Rec(C).Lo;
-  for I := 1 to L - 1 do
-    begin
-      Inc(P);
-      C := C shr 32;
-      C := C + (Int64(P^) * B);
-      // P^ := Int64Rec(C).Lo;
-      P^ := Word32(C);
-    end;
-  C := C shr 32;
-  if C > 0 then
-    begin
-      HugeWordSetSize(A, L + 1);
-      P := A.Data;
-      Inc(P, L);
-      // P^ := Int64Rec(C).Lo;
-      P^ := Word32(C);
-    end;
+  HugeWordMultiplyWord8_Long(A, B);
 end;
 
-procedure HugeWordMultiplyWord16(var A: HugeWord; const B: Word);
-var I, L : Integer;
-    C    : Int64;
-    P    : PWord32;
+procedure HugeWordMultiplyWord16(var A: HugeWord; const B: Word16);
+var
+  L : Integer;
 begin
   L := A.Used;
   if L = 0 then
@@ -2987,40 +3192,37 @@ begin
     end;
   if B = 1 then
     exit;
-  P := A.Data;
-  C := Int64(P^) * B;
-  P^ := Int64Rec(C).Lo;
-  for I := 1 to L - 1 do
+  if B = 2 then
     begin
-      Inc(P);
-      C := C shr 32;
-      C := C + (Int64(P^) * B);
-      // P^ := Int64Rec(C).Lo;
-      P^ := Word32(C);
+      HugeWordShl1(A);
+      exit;
     end;
-  C := C shr 32;
-  if C > 0 then
-    begin
-      HugeWordSetSize(A, L + 1);
-      P := A.Data;
-      Inc(P, L);
-      // P^ := Int64Rec(C).Lo;
-      P^ := Word32(C);
-    end;
+  HugeWordMultiplyWord16_Long(A, B);
 end;
 
 procedure HugeWordMultiplyWord32(var A: HugeWord; const B: Word32);
-var F : HugeWord;
+var
+  L : Integer;
 begin
-  HugeWordInitWord32(F, B);
-  HugeWordMultiply(A, A, F);
-  HugeWordFinalise(F);
+  L := A.Used;
+  if L = 0 then
+    exit;
+  if B = 0 then
+    begin
+      HugeWordAssignZero(A);
+      exit;
+    end;
+  if B = 1 then
+    exit;
+  if B = 2 then
+    begin
+      HugeWordShl1(A);
+      exit;
+    end;
+  HugeWordMultiplyWord32_Long(A, B);
 end;
 
 {$IFDEF ASM386_DELPHI}
-type
-  Word64 = Int64;
-
 procedure Word32MultiplyWord32(const A, B: Word32; var R: Word64);
 asm
     // EAX = A, EDX = B, [ECX] = R
@@ -3042,7 +3244,7 @@ var L, M : Integer;
     I, J : Integer;
     R    : Word64;
     {$IFDEF ASM386_DELPHI}
-    TM   : Int64;
+    TM   : Word64;
     V    : Word32;
     {$ELSE}
     V    : UInt64;
@@ -3063,35 +3265,73 @@ begin
       exit;
     end;
   // handle one and two
-  if (L = 1) or (M = 1) then
-    begin
-      if L = 1 then
-        if HugeWordIsOne(A) then
-          begin
-            HugeWordAssign(Res, B);
-            exit;
-          end;
-      if M = 1 then
-        if HugeWordIsOne(B) then
-          begin
-            HugeWordAssign(Res, A);
-            exit;
-          end;
-      if L = 1 then
-        if HugeWordIsTwo(A) then
-          begin
-            HugeWordAssign(Res, B);
-            HugeWordShl1(Res);
-            exit;
-          end;
-      if M = 1 then
-        if HugeWordIsTwo(B) then
-          begin
-            HugeWordAssign(Res, A);
-            HugeWordShl1(Res);
-            exit;
-          end;
-    end;
+  if L = 1 then
+    if HugeWordIsOne(A) then
+      begin
+        HugeWordAssign(Res, B);
+        exit;
+      end
+    else
+    if HugeWordIsTwo(A) then
+      begin
+        HugeWordAssign(Res, B);
+        HugeWordShl1(Res);
+        exit;
+      end;
+  if M = 1 then
+    if HugeWordIsOne(B) then
+      begin
+        HugeWordAssign(Res, A);
+        exit;
+      end
+    else
+    if HugeWordIsTwo(B) then
+      begin
+        HugeWordAssign(Res, A);
+        HugeWordShl1(Res);
+        exit;
+      end;
+  // handle small numbers
+  if L = 1 then
+    if HugeWordIsWord8Range(A) then
+      begin
+        HugeWordAssign(Res, B);
+        HugeWordMultiplyWord8(Res, Byte(HugeWordToWord32(A)));
+        exit;
+      end
+    else
+    if HugeWordIsWord16Range(A) then
+      begin
+        HugeWordAssign(Res, B);
+        HugeWordMultiplyWord16(Res, Word16(HugeWordToWord32(A)));
+        exit;
+      end
+    else
+      begin
+        HugeWordAssign(Res, B);
+        HugeWordMultiplyWord32(Res, HugeWordToWord32(A));
+        exit;
+      end;
+  if M = 1 then
+    if HugeWordIsWord8Range(B) then
+      begin
+        HugeWordAssign(Res, A);
+        HugeWordMultiplyWord8(Res, Byte(HugeWordToWord32(B)));
+        exit;
+      end
+    else
+    if HugeWordIsWord16Range(B) then
+      begin
+        HugeWordAssign(Res, A);
+        HugeWordMultiplyWord16(Res, Word16(HugeWordToWord32(B)));
+        exit;
+      end
+    else
+      begin
+        HugeWordAssign(Res, A);
+        HugeWordMultiplyWord32(Res, HugeWordToWord32(B));
+        exit;
+      end;
   // multiply
   HugeWordAssignZero(Res);
   HugeWordSetSize(Res, L + M);
@@ -4706,6 +4946,12 @@ begin
   HugeIntAssignWord32(A, B);
 end;
 
+procedure HugeIntInitWord64(out A: HugeInt; const B: Word64);
+begin
+  HugeIntInit(A);
+  HugeIntAssignWord64(A, B);
+end;
+
 procedure HugeIntInitInt32(out A: HugeInt; const B: Int32);
 begin
   HugeIntInit(A);
@@ -4770,6 +5016,20 @@ begin
     begin
       A.Sign := 1;
       HugeWordAssignWord32(A.Value, B);
+    end;
+end;
+
+procedure HugeIntAssignWord64(var A: HugeInt; const B: Word64);
+begin
+  if B = 0 then
+    begin
+      A.Sign := 0;
+      HugeWordAssignZero(A.Value);
+    end
+  else
+    begin
+      A.Sign := 1;
+      HugeWordAssignWord64(A.Value, B);
     end;
 end;
 
@@ -5104,6 +5364,15 @@ begin
     RaiseRangeError;
   {$ENDIF}
   Result := HugeWordToWord32(A.Value);
+end;
+
+function HugeIntToWord64(const A: HugeInt): Word64;
+begin
+  {$IFOPT R+}
+  if (A.Sign < 0) or not HugeWordIsWord64Range(A.Value) then
+    RaiseRangeError;
+  {$ENDIF}
+  Result := HugeWordToWord64(A.Value);
 end;
 
 function HugeIntToInt32(const A: HugeInt): Int32;
@@ -5621,22 +5890,6 @@ begin
   HugeWordSqr(A.Value, A.Value);
 end;
 
-// Truncated division:
-// Qt = Trunc(A/B)        Qt = Trunc(1000/3) = 333
-// Rt = A - B * Qt        Rt = -1000 - (3 * -333) = -1000 + 999 = -1
-// Sign of Rt always Sign of A
-
-// Floor division:
-// Qf = Floor(A/B) = Qt - I
-// Rf = Rt + I * B
-// I = if Sign(Rt) = -Sign(B) then 1 else 0
-
-// Euclidian division:
-// Qf = Floor(A/B) = Qt - I
-// Rf = Rt + I * B
-// 0 <= Rf < Abs(B)
-// I = if Rt >= 0 then 0 else if B > 0 then 1 else -1
-
 procedure HugeIntDivideWord32(const A: HugeInt; const B: Word32; var Q: HugeInt; out R: Word32);
 begin
   if B = 0 then
@@ -5676,11 +5929,13 @@ begin
   R := Int32(C);
 end;
 
-/// See https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/divmodnote-letter.pdf
+// See https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/divmodnote-letter.pdf
+// for information on different kinds of Div/Mod operations.
 
-// Q = Trunc(A/B)
-// Also known as truncated division
-// Remainder has same sign as dividend
+// Truncated division:
+// Qt = Trunc(A/B)        Qt = Trunc(1000/3) = 333
+// Rt = A - B * Qt        Rt = -1000 - (3 * -333) = -1000 + 999 = -1
+// Sign of Rt always Sign of A
 // C++, C#, Go, Java % operators
 procedure HugeIntDivideHugeInt_T(const A, B: HugeInt; var Q, R: HugeInt);
 begin
@@ -5715,6 +5970,10 @@ begin
     Q.Sign := 1;
 end;
 
+// Floor division:
+// Qf = Floor(A/B) = Qt - I
+// Rf = Rt + I * B
+// I = if Sign(Rt) = -Sign(B) then 1 else 0
 // Q = Floor(A/B)
 // Also known as Knuth method
 // Remainder has same sign as divisor
@@ -5735,7 +5994,11 @@ begin
     end;
 end;
 
-// Euclidian division
+// Euclidian division:
+// Qf = Floor(A/B) = Qt - I
+// Rf = Rt + I * B
+// 0 <= Rf < Abs(B)
+// I = if Rt >= 0 then 0 else if B > 0 then 1 else -1
 // Remainder always positive
 procedure HugeIntDivideHugeInt_E(const A, B: HugeInt; var Q, R: HugeInt);
 var
@@ -7400,6 +7663,20 @@ begin
     begin
       Di := Digits_Default[J];
       HugeWordRandom(C, Di);
+      T := GetTickCount;
+      for I := 1 to 100000 do
+        begin
+          HugeWordAssign(A, C);
+          HugeWordShl1(A);
+        end;
+      T := GetTickCount - T;
+      Writeln('Shl1:':25, Di*32:10, ' ', 1000 / (T / 100000):0:1, '/s');
+  end;
+
+  for J := 0 to Digit_Test_Count - 1 do
+    begin
+      Di := Digits_Default[J];
+      HugeWordRandom(C, Di);
       HugeWordRandom(D, Di - 2);
       HugeWordAssign(B, D);
       T := GetTickCount;
@@ -7465,20 +7742,6 @@ begin
 
   for J := 0 to Digit_Test_Count - 1 do
     begin
-      Di := Digits_Default[J];
-      HugeWordRandom(C, Di);
-      T := GetTickCount;
-      for I := 1 to 100000 do
-        begin
-          HugeWordAssign(A, C);
-          HugeWordShl1(A);
-        end;
-      T := GetTickCount - T;
-      Writeln('Shl1:':25, Di*32:10, ' ', 1000 / (T / 100000):0:1, '/s');
-  end;
-
-  for J := 0 to Digit_Test_Count - 1 do
-    begin
       Di := Digits_Multiply[J];
       HugeWordRandom(A, Di);
       HugeWordRandom(B, Di - 3);
@@ -7517,6 +7780,16 @@ begin
       T := GetTickCount - T;
       Writeln('Mul_Long:':25, Di*32:10, ' ', 1000 / (T / 1000000):0:1, '/s');
     end;
+
+    Di := 4;
+    HugeWordRandom(A, Di);
+    HugeWordRandom(B, Di);
+
+    T := GetTickCount;
+    for I := 1 to 100000000 do
+      HugeWordMultiply_Long(C, A, B);
+    T := GetTickCount - T;
+    Writeln('Mul_Long4:':25, Di*32:10, ' ', 1000 / (T / 100000000):0:1, '/s');
 
   for J := 0 to Digit_Test_Count - 1 do
     begin
