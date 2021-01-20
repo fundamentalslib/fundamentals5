@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPServer.pas                                         }
-{   File version:     5.27                                                     }
+{   File version:     5.32                                                     }
 {   Description:      TCP server.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -49,7 +49,7 @@
 {   2013/01/28  4.11  Fix for restarting server.                               }
 {   2015/04/25  4.12  OnReady event.                                           }
 {   2015/04/26  4.13  Blocking interface and worker thread.                    }
-{   2015/04/27  4.14  Whitelist/Blacklist.                                     }
+{   2015/04/27  4.14  Address lists.                                           }
 {   2016/01/09  5.15  Revised for Fundamentals 5.                              }
 {   2018/08/30  5.16  Trigger Close event when ready client is terminated.     }
 {   2018/09/07  5.17  Implement ClientList as linked list.                     }
@@ -63,13 +63,21 @@
 {                     threads. Improved latency.                               }
 {   2019/12/30  5.25  MinReadBufferSize, MinWriteBuffersize,                   }
 {                     SocketReadBufferSize and SocketWriteBufferSize.          }
-{   2020/03/21  5.26  Remove address whitelist/blacklist.                      }
+{   2020/03/21  5.26  Remove address lists.                                    }
 {   2020/05/02  5.27  Log exceptions raised in event handlers.                 }
+{   2020/07/14  5.28  Refactor thread processes into classes.                  }
+{   2020/07/15  5.29  Replace polling in controller thread and process threads }
+{                     with short poll process thread.                          }
+{   2020/07/15  5.30  Use spin poll process thread for accepted clients when   }
+{                     short poll process thread is waiting.                    }
+{   2020/07/15  5.31  Start option to wait for startup to complete.            }
+{   2020/07/19  5.32  Separate Accept thread.                                  }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
-{   Delphi 2010-10.4 Win32/Win64        5.27  2020/06/02                       }
-{   Delphi 10.2-10.4 Linux64            5.27  2020/06/02                       }
+{   Delphi 7-10.4 Win32/Win64           5.32  2021/01/20                       }
+{   Delphi 10.2 Linux64                 5.32  2020/07/30                       }
+{   Delphi 10.3-10.4 Linux64            5.27  2020/06/02                       }
 {   Delphi 10.2-10.4 iOS32/64           5.27  2020/06/02                       }
 {   Delphi 10.2-10.4 OSX32/64           5.27  2020/06/02                       }
 {   Delphi 10.2-10.4 Android32/64       5.27  2020/06/02                       }
@@ -77,7 +85,7 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ../flcInclude.inc}
+{$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcTCP.inc}
 
 unit flcTCPServer;
@@ -106,8 +114,10 @@ uses
 
   { TCP }
 
+  flcTCPUtils,
   flcTCPBuffer,
-  flcTCPConnection
+  flcTCPConnection,
+  flcTCPServerUtils
 
   { TLS }
 
@@ -161,11 +171,9 @@ type
       scsClosed
     );
 
-  TTCPServerClient = class
+  TTCPServerClient = class(TTCPServerClientBase)
   protected
     FServer         : TF5TCPServer;
-    FPrev           : TTCPServerClient;
-    FNext           : TTCPServerClient;
     FState          : TTCPServerClientState;
     FTerminated     : Boolean;
     FRemoteAddr     : TSocketAddr;
@@ -174,8 +182,8 @@ type
     FReferenceCount : Integer;
     FOrphanClient   : Boolean;
     FClientID       : Int64;
+    FPollThread     : TTCPServerThreadBase;
     FPollIndex      : Integer;
-    //// FPolEvents : Word16;
     FUserTag        : NativeInt;
     FUserObject     : TObject;
 
@@ -213,7 +221,6 @@ type
     procedure ConnectionRead(Sender: TTCPConnection);
     procedure ConnectionWrite(Sender: TTCPConnection);
     procedure ConnectionReadActivity(Sender: TTCPConnection);
-    procedure ConnectionWriteActivity(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
               Connection: TTCPBlockingConnection; var CloseOnExit: Boolean);
@@ -228,12 +235,12 @@ type
     procedure TriggerRead;
     procedure TriggerWrite;
     procedure TriggerReadActivity;
-    procedure TriggerWriteActivity;
 
     procedure Start;
-    procedure Process(const ProcessRead, ProcessWrite: Boolean;
-              const ActivityTime: TDateTime;
-              var Idle, Terminated: Boolean);
+    procedure Process(
+              const AProcessRead, AProcessWrite: Boolean;
+              const AActivityTime: TDateTime;
+              out AIdle, ATerminated: Boolean);
     procedure AddReference;
     procedure SetClientOrphaned;
 
@@ -244,7 +251,7 @@ type
                 const AClientID: Int64;
                 const ARemoteAddr: TSocketAddr);
     destructor Destroy; override;
-    procedure Finalise;
+    procedure Finalise; override;
 
     property  State: TTCPServerClientState read GetState;
     property  StateStr: String read GetStateStr;
@@ -281,66 +288,76 @@ type
 
 
 
-  { TCP Server Client List                                                     }
-
-  TTCPServerClientList = class
-  private
-    FCount : Integer;
-    FFirst : TTCPServerClient;
-    FLast  : TTCPServerClient;
-
-  public
-    destructor Destroy; override;
-    procedure Finalise;
-
-    procedure Add(const Client: TTCPServerClient);
-    procedure Remove(const Client: TTCPServerClient);
-    property  First: TTCPServerClient read FFirst;
-    property  Count: Integer read FCount;
-  end;
-
-
-
-  { TCP Server Poll List                                                       }
-  { Poll list maintains poll buffer used in call to Poll.                      }
-
-  TTCPServerPollList = class
-  private
-    FListLen     : Integer;
-    FListUsed    : Integer;
-    FClientCount : Integer;
-    FFDList      : packed array of TPollfd;
-    FClientList  : array of TTCPServerClient;
-
-  public
-    constructor Create;
-    destructor Destroy; override;
-    procedure Finalise;
-    procedure AddPollEvent(const ASocket: TSysSocket);
-    function  Add(const Client: TTCPServerClient): Integer;
-    procedure Remove(const Idx: Integer);
-    property  ClientCount: Integer read FClientCount;
-    procedure GetPollBuffer(out P: Pointer; out ItemCount: Integer);
-    function  GetClientByIndex(const Idx: Integer): TTCPServerClient; {$IFDEF UseInline}inline;{$ENDIF}
-  end;
-
   { TCP Server Thread                                                          }
 
-  TTCPServerThreadTask = (
-      sttControl,
-      sttProcess
-    );
-
-  TTCPServerThread = class(TThread)
+  TTCPServerThread = class(TTCPServerThreadBase)
   protected
     FServer : TF5TCPServer;
-    FTask   : TTCPServerThreadTask;
+  public
+    constructor Create(const AServer: TF5TCPServer);
+    procedure Finalise; override;
+  end;
+
+  TTCPServerControlThread = class(TTCPServerThread)
+  protected
+    procedure Execute; override;
+  end;
+
+  TTCPServerAcceptThread = class(TTCPServerThread)
+  private
+    FAcceptProcess : TTCPServerAcceptProcess;
+  protected
     procedure Execute; override;
   public
-    constructor Create(const AServer: TF5TCPServer; const ATask: TTCPServerThreadTask);
-    procedure Finalise;
-    property Terminated;
+    constructor Create(const AServer: TF5TCPServer);
+    destructor Destroy; override;
+    procedure Finalise; override;
   end;
+
+  TTCPServerProcessPollThread = class(TTCPServerThread)
+  private
+    FPollProcess : TTCPServerPollProcess;
+    FPollTime    : TDateTime;
+  public
+    constructor Create(const AServer: TF5TCPServer);
+    destructor Destroy; override;
+    procedure Finalise; override;
+  end;
+
+  TTCPServerProcessPollLongThread = class(TTCPServerProcessPollThread)
+  protected
+    procedure Execute; override;
+  end;
+
+  TTCPServerProcessPollShortThread = class(TTCPServerProcessPollThread)
+  protected
+    procedure Execute; override;
+  end;
+
+  TTCPServerProcessSpinThread = class(TTCPServerThread)
+  private
+    FSpinProcess : TTCPServerSpinProcess;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create(const AServer: TF5TCPServer);
+    destructor Destroy; override;
+    procedure Finalise; override;
+  end;
+
+  ////
+  TTCPServerThreads = class
+  {
+    FControlThread        : TTCPServerControlThread;
+    FAcceptThread         : TTCPServerAcceptThread;
+    FPollLongThread       : array of TTCPServerProcessPollLongThread;
+    FPollShortThread      : array of TTCPServerProcessPollShortThread;
+    FPollBusyThread       : array of TTCPServerProcessSpinThread;
+  }
+  end;
+  ////
+
+
 
   { TCP Server                                                                 }
 
@@ -348,14 +365,8 @@ type
       ssInit,
       ssStarting,
       ssReady,
-      ssFailure,
+      ssError,
       ssClosed
-    );
-
-  TTCPServerControlThreadState = (
-      sctsInit,
-      sctsPollReady,
-      sctsPollProcess
     );
 
   {$IFDEF TCPSERVER_TLS}
@@ -375,7 +386,7 @@ type
   TTCPServerAcceptEvent = procedure (AServer: TF5TCPServer; AAddress: TSocketAddr;
       var AAcceptClient: Boolean) of object;
   TTCPServerClientWorkerExecuteEvent = procedure (AClient: TTCPServerClient;
-      AConnection: TTCPBlockingConnection; var CloseOnExit: Boolean) of object;
+      AConnection: TTCPBlockingConnection; var ACloseOnExit: Boolean) of object;
 
   TF5TCPServer = class(TComponent)
   private
@@ -393,6 +404,7 @@ type
     FSocketWriteBufferSize : Integer;
     FTrackLastActivityTime : Boolean;
     FProcessThreadCount    : Integer;
+
     {$IFDEF TCPSERVER_TLS}
     FTLSEnabled            : Boolean;
     FTLSOptions            : TTCPServerTLSOptions;
@@ -402,19 +414,24 @@ type
     FTLSCipherOptions      : TTCPServerTLSCipherOptions;
     FTLSHashOptions        : TTCPServerTLSHashOptions;
     {$ENDIF}
+
     FUseWorkerThread       : Boolean;
     FUserTag               : NativeInt;
     FUserObject            : TObject;
 
-    FProcessProcessEvent   : TSimpleEvent;
-    FProcessReadyEvent     : TSimpleEvent;
-    FControlReadyEvent     : TSimpleEvent;
+    FStartFinishEvent      : TSimpleEvent;
 
     // event handlers
     FOnLog                 : TTCPServerLogEvent;
+
+    FOnActive              : TTCPServerNotifyEvent;
+    FOnStarting            : TTCPServerNotifyEvent;
+    FOnError               : TTCPServerNotifyEvent;
+    FOnReady               : TTCPServerNotifyEvent;
+    FOnStopping            : TTCPServerNotifyEvent;
+    FOnInactive            : TTCPServerNotifyEvent;
+
     FOnStateChanged        : TTCPServerStateEvent;
-    FOnStart               : TTCPServerNotifyEvent;
-    FOnStop                : TTCPServerNotifyEvent;
     FOnThreadIdle          : TTCPServerIdleEvent;
 
     FOnClientAccept        : TTCPServerAcceptEvent;
@@ -434,7 +451,6 @@ type
     FOnClientRead          : TTCPServerClientEvent;
     FOnClientWrite         : TTCPServerClientEvent;
     FOnClientReadActivity  : TTCPServerClientEvent;
-    FOnClientWriteActivity : TTCPServerClientEvent;
 
     FOnClientWorkerExecute : TTCPServerClientWorkerExecuteEvent;
 
@@ -443,21 +459,18 @@ type
     FActive               : Boolean;
     FActiveOnLoaded       : Boolean;
     FState                : TTCPServerState;
-    FControlThread        : TTCPServerThread;
-    FControlState         : TTCPServerControlThreadState;
-    FProcessThreads       : array of TTCPServerThread;
-    FProcessThreadsRun    : Integer;
-    FProcessThreadsReady  : Integer;
+    FStateErrorMsg        : String;
+    FStopping             : Boolean;
+    FControlThread        : TTCPServerControlThread;
+    FAcceptThread         : TTCPServerAcceptThread;
+    ////FPollLongThread       : TTCPServerProcessPollLongThread;
+    FPollShortThread      : TTCPServerProcessPollShortThread;
+    FPollSpinThread       : TTCPServerProcessSpinThread;
     FServerSocket         : TSysSocket;
     FBindAddress          : TSocketAddr;
-    FClientList           : TTCPServerClientList;
+    FClientActiveList     : TTCPServerClientList;
     FClientAcceptedList   : TTCPServerClientList;
     FClientTerminatedList : TTCPServerClientList;
-    FPollList             : TTCPServerPollList;
-    FPollTime             : TDateTime;
-    FPollEntBuf           : Pointer;
-    FPollEntCount         : Integer;
-    FPollProcessIdx       : Integer;
     FClientIDCounter      : Int64;
     {$IFDEF TCPSERVER_TLS}
     FTLSServer            : TTLSServer;
@@ -472,15 +485,10 @@ type
 
     procedure Log(const LogType: TTCPLogType; const Msg: String; const LogLevel: Integer = 0); overload;
     procedure Log(const LogType: TTCPLogType; const Msg: String; const Args: array of const; const LogLevel: Integer = 0); overload;
+    procedure LogParameter(const Msg: String; const Args: array of const; const LogLevel: Integer = 0); overload;
     procedure LogException(const Msg: String; const E: Exception);
 
-    function  GetState: TTCPServerState;
-    function  GetStateStr: String;
-    procedure SetState(const AState: TTCPServerState);
     procedure CheckNotActive;
-
-    procedure SetActive(const AActive: Boolean);
-    procedure Loaded; override;
 
     procedure SetAddressFamily(const AAddressFamily: TIPAddressFamily);
     procedure SetBindAddress(const ABindAddressStr: String);
@@ -497,7 +505,9 @@ type
 
     procedure SetTrackLastActivityTime(const Track: Boolean);
 
-    procedure SetProcessThreadCount(const ThreadCount: Integer);
+    procedure SetProcessThreadCount(const AThreadCount: Integer);
+
+    procedure SetUseWorkerThread(const AUseWorkerThread: Boolean);
 
     {$IFDEF TCPSERVER_TLS}
     procedure SetTLSEnabled(const TLSEnabled: Boolean);
@@ -509,42 +519,27 @@ type
     procedure SetTLSHashOptions(const ATLSHashOptions: TTCPServerTLSHashOptions);
     {$ENDIF}
 
-    procedure SetUseWorkerThread(const UseWorkerThread: Boolean);
-
-    procedure TriggerStart; virtual;
-    procedure TriggerStop; virtual;
-
-    procedure TriggerThreadIdle(const AThread: TTCPServerThread); virtual;
-
     procedure ServerSocketLog(Sender: TSysSocket; LogType: TSysSocketLogType; Msg: String);
 
     procedure ClientLog(const AClient: TTCPServerClient; const LogType: TTCPLogType; const LogMsg: String; const LogLevel: Integer);
 
-    procedure TriggerClientAccept(const Address: TSocketAddr; var AcceptClient: Boolean); virtual;
-    procedure TriggerClientCreate(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientAdd(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientRemove(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientDestroy(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientStateChange(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientNegotiating(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientConnected(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientReady(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientReadShutdown(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientShutdown(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientClose(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientRead(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientWrite(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientReadActivity(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientWriteActivity(const Client: TTCPServerClient); virtual;
-    procedure TriggerClientWorkerExecute(const Client: TTCPServerClient;
-              const Connection: TTCPBlockingConnection; var CloseOnExit: Boolean); virtual;
-
-    procedure SetReady; virtual;
-    procedure SetClosed; virtual;
-
-    procedure DoCloseClients;
-    procedure DoCloseServer;
-    procedure DoClose;
+    procedure TriggerClientAccept(const AAddress: TSocketAddr; var AAcceptClient: Boolean); virtual;
+    procedure TriggerClientCreate(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientAdd(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientRemove(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientDestroy(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientStateChange(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientNegotiating(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientConnected(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientReady(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientReadShutdown(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientShutdown(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientClose(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientRead(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientWrite(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientReadActivity(const AClient: TTCPServerClient); virtual;
+    procedure TriggerClientWorkerExecute(const AClient: TTCPServerClient;
+              const AConnection: TTCPBlockingConnection; var ACloseOnExit: Boolean); virtual;
 
     {$IFDEF TCPSERVER_TLS}
     procedure TLSServerTransportLayerSendProc(
@@ -552,31 +547,92 @@ type
               const Buffer; const Size: Integer);
     {$ENDIF}
 
+    function  GetState: TTCPServerState;
+    function  GetStateStr: String;
+    function  GetStateErrorMsg: String;
+
+    procedure SetState(const AState: TTCPServerState);
+
+    procedure ServerActive; virtual;
+    procedure ServerStarting; virtual;
+    procedure ServerReady; virtual;
+    procedure ServerError(const ErrorMsg: String);
+    procedure ServerStopping; virtual;
+    procedure ServerInactive; virtual;
+
     procedure StartControlThread;
-    procedure StartProcessThreads;
+    procedure StartAcceptThread;
+    procedure StartPollThreads;
     procedure StopServerThreads;
 
-    procedure DoSetActive;
-    procedure DoSetInactive;
+    procedure ServerCloseClients;
+    procedure ServerCloseServer;
+    procedure ServerClose; virtual;
+    procedure ServerSetStateError(const ErrorMsg: String); virtual;
+    procedure ServerSetStateReady; virtual;
+    procedure ServerStart; virtual;
+    procedure ServerStop; virtual;
+    procedure ServerActivate; virtual;
+    procedure ServerDeactivate; virtual;
+
+    procedure ServerSetError(const ErrorMsg: String);
+    procedure ServerSetReady;
+    procedure ServerSetActive;
+    procedure ServerSetInactive;
+
+    procedure SetActive(const AActive: Boolean);
+
+    procedure Loaded; override;
 
     function  CreateClient(const ASocketHandle: TSocketHandle; const ASocketAddr: TSocketAddr): TTCPServerClient; virtual;
 
     function  CanAcceptClient: Boolean;
-    function  ServerAcceptClient: Boolean;
+    function  ServerAcceptClient(
+              const AcceptSocket: TSocketHandle;
+              const AcceptAddr: TSocketAddr): Boolean;
+
     function  ServerDropClient: Boolean;
+
     procedure ProcessClient(
               const AClient: TTCPServerClient;
-              const ProcessRead, ProcessWrite: Boolean;
-              const ActivityTime: TDateTime;
-              out ClientIdle, ClientTerminated: Boolean);
-    function  ServerProcessClient: Boolean;
-    procedure ServerPoll(out Idle: Boolean; out ProcessPending: Boolean);
+              const AProcessRead, AProcessWrite: Boolean;
+              const AActivityTime: TDateTime;
+              out AClientIdle, AClientTerminated: Boolean);
 
-    procedure ControlThreadExecute(const Thread: TTCPServerThread);
-    procedure ProcessThreadExecute(const Thread: TTCPServerThread);
+    function  ControlThreadListen(const AThread: TTCPThread): Boolean;
+    function  ControlThreadDropClients(const AThread: TTCPThread): Boolean;
+    procedure ControlThreadExecute(const AThread: TTCPServerControlThread);
 
-    procedure ThreadError(const Thread: TTCPServerThread; const Error: Exception);
-    procedure ThreadTerminate(const Thread: TTCPServerThread);
+    procedure AcceptThreadAcceptSocket(
+              const ASocketHandle: TSocket;
+              const AAddr: TSocketAddr;
+              var AAcceptSocket: Boolean);
+    procedure AcceptThreadExecute(const AThread: TTCPServerAcceptThread);
+
+    procedure ProcessPollLongThreadExecute(const AThread: TTCPServerProcessPollLongThread);
+
+    procedure AddAcceptedClientsToPollShort;
+    procedure AddAcceptedClientsToPollSpin;
+
+    procedure ProcessPollShortThreadStartPoll;
+    procedure ProcessPollShortThreadClientPoll(
+              const AClient: TTCPServerClientBase;
+              var AEventRead, AEventWrite: Boolean);
+    procedure ProcessPollShortThreadClientProcess(
+              const AClient: TTCPServerClientBase;
+              const AEventRead, AEventWrite, AEventError: Boolean;
+              out AClientTerminated: Boolean);
+    procedure ProcessPollShortThreadCompletePoll;
+    procedure ProcessPollShortThreadExecute(const AThread: TTCPServerProcessPollShortThread);
+
+    procedure ProcessPollSpinThreadClientPoll(
+              const AClient: TTCPServerClientBase;
+              var AEventRead, AEventWrite: Boolean);
+    procedure ProcessPollSpinThreadClientProcess(
+              const AClient: TTCPServerClientBase;
+              const AEventRead, AEventWrite, AEventError: Boolean;
+              out AClientTerminated: Boolean);
+    procedure ProcessPollSpinThreadExecute(const AThread: TTCPServerProcessSpinThread);
 
     function  GetActiveClientCount: Integer;
     function  GetClientCount: Integer;
@@ -623,9 +679,15 @@ type
     // Event handlers should do their own synchronisation if required.
     property  OnLog: TTCPServerLogEvent read FOnLog write FOnLog;
 
+    property  OnActive: TTCPServerNotifyEvent read FOnActive write FOnActive;
+    property  OnStarting: TTCPServerNotifyEvent read FOnStarting write FOnStarting;
+    property  OnError: TTCPServerNotifyEvent read FOnError write FOnError;
+    property  OnReady: TTCPServerNotifyEvent read FOnReady write FOnReady;
+    property  OnStopping: TTCPServerNotifyEvent read FOnStopping write FOnStopping;
+    property  OnInactive: TTCPServerNotifyEvent read FOnInactive write FOnInactive;
+
     property  OnStateChanged: TTCPServerStateEvent read FOnStateChanged write FOnStateChanged;
-    property  OnStart: TTCPServerNotifyEvent read FOnStart write FOnStart;
-    property  OnStop: TTCPServerNotifyEvent read FOnStop write FOnStop;
+
     property  OnThreadIdle: TTCPServerIdleEvent read FOnThreadIdle write FOnThreadIdle;
 
     property  OnClientAccept: TTCPServerAcceptEvent read FOnClientAccept write FOnClientAccept;
@@ -645,13 +707,17 @@ type
     property  OnClientRead: TTCPServerClientEvent read FOnClientRead write FOnClientRead;
     property  OnClientWrite: TTCPServerClientEvent read FOnClientWrite write FOnClientWrite;
     property  OnClientReadActivity: TTCPServerClientEvent read FOnClientReadActivity write FOnClientReadActivity;
-    property  OnClientWriteActivity: TTCPServerClientEvent read FOnClientWriteActivity write FOnClientWriteActivity;
 
     // State
     property  State: TTCPServerState read GetState;
     property  StateStr: String read GetStateStr;
+    property  StateErrorMsg: String read GetStateErrorMsg;
+
     property  Active: Boolean read FActive write SetActive default False;
-    procedure Start;
+
+    procedure Start(
+              const AWaitStartup: Boolean = False;
+              const AWaitTimeoutMs: Int32 = 30000);
     procedure Stop;
 
     property  ActiveClientCount: Integer read GetActiveClientCount;
@@ -703,9 +769,16 @@ type
     {$ENDIF}
 
     property  OnLog;
+
+    property  OnActive;
+    property  OnStarting;
+    property  OnError;
+    property  OnReady;
+    property  OnStopping;
+    property  OnInactive;
+
     property  OnStateChanged;
-    property  OnStart;
-    property  OnStop;
+
     property  OnThreadIdle;
 
     property  OnClientAccept;
@@ -724,7 +797,6 @@ type
     property  OnClientRead;
     property  OnClientWrite;
     property  OnClientReadActivity;
-    property  OnClientWriteActivity;
 
     property  UseWorkerThread;
     property  OnClientWorkerExecute;
@@ -754,7 +826,7 @@ const
       'Initialise',
       'Starting',
       'Ready',
-      'Failure',
+      'Error',
       'Closed');
 
   STCPServerClientState : array[TTCPServerClientState] of String = (
@@ -780,6 +852,7 @@ type
     FTLSServer : TTLSServer;
     FTLSClient : TTLSServerClient;
 
+  protected
     procedure TLSClientTransportLayerSendProc(const Sender: TTLSConnection; const Buffer; const Size: Integer);
     procedure TLSClientLog(Sender: TTLSConnection; LogType: TTLSLogType; LogMsg: String; LogLevel: Integer);
     procedure TLSClientStateChange(Sender: TTLSConnection; State: TTLSConnectionState);
@@ -909,7 +982,7 @@ begin
   Assert(Assigned(AServer));
   Assert(ASocketHandle <> INVALID_SOCKETHANDLE);
 
-  inherited Create;
+  inherited Create(ASocketHandle);
 
   FState := scsInit;
   FServer := AServer;
@@ -942,8 +1015,6 @@ begin
     FConnection.OnWrite := ConnectionWrite;
   if Assigned(FServer.FOnClientReadActivity) then
     FConnection.OnReadActivity := ConnectionReadActivity;
-  if Assigned(FServer.FOnClientWriteActivity) then
-    FConnection.OnWriteActivity := ConnectionWriteActivity;
 
   {$IFDEF TCPSERVER_TLS}
   if FServer.FTLSEnabled then
@@ -962,9 +1033,9 @@ end;
 
 procedure TTCPServerClient.Finalise;
 begin
+  inherited Finalise;
+  FPollThread := nil;
   FUserObject := nil;
-  FNext := nil;
-  FPrev := nil;
   FServer := nil;
 end;
 
@@ -1045,7 +1116,7 @@ begin
   {$IFDEF TCP_DEBUG_CONNECTION}
   Log(LogType, 'Connection:%s', [LogMsg], LogLevel_Connection + LogLevel);
   {$ELSE}
-  if LogType = tlError then //// 2020-05-05
+  if LogType in [tlWarning, tlError] then
     Log(LogType, 'Connection:%s', [LogMsg], LogLevel_Connection + LogLevel);
   {$ENDIF}
 end;
@@ -1101,11 +1172,6 @@ end;
 procedure TTCPServerClient.ConnectionReadActivity(Sender: TTCPConnection);
 begin
   TriggerReadActivity;
-end;
-
-procedure TTCPServerClient.ConnectionWriteActivity(Sender: TTCPConnection);
-begin
-  TriggerWriteActivity;
 end;
 
 procedure TTCPServerClient.ConnectionWorkerExecute(Sender: TTCPConnection;
@@ -1176,12 +1242,6 @@ begin
     FServer.TriggerClientReadActivity(self);
 end;
 
-procedure TTCPServerClient.TriggerWriteActivity;
-begin
-  if Assigned(FServer) then
-    FServer.TriggerClientWriteActivity(self);
-end;
-
 procedure TTCPServerClient.Start;
 begin
   {$IFDEF TCP_DEBUG}
@@ -1192,17 +1252,16 @@ begin
 end;
 
 procedure TTCPServerClient.Process(
-          const ProcessRead, ProcessWrite: Boolean;
-          const ActivityTime: TDateTime;
-          var Idle, Terminated: Boolean);
+          const AProcessRead, AProcessWrite: Boolean;
+          const AActivityTime: TDateTime;
+          out AIdle, ATerminated: Boolean);
 begin
-  //FServer.Lock; ////
-  //try
-    FConnection.ProcessSocket(ProcessRead, ProcessWrite, ActivityTime, Idle, Terminated);
-  //finally
-    //FServer.Unlock; ////
-  //end;
-  if Terminated then
+  FConnection.ProcessSocket(
+      AProcessRead, AProcessWrite,
+      AActivityTime,
+      AIdle, ATerminated);
+
+  if ATerminated then
     FTerminated := True;
 end;
 
@@ -1283,241 +1342,136 @@ end;
 
 
 
-{                                                                              }
-{ TCP Server Client List                                                       }
-{                                                                              }
-{ This implementation uses a linked list to avoid any heap operations.         }
-{                                                                              }
-destructor TTCPServerClientList.Destroy;
-var
-  Iter, Next : TTCPServerClient;
-begin
-  Iter := First;
-  FFirst := nil;
-  FLast := nil;
-  while Assigned(Iter) do
-    begin
-      Next := Iter.FNext;
-      Iter.FPrev := nil;
-      Iter.FNext := nil;
-      if Iter.FReferenceCount = 0 then
-        Iter.Free
-      else
-        Iter.SetClientOrphaned;
-      Iter := Next;
-    end;
-  inherited Destroy;
-end;
-
-procedure TTCPServerClientList.Finalise;
-begin
-end;
-
-procedure TTCPServerClientList.Add(const Client: TTCPServerClient);
-var
-  Last : TTCPServerClient;
-begin
-  Assert(Assigned(Client));
-  Last := FLast;
-  Client.FNext := nil;
-  Client.FPrev := Last;
-  if Assigned(Last) then
-    Last.FNext := Client
-  else
-    FFirst := Client;
-  FLast := Client;
-  Inc(FCount);
-end;
-
-procedure TTCPServerClientList.Remove(const Client: TTCPServerClient);
-var
-  Prev, Next : TTCPServerClient;
-begin
-  Assert(Assigned(Client));
-  Assert(FCount > 0);
-  Prev := Client.FPrev;
-  Next := Client.FNext;
-  if Assigned(Prev) then
-    begin
-      Prev.FNext := Next;
-      Client.FPrev := nil;
-    end
-  else
-    begin
-      Assert(FFirst = Client);
-      FFirst := Next;
-    end;
-  if Assigned(Next) then
-    begin
-      Next.FPrev := Prev;
-      Client.FNext := nil;
-    end
-  else
-    begin
-      Assert(FLast = Client);
-      FLast := Prev;
-    end;
-  Dec(FCount);
-end;
-
-
-
-{                                                                              }
-{ TCP Server Poll List                                                         }
-{                                                                              }
-{ This implementation aims to:                                                 }
-{   - Keep a populated buffer ready for use in calls to Poll (one entry for    }
-{     every active client).                                                    }
-{   - Avoid heap operations for calls to frequently used operations Add        }
-{     and Remove.                                                              }
-{                                                                              }
-constructor TTCPServerPollList.Create;
-begin
-  inherited Create;
-end;
-
-destructor TTCPServerPollList.Destroy;
-begin
-  Finalise;
-  inherited Destroy;
-end;
-
-procedure TTCPServerPollList.Finalise;
-begin
-  FFDList := nil;
-  FClientList := nil;
-end;
-
-procedure TTCPServerPollList.AddPollEvent(const ASocket: TSysSocket);
-var
-  SocketHandle : TSocket;
-begin
-  SocketHandle := ASocket.SocketHandle;
-  SetLength(FFDList, 1);
-  SetLength(FClientList, 1);
-  FFDList[0].fd := SocketHandle;
-  FFDList[0].events := POLLIN;
-  FFDList[0].revents := 0;
-  FClientList[0] := nil;
-  FClientCount := 1;
-  FListLen := 1;
-  FListUsed := 1;
-end;
-
-function TTCPServerPollList.Add(const Client: TTCPServerClient): Integer;
-var
-  SocketHandle : TSocket;
-  Idx, I, N, L : Integer;
-begin
-  SocketHandle := Client.FSocket.SocketHandle;
-  if FClientCount < FListUsed then
-    begin
-      Idx := -1;
-      for I := 0 to FListUsed - 1 do
-        if not Assigned(FClientList[I]) then
-          begin
-            Idx := I;
-            break;
-          end;
-      if Idx < 0 then
-        raise ETCPServer.Create('Internal error');
-    end
-  else
-  if FListUsed < FListLen then
-    begin
-      Idx := FListUsed;
-      Inc(FListUsed);
-    end
-  else
-    begin
-      N := FListLen;
-      L := N;
-      if L < 16 then
-        L := 16
-      else
-        L := L * 2;
-      SetLength(FFDList, L);
-      SetLength(FClientList, L);
-      for I := N to L - 1 do
-        FClientList[I] := nil;
-      FListLen := L;
-      Idx := FListUsed;
-      Inc(FListUsed);
-    end;
-  FClientList[Idx] := Client;
-  FFDList[Idx].fd := SocketHandle;
-  FFDList[Idx].events := POLLIN or POLLOUT;
-  FFDList[Idx].revents := 0;
-  Inc(FClientCount);
-  Result := Idx;
-end;
-
-procedure TTCPServerPollList.Remove(const Idx: Integer);
-begin
-  if (Idx < 0) or (Idx >= FListUsed) or not Assigned(FClientList[Idx]) then
-    raise ETCPServer.Create('Invalid index');
-  FClientList[Idx] := nil;
-  FFDList[Idx].fd := INVALID_SOCKET;
-  FFDList[Idx].events := 0;
-  FFDList[Idx].revents := 0;
-  Dec(FClientCount);
-  if Idx = FListUsed - 1 then
-    while (FListUsed > 0) and not Assigned(FClientList[FListUsed - 1]) do
-      Dec(FListUsed);
-end;
-
-// Returns buffer to be passed to Poll in P
-procedure TTCPServerPollList.GetPollBuffer(out P: Pointer; out ItemCount: Integer);
-begin
-  P := Pointer(FFDList);
-  ItemCount := FListUsed;
-end;
-
-function TTCPServerPollList.GetClientByIndex(const Idx: Integer): TTCPServerClient;
-begin
-  Assert(Idx >= 0);
-  Assert(Idx < FListUsed);
-  Result := FClientList[Idx];
-end;
-
-
 
 {                                                                              }
 { TCP Server Thread                                                            }
 {                                                                              }
-constructor TTCPServerThread.Create(const AServer: TF5TCPServer; const ATask: TTCPServerThreadTask);
+constructor TTCPServerThread.Create(const AServer: TF5TCPServer);
 begin
   Assert(Assigned(AServer));
   FServer := AServer;
-  FTask := ATask;
-  FreeOnTerminate := False;
-  inherited Create(False);
+  inherited Create;
 end;
 
 procedure TTCPServerThread.Finalise;
 begin
+  inherited Finalise;
   FServer := nil;
 end;
 
-procedure TTCPServerThread.Execute;
+
+{ TTCPServerControlThread }
+
+procedure TTCPServerControlThread.Execute;
 begin
-  Assert(Assigned(FServer));
-  try
-    try
-      case FTask of
-        sttControl : FServer.ControlThreadExecute(self);
-        sttProcess : FServer.ProcessThreadExecute(self);
-      end;
-    except
-      on E : Exception do
-        if not Terminated then
-          FServer.ThreadError(self, E);
-    end;
-  finally
-    if not Terminated then
-      FServer.ThreadTerminate(self);
-    FServer := nil;
-  end;
+  FServer.ControlThreadExecute(self);
+end;
+
+
+
+{ TTCPServerAcceptThread }
+
+constructor TTCPServerAcceptThread.Create(const AServer: TF5TCPServer);
+begin
+  FAcceptProcess := TTCPServerAcceptProcess.Create;
+  inherited Create(AServer);
+end;
+
+destructor TTCPServerAcceptThread.Destroy;
+begin
+  inherited Destroy;
+  FreeAndNil(FAcceptProcess);
+end;
+
+procedure TTCPServerAcceptThread.Finalise;
+begin
+  inherited Finalise;
+  FAcceptProcess.Finalise;
+end;
+
+procedure TTCPServerAcceptThread.Execute;
+begin
+  FServer.AcceptThreadExecute(self);
+end;
+
+
+
+{ TTCPServerProcessPollThread }
+
+constructor TTCPServerProcessPollThread.Create(const AServer: TF5TCPServer);
+begin
+  FPollProcess := TTCPServerPollProcess.Create;
+  inherited Create(AServer);
+end;
+
+destructor TTCPServerProcessPollThread.Destroy;
+begin
+  if not Terminated then
+    Terminate;
+  if Assigned(FPollProcess) then
+    FPollProcess.Terminate;
+  inherited Destroy;
+  FreeAndNil(FPollProcess);
+end;
+
+procedure TTCPServerProcessPollThread.Finalise;
+begin
+  if not Terminated then
+    Terminate;
+  FPollProcess.Terminate;
+  inherited Finalise;
+  FPollProcess.Finalise;
+end;
+
+
+
+{ TTCPServerProcessPollLongThread }
+
+procedure TTCPServerProcessPollLongThread.Execute;
+begin
+  FServer.ProcessPollLongThreadExecute(self);
+end;
+
+
+
+{ TTCPServerProcessPollShortThread }
+
+procedure TTCPServerProcessPollShortThread.Execute;
+begin
+  FServer.ProcessPollShortThreadExecute(self);
+end;
+
+
+
+{ TTCPServerProcessSpinThread }
+
+constructor TTCPServerProcessSpinThread.Create(const AServer: TF5TCPServer);
+begin
+  FSpinProcess := TTCPServerSpinProcess.Create;
+  inherited Create(AServer);
+end;
+
+destructor TTCPServerProcessSpinThread.Destroy;
+begin
+  if not Terminated then
+    Terminate;
+  if Assigned(FSpinProcess) then
+    FSpinProcess.Terminate;
+  inherited Destroy;
+  FreeAndNil(FSpinProcess);
+end;
+
+procedure TTCPServerProcessSpinThread.Finalise;
+begin
+  if not Terminated then
+    Terminate;
+  FSpinProcess.Terminate;
+  inherited Finalise;
+end;
+
+procedure TTCPServerProcessSpinThread.Execute;
+begin
+  FServer.ProcessPollSpinThreadExecute(self);
 end;
 
 
@@ -1536,16 +1490,13 @@ begin
   FState := ssInit;
   FActiveOnLoaded := False;
   FLock := TCriticalSection.Create;
-  FClientList := TTCPServerClientList.Create;
+  FClientActiveList := TTCPServerClientList.Create;
   FClientAcceptedList := TTCPServerClientList.Create;
   FClientTerminatedList := TTCPServerClientList.Create;
-  FPollList := TTCPServerPollList.Create;
   {$IFDEF TCPSERVER_TLS}
   FTLSServer := TTLSServer.Create(TLSServerTransportLayerSendProc);
   {$ENDIF}
-  FProcessProcessEvent := TSimpleEvent.Create;
-  FProcessReadyEvent := TSimpleEvent.Create;
-  FControlReadyEvent := TSimpleEvent.Create;
+  FStartFinishEvent := TSimpleEvent.Create;
   InitDefaults;
 end;
 
@@ -1576,11 +1527,42 @@ begin
 end;
 
 destructor TF5TCPServer.Destroy;
+
+  procedure FreeList(var AList: TTCPServerClientList);
+  var
+    LIter, LNext : TTCPServerClient;
+  begin
+    LIter := TTCPServerClient(AList.First);
+    AList.First := nil;
+    AList.Last := nil;
+    while Assigned(LIter) do
+      begin
+        LNext := TTCPServerClient(LIter.ListNext);
+        if LIter.FReferenceCount = 0 then
+          begin
+            LIter.Finalise;
+            FreeAndNil(LIter);
+          end
+        else
+          LIter.SetClientOrphaned;
+        LIter := LNext;
+      end;
+    FreeAndNil(AList);
+  end;
+
 begin
-  Finalise;
-  FreeAndNil(FClientTerminatedList);
-  FreeAndNil(FClientAcceptedList);
-  FreeAndNil(FClientList);
+  FreeAndNil(FControlThread);
+  FreeAndNil(FAcceptThread);
+  //FreeAndNil(FPollLongThread);
+  FreeAndNil(FPollShortThread);
+  FreeAndNil(FPollSpinThread);
+  FreeAndNil(FStartFinishEvent);
+  FreeList(FClientTerminatedList);
+  FreeList(FClientAcceptedList);
+  FreeList(FClientActiveList);
+  {$IFDEF TCPSERVER_TLS}
+  FreeAndNil(FTLSServer);
+  {$ENDIF}
   FreeAndNil(FServerSocket);
   FreeAndNil(FLock);
   inherited Destroy;
@@ -1592,31 +1574,19 @@ var
 begin
   try
     StopServerThreads;
-    if Assigned(FClientList) then
+    if Assigned(FClientActiveList) then
       begin
-        Iter := FClientList.First;
+        Iter := TTCPServerClient(FClientActiveList.First);
         while Assigned(Iter) do
           begin
             Iter.TerminateWorkerThread;
-            Iter := Iter.FNext;
+            Iter := TTCPServerClient(Iter.ListNext);
           end;
       end;
-    FreeAndNil(FProcessProcessEvent);
-    FreeAndNil(FProcessReadyEvent);
-    FreeAndNil(FControlReadyEvent);
   except
-    {$IFDEF TCP_DEBUG} raise; {$ELSE}
     on E : Exception do
-       LogException('Error stopping threads: %s', E); {$ENDIF}
+       LogException('Error stopping threads: %s', E);
   end;
-  {$IFDEF TCPSERVER_TLS}
-  FreeAndNil(FTLSServer);
-  {$ENDIF}
-  if Assigned(FPollList) then
-    begin
-      FPollList.Finalise;
-      FreeAndNil(FPollList);
-    end;
   FUserObject := nil;
 end;
 
@@ -1643,10 +1613,261 @@ begin
   Log(LogType, Format(Msg, Args), LogLevel);
 end;
 
+procedure TF5TCPServer.LogParameter(const Msg: String; const Args: array of const; const LogLevel: Integer);
+begin
+  Log(tlParameter, Format(Msg, Args), LogLevel);
+end;
+
 procedure TF5TCPServer.LogException(const Msg: String; const E: Exception);
 begin
   Log(tlError, Msg, [E.Message]);
 end;
+
+procedure TF5TCPServer.CheckNotActive;
+begin
+  if not (csDesigning in ComponentState) then
+    if FActive then
+      raise ETCPServer.Create(SError_NotAllowedWhileActive);
+end;
+
+procedure TF5TCPServer.SetAddressFamily(const AAddressFamily: TIPAddressFamily);
+begin
+  if AAddressFamily = FAddressFamily then
+    exit;
+  CheckNotActive;
+  FAddressFamily := AAddressFamily;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('AddressFamily:%s', [IPAddressFamilyStr[FAddressFamily]]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetBindAddress(const ABindAddressStr: String);
+begin
+  if ABindAddressStr = FBindAddressStr then
+    exit;
+  CheckNotActive;
+  FBindAddressStr := ABindAddressStr;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('BindAddress:%s', [FBindAddressStr]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetServerPort(const AServerPort: Integer);
+begin
+  if AServerPort = FServerPort then
+    exit;
+  CheckNotActive;
+  if (AServerPort <= 0) or (AServerPort > $FFFF) then
+    raise ETCPServer.Create(SError_InvalidServerPort);
+  FServerPort := AServerPort;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('ServerPort:%d', [FServerPort]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMaxBacklog(const AMaxBacklog: Integer);
+begin
+  if AMaxBacklog = FMaxBacklog then
+    exit;
+  CheckNotActive;
+  FMaxBacklog := AMaxBacklog;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MaxBacklog:%d', [FMaxBacklog]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMaxClients(const AMaxClients: Integer);
+begin
+  if AMaxClients = FMaxClients then
+    exit;
+  Lock;
+  try
+    FMaxClients := AMaxClients;
+  finally
+    Unlock;
+  end;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MaxClients:%d', [FMaxClients]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMinReadBufferSize(const AMinReadBufferSize: Integer);
+begin
+  if AMinReadBufferSize = FMinReadBufferSize then
+    exit;
+  CheckNotActive;
+  FMinReadBufferSize := AMinReadBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MinReadBufferSize:%d', [FMinReadBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMaxReadBufferSize(const AMaxReadBufferSize: Integer);
+begin
+  if AMaxReadBufferSize = FMaxReadBufferSize then
+    exit;
+  CheckNotActive;
+  FMaxReadBufferSize := AMaxReadBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MaxReadBufferSize:%d', [FMaxReadBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMinWriteBufferSize(const AMinWriteBufferSize: Integer);
+begin
+  if AMinWriteBufferSize = FMinWriteBufferSize then
+    exit;
+  CheckNotActive;
+  FMinWriteBufferSize := AMinWriteBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MinWriteBufferSize:%d', [FMinWriteBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetMaxWriteBufferSize(const AMaxWriteBufferSize: Integer);
+begin
+  if AMaxWriteBufferSize = FMaxWriteBufferSize then
+    exit;
+  CheckNotActive;
+  FMaxWriteBufferSize := AMaxWriteBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('MaxWriteBufferSize:%d', [FMaxWriteBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetSocketReadBufferSize(const ASocketReadBufferSize: Integer);
+begin
+  if ASocketReadBufferSize = FSocketReadBufferSize then
+    exit;
+  CheckNotActive;
+  FSocketReadBufferSize := ASocketReadBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('SocketReadBufferSize:%d', [FSocketReadBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetSocketWriteBufferSize(const ASocketWriteBufferSize: Integer);
+begin
+  if ASocketWriteBufferSize = FSocketWriteBufferSize then
+    exit;
+  CheckNotActive;
+  FSocketWriteBufferSize := ASocketWriteBufferSize;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('SocketWriteBufferSize:%d', [FSocketWriteBufferSize]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTrackLastActivityTime(const Track: Boolean);
+begin
+  if Track = FTrackLastActivityTime then
+    exit;
+  CheckNotActive;
+  FTrackLastActivityTime := Track;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TrackLastActivityTime:%d', [Ord(Track)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetProcessThreadCount(const AThreadCount: Integer);
+begin
+  if AThreadCount = FProcessThreadCount then
+    exit;
+  CheckNotActive;
+  FProcessThreadCount := AThreadCount;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('ProcessThreadCount:%d', [ThreadCount]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetUseWorkerThread(const AUseWorkerThread: Boolean);
+begin
+  if AUseWorkerThread = FUseWorkerThread then
+    exit;
+  CheckNotActive;
+  FUseWorkerThread := AUseWorkerThread;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('UseWorkerThread:%d', [UseWorkerThread]);
+  {$ENDIF}
+end;
+
+{$IFDEF TCPSERVER_TLS}
+procedure TF5TCPServer.SetTLSEnabled(const TLSEnabled: Boolean);
+begin
+  if TLSEnabled = FTLSEnabled then
+    exit;
+  CheckNotActive;
+  FTLSEnabled := TLSEnabled;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSEnabled:%d', [Ord(TLSEnabled)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSOptions(const ATLSOptions: TTCPServerTLSOptions);
+begin
+  if ATLSOptions = FTLSOptions then
+    exit;
+  CheckNotActive;
+  FTLSOptions := ATLSOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSOptions:%d', [Ord(ATLSOptions)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSServerOptions(const ATLSServerOptions: TTCPServerTLSServerOptions);
+begin
+  if ATLSServerOptions = FTLSServerOptions then
+    exit;
+  CheckNotActive;
+  FTLSServerOptions := ATLSServerOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSServerOptions:%d', [Ord(ATLSServerOptions)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSVersionOptions(const ATLSVersionOptions: TTCPServerTLSVersionOptions);
+begin
+  if ATLSVersionOptions = FTLSVersionOptions then
+    exit;
+  CheckNotActive;
+  FTLSVersionOptions := ATLSVersionOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSVersionOptions:%d', [Ord(ATLSVersionOptions)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSKeyExchangeOptions(const ATLSKeyExchangeOptions: TTCPServerTLSKeyExchangeOptions);
+begin
+  if ATLSKeyExchangeOptions = FTLSKeyExchangeOptions then
+    exit;
+  CheckNotActive;
+  FTLSKeyExchangeOptions := ATLSKeyExchangeOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSKeyExchangeOptions:%d', [Ord(ATLSKeyExchangeOptions)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSCipherOptions(const ATLSCipherOptions: TTCPServerTLSCipherOptions);
+begin
+  if ATLSCipherOptions = FTLSCipherOptions then
+    exit;
+  CheckNotActive;
+  FTLSCipherOptions := ATLSCipherOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSCipherOptions:%d', [Ord(ATLSCipherOptions)]);
+  {$ENDIF}
+end;
+
+procedure TF5TCPServer.SetTLSHashOptions(const ATLSHashOptions: TTCPServerTLSHashOptions);
+begin
+  if ATLSHashOptions = FTLSHashOptions then
+    exit;
+  CheckNotActive;
+  FTLSHashOptions := ATLSHashOptions;
+  {$IFDEF TCP_LOG_PARAMETERS}
+  LogParameter('TLSHashOptions:%d', [Ord(ATLSHashOptions)]);
+  {$ENDIF}
+end;
+{$ENDIF}
 
 function TF5TCPServer.GetState: TTCPServerState;
 begin
@@ -1659,8 +1880,31 @@ begin
 end;
 
 function TF5TCPServer.GetStateStr: String;
+var
+  S : String;
 begin
-  Result := STCPServerState[GetState];
+  Lock;
+  try
+    S := STCPServerState[FState];
+    if (FState = ssError) and (FStateErrorMsg <> '') then
+      S := S + ': ' + FStateErrorMsg;
+    Result := S;
+  finally
+    Unlock;
+  end;
+end;
+
+function TF5TCPServer.GetStateErrorMsg: String;
+begin
+  Lock;
+  try
+    if FState in [ssError, ssClosed] then
+      Result := FStateErrorMsg
+    else
+      Result := '';
+  finally
+    Unlock;
+  end;
 end;
 
 procedure TF5TCPServer.SetState(const AState: TTCPServerState);
@@ -1679,276 +1923,6 @@ begin
     FOnStateChanged(self, AState);
 end;
 
-procedure TF5TCPServer.CheckNotActive;
-begin
-  if not (csDesigning in ComponentState) then
-    if FActive then
-      raise ETCPServer.Create(SError_NotAllowedWhileActive);
-end;
-
-procedure TF5TCPServer.SetActive(const AActive: Boolean);
-begin
-  if AActive = FActive then
-    exit;
-  if csDesigning in ComponentState then
-    FActive := AActive else
-  if csLoading in ComponentState then
-    FActiveOnLoaded := AActive
-  else
-    if AActive then
-      DoSetActive
-    else
-      DoSetInactive;
-end;
-
-procedure TF5TCPServer.Loaded;
-begin
-  inherited Loaded;
-  if FActiveOnLoaded then
-    DoSetActive;
-end;
-
-procedure TF5TCPServer.SetAddressFamily(const AAddressFamily: TIPAddressFamily);
-begin
-  if AAddressFamily = FAddressFamily then
-    exit;
-  CheckNotActive;
-  FAddressFamily := AAddressFamily;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'AddressFamily:%s', [IPAddressFamilyStr[AddressFamily]]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetBindAddress(const ABindAddressStr: String);
-begin
-  if ABindAddressStr = FBindAddressStr then
-    exit;
-  CheckNotActive;
-  FBindAddressStr := ABindAddressStr;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'BindAddress:%s', [BindAddressStr]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetServerPort(const AServerPort: Integer);
-begin
-  if AServerPort = FServerPort then
-    exit;
-  CheckNotActive;
-  if (AServerPort <= 0) or (AServerPort > $FFFF) then
-    raise ETCPServer.Create(SError_InvalidServerPort);
-  FServerPort := AServerPort;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'ServerPort:%d', [ServerPort]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMaxBacklog(const AMaxBacklog: Integer);
-begin
-  if AMaxBacklog = FMaxBacklog then
-    exit;
-  CheckNotActive;
-  FMaxBacklog := AMaxBacklog;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MaxBacklog:%d', [MaxBacklog]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMaxClients(const AMaxClients: Integer);
-begin
-  if AMaxClients = FMaxClients then
-    exit;
-  Lock;
-  try
-    FMaxClients := AMaxClients;
-  finally
-    Unlock;
-  end;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MaxClients:%d', [MaxClients]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMinReadBufferSize(const AMinReadBufferSize: Integer);
-begin
-  if AMinReadBufferSize = FMinReadBufferSize then
-    exit;
-  CheckNotActive;
-  FMinReadBufferSize := AMinReadBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MinReadBufferSize:%d', [MinReadBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMaxReadBufferSize(const AMaxReadBufferSize: Integer);
-begin
-  if AMaxReadBufferSize = FMaxReadBufferSize then
-    exit;
-  CheckNotActive;
-  FMaxReadBufferSize := AMaxReadBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MaxReadBufferSize:%d', [MaxReadBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMinWriteBufferSize(const AMinWriteBufferSize: Integer);
-begin
-  if AMinWriteBufferSize = FMinWriteBufferSize then
-    exit;
-  CheckNotActive;
-  FMinWriteBufferSize := AMinWriteBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MinWriteBufferSize:%d', [MinWriteBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetMaxWriteBufferSize(const AMaxWriteBufferSize: Integer);
-begin
-  if AMaxWriteBufferSize = FMaxWriteBufferSize then
-    exit;
-  CheckNotActive;
-  FMaxWriteBufferSize := AMaxWriteBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'MaxWriteBufferSize:%d', [MaxWriteBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetSocketReadBufferSize(const ASocketReadBufferSize: Integer);
-begin
-  if ASocketReadBufferSize = FSocketReadBufferSize then
-    exit;
-  CheckNotActive;
-  FSocketReadBufferSize := ASocketReadBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'SocketReadBufferSize:%d', [SocketReadBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetSocketWriteBufferSize(const ASocketWriteBufferSize: Integer);
-begin
-  if ASocketWriteBufferSize = FSocketWriteBufferSize then
-    exit;
-  CheckNotActive;
-  FSocketWriteBufferSize := ASocketWriteBufferSize;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'SocketWriteBufferSize:%d', [SocketWriteBufferSize]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetTrackLastActivityTime(const Track: Boolean);
-begin
-  if Track = FTrackLastActivityTime then
-    exit;
-  CheckNotActive;
-  FTrackLastActivityTime := Track;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'TrackLastActivityTime:%d', [Ord(Track)]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetProcessThreadCount(const ThreadCount: Integer);
-begin
-  if ThreadCount = FProcessThreadCount then
-    exit;
-  CheckNotActive;
-  FProcessThreadCount := ThreadCount;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'ProcessThreadCount:%d', [ThreadCount]);
-  {$ENDIF}
-end;
-
-{$IFDEF TCPSERVER_TLS}
-procedure TF5TCPServer.SetTLSEnabled(const TLSEnabled: Boolean);
-begin
-  if TLSEnabled = FTLSEnabled then
-    exit;
-  CheckNotActive;
-  FTLSEnabled := TLSEnabled;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'TLSEnabled:%d', [Ord(TLSEnabled)]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.SetTLSOptions(const ATLSOptions: TTCPServerTLSOptions);
-begin
-  if ATLSOptions = FTLSOptions then
-    exit;
-  CheckNotActive;
-  FTLSOptions := ATLSOptions;
-end;
-
-procedure TF5TCPServer.SetTLSServerOptions(const ATLSServerOptions: TTCPServerTLSServerOptions);
-begin
-  if ATLSServerOptions = FTLSServerOptions then
-    exit;
-  CheckNotActive;
-  FTLSServerOptions := ATLSServerOptions;
-end;
-
-procedure TF5TCPServer.SetTLSVersionOptions(const ATLSVersionOptions: TTCPServerTLSVersionOptions);
-begin
-  if ATLSVersionOptions = FTLSVersionOptions then
-    exit;
-  CheckNotActive;
-  FTLSVersionOptions := ATLSVersionOptions;
-end;
-
-procedure TF5TCPServer.SetTLSKeyExchangeOptions(const ATLSKeyExchangeOptions: TTCPServerTLSKeyExchangeOptions);
-begin
-  if ATLSKeyExchangeOptions = FTLSKeyExchangeOptions then
-    exit;
-  CheckNotActive;
-  FTLSKeyExchangeOptions := ATLSKeyExchangeOptions;
-end;
-
-procedure TF5TCPServer.SetTLSCipherOptions(const ATLSCipherOptions: TTCPServerTLSCipherOptions);
-begin
-  if ATLSCipherOptions = FTLSCipherOptions then
-    exit;
-  CheckNotActive;
-  FTLSCipherOptions := ATLSCipherOptions;
-end;
-
-procedure TF5TCPServer.SetTLSHashOptions(const ATLSHashOptions: TTCPServerTLSHashOptions);
-begin
-  if ATLSHashOptions = FTLSHashOptions then
-    exit;
-  CheckNotActive;
-  FTLSHashOptions := ATLSHashOptions;
-end;
-{$ENDIF}
-
-procedure TF5TCPServer.SetUseWorkerThread(const UseWorkerThread: Boolean);
-begin
-  if UseWorkerThread = FUseWorkerThread then
-    exit;
-  CheckNotActive;
-  FUseWorkerThread := UseWorkerThread;
-  {$IFDEF TCP_LOG_PARAMETERS}
-  Log(tlParameter, 'UseWorkerThread:%d', [UseWorkerThread]);
-  {$ENDIF}
-end;
-
-procedure TF5TCPServer.TriggerStart;
-begin
-  if Assigned(FOnStart) then
-    FOnStart(self);
-end;
-
-procedure TF5TCPServer.TriggerStop;
-begin
-  if Assigned(FOnStop) then
-    FOnStop(self);
-end;
-
-procedure TF5TCPServer.TriggerThreadIdle(const AThread: TTCPServerThread);
-begin
-  if Assigned(FOnThreadIdle) then
-    FOnThreadIdle(self, AThread)
-  else
-    Sleep(1);
-end;
-
 procedure TF5TCPServer.ServerSocketLog(Sender: TSysSocket; LogType: TSysSocketLogType; Msg: String);
 begin
   {$IFDEF TCP_DEBUG_SOCKET}
@@ -1964,262 +1938,185 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPServer.TriggerClientAccept(const Address: TSocketAddr; var AcceptClient: Boolean);
+procedure TF5TCPServer.TriggerClientAccept(const AAddress: TSocketAddr; var AAcceptClient: Boolean);
 begin
   if Assigned(FOnClientAccept) then
     try
-      FOnClientAccept(self, Address, AcceptClient);
+      FOnClientAccept(self, AAddress, AAcceptClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientAccept.Error:Address=%s,Error=%s[%s]',
-            [SocketAddrStr(Address), E.ClassName, E.Message]);
-      {$ENDIF}
+            [SocketAddrStr(AAddress), E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientCreate(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientCreate(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientCreate) then
     try
-      FOnClientCreate(Client);
+      FOnClientCreate(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientCreate.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientAdd(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientAdd(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientAdd) then
     try
-      FOnClientAdd(Client);
+      FOnClientAdd(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientAdd.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientRemove(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientRemove(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientRemove) then
     try
-      FOnClientRemove(Client);
+      FOnClientRemove(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientRemove.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientDestroy(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientDestroy(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientDestroy) then
     try
-      FOnClientDestroy(Client);
+      FOnClientDestroy(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientDestroy.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientStateChange(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientStateChange(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientStateChange) then
     try
-      FOnClientStateChange(Client);
+      FOnClientStateChange(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientStateChange.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientNegotiating(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientNegotiating(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientNegotiating) then
-    FOnClientNegotiating(Client);
+    FOnClientNegotiating(AClient);
 end;
 
-procedure TF5TCPServer.TriggerClientConnected(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientConnected(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientConnected) then
     try
-      FOnClientConnected(Client);
+      FOnClientConnected(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientConnected.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientReady(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientReady(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientReady) then
     try
-      FOnClientReady(Client);
+      FOnClientReady(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientReady.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientReadShutdown(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientReadShutdown(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientReadShutdown) then
     try
-      FOnClientReadShutdown(Client);
+      FOnClientReadShutdown(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientReadShutdown.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientShutdown(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientShutdown(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientShutdown) then
     try
-      FOnClientShutdown(Client);
+      FOnClientShutdown(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientShutdown.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientClose(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientClose(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientClose) then
     try
-      FOnClientClose(Client);
+      FOnClientClose(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientClose.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientRead(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientRead(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientRead) then
     try
-      FOnClientRead(Client);
+      FOnClientRead(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientRead.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientWrite(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientWrite(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientWrite) then
     try
-      FOnClientWrite(Client);
+      FOnClientWrite(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientWrite.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientReadActivity(const Client: TTCPServerClient);
+procedure TF5TCPServer.TriggerClientReadActivity(const AClient: TTCPServerClient);
 begin
   if Assigned(FOnClientReadActivity) then
     try
-      FOnClientReadActivity(Client);
+      FOnClientReadActivity(AClient);
     except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
       on E : Exception do
         Log(tlError, 'TriggerClientReadActivity.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
+            [AClient.ClientID, E.ClassName, E.Message]);
     end;
 end;
 
-procedure TF5TCPServer.TriggerClientWriteActivity(const Client: TTCPServerClient);
-begin
-  if Assigned(FOnClientWriteActivity) then
-    try
-      FOnClientWriteActivity(Client);
-    except
-      {$IFDEF TCP_DEBUG} raise; {$ELSE}
-      on E : Exception do
-        Log(tlError, 'TriggerClientWriteActivity.Error:Client=%d,Error=%s[%s]',
-            [Client.ClientID, E.ClassName, E.Message]);
-      {$ENDIF}
-    end;
-end;
-
-procedure TF5TCPServer.TriggerClientWorkerExecute(const Client: TTCPServerClient;
-          const Connection: TTCPBlockingConnection; var CloseOnExit: Boolean);
+procedure TF5TCPServer.TriggerClientWorkerExecute(const AClient: TTCPServerClient;
+          const AConnection: TTCPBlockingConnection; var ACloseOnExit: Boolean);
 begin
   if Assigned(FOnClientWorkerExecute) then
-    FOnClientWorkerExecute(Client, Connection, CloseOnExit);
-end;
-
-procedure TF5TCPServer.SetReady;
-begin
-  SetState(ssReady);
-end;
-
-procedure TF5TCPServer.SetClosed;
-begin
-  SetState(ssClosed);
-end;
-
-procedure TF5TCPServer.DoCloseClients;
-var
-  C : TTCPServerClient;
-begin
-  C := FClientList.FFirst;
-  while Assigned(C) do
-    begin
-      C.Close;
-      C := C.FNext;
-    end;
-end;
-
-procedure TF5TCPServer.DoCloseServer;
-begin
-  if Assigned(FServerSocket) then
-    FServerSocket.CloseSocket;
-end;
-
-procedure TF5TCPServer.DoClose;
-begin
-  DoCloseServer;
-  DoCloseClients;
-  SetClosed;
+    FOnClientWorkerExecute(AClient, AConnection, ACloseOnExit);
 end;
 
 {$IFDEF TCPSERVER_TLS}
@@ -2234,84 +2131,154 @@ begin
 end;
 {$ENDIF}
 
+procedure TF5TCPServer.ServerActive;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerActive');
+  {$ENDIF}
+  if Assigned(FOnActive) then
+    FOnActive(self);
+end;
+
+procedure TF5TCPServer.ServerStarting;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerStarting');
+  {$ENDIF}
+  if Assigned(FOnStarting) then
+    FOnStarting(self);
+end;
+
+procedure TF5TCPServer.ServerReady;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerReady');
+  {$ENDIF}
+  if Assigned(FOnReady) then
+    FOnReady(self);
+end;
+
+procedure TF5TCPServer.ServerError(const ErrorMsg: String);
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerError');
+  {$ENDIF}
+  if Assigned(FOnError) then
+    FOnError(self);
+end;
+
+procedure TF5TCPServer.ServerStopping;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerStopping');
+  {$ENDIF}
+  if Assigned(FOnStopping) then
+    FOnStopping(self);
+end;
+
+procedure TF5TCPServer.ServerInactive;
+begin
+  {$IFDEF TCP_DEBUG}
+  Log(tlDebug, 'ServerInactive');
+  {$ENDIF}
+  if Assigned(FOnInactive) then
+    FOnInactive(self);
+end;
+
 procedure TF5TCPServer.StartControlThread;
 begin
   Assert(not Assigned(FControlThread));
-  FControlState := sctsInit;
-  FControlThread := TTCPServerThread.Create(self, sttControl);
+  FControlThread := TTCPServerControlThread.Create(self);
 end;
 
-procedure TF5TCPServer.StartProcessThreads;
-var
-  L, I : Integer;
+procedure TF5TCPServer.StartAcceptThread;
 begin
-  Assert(FProcessThreads = nil);
-  L := FProcessThreadCount;
-  if L <= 0 then
-    L := TCP_SERVER_DEFAULT_ProcessThreadCount;
-  FProcessThreadsRun := L;
-  SetLength(FProcessThreads, L);
-  for I := 0 to L - 1 do
-    FProcessThreads[I] := nil;
-  for I := 0 to L - 1 do
-    FProcessThreads[I] := TTCPServerThread.Create(self, sttProcess);
+  Assert(not Assigned(FAcceptThread));
+  FAcceptThread := TTCPServerAcceptThread.Create(self);
+end;
+
+procedure TF5TCPServer.StartPollThreads;
+begin
+  Assert(not Assigned(FPollShortThread));
+  Assert(not Assigned(FPollSpinThread));
+  //Assert(not Assigned(FPollLongThread));
+
+  FPollSpinThread := TTCPServerProcessSpinThread.Create(self);
+  FPollShortThread := TTCPServerProcessPollShortThread.Create(self);
+  //FPollLongThread := TTCPServerProcessPollLongThread.Create(self);
 end;
 
 procedure TF5TCPServer.StopServerThreads;
-var
-  C : TTCPServerThread;
-  T : TTCPServerThread;
-  L, I : Integer;
 begin
-  C := FControlThread;
-  if Assigned(C) then
-    C.Terminate;
-  L := Length(FProcessThreads);
-  for I := 0 to L - 1 do
+  TCPThreadTerminate(FControlThread);
+  TCPThreadTerminate(FAcceptThread);
+  //TCPThreadTerminate(FPollLongThread);
+  TCPThreadTerminate(FPollShortThread);
+  TCPThreadTerminate(FPollSpinThread);
+
+  TCPThreadFinalise(FControlThread);
+  TCPThreadFinalise(FAcceptThread);
+  //TCPThreadFinalise(FPollLongThread);
+  TCPThreadFinalise(FPollShortThread);
+  TCPThreadFinalise(FPollSpinThread);
+
+  FreeAndNil(FControlThread);
+  FreeAndNil(FAcceptThread);
+  //FreeAndNil(FPollLongThread);
+  FreeAndNil(FPollShortThread);
+  FreeAndNil(FPollSpinThread);
+end;
+
+procedure TF5TCPServer.ServerCloseClients;
+var
+  C : TTCPServerClient;
+begin
+  C := TTCPServerClient(FClientActiveList.First);
+  while Assigned(C) do
     begin
-      T := FProcessThreads[I];
-      if Assigned(T) then
-        T.Terminate;
-    end;
-  if Assigned(C) then
-    begin
-      try
-        C.WaitFor;
-      except
-      end;
-      C.Finalise;
-    end;
-  for I := 0 to L - 1 do
-    begin
-      T := FProcessThreads[I];
-      if Assigned(T) then
-        begin
-          FProcessThreads[I] := nil;
-          try
-            T.WaitFor;
-          except
-          end;
-          T.Finalise;
-          FreeAndNil(T);
-        end;
-    end;
-  FProcessThreads := nil;
-  if Assigned(C) then
-    begin
-      FControlThread := nil;
-      FreeAndNil(C);
+      C.Close;
+      C := TTCPServerClient(C.ListNext);
     end;
 end;
 
-procedure TF5TCPServer.DoSetActive;
+procedure TF5TCPServer.ServerCloseServer;
 begin
-  Assert(not FActive);
+  if Assigned(FServerSocket) then
+    FServerSocket.CloseSocket;
+end;
+
+procedure TF5TCPServer.ServerClose;
+begin
+  ServerCloseServer;
+  ServerCloseClients;
+end;
+
+procedure TF5TCPServer.ServerSetStateError(const ErrorMsg: String);
+begin
+  Lock;
+  try
+    FStateErrorMsg := ErrorMsg;
+  finally
+    Unlock;
+  end;
+  SetState(ssError);
+  ServerError(ErrorMsg);
+end;
+
+procedure TF5TCPServer.ServerSetStateReady;
+begin
+  Assert(FState = ssStarting);
+  SetState(ssReady);
+  ServerReady;
+end;
+
+procedure TF5TCPServer.ServerStart;
+begin
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Starting');
   {$ENDIF}
-  TriggerStart;
-  FActive := True;
   SetState(ssStarting);
+  ServerStarting;
   {$IFDEF TCPSERVER_TLS}
   if FTLSEnabled then
     begin
@@ -2323,65 +2290,165 @@ begin
       FTLSServer.Start;
     end;
   {$ENDIF}
-  FProcessThreadsReady := 0;
+  StartPollThreads;
   StartControlThread;
-  StartProcessThreads;
-  {$IFDEF TCP_DEBUG}
-  Log(tlDebug, 'Started');
-  {$ENDIF}
 end;
 
-procedure TF5TCPServer.DoSetInactive;
+procedure TF5TCPServer.ServerStop;
 
-  procedure RemoveAllClients(const List: TTCPServerClientList);
+  procedure RemoveAllClients(const AList: TTCPServerClientList);
   var
-    Iter, Next : TTCPServerClient;
+    LIter, LNext : TTCPServerClient;
   begin
-    Iter := List.First;
-    while Assigned(Iter) do
+    LIter := TTCPServerClient(AList.First);
+    while Assigned(LIter) do
       begin
-        Next := Iter.FNext;
-        TriggerClientRemove(Iter);
-        List.Remove(Iter);
-        if Iter.FReferenceCount = 0 then
+        LNext := TTCPServerClient(LIter.ListNext);
+        TriggerClientRemove(LIter);
+        AList.Remove(LIter);
+        if LIter.FReferenceCount = 0 then
           begin
-            TriggerClientDestroy(Iter);
-            Iter.Free;
+            TriggerClientDestroy(LIter);
+            LIter.Finalise;
+            FreeAndNil(LIter);
           end
         else
-          Iter.SetClientOrphaned;
-        Iter := Next;
+          LIter.SetClientOrphaned;
+        LIter := LNext;
       end;
   end;
 
 var
-  Iter : TTCPServerClient;
+  LIter : TTCPServerClient;
 begin
-  Assert(FActive);
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Stopping');
   {$ENDIF}
-  TriggerStop;
+  ServerStopping;
   StopServerThreads;
-  Iter := FClientList.First;
-  while Assigned(Iter) do
+  LIter := TTCPServerClient(FClientActiveList.First);
+  while Assigned(LIter) do
     begin
-      Iter.TerminateWorkerThread;
-      Iter := Iter.FNext;
+      LIter.TerminateWorkerThread;
+      LIter := TTCPServerClient(LIter.ListNext);
     end;
-  DoClose;
+  ServerClose;
   {$IFDEF TCPSERVER_TLS}
   if FTLSEnabled then
     FTLSServer.Stop;
   {$ENDIF}
   RemoveAllClients(FClientTerminatedList);
   RemoveAllClients(FClientAcceptedList);
-  RemoveAllClients(FClientList);
+  RemoveAllClients(FClientActiveList);
   FreeAndNil(FServerSocket);
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, 'Stopped');
   {$ENDIF}
-  FActive := False;
+  SetState(ssClosed);
+end;
+
+procedure TF5TCPServer.ServerActivate;
+begin
+  FStateErrorMsg := '';
+  FStopping := False;
+  FStartFinishEvent.ResetEvent;
+  ServerActive;
+  ServerStart;
+end;
+
+procedure TF5TCPServer.ServerDeactivate;
+begin
+  Lock;
+  try
+    FActive := False;
+  finally
+    Unlock;
+  end;
+  ServerInactive;
+end;
+
+procedure TF5TCPServer.ServerSetError(const ErrorMsg: String);
+begin
+  ServerSetStateError(ErrorMsg);
+end;
+
+procedure TF5TCPServer.ServerSetReady;
+begin
+  ServerSetStateReady;
+end;
+
+procedure TF5TCPServer.ServerSetActive;
+begin
+  Lock;
+  try
+    if FActive then
+      exit;
+    FActive := True;
+  finally
+    Unlock;
+  end;
+  ServerActivate;
+end;
+
+procedure TF5TCPServer.ServerSetInactive;
+begin
+  Lock;
+  try
+    if not FActive then
+      exit;
+    if FStopping then
+      exit;
+    FStopping := True;
+  finally
+    Unlock;
+  end;
+  ServerStop;
+  ServerDeactivate;
+end;
+
+procedure TF5TCPServer.SetActive(const AActive: Boolean);
+begin
+  if AActive = FActive then
+    exit;
+  if csDesigning in ComponentState then
+    FActive := AActive else
+  if csLoading in ComponentState then
+    FActiveOnLoaded := AActive
+  else
+    if AActive then
+      ServerSetActive
+    else
+      ServerSetInactive;
+end;
+
+procedure TF5TCPServer.Loaded;
+begin
+  inherited Loaded;
+  if FActiveOnLoaded then
+    ServerSetActive;
+end;
+
+procedure TF5TCPServer.Start(
+          const AWaitStartup: Boolean;
+          const AWaitTimeoutMs: Int32);
+begin
+  ServerSetActive;
+  if AWaitStartup then
+    begin
+      FStartFinishEvent.WaitFor(AWaitTimeoutMs);
+      case GetState of
+        ssInit,
+        ssStarting : raise ETCPServerError.Create('Startup timeout');
+        ssReady    : ;
+        ssError,
+        ssClosed   : raise ETCPServerError.CreateFmt('Not ready: %s', [GetStateStr]);
+      end;
+    end;
+end;
+
+procedure TF5TCPServer.Stop;
+begin
+  ServerSetInactive;
 end;
 
 function TF5TCPServer.CreateClient(const ASocketHandle: TSocketHandle; const ASocketAddr: TSocketAddr): TTCPServerClient;
@@ -2407,25 +2474,19 @@ begin
     if M = 0 then // paused
       Result := False
     else
-      Result := FClientList.Count + FClientAcceptedList.Count < M;
+      Result := FClientActiveList.Count + FClientAcceptedList.Count < M;
   finally
     Unlock;
   end;
 end;
 
-function TF5TCPServer.ServerAcceptClient: Boolean;
-var AcceptAddr   : TSocketAddr;
-    AcceptSocket : TSocketHandle;
-    AcceptClient : Boolean;
-    Client       : TTCPServerClient;
+function TF5TCPServer.ServerAcceptClient(
+         const AcceptSocket: TSocketHandle;
+         const AcceptAddr: TSocketAddr): Boolean;
+var
+  AcceptClient : Boolean;
+  Client       : TTCPServerClient;
 begin
-  // accept socket
-  AcceptSocket := FServerSocket.Accept(AcceptAddr);
-  if AcceptSocket = INVALID_SOCKETHANDLE then
-    begin
-      Result := False;
-      exit;
-    end;
   {$IFDEF TCP_DEBUG}
   Log(tlDebug, Format('IncommingConnection(%s:%d)', [
       SocketAddrIPStrA(AcceptAddr),
@@ -2433,9 +2494,9 @@ begin
   {$ENDIF}
   AcceptClient := True;
   if (AcceptAddr.AddrFamily = iaNone) or
-     (AcceptAddr.AddrFamily <> FAddressFamily) then //// 2020/05/05
+     (AcceptAddr.AddrFamily <> FAddressFamily) then
     begin
-      Log(tlError, 'Accept: Invalid address family: Closing'); //// 2020/05/05
+      Log(tlError, 'Accept: Invalid address family: Closing');
       AcceptClient := False;
     end;
   if AcceptClient then
@@ -2470,7 +2531,6 @@ begin
   Lock;
   try
     FClientAcceptedList.Add(Client);
-    Client.Start;
   finally
     Unlock;
   end;
@@ -2478,6 +2538,7 @@ begin
   Log(tlDebug, 'ClientAdded');
   {$ENDIF}
   TriggerClientAdd(Client);
+  Client.Start;  // 2020/07/15 moved to after trigger add; and removed from lock
   Result := True;
 end;
 
@@ -2495,7 +2556,7 @@ begin
   try
     DropCl := nil;
     ClCnt := FClientTerminatedList.Count;
-    Iter := FClientTerminatedList.First;
+    Iter := TTCPServerClient(FClientTerminatedList.First);
     for ItCnt := 0 to ClCnt - 1 do
       begin
         if Iter.FReferenceCount = 0 then
@@ -2504,7 +2565,7 @@ begin
             FClientTerminatedList.Remove(DropCl);
             break;
           end;
-        Iter := Iter.FNext;
+        Iter := TTCPServerClient(Iter.ListNext);
       end;
   finally
     Unlock;
@@ -2530,23 +2591,24 @@ end;
 // Process a client (read from socket, write to socket, handle socket errors)
 procedure TF5TCPServer.ProcessClient(
           const AClient: TTCPServerClient;
-          const ProcessRead, ProcessWrite: Boolean;
-          const ActivityTime: TDateTime;
-          out ClientIdle, ClientTerminated: Boolean);
+          const AProcessRead, AProcessWrite: Boolean;
+          const AActivityTime: TDateTime;
+          out AClientIdle, AClientTerminated: Boolean);
 var
   ClSt : TTCPServerClientState;
   ClFr : Boolean;
 begin
-  AClient.Process(ProcessRead, ProcessWrite, ActivityTime, ClientIdle, ClientTerminated);
-  if ClientTerminated then
+  AClient.Process(AProcessRead, AProcessWrite, AActivityTime, AClientIdle, AClientTerminated);
+  if AClientTerminated then
     begin
       AClient.TerminateWorkerThread;
       Lock;
       try
         ClSt := AClient.State;
         ClFr := AClient.FReferenceCount = 0;
-        FPollList.Remove(AClient.FPollIndex);
-        FClientList.Remove(AClient);
+        AClient.FPollThread := nil;
+        AClient.FPollIndex := -1;
+        FClientActiveList.Remove(AClient);
       finally
         Unlock;
       end;
@@ -2579,172 +2641,33 @@ begin
     end;
 end;
 
-function TF5TCPServer.ServerProcessClient: Boolean;
-var
-  IdxStart, Cnt, Idx : Integer;
-  ItemP : PPollfd;
-  Ev : Int16;
-  Cl : TTCPServerClient;
-  ClientIdle, ClientTerminated : Boolean;
-begin
-  Ev := 0;
-  Cl := nil;
-  Lock;
-  try
-    IdxStart := FPollProcessIdx;
-    Cnt := FPollEntCount;
-    if IdxStart >= Cnt then
-      begin
-        Result := False;
-        exit;
-      end;
-    ItemP := FPollEntBuf;
-    Inc(ItemP, IdxStart);
-    for Idx := IdxStart to Cnt - 1 do
-      begin
-        Ev := ItemP^.revents;
-        if (ItemP^.fd <> INVALID_SOCKET) and (Ev <> 0) then
-          begin
-            Cl := FPollList.GetClientByIndex(Idx);
-            Assert(Assigned(Cl));
-            ItemP^.revents := 0;
-            FPollProcessIdx := Idx + 1;
-            break;
-          end;
-        Inc(ItemP);
-      end;
-  finally
-    Unlock;
-  end;
-  if not Assigned(Cl) then
-    begin
-      Result := False;
-      exit;
-    end;
-  ProcessClient(Cl,
-      Ev and (POLLIN or POLLHUP or POLLERR) <> 0,
-      Ev and (POLLOUT or POLLHUP or POLLERR) <> 0,
-      FPollTime,
-      ClientIdle, ClientTerminated);
-  Result := True;
-end;
-
-// Add newly accepted clients to poll list
-// Poll to determine which clients to process
-procedure TF5TCPServer.ServerPoll(out Idle: Boolean; out ProcessPending: Boolean);
-var
-  Cl, Nx : TTCPServerClient;
-  FdPtr : Pointer;
-  FdCnt : Integer;
-  ItemP : PPollfd;
-  Idx : Integer;
-  WritePoll : Boolean;
-  Ev : Int16;
-  PollRes : Integer;
-  {$IFDEF OS_WIN32}
-  PollCnt : Integer;
-  {$ENDIF}
-begin
-  Lock;
-  try
-    Cl := FClientAcceptedList.First;
-    while Assigned(Cl) do
-      begin
-        Nx := Cl.FNext;
-        FClientAcceptedList.Remove(Cl);
-        FClientList.Add(Cl);
-        Cl.FPollIndex := FPollList.Add(Cl);
-        Cl := Nx;
-      end;
-  finally
-    Unlock;
-  end;
-  if FPollList.ClientCount = 0 then
-    begin
-      Idle := True;
-      ProcessPending := False;
-      exit;
-    end;
-  FPollList.GetPollBuffer(FdPtr, FdCnt);
-  ItemP := FdPtr;
-  for Idx := 0 to FdCnt - 1 do
-    begin
-      Cl := FPollList.GetClientByIndex(Idx);
-      if Assigned(Cl) then
-        begin
-          Cl.Connection.GetEventsToPoll(WritePoll);
-          Ev := POLLIN;
-          if WritePoll then
-            Ev := Ev or POLLOUT;
-          ItemP^.events := Ev;
-        end
-      else
-        ItemP^.events := 0;
-      ItemP^.revents := 0;
-      Inc(ItemP);
-    end;
-  Assert(FdCnt > 0);
-  {$IFDEF OS_WIN32}
-  // under Win32, WinSock blocks Socket.Write() if Socket.Poll() is active
-  // use loop to reduce write latency
-  for PollCnt := 1 to 10 do
-    begin
-      PollRes := SocketsPoll(FdPtr, FdCnt, 10); // 10 milliseconds
-      if PollRes <> 0 then
-        break;
-    end;
-  {$ELSE}
-  PollRes := SocketsPoll(FdPtr, FdCnt, 100); // 100 milliseconds
-  {$ENDIF}
-  if PollRes < 0 then
-    begin
-      Idle := True;
-      ProcessPending := False;
-      //// Check error: log error/warn/alter/critial
-      exit;
-    end;
-  if PollRes = 0 then
-    begin
-      Idle := False;
-      ProcessPending := False;
-      exit;
-    end;
-  FPollEntBuf := FdPtr;
-  FPollEntCount := FdCnt;
-  FPollTime := Now;
-  FPollProcessIdx := 0;
-  Idle := False;
-  ProcessPending := True;
-end;
-
-// The control thread handles accepting new clients and removing deleted client
-// A single instance of the control thread executes
-procedure TF5TCPServer.ControlThreadExecute(const Thread: TTCPServerThread);
+function TF5TCPServer.ControlThreadListen(const AThread: TTCPThread): Boolean;
 
   function IsTerminated: Boolean;
   begin
-    Result := Thread.Terminated;
+    Result := AThread.Terminated;
   end;
 
-var
-  IsIdle : Boolean;
-  DoPoll : Boolean;
-  PollIdle, PollProcess : Boolean;
 begin
-  {$IFDEF TCP_DEBUG_THREAD}
-  Log(tlDebug, 'ControlThreadExecute');
-  {$ENDIF}
-  Assert(FControlState = sctsInit);
   Assert(FState = ssStarting);
   Assert(not Assigned(FServerSocket));
-  Assert(Assigned(Thread));
+
+  Result := False;
   if IsTerminated then
     exit;
-  // initialise server socket
-  FBindAddress := ResolveHost(FBindAddressStr, FAddressFamily);
-  SetSocketAddrPort(FBindAddress, FServerPort);
+  try
+    FBindAddress := ResolveHost(FBindAddressStr, FAddressFamily);
+    SetSocketAddrPort(FBindAddress, FServerPort);
+  except
+    on E: Exception do
+      begin
+        ServerSetError(E.Message);
+        exit;
+      end;
+  end;
   if IsTerminated then
     exit;
+
   FServerSocket := TSysSocket.Create(FAddressFamily, ipTCP, False, INVALID_SOCKETHANDLE);
   try
     {$IFDEF TCP_DEBUG}
@@ -2753,220 +2676,317 @@ begin
     FServerSocket.SetBlocking(True);
     FServerSocket.Bind(FBindAddress);
     FServerSocket.Listen(FMaxBacklog);
+    FServerSocket.SetBlocking(False);
   except
-    FreeAndNil(FServerSocket);
-    SetState(ssFailure);
-    raise; ////// retry in loop, log alert/critical
+    on E : Exception do
+      begin
+        FreeAndNil(FServerSocket);
+        ServerSetError(E.Message);
+        exit; //// retry in loop if transient
+      end;
   end;
   if IsTerminated then
     exit;
 
-  // server socket ready
-  FServerSocket.SetBlocking(False);
-  SetReady;
+  Result := True;
+end;
+
+function TF5TCPServer.ControlThreadDropClients(const AThread: TTCPThread): Boolean;
+
+  function IsTerminated: Boolean;
+  begin
+    Result := AThread.Terminated;
+  end;
+
+begin
+  Result := False;
   if IsTerminated then
     exit;
-  Lock;
-  try
-    FControlState := sctsPollReady;
-    FProcessProcessEvent.ResetEvent;
-    FProcessReadyEvent.ResetEvent;
-  finally
-    Unlock;
-  end;
-  // loop until thread termination
-  while not IsTerminated do
+  while ServerDropClient do
     begin
-      IsIdle := True;
-      // drop terminated clients
-      while ServerDropClient do
-        begin
-          IsIdle := False;
-          if IsTerminated then
-            exit;
-        end;
-      // accept new clients
+      Result := True;
       if IsTerminated then
-        break;
-      while CanAcceptClient do
-        if ServerAcceptClient then
+        exit;
+    end;
+end;
+
+procedure TF5TCPServer.ControlThreadExecute(const AThread: TTCPServerControlThread);
+
+  function IsTerminated: Boolean;
+  begin
+    Result := AThread.Terminated;
+  end;
+
+var
+  IsIdle : Boolean;
+begin
+  try
+    try
+      {$IFDEF TCP_DEBUG_THREAD}
+      Log(tlDebug, 'ControlThreadExecute');
+      {$ENDIF}
+
+      Assert(Assigned(AThread));
+
+      if IsTerminated then
+        exit;
+
+      if not ControlThreadListen(AThread) then
+        exit;
+
+      // server socket ready
+      StartAcceptThread;
+
+      ServerSetReady;
+      if IsTerminated then
+        exit;
+
+    finally
+      // start complete (server state is ready or error)
+      FStartFinishEvent.SetEvent;
+    end;
+
+    while not IsTerminated do
+      begin
+        IsIdle := True;
+        if ControlThreadDropClients(AThread) then
           begin
             IsIdle := False;
             if IsTerminated then
               exit;
-          end
-        else
+          end;
+        if IsTerminated then
           break;
-      // poll / managed process threads
-      if IsTerminated then
-        break;
-      if FControlReadyEvent.WaitFor(100) = wrTimeout then
-        IsIdle := False;
+        FAcceptThread.FAcceptProcess.AcceptPaused := not CanAcceptClient;
+        if IsIdle then
+          AThread.SleepUnterminated(1000);
+      end;
+    if not IsTerminated then
+      Log(tlError, 'ControlThreadExecute.UnexpectedTerminatation');
+  except
+    on E : Exception do
+      if not IsTerminated then
+        LogException('ControlThreadExecute.Error', E);
+  end;
+end;
+
+procedure TF5TCPServer.AcceptThreadAcceptSocket(
+          const ASocketHandle: TSocket;
+          const AAddr: TSocketAddr;
+          var AAcceptSocket: Boolean);
+begin
+  if ServerAcceptClient(ASocketHandle, AAddr) then
+    begin
+      AAcceptSocket := True;
       Lock;
       try
-        // wait process threads ready to poll
-        DoPoll :=
-            (FControlState = sctsPollReady) and
-            (FProcessThreadsReady = FProcessThreadsRun);
-        // wait process theads complete
-        if (FControlState = sctsPollProcess) and
-           (FProcessThreadsReady = FProcessThreadsRun) then
-          begin
-            // start next poll
-            FProcessThreadsReady := 0;
-            FControlState := sctsPollReady;
-            FProcessReadyEvent.SetEvent;
-            FControlReadyEvent.ResetEvent;
-            FProcessProcessEvent.ResetEvent;
-            IsIdle := False;
-          end;
+        if FPollShortThread.FPollProcess.GetClientCount = 0 then
+          AddAcceptedClientsToPollShort
+        else
+          AddAcceptedClientsToPollSpin;
       finally
         Unlock;
       end;
-      if DoPoll then
-        begin
-          ServerPoll(PollIdle, PollProcess);
-          if IsTerminated then
-            break;
-          if PollIdle and not PollProcess and IsIdle then
-            Sleep(50); // No clients to poll
-          if not PollIdle then
-            IsIdle := False;
-          if PollProcess then
-            begin
-              Lock;
-              try
-                // start clients process
-                FProcessThreadsReady := 0;
-                FControlState := sctsPollProcess;
-                FProcessProcessEvent.SetEvent;
-                FControlReadyEvent.ResetEvent;
-                FProcessReadyEvent.ResetEvent;
-              finally
-                Unlock;
-              end;
-            end;
-        end;
-      // sleep if idle
-      if IsTerminated then
-        break;
-      if IsIdle then
-        TriggerThreadIdle(Thread);
-    end;
+    end
+  else
+    AAcceptSocket := False;
 end;
 
-// The processing thread handles processing of client sockets
-// Event handlers are called from this thread
-// A single instance of the processing thread executes
-procedure TF5TCPServer.ProcessThreadExecute(const Thread: TTCPServerThread);
+procedure TF5TCPServer.AcceptThreadExecute(const AThread: TTCPServerAcceptThread);
 
   function IsTerminated: Boolean;
   begin
-    Result := Thread.Terminated;
+    Result := AThread.Terminated;
   end;
 
-  procedure SetThreadReady;
-  begin
-    Lock;
-    try
-      Inc(FProcessThreadsReady);
-      if FProcessThreadsReady >= FProcessThreadsRun then
-        FControlReadyEvent.SetEvent;
-    finally
-      Unlock;
-    end;
-  end;
+begin
+  try
+    Assert(Assigned(AThread));
 
-  function WaitState(const AState: TTCPServerControlThreadState): Boolean;
-  var
-    WaitFin : Boolean;
-  begin
-    repeat
-      if IsTerminated then
-        begin
-          Result := False;
-          exit;
-        end;
-      Lock;
-      try
-        WaitFin := FControlState = AState;
-      finally
-        Unlock;
+    {$IFDEF TCP_DEBUG_THREAD}
+    Log(tlDebug, 'AcceptThreadExecute');
+    {$ENDIF}
+
+    while not IsTerminated do
+      begin
+        AThread.FAcceptProcess.Execute(AThread, FServerSocket.SocketHandle,
+            AcceptThreadAcceptSocket, 2000);
       end;
-      if IsTerminated then
-        begin
-          Result := False;
-          exit;
-        end;
-      if WaitFin then
-        begin
-          Result := True;
-          exit;
-        end;
-      if AState = sctsPollProcess then
-        FProcessProcessEvent.WaitFor(100)
-      else
-      if AState = sctsPollReady then
-        FProcessReadyEvent.WaitFor(100)
-      else
-        TriggerThreadIdle(Thread);
-    until False;
+    if not IsTerminated then
+      Log(tlError, 'AcceptThreadExecute.UnexpectedTerminatation');
+  except
+    on E : Exception do
+      if not IsTerminated then
+        LogException('AcceptThreadExecute.Error', E);
   end;
+end;
 
+procedure TF5TCPServer.ProcessPollLongThreadExecute(const AThread: TTCPServerProcessPollLongThread);
 begin
-  Assert(Assigned(Thread));
+  ////
+end;
 
-  {$IFDEF TCP_DEBUG_THREAD}
-  Log(tlDebug, 'ProcessThreadExecute');
-  {$ENDIF}
-
-  // loop until thread termination
-  while not IsTerminated do
+procedure TF5TCPServer.AddAcceptedClientsToPollShort;
+var
+  Cl, Nx : TTCPServerClient;
+begin
+  Cl := TTCPServerClient(FClientAcceptedList.First);
+  while Assigned(Cl) do
     begin
-      // wait to process
-      SetThreadReady;
-      if not WaitState(sctsPollProcess) then
-        break;
-      // process clients
-      repeat
-        if not ServerProcessClient then
-          break;
-        if IsTerminated then
-          exit;
-      until False;
-      // wait for next poll
-      if IsTerminated then
-        break;
-      SetThreadReady;
-      if not WaitState(sctsPollReady) then
-        break;
+      Nx := TTCPServerClient(Cl.ListNext);
+      FClientAcceptedList.Remove(Cl);
+      FClientActiveList.Add(Cl);
+      Cl.FPollThread := FPollShortThread;
+      Cl.FPollIndex := FPollShortThread.FPollProcess.AddClient(Cl);
+      Cl := Nx;
     end;
 end;
 
-procedure TF5TCPServer.ThreadError(const Thread: TTCPServerThread; const Error: Exception);
+procedure TF5TCPServer.AddAcceptedClientsToPollSpin;
+var
+  Cl, Nx : TTCPServerClient;
 begin
-  Log(tlError, Format('ThreadError(Task:%d,%s,%s)', [Ord(Thread.FTask), Error.ClassName, Error.Message]));
+  Cl := TTCPServerClient(FClientAcceptedList.First);
+  while Assigned(Cl) do
+    begin
+      Nx := TTCPServerClient(Cl.ListNext);
+      FClientAcceptedList.Remove(Cl);
+      FClientActiveList.Add(Cl);
+      Cl.FPollThread := FPollSpinThread;
+      Cl.FPollIndex := FPollSpinThread.FSpinProcess.AddClient(Cl);
+      Cl := Nx;
+    end;
 end;
 
-procedure TF5TCPServer.ThreadTerminate(const Thread: TTCPServerThread);
+procedure TF5TCPServer.ProcessPollShortThreadStartPoll;
+var
+  ClAr : TTCPServerClientBaseArray;
+  ClIdx : Int32;
+  Cl : TTCPServerClient;
 begin
-  {$IFDEF TCP_DEBUG_THREAD}
-  Log(tlDebug, Format('ThreadTerminate(Task:%d)', [Ord(Thread.FTask)]));
-  {$ENDIF}
+  ClAr := FPollSpinThread.FSpinProcess.RemoveClients; // 2020/07/15: must be outside Lock
+
+  Lock;
+  try
+    for ClIdx := 0 to Length(ClAr) - 1 do
+      begin
+        Cl := TTCPServerClient(ClAr[ClIdx]);
+        if Assigned(Cl) then
+          begin
+            Cl.FPollThread := FPollShortThread;
+            Cl.FPollIndex := FPollShortThread.FPollProcess.AddClient(Cl);
+          end;
+      end;
+
+    AddAcceptedClientsToPollShort;
+
+    FPollShortThread.FPollTime := Now;
+  finally
+    Unlock;
+  end;
 end;
 
-procedure TF5TCPServer.Start;
+procedure TF5TCPServer.ProcessPollShortThreadClientPoll(
+          const AClient: TTCPServerClientBase;
+          var AEventRead, AEventWrite: Boolean);
+var
+  Con : TTCPConnection;
 begin
-  if FActive then
-    exit;
-  DoSetActive;
+  Con := TTCPServerClient(AClient).Connection;
+  if Assigned(Con) then
+    begin
+      Con.ProcessPendingEvents;
+      Con.GetEventsToPoll(AEventRead, AEventWrite);
+    end
+  else
+    begin
+      AEventRead := False;
+      AEventWrite := False;
+    end;
 end;
 
-procedure TF5TCPServer.Stop;
+procedure TF5TCPServer.ProcessPollShortThreadClientProcess(
+          const AClient: TTCPServerClientBase;
+          const AEventRead, AEventWrite, AEventError: Boolean;
+          out AClientTerminated: Boolean);
+var
+  LIdle : Boolean;
 begin
-  if not FActive then
-    exit;
-  DoSetInactive;
+  ProcessClient(TTCPServerClient(AClient),
+      AEventRead, AEventWrite, FPollShortThread.FPollTime, LIdle, AClientTerminated);
+  if not AClientTerminated then
+    TTCPServerClient(AClient).Connection.ProcessPendingEvents;
+end;
+
+procedure TF5TCPServer.ProcessPollShortThreadCompletePoll;
+begin
+end;
+
+procedure TF5TCPServer.ProcessPollShortThreadExecute(const AThread: TTCPServerProcessPollShortThread);
+begin
+  try
+    AThread.FPollProcess.Execute(
+        AThread,
+        ProcessPollShortThreadStartPoll,
+        ProcessPollShortThreadClientPoll,
+        ProcessPollShortThreadClientProcess,
+        ProcessPollShortThreadCompletePoll,
+        100);
+    if not AThread.Terminated then
+      Log(tlError, 'ProcessPollShortThreadExecute.UnexpectedTerminatation');
+  except
+    on E : Exception do
+      if not AThread.Terminated then
+        LogException('ProcessPollShortThreadExecute.Error', E);
+  end;
+end;
+
+procedure TF5TCPServer.ProcessPollSpinThreadClientPoll(
+          const AClient: TTCPServerClientBase;
+          var AEventRead, AEventWrite: Boolean);
+var
+  Con : TTCPConnection;
+begin
+  Con := TTCPServerClient(AClient).Connection;
+  if Assigned(Con) then
+    begin
+      Con.ProcessPendingEvents;
+      Con.GetEventsToPoll(AEventRead, AEventWrite);
+    end
+  else
+    begin
+      AEventRead := False;
+      AEventWrite := False;
+    end;
+end;
+
+procedure TF5TCPServer.ProcessPollSpinThreadClientProcess(
+          const AClient: TTCPServerClientBase;
+          const AEventRead, AEventWrite, AEventError: Boolean;
+          out AClientTerminated: Boolean);
+var
+  LIdle : Boolean;
+begin
+  ProcessClient(TTCPServerClient(AClient),
+      AEventRead, AEventWrite, FPollShortThread.FPollTime, LIdle, AClientTerminated);
+  if not AClientTerminated then
+    TTCPServerClient(AClient).Connection.ProcessPendingEvents;
+end;
+
+procedure TF5TCPServer.ProcessPollSpinThreadExecute(const AThread: TTCPServerProcessSpinThread);
+begin
+  try
+    AThread.FSpinProcess.Execute(
+        AThread,
+        ProcessPollSpinThreadClientPoll,
+        ProcessPollSpinThreadClientProcess);
+    if not AThread.Terminated then
+      Log(tlError, 'ProcessPollSpinThreadExecute.UnexpectedTerminatation');
+  except
+    on E : Exception do
+      if not AThread.Terminated then
+        LogException('ProcessPollSpinThreadExecute.Error', E);
+  end;
 end;
 
 function TF5TCPServer.GetActiveClientCount: Integer;
@@ -2977,12 +2997,12 @@ begin
   Lock;
   try
     N := 0;
-    C := FClientList.FFirst;
+    C := TTCPServerClient(FClientActiveList.First);
     while Assigned(C) do
       begin
         if not C.FTerminated and (C.FState in [scsNegotiating, scsReady]) then
           Inc(N);
-        C := C.FNext;
+        C := TTCPServerClient(C.ListNext);
       end;
   finally
     Unlock;
@@ -2994,7 +3014,7 @@ function TF5TCPServer.GetClientCount: Integer;
 begin
   Lock;
   try
-    Result := FClientList.Count;
+    Result := FClientActiveList.Count;
   finally
     Unlock;
   end;
@@ -3006,7 +3026,7 @@ var
 begin
   Lock;
   try
-    C := FClientList.FFirst;
+    C := TTCPServerClient(FClientActiveList.First);
     // add reference to prevent removal of client
     // caller must call C.ReleaseReference
     C.AddReference;
@@ -3022,7 +3042,7 @@ var
 begin
   Lock;
   try
-    N := C.FNext;
+    N := TTCPServerClient(C.ListNext);
     if Assigned(N) then
       // add reference to prevent removal of client
       // caller must call C.ReleaseReference
@@ -3041,12 +3061,12 @@ begin
   Lock;
   try
     R := 0;
-    C := FClientList.FFirst;
+    C := TTCPServerClient(FClientActiveList.First);
     while Assigned(C) do
       begin
         if not C.FTerminated and (C.FState = scsReady) then
           Inc(R, C.Connection.ReadRate);
-        C := C.FNext;
+        C := TTCPServerClient(C.ListNext);
       end;
   finally
     Unlock;
@@ -3062,12 +3082,12 @@ begin
   Lock;
   try
     R := 0;
-    C := FClientList.FFirst;
+    C := TTCPServerClient(FClientActiveList.First);
     while Assigned(C) do
       begin
         if not C.FTerminated and (C.FState = scsReady) then
           Inc(R, C.Connection.WriteRate);
-        C := C.FNext;
+        C := TTCPServerClient(C.ListNext);
       end;
   finally
     Unlock;

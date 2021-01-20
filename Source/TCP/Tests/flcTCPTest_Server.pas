@@ -37,7 +37,7 @@ uses
 {                                                                              }
 {$IFDEF TCPSERVER_TEST}
 {$ASSERTIONS ON}
-procedure Test_Server_Simple;
+procedure Test_Server_StartStop;
 var S : TF5TCPServer;
     I : Integer;
 begin
@@ -45,7 +45,7 @@ begin
   try
     // init
     S.AddressFamily := iaIP4;
-    S.ServerPort := 12745;
+    S.ServerPort := 10549;
     S.MaxClients := -1;
     Assert(S.State = ssInit);
     Assert(not S.Active);
@@ -72,7 +72,29 @@ begin
   try
     // init
     S.AddressFamily := iaIP4;
-    S.ServerPort := 12745;
+    S.ServerPort := 10545;
+    S.MaxClients := -1;
+    Assert(S.State = ssInit);
+    Assert(not S.Active);
+    // activate (wait for startup)
+    S.Start(True, 30000);
+    Assert(S.Active);
+    Assert(S.State = ssReady);
+    Assert(S.ClientCount = 0);
+    // shut down
+    S.Stop;
+    Assert(not S.Active);
+    Assert(S.State = ssClosed);
+  finally
+    S.Finalise;
+    FreeAndNil(S);
+  end;
+
+  S := TF5TCPServer.Create(nil);
+  try
+    // init
+    S.AddressFamily := iaIP4;
+    S.ServerPort := 10545;
     S.MaxClients := -1;
     Assert(S.State = ssInit);
     for I := 1 to 10 do
@@ -104,9 +126,10 @@ begin
   S := TF5TCPServer.Create(nil);
   S.AddressFamily := iaIP4;
   S.BindAddress := '127.0.0.1';
-  S.ServerPort := 12249;
+  S.ServerPort := 12649;
   S.MaxClients := -1;
   S.Active := True;
+  Sleep(1000);
 
   for I := 1 to MaxConns do
     begin
@@ -117,7 +140,7 @@ begin
   T := TCPGetTick;
   for I := 1 to MaxConns do
     begin
-      C[I].Connect('127.0.0.1', '12249');
+      C[I].Connect('127.0.0.1', '12649');
       Sleep(5);
       if I mod 100 = 0 then
         Writeln(I, ' ', Word32(TCPGetTick - T) / I:0:2);
@@ -126,7 +149,7 @@ begin
   repeat
     Sleep(10);
     Inc(I, 10);
-  until (S.ClientCount = MaxConns) or (I > 4000);
+  until (S.ClientCount = MaxConns) or (I > 12000);
   Assert(S.ClientCount = MaxConns);
   T := Word32(TCPGetTick - T);
   Writeln(T / MaxConns:0:2);
@@ -159,10 +182,11 @@ begin
       S[I] := TF5TCPServer.Create(nil);
       S[I].AddressFamily := iaIP4;
       S[I].BindAddress := '127.0.0.1';
-      S[I].ServerPort := 12300 + I;
+      S[I].ServerPort := 12820 + I;
       S[I].MaxClients := -1;
       S[I].Active := True;
     end;
+  Sleep(1000);
 
   for J := 1 to MaxSrvrs do
     for I := 1 to MaxConns do
@@ -176,9 +200,9 @@ begin
   for J := 1 to MaxSrvrs do
     for I := 1 to MaxConns do
       begin
-        C[J][I].Connect('127.0.0.1', RawByteString(IntToStr(12300 + J)));
+        C[J][I].Connect('127.0.0.1', RawByteString(IntToStr(12820 + J)));
         if I mod 2 = 0 then
-          Sleep(1);
+          Sleep(50);
         if I mod 100 = 0 then
           Writeln(J, ' ', I, ' ', Word32(TCPGetTick - T) / (I + (J - 1) * MaxConns):0:2);
       end;
@@ -212,7 +236,7 @@ end;
 
 procedure Test;
 begin
-  Test_Server_Simple;
+  Test_Server_StartStop;
   Test_Server_Connections;
   Test_Server_MultiServers_Connections;
 end;
@@ -221,3 +245,4 @@ end;
 
 
 end.
+

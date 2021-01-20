@@ -5,7 +5,7 @@
 {   File version:     5.08                                                     }
 {   Description:      TCP buffer.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -47,7 +47,7 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ../flcInclude.inc}
+{$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcTCP.inc}
 
 unit flcTCPBuffer;

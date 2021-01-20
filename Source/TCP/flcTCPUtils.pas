@@ -5,7 +5,7 @@
 {   File version:     5.01                                                     }
 {   Description:      TCP utilities.                                           }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -41,7 +41,7 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ../flcInclude.inc}
+{$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcTCP.inc}
 
 unit flcTCPUtils;
@@ -49,6 +49,10 @@ unit flcTCPUtils;
 interface
 
 uses
+  SysUtils,
+  SyncObjs,
+  Classes,
+
   { Fundamentals }
   flcStdTypes;
 
@@ -66,6 +70,62 @@ function  TCPTickDeltaU(const D1, D2: Word64): Word64;
 { TCP CompareMem helper                                                        }
 {                                                                              }
 function  TCPCompareMem(const Buf1; const Buf2; const Count: Integer): Boolean;
+
+
+
+{ TCP Log Type }
+
+type
+  TTCPLogType = (
+      tlDebug,
+      tlParameter,
+      tlInfo,
+      tlWarning,
+      tlError
+    );
+
+
+
+{ TCP Thread }
+
+type
+  TTCPThread = class(TThread)
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Finalise; virtual;
+    property  Terminated;
+    function  SleepUnterminated(const ATimeMs: Int32): Boolean;
+  end;
+
+procedure TCPThreadTerminate(const AThread: TTCPThread);
+procedure TCPThreadFinalise(const AThread: TTCPThread);
+
+
+
+type
+  ETAbortableMultiWaitEventError = class(Exception);
+
+  TAbortableMultiWaitEvent = class
+    FLock       : TCriticalSection;
+    FEvent      : TSimpleEvent;
+    FWaitCount  : Int32;
+    FTerminated : Boolean;
+
+    procedure Lock;
+    procedure Unlock;
+
+  public
+    constructor Create;
+    destructor Destroy; override;
+
+    procedure SetEvent;
+    procedure ResetEvent;
+    function  WaitEvent(const ATimeout: UInt32): TWaitResult;
+
+    procedure SetTerminated;
+    procedure WaitTerminated(const ATimeout: UInt32);
+  end;
 
 
 
@@ -170,6 +230,211 @@ end;
 {$ENDIF}
 
 
+
+{ TTCPThread }
+
+constructor TTCPThread.Create;
+begin
+  FreeOnTerminate := False;
+  inherited Create(False);
+end;
+
+destructor TTCPThread.Destroy;
+begin
+  if not Terminated then
+    Terminate;
+  inherited Destroy;
+end;
+
+procedure TTCPThread.Finalise;
+begin
+  if not Terminated then
+    Terminate;
+  try
+    {$IFNDEF DELPHI7}
+    if not Finished then
+    {$ENDIF}
+      WaitFor;
+  except
+  end;
+end;
+
+function TTCPThread.SleepUnterminated(const ATimeMs: Int32): Boolean;
+var
+  LTime : Int32;
+begin
+  if Terminated then
+    begin
+      Result := False;
+      exit;
+    end;
+  if ATimeMs < 0 then
+    begin
+      Result := True;
+      exit;
+    end;
+  if ATimeMs = 0 then
+    Sleep(0)
+  else
+    begin
+      LTime := ATimeMs;
+      while LTime >= 100 do
+        begin
+          Sleep(100);
+          if Terminated then
+            begin
+              Result := False;
+              exit;
+            end;
+          Dec(LTime, 100);
+        end;
+      if LTime > 0 then
+        Sleep(LTime);
+    end;
+  Result := not Terminated;
+end;
+
+
+
+procedure TCPThreadTerminate(const AThread: TTCPThread);
+begin
+  if Assigned(AThread) then
+    if not AThread.Terminated then
+      AThread.Terminate;
+end;
+
+procedure TCPThreadFinalise(const AThread: TTCPThread);
+begin
+  if Assigned(AThread) then
+    AThread.Finalise;
+end;
+
+
+{ TAbortableMultiWaitEvent }
+
+constructor TAbortableMultiWaitEvent.Create;
+begin
+  inherited Create;
+  FLock := TCriticalSection.Create;
+  FEvent := TSimpleEvent.Create;
+  FTerminated := False;
+end;
+
+destructor TAbortableMultiWaitEvent.Destroy;
+begin
+  if Assigned(FEvent) and Assigned(FLock) and not FTerminated then
+    try
+      WaitTerminated(20);
+    except
+    end;
+  FreeAndNil(FEvent);
+  FreeAndNil(FLock);
+  inherited Destroy;
+end;
+
+procedure TAbortableMultiWaitEvent.Lock;
+begin
+  FLock.Acquire;
+end;
+
+procedure TAbortableMultiWaitEvent.Unlock;
+begin
+  FLock.Release;
+end;
+
+function TAbortableMultiWaitEvent.WaitEvent(const ATimeout: UInt32): TWaitResult;
+
+  procedure CheckTerminated;
+  begin
+    if FTerminated then
+      raise ETAbortableMultiWaitEventError.Create('Terminated');
+  end;
+
+var
+  LEvent : TSimpleEvent;
+
+begin
+  LEvent := FEvent;
+
+  Lock;
+  try
+    CheckTerminated;
+    Inc(FWaitCount);
+  finally
+    Unlock;
+  end;
+  try
+    Result := LEvent.WaitFor(ATimeout);
+    case Result of
+      wrAbandoned : raise ETAbortableMultiWaitEventError.Create('Abandoned');
+      wrError     : raise ETAbortableMultiWaitEventError.Create('Wait error');
+    end;
+    CheckTerminated;
+  finally
+    Lock;
+    try
+      CheckTerminated;
+      Dec(FWaitCount);
+    finally
+      Unlock;
+    end;
+  end;
+end;
+
+procedure TAbortableMultiWaitEvent.SetEvent;
+begin
+  FEvent.SetEvent;
+end;
+
+procedure TAbortableMultiWaitEvent.ResetEvent;
+begin
+  if not FTerminated then
+    FEvent.ResetEvent;
+end;
+
+procedure TAbortableMultiWaitEvent.SetTerminated;
+begin
+  Lock;
+  try
+    if FTerminated then
+      exit;
+    FTerminated := True;
+    FEvent.SetEvent;
+  finally
+    Unlock;
+  end;
+end;
+
+{$IFDEF DELPHI7}
+const
+  INFINITE = -1;
+{$ENDIF}
+
+procedure TAbortableMultiWaitEvent.WaitTerminated(const ATimeout: UInt32);
+var
+  L : UInt32;
+begin
+  SetTerminated;
+  L := ATimeout;
+  while L <> 0 do
+    begin
+      Lock;
+      try
+        if FWaitCount <= 0 then
+          exit;
+      finally
+        Unlock;
+      end;
+      Sleep(1);
+      if L <> INFINITE then
+        if L >= 1 then
+          Dec(L, 1)
+        else
+          L := 0;
+    end;
+  if ATimeout > 0 then
+    raise ETAbortableMultiWaitEventError.Create('Timeout waiting for termination');
+end;
 
 end.
 

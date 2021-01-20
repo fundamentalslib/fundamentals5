@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPConnection.pas                                     }
-{   File version:     5.34                                                     }
+{   File version:     5.35                                                     }
 {   Description:      TCP connection.                                          }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -70,10 +70,11 @@
 {   2019/12/30  5.32  Initialise buffer sizes on creation.                     }
 {   2020/03/28  5.33  Update LastReadActivityTime when read is from socket.    }
 {   2020/05/02  5.34  Log exceptions raised in event handlers.                 }
+{   2020/07/19  5.35  Remove throttling and write activity.                    }
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ../flcInclude.inc}
+{$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcTCP.inc}
 
 unit flcTCPConnection;
@@ -100,7 +101,8 @@ uses
 
   { TCP }
 
-  flcTCPBuffer;
+  flcTCPBuffer,
+  flcTCPUtils;
 
 
 
@@ -110,16 +112,6 @@ uses
 type
   ETCPConnection = class(Exception);
 
-
-
-  TTCPLogType = (
-      tlDebug,
-      tlParameter,
-      tlInfo,
-      tlWarning,
-      tlError
-    );
-    //tlCritical
 
 
   TTCPConnectionProxyState = (
@@ -249,11 +241,6 @@ type
     // parameters
     FSocket                : TSysSocket;
 
-    FReadThrottle          : Boolean;
-    FReadThrottleRate      : Integer;
-    FWriteThrottle         : Boolean;
-    FWriteThrottleRate     : Integer;
-
     FTrackLastActivityTime : Boolean;
 
     FUseWorkerThread       : Boolean;
@@ -273,7 +260,6 @@ type
     FOnRead             : TTCPConnectionNotifyEvent;
     FOnWrite            : TTCPConnectionNotifyEvent;
     FOnReadActivity     : TTCPConnectionNotifyEvent;
-    FOnWriteActivity    : TTCPConnectionNotifyEvent;
     FOnReadBufferFull   : TTCPConnectionNotifyEvent;
     FOnWriteBufferEmpty : TTCPConnectionNotifyEvent;
 
@@ -312,7 +298,6 @@ type
     FClosePending          : Boolean;
 
     FLastReadActivityTime  : TDateTime;
-    FLastWriteActivityTime : TDateTime;
 
     FBlockingConnection    : TTCPBlockingConnection;
 
@@ -361,9 +346,6 @@ type
     function  GetReadBufferAvailable: Integer;
     function  GetWriteBufferAvailable: Integer;
 
-    procedure SetReadThrottle(const AReadThrottle: Boolean);
-    procedure SetWriteThrottle(const AWriteThrottle: Boolean);
-
     function  GetReadRate: Integer;
     function  GetWriteRate: Integer;
 
@@ -375,7 +357,6 @@ type
     procedure TriggerRead;
     procedure TriggerWrite;
     procedure TriggerReadActivity;
-    procedure TriggerWriteActivity;
     procedure TriggerReadBufferFull;
     procedure TriggerWriteBufferEmpty;
 
@@ -401,8 +382,6 @@ type
     function  WriteBufferToSocket(out BufferEmptyBefore, BufferEmptied: Boolean): Integer;
 
     function  GetLastReadActivityTime: TDateTime;
-    function  GetLastWriteActivityTime: TDateTime;
-    function  GetLastActivityTime: TDateTime;
 
     function  LocateByteCharInBuffer(const ADelimiter: ByteCharSet; const AMaxSize: Integer): Integer;
     function  LocateByteStrInBuffer(const ADelimiter: RawByteString; const AMaxSize: Integer): Integer;
@@ -445,7 +424,6 @@ type
     property  OnWriteBufferEmpty: TTCPConnectionNotifyEvent read FOnWriteBufferEmpty write FOnWriteBufferEmpty;
 
     property  OnReadActivity: TTCPConnectionNotifyEvent read FOnReadActivity write FOnReadActivity; //// OnSocketReadActivity
-    property  OnWriteActivity: TTCPConnectionNotifyEvent read FOnWriteActivity write FOnWriteActivity; ////
 
     // Parameters
     property  Socket: TSysSocket read FSocket;
@@ -472,17 +450,12 @@ type
 
     procedure Start;
 
-    // Throttling
-    property  ReadThrottle: Boolean read FReadThrottle write SetReadThrottle;
-    property  ReadThrottleRate: Integer read FReadThrottleRate write FReadThrottleRate;
-    property  WriteThrottle: Boolean read FWriteThrottle write SetWriteThrottle;
-    property  WriteThrottleRate: Integer read FWriteThrottleRate write FWriteThrottleRate;
-
     property  ReadRate: Integer read GetReadRate;
     property  WriteRate: Integer read GetWriteRate;
 
     // Poll routines
-    procedure GetEventsToPoll(out WritePoll: Boolean);
+    function  ProcessPendingEvents: Boolean;
+    procedure GetEventsToPoll(out ReadPoll, WritePoll: Boolean);
     procedure ProcessSocket(
               const ProcessRead, ProcessWrite: Boolean;
               const ActivityTime: TDateTime;
@@ -491,8 +464,6 @@ type
     // Last activity times
     property  TrackLastActivityTime: Boolean read FTrackLastActivityTime write FTrackLastActivityTime;
     property  LastReadActivityTime: TDateTime read GetLastReadActivityTime;
-    property  LastWriteActivityTime: TDateTime read GetLastWriteActivityTime;
-    property  LastActivityTime: TDateTime read GetLastActivityTime;
 
     // Buffer status
     property  ReadBufferUsed: Integer read GetReadBufferUsed;
@@ -619,11 +590,9 @@ uses
 
   { Sockets }
 
-  flcSocketLib,
+  flcSocketLib
 
-  { TCP }
-
-  flcTCPUtils;
+  { TCP };
 
 
 
@@ -963,8 +932,6 @@ var
   N : TDateTime;
 begin
   FState := cnsInit;
-  FReadThrottle  := False;
-  FWriteThrottle := False;
   FLock := TCriticalSection.Create;
   FProxyList := TTCPConnectionProxyList.Create;
   FProxyConnection := False;
@@ -972,7 +939,6 @@ begin
   FCreationTime := N;
   FTrackLastActivityTime := False;
   FLastReadActivityTime := 0.0;
-  FLastWriteActivityTime := 0.0;
 end;
 
 procedure TTCPConnection.InitBuffers(
@@ -1309,34 +1275,13 @@ begin
     end;
 end;
 
-procedure TTCPConnection.SetReadThrottle(const AReadThrottle: Boolean);
-begin
-  Lock;
-  try
-    FReadThrottle := AReadThrottle;
-  finally
-    Unlock;
-  end;
-end;
-
-procedure TTCPConnection.SetWriteThrottle(const AWriteThrottle: Boolean);
-begin
-  Lock;
-  try
-    FWriteThrottle := AWriteThrottle;
-  finally
-    Unlock;
-  end;
-end;
-
 function TTCPConnection.GetReadRate: Integer;
 var
   E : Int64;
 begin
   Lock;
   try
-    if not FReadThrottle then
-      TCPConnectionTransferUpdate(FReadTransferState, TCPGetTick, E);
+    TCPConnectionTransferUpdate(FReadTransferState, TCPGetTick, E);
     Result := FReadTransferState.TransferRate;
   finally
     Unlock;
@@ -1349,8 +1294,7 @@ var
 begin
   Lock;
   try
-    if not FWriteThrottle then
-      TCPConnectionTransferUpdate(FWriteTransferState, TCPGetTick, E);
+    TCPConnectionTransferUpdate(FWriteTransferState, TCPGetTick, E);
     Result := FWriteTransferState.TransferRate;
   finally
     Unlock;
@@ -1445,17 +1389,6 @@ begin
     end;
 end;
 
-procedure TTCPConnection.TriggerWriteActivity;
-begin
-  if Assigned(FOnWriteActivity) then
-    try
-      FOnWriteActivity(self);
-    except
-      on E : Exception do
-        Log(tlError, 'TriggerWriteActivity.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
 procedure TTCPConnection.TriggerReadBufferFull;
 begin
   if Assigned(FOnReadBufferFull) then
@@ -1508,7 +1441,8 @@ begin
 end;
 
 procedure TTCPConnection.ProxyProcessReadData(const Buf; const BufSize: Integer; out ReadEventPending: Boolean);
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   Assert(FProxyConnection);
   Assert(FProxyList.Count > 0);
@@ -1534,7 +1468,8 @@ begin
 end;
 
 procedure TTCPConnection.ProxyProcessWriteData(const Buf; const BufSize: Integer);
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   Assert(BufSize > 0);
   Assert(FProxyConnection);
@@ -1567,7 +1502,8 @@ begin
 end;
 
 function GetNextFilteringProxy(const Proxy: TTCPConnectionProxy): TTCPConnectionProxy;
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   Assert(Assigned(Proxy));
 
@@ -1578,7 +1514,8 @@ begin
 end;
 
 procedure TTCPConnection.ProxyConnectionPutReadData(const AProxy: TTCPConnectionProxy; const Buf; const BufSize: Integer);
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   P := GetNextFilteringProxy(AProxy);
   if Assigned(P) then
@@ -1592,7 +1529,7 @@ begin
       try
         TCPBufferAddBuf(FReadBuffer, Buf, BufSize);
         // allow user to read buffered data; flag pending event
-        FReadEventPending := True;
+        FReadEventPending := True; // Include(FPendingFlags, cpfReadEvent);
       finally
         Unlock;
       end;
@@ -1600,7 +1537,8 @@ begin
 end;
 
 procedure TTCPConnection.ProxyConnectionPutWriteData(const AProxy: TTCPConnectionProxy; const Buf; const BufSize: Integer);
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   P := GetNextFilteringProxy(AProxy);
   if Assigned(P) then
@@ -1632,7 +1570,8 @@ end;
 
 // called when a proxy changes state
 procedure TTCPConnection.ProxyStateChange(const AProxy: TTCPConnectionProxy; const AState: TTCPConnectionProxyState);
-var P : TTCPConnectionProxy;
+var
+  P : TTCPConnectionProxy;
 begin
   case AState of
     prsFiltering,
@@ -1661,8 +1600,9 @@ begin
 end;
 
 procedure TTCPConnection.StartProxies(out AProxiesFinished: Boolean);
-var L : Integer;
-    P : TTCPConnectionProxy;
+var
+  L : Integer;
+  P : TTCPConnectionProxy;
 begin
   Lock;
   try
@@ -1684,7 +1624,8 @@ begin
 end;
 
 procedure TTCPConnection.Start;
-var ProxiesFin : Boolean;
+var
+  ProxiesFin : Boolean;
 begin
   Assert(FState in [cnsInit, cnsClosed]);
   {$IFDEF TCP_DEBUG}
@@ -1697,6 +1638,7 @@ begin
     TCPConnectionTransferReset(FReadTransferState);
     TCPConnectionTransferReset(FWriteTransferState);
     FReadyNotified := False;
+    //FPendingFlags := [];
     FReadEventPending := False;
     FReadBufferFull := False;
     FReadProcessPending := False;
@@ -1722,7 +1664,8 @@ const
   BufferSize = TCP_BUFFER_DEFAULTMAXSIZE;
 var
   Buffer : array[0..BufferSize - 1] of Byte;
-  Avail, Size : Integer;
+  Avail : Int32;
+  Size : Integer;
   IsHandleInvalid : Boolean;
   IsProxyConn : Boolean;
   {$IFDEF TCP_DEBUG}
@@ -1815,9 +1758,12 @@ end;
 // Returns number of bytes written to socket
 // Pre: Socket is non-blocking
 function TTCPConnection.WriteBufferToSocket(out BufferEmptyBefore, BufferEmptied: Boolean): Integer;
-var P : Pointer;
-    SizeBuf, SizeWrite, SizeWritten : Integer;
-    E : Boolean;
+var
+  P : Pointer;
+  SizeBuf : Int32;
+  SizeWrite : Int32;
+  SizeWritten : Integer;
+  E : Boolean;
 begin
   BufferEmptied := False;
   Lock;
@@ -1828,9 +1774,6 @@ begin
     BufferEmptyBefore := E;
     if E then
       SizeWrite := 0
-    else
-    if FWriteThrottle and (FWriteThrottleRate > 0) then // throttled writing
-      SizeWrite := TCPConnectionTransferThrottledSize(FWriteTransferState, TCPGetTick, FWriteThrottleRate, SizeBuf)
     else
       SizeWrite := SizeBuf;
     // handle nothing to send
@@ -1868,10 +1811,47 @@ begin
   Result := SizeWritten;
 end;
 
-procedure TTCPConnection.GetEventsToPoll(out WritePoll: Boolean); // out ReadPoll; out ProcessSocket)
+function TTCPConnection.ProcessPendingEvents: Boolean;
+var
+  ReadActivityPending : Boolean;
+  ReadEventPending : Boolean;
+  Res : Boolean;
 begin
   Lock;
   try
+    ReadActivityPending := FReadActivityPending;
+    ReadEventPending := FReadEventPending;
+    FReadActivityPending := False;
+    FReadEventPending := False;
+  finally
+    Unlock;
+  end;
+
+  Res := False;
+  if ReadActivityPending then
+    begin
+      TriggerReadActivity;
+      Res := True;
+    end;
+  if ReadEventPending then
+    begin
+      TriggerRead;
+      Res := True;
+    end;
+  Result := Res;
+end;
+
+procedure TTCPConnection.GetEventsToPoll(out ReadPoll, WritePoll: Boolean);
+begin
+  Lock;
+  try
+    ReadPoll := True; // 2020/07/19: Always poll
+{        not FReadBufferFull
+        or FReadProcessPending
+        or FReadActivityPending
+        or FReadEventPending
+        or FClosePending
+        or (FShutdownSent and not FShutdownComplete); }
     WritePoll :=
         FWriteEventPending or
         FShutdownSendPending or
@@ -1912,7 +1892,6 @@ var
   WriteBufEmptyEvent : Boolean;
   WriteShutdownNow : Boolean;
   WriteData : Boolean;
-  WriteActivity : Boolean;
   ShutdownSendPending : Boolean;
   ShutdownComplete : Boolean;
   ClosePending : Boolean;
@@ -2064,7 +2043,6 @@ begin
         until Fin;
       end;
     // process write
-    WriteActivity := False;
     if WriteDoProcess then
       begin
         WriteEvent := False;
@@ -2081,7 +2059,6 @@ begin
         WriteData := Len > 0;
         if WriteEventPending then
           begin
-            WriteActivity := True;
             WriteEvent := True;
             WriteBufEmptyEvent := True;
           end;
@@ -2095,7 +2072,6 @@ begin
             // data sent
             Idle := False;
             WriteEvent := True;
-            WriteActivity := True;
           end
         else
           begin
@@ -2105,8 +2081,6 @@ begin
             // nothing sent
           end;
         // trigger write
-        if WriteActivity then
-          TriggerWriteActivity;
         if WriteEvent then
           TriggerWrite;
         // triger write buffer empty
@@ -2125,15 +2099,13 @@ begin
           end;
       end;
       // set last activity time
-      if RecvActivity or WriteActivity then
+      if RecvActivity then
         if TrackLastActivityTime then
           begin
             Lock;
             try
               if RecvActivity then
                 FLastReadActivityTime := ActivityTime;
-              if WriteActivity then
-                FLastWriteActivityTime := ActivityTime;
             finally
               Unlock;
             end;
@@ -2160,32 +2132,6 @@ begin
   end;
 end;
 
-function TTCPConnection.GetLastWriteActivityTime: TDateTime;
-begin
-  Lock;
-  try
-    Result := FLastWriteActivityTime;
-  finally
-    Unlock;
-  end;
-end;
-
-function TTCPConnection.GetLastActivityTime: TDateTime;
-begin
-  Lock;
-  try
-    if FLastReadActivityTime > FLastWriteActivityTime then
-      Result := FLastReadActivityTime
-    else
-    if FLastWriteActivityTime > FCreationTime then
-      Result := FLastWriteActivityTime
-    else
-      Result := FCreationTime;
-  finally
-    Unlock;
-  end;
-end;
-
 // LocateByteCharInBuffer
 // Returns position of Delimiter in buffer
 // Returns >= 0 if found in buffer
@@ -2202,12 +2148,13 @@ end;
 // Returns -1 if not found in buffer
 // MaxSize specifies maximum bytes before delimiter, of -1 for no limit
 function TTCPConnection.LocateByteStrInBuffer(const ADelimiter: RawByteString; const AMaxSize: Integer): Integer;
-var DelLen  : Integer;
-    BufSize : Integer;
-    LocLen  : Integer;
-    BufPtr  : PByteChar;
-    DelPtr  : PByteChar;
-    I       : Integer;
+var
+  DelLen  : Integer;
+  BufSize : Integer;
+  LocLen  : Integer;
+  BufPtr  : PByteChar;
+  DelPtr  : PByteChar;
+  I       : Integer;
 begin
   if AMaxSize = 0 then
     begin
@@ -2253,9 +2200,10 @@ end;
 // MaxSize specifies maximum bytes before delimiter, of -1 for no limit
 function TTCPConnection.PeekDelimited(var Buf; const BufSize: Integer;
          const ADelimiter: TRawByteCharSet; const AMaxSize: Integer): Integer;
-var DelPos : Integer;
-    BufPtr : PByteChar;
-    BufLen : Integer;
+var
+  DelPos : Integer;
+  BufPtr : PByteChar;
+  BufLen : Integer;
 begin
   Lock;
   try
@@ -2284,9 +2232,10 @@ end;
 // MaxSize specifies maximum bytes before delimiter, of -1 for no limit
 function TTCPConnection.PeekDelimited(var Buf; const BufSize: Integer;
          const ADelimiter: RawByteString; const AMaxSize: Integer): Integer;
-var DelPos : Integer;
-    BufPtr : PByteChar;
-    BufLen : Integer;
+var
+  DelPos : Integer;
+  BufPtr : PByteChar;
+  BufLen : Integer;
 begin
   Assert(ADelimiter <> '');
   Lock;
@@ -2311,11 +2260,15 @@ end;
 
 // Read a number of bytes from read buffer and transport.
 // Return the number of bytes actually read.
-// Throttles reading.
 function TTCPConnection.Read(var Buf; const BufSize: Integer): Integer;
 var
   BufPtr : PByteChar;
-  SizeRead, SizeReadBuf, SizeReadSocket, SizeRecv, SizeRemain, SizeTotal : Integer;
+  SizeRead : Integer;
+  SizeReadBuf : Int32;
+  SizeReadSocket : Integer;
+  SizeRecv : Integer;
+  SizeRemain : Integer;
+  SizeTotal : Integer;
 begin
   if BufSize <= 0 then
     begin
@@ -2324,20 +2277,8 @@ begin
     end;
   Lock;
   try
-    // get read size
-    if FReadThrottle then // throttled reading
-      begin
-        SizeRead := TCPConnectionTransferThrottledSize(FReadTransferState, TCPGetTick, FReadThrottleRate, BufSize);
-        // handle nothing to read
-        if SizeRead <= 0 then
-          begin
-            Result := 0;
-            exit;
-          end;
-      end
-    else
-      SizeRead := BufSize;
     // read from buffer
+    SizeRead := BufSize;
     SizeReadBuf := TCPBufferRemove(FReadBuffer, Buf, SizeRead);
     if SizeReadBuf > 0 then
       if FReadBufferFull then
@@ -2402,7 +2343,8 @@ begin
 end;
 
 function TTCPConnection.ReadByteString(const AStrLen: Integer): RawByteString;
-var ReadLen : Integer;
+var
+  ReadLen : Integer;
 begin
   if AStrLen <= 0 then
     begin
@@ -2416,7 +2358,8 @@ begin
 end;
 
 function TTCPConnection.ReadBytes(const ASize: Integer): TBytes;
-var ReadLen : Integer;
+var
+  ReadLen : Integer;
 begin
   if ASize <= 0 then
     begin
@@ -2433,7 +2376,8 @@ end;
 // Returns the number of bytes actually discarded.
 // No throttling and no reading from transport.
 function TTCPConnection.Discard(const ASize: Integer): Integer;
-var SizeDiscarded : Integer;
+var
+  SizeDiscarded : Int32;
 begin
   // handle nothing to discard
   if ASize <= 0 then
@@ -2471,9 +2415,8 @@ var
   SizeToSocket : Integer;
 begin
   Assert(BufSize > 0);
-  // if there is already data in the write buffer then add to the write buffer; or
-  // if write is being throttled then add to the write buffer
-  UseBuf := (TCPBufferUsed(FWriteBuffer) > 0) or FWriteThrottle;
+  // if there is already data in the write buffer then add to the write buffer
+  UseBuf := TCPBufferUsed(FWriteBuffer) > 0;
   if UseBuf then
     begin
       TCPBufferAddBuf(FWriteBuffer, Buf, BufSize);
@@ -2509,7 +2452,8 @@ end;
 // Write a number of bytes to transport
 // No throtling
 function TTCPConnection.Write(const Buf; const BufSize: Integer): Integer;
-var IsProxy : Boolean;
+var
+  IsProxy : Boolean;
 begin
   Result := 0;
   if BufSize <= 0 then
@@ -2535,7 +2479,8 @@ begin
 end;
 
 function TTCPConnection.WriteByteString(const AStr: RawByteString): Integer;
-var Len : Integer;
+var
+  Len : Integer;
 begin
   Len := Length(AStr);
   if Len <= 0 then
@@ -2547,7 +2492,8 @@ begin
 end;
 
 function TTCPConnection.WriteBytes(const B: TBytes): Integer;
-var Len : Integer;
+var
+  Len : Integer;
 begin
   Len := Length(B);
   if Len <= 0 then
@@ -2581,7 +2527,8 @@ begin
 end;
 
 function TTCPConnection.PeekByteString(const AStrLen: Integer): RawByteString;
-var PeekLen : Integer;
+var
+  PeekLen : Integer;
 begin
   if AStrLen <= 0 then
     begin
@@ -2595,7 +2542,8 @@ begin
 end;
 
 function TTCPConnection.PeekBytes(const ASize: Integer): TBytes;
-var PeekLen : Integer;
+var
+  PeekLen : Integer;
 begin
   if ASize <= 0 then
     begin
@@ -2835,9 +2783,10 @@ end;
 
 // Wait until one of the States or time out.
 function TTCPBlockingConnection.WaitForState(const AStates: TTCPConnectionStates; const ATimeOutMs: Integer): TTCPConnectionState;
-var T : Word32;
-    S : TTCPConnectionState;
-    C : TTCPConnection;
+var
+  T : Word32;
+  S : TTCPConnectionState;
+  C : TTCPConnection;
 begin
   T := TCPGetTick;
   C := FConnection;
@@ -2855,9 +2804,10 @@ end;
 
 // Wait until amount of data received, closed or time out.
 function TTCPBlockingConnection.WaitForReceiveData(const ABufferSize: Integer; const ATimeOutMs: Integer): Boolean;
-var T : Word32;
-    L : Integer;
-    C : TTCPConnection;
+var
+  T : Word32;
+  L : Integer;
+  C : TTCPConnection;
 begin
   Assert(Assigned(FConnection));
   T := TCPGetTick;
@@ -2878,9 +2828,10 @@ end;
 
 // Wait until send buffer is cleared to socket, closed or time out.
 function TTCPBlockingConnection.WaitForTransmitFin(const ATimeOutMs: Integer): Boolean;
-var T : Word32;
-    L : Integer;
-    C : TTCPConnection;
+var
+  T : Word32;
+  L : Integer;
+  C : TTCPConnection;
 begin
   Assert(Assigned(FConnection));
   T := TCPGetTick;

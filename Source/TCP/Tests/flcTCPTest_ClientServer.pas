@@ -16,6 +16,8 @@ uses
   Classes,
 
   flcStdTypes,
+
+  flcTCPUtils,
   flcTCPConnection,
   flcTCPClient,
   flcTCPServer;
@@ -179,6 +181,8 @@ var
   F : RawByteString;
   B : Byte;
 begin
+  DebugObj.Log('--------------');
+  DebugObj.Log('TestClientServer_ReadWrite_Blocks:');
   // read & write (small block): client to server
   for K := 0 to TestClientCount - 1 do
     C[K].Connection.WriteByteString('Fundamentals');
@@ -209,6 +213,7 @@ begin
       F := C[K].Connection.ReadByteString(3);
       Assert(F = '123');
     end;
+  DebugObj.Log('{RWS:1}');
   if TestLargeBlock then
     begin
       // read & write (large block): client to server
@@ -239,6 +244,7 @@ begin
           Sleep(2);
           Assert(T[K].Connection.ReadBufferUsed = 0);
         end;
+      DebugObj.Log('{RWS:L1}');
       // read & write (large block): server to client
       F := '';
       for I := 1 to LargeBlockSize do
@@ -263,7 +269,9 @@ begin
           Sleep(2);
           Assert(C[K].Connection.ReadBufferUsed = 0);
         end;
+      DebugObj.Log('{RWS:L2}');
     end;
+  DebugObj.Log('--------------');
 end;
 
 procedure TestClientServer_ReadWrite(
@@ -292,6 +300,8 @@ var C : TF5TCPClientArray;
     DebugObj : TTCPClientServerTestObj;
 begin
   DebugObj := TTCPClientServerTestObj.Create;
+  DebugObj.Log('--------------');
+  DebugObj.Log('TestClientServer_ReadWrite:');
   S := TF5TCPServer.Create(nil);
   SetLength(C, TestClientCount);
   SetLength(T, TestClientCount);
@@ -379,6 +389,7 @@ begin
     until (S.ClientCount = 0) or (I >= 5000);
     Assert(S.ClientCount = 0);
     // stop server
+    DebugObj.Log('S.Stop');
     S.Stop;
     Assert(not S.Active);
   finally
@@ -387,13 +398,17 @@ begin
         C[K].Finalise;
         FreeAndNil(C[K]);
       end;
+    DebugObj.Log('S.Finalise');
     S.Finalise;
+    DebugObj.Log('S.Free');
     FreeAndNil(S);
+    DebugObj.Log('S=nil');
+    DebugObj.Log('--------------');
     DebugObj.Free;
   end;
 end;
 
-procedure Test_ClientServer_StopStart;
+procedure Test_ClientServer_StopStart(const AWaitForServerStartup: Boolean);
 const
   TestClientCount = 10;
   TestRepeatCount = 3;
@@ -404,6 +419,8 @@ var C : array of TF5TCPClient;
     DebugObj : TTCPClientServerTestObj;
 begin
   DebugObj := TTCPClientServerTestObj.Create;
+  DebugObj.Log('--------------');
+  DebugObj.Log('Test_ClientServer_StopStart:');
   S := TF5TCPServer.Create(nil);
   SetLength(C, TestClientCount);
   for K := 0 to TestClientCount - 1 do
@@ -423,13 +440,16 @@ begin
     Assert(S.State = ssInit);
     Assert(not S.Active);
     // start server
-    S.Start;
+    S.Start(AWaitForServerStartup, 30000);
     Assert(S.Active);
-    I := 0;
-    repeat
-      Inc(I);
-      Sleep(1);
-    until (S.State <> ssStarting) or (I >= 5000);
+    if not AWaitForServerStartup then
+      begin
+        I := 0;
+        repeat
+          Inc(I);
+          Sleep(1);
+        until (S.State <> ssStarting) or (I >= 5000);
+      end;
     Assert(S.State = ssReady);
     Assert(S.ClientCount = 0);
     // init clients
@@ -486,16 +506,22 @@ begin
           end;
       end;
     // stop server
+    DebugObj.Log('S.Stop');
     S.Stop;
     Assert(not S.Active);
   finally
+    DebugObj.Log('Clients.Free');
     for K := TestClientCount - 1 downto 0 do
       begin
         C[K].Finalise;
         FreeAndNil(C[K]);
       end;
+    DebugObj.Log('S.Finalise');
     S.Finalise;
+    DebugObj.Log('S.Free');
     FreeAndNil(S);
+    DebugObj.Log('S=nil');
+    DebugObj.Log('--------------');
     DebugObj.Free;
   end;
 end;
@@ -590,6 +616,9 @@ begin
   DebugObj := TTCPClientServerTestObj.Create;
   TestObj := TTCPClientServerBlockTestObj.Create;
 
+  DebugObj.Log('--------------');
+  DebugObj.Log('Test_ClientServer_Block:');
+
   S := TF5TCPServer.Create(nil);
   S.OnLog := DebugObj.ServerLog;
   S.AddressFamily := iaIP4;
@@ -624,6 +653,8 @@ begin
   S.Finalise;
   FreeAndNil(S);
 
+  DebugObj.Log('--------------');
+
   TestObj.Free;
   DebugObj.Free;
 end;
@@ -638,6 +669,9 @@ var
 begin
   DebugObj := TTCPClientServerTestObj.Create;
   TestObj := TTCPClientServerBlockTestObj.Create;
+
+  DebugObj.Log('--------------');
+  DebugObj.Log('Test_ClientServer_RetryConnect:');
 
   S := TF5TCPServer.Create(nil);
   S.OnLog := DebugObj.ServerLog;
@@ -685,6 +719,8 @@ begin
   S.Finalise;
   FreeAndNil(S);
 
+  DebugObj.Log('--------------');
+
   TestObj.Free;
   DebugObj.Free;
 end;
@@ -730,7 +766,7 @@ const
   Test1N = 5;
 begin
   DebugObj := TTCPClientServerTestObj.Create;
-  DebugObj.Log('');
+  DebugObj.Log('--------------');
   DebugObj.Log('Test_ClientServer_Latency:');
 
   S := TF5TCPServer.Create(nil);
@@ -841,13 +877,17 @@ begin
     S.Free;
   end;
 
+  DebugObj.Log('--------------');
   FreeAndNil(DebugObj);
 end;
 
 procedure Test;
 begin
+  Test_ClientServer_StopStart(False);
+  Test_ClientServer_StopStart(True);
   Test_ClientServer_ReadWrite;
-  Test_ClientServer_StopStart;
+  Test_ClientServer_StopStart(False);
+  Test_ClientServer_StopStart(True);
   Test_ClientServer_Shutdown;
   Test_ClientServer_Block;
   Test_ClientServer_RetryConnect;

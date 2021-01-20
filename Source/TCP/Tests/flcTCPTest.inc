@@ -1,5 +1,5 @@
-{$INCLUDE ../../flcInclude.inc}
-{$INCLUDE ../flcTCP.inc}
+{$INCLUDE ..\..\flcInclude.inc}
+{$INCLUDE ..\flcTCP.inc}
 
 {$IFDEF DEBUG}
 {$IFDEF TEST}

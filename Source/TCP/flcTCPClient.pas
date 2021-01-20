@@ -2,10 +2,10 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcTCPClient.pas                                         }
-{   File version:     5.25                                                     }
+{   File version:     5.28                                                     }
 {   Description:      TCP client.                                              }
 {                                                                              }
-{   Copyright:        Copyright (c) 2007-2020, David J Butler                  }
+{   Copyright:        Copyright (c) 2007-2021, David J Butler                  }
 {                     All rights reserved.                                     }
 {                     This file is licensed under the BSD License.             }
 {                     See http://www.opensource.org/licenses/bsd-license.php   }
@@ -63,11 +63,16 @@
 {   2020/03/28  5.23  Select wait 50ms under Win32.                            }
 {   2020/05/02  5.24  Log exceptions raised in event handlers.                 }
 {   2020/05/11  5.25  TLS options.                                             }
+{   2020/07/25  5.26  Change event order to: Active, Start, Stop, Inactive.    }
+{   2020/07/25  5.27  WaitForStartup using TSimpleEvent. StartFailed state.    }
+{   2020/07/26  5.28  Remove SynchronisedEvents. Add OnReadyFailed event.      }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
 {   Delphi 2010-10.4 Win32/Win64        5.25  2020/06/02                       }
-{   Delphi 10.2-10.4 Linux64            5.25  2020/06/02                       }
+{   Delphi 10.2-10.3 Win32/Win64        5.28  2020/07/30                       }
+{   Delphi 10.2 Linux64                 5.28  2020/07/30                       }
+{   Delphi 10.3-10.4 Linux64            5.25  2020/06/02                       }
 {   Delphi 10.2-10.4 iOS32/64           5.25  2020/06/02                       }
 {   Delphi 10.2-10.4 OSX32/64           5.25  2020/06/02                       }
 {   Delphi 10.2-10.4 Android32/64       5.25  2020/06/02                       }
@@ -75,7 +80,7 @@
 {                                                                              }
 {******************************************************************************}
 
-{$INCLUDE ../flcInclude.inc}
+{$INCLUDE ..\flcInclude.inc}
 {$INCLUDE flcTCP.inc}
 
 unit flcTCPClient;
@@ -94,6 +99,8 @@ uses
   SyncObjs,
   Classes,
 
+  flcStdTypes,
+
   { Sockets }
 
   flcSocketLib,
@@ -101,6 +108,7 @@ uses
 
   { TCP }
 
+  flcTCPUtils,
   flcTCPConnection
 
   { Socks }
@@ -138,6 +146,7 @@ type
   TTCPClientState = (
     csInit,           // Client initialise
     csStarting,       // Client starting (thread starting up)
+    csStartFailed,    // Client start failed
     csStarted,        // Client activated (thread running)
     csConnectRetry,   // Client retrying connection
     csResolvingLocal, // Local IP resolving
@@ -148,10 +157,12 @@ type
     csConnecting,     // TCP connecting
     csConnected,      // TCP connected
     csNegotiating,    // Connection proxy negotiation
+    csReadyFailed,    // Failed to reach ready state
     csReady,          // Client ready, connection negotiated and ready
+    //// csReadyClose
     csClosed,         // Connection closed
-    //// csReadyFailed
-    //// csStartFailed
+    //// csFinishedClose
+    //// csFinishedError
     csStopped         // Client stopped
     );
 
@@ -159,6 +170,7 @@ type
 
   TTCPClientLogType = (
     cltDebug,
+    cltParameter, ////
     cltInfo,
     cltError
     );
@@ -187,6 +199,9 @@ type
   TTCPClientTLSHashOptions        = TTLSHashOptions;
 {$ENDIF}
 
+const
+  DefaultTCPClientStartupTimeout = 30000; // 30s
+
 type
   TF5TCPClient = class;
 
@@ -195,8 +210,6 @@ type
   TTCPClientStateEvent = procedure (AClient: TF5TCPClient; AState: TTCPClientState) of object;
   TTCPClientErrorEvent = procedure (AClient: TF5TCPClient; ErrorMsg: String; ErrorCode: Integer) of object;
   TTCPClientWorkerExecuteEvent = procedure (AClient: TF5TCPClient; AConnection: TTCPBlockingConnection; var CloseOnExit: Boolean) of object;
-
-  TSyncProc = procedure of object;
 
   TTCPClientProcessThread = class(TThread)
   protected
@@ -249,7 +262,6 @@ type
 
     FUseWorkerThread    : Boolean;
 
-    FSynchronisedEvents : Boolean;
     FWaitForStartup     : Boolean;
 
     FTrackLastActivityTime : Boolean;
@@ -261,25 +273,25 @@ type
     FOnLog               : TTCPClientLogEvent;
 
     FOnError             : TTCPClientErrorEvent;
-    FOnStart             : TTCPClientNotifyEvent;
-    FOnStop              : TTCPClientNotifyEvent;
-    FOnActive            : TTCPClientNotifyEvent;
-    FOnInactive          : TTCPClientNotifyEvent;
     FOnStateChanged      : TTCPClientStateEvent;
+    FOnActive            : TTCPClientNotifyEvent;
+    FOnStart             : TTCPClientNotifyEvent;
+    FOnStartFailed       : TTCPClientNotifyEvent;
     FOnStarted           : TTCPClientNotifyEvent;
-    FOnConnected         : TTCPClientNotifyEvent;
     FOnConnectFailed     : TTCPClientNotifyEvent;
+    FOnConnected         : TTCPClientNotifyEvent;
     FOnNegotiating       : TTCPClientNotifyEvent;
+    FOnReadyFailed       : TTCPClientNotifyEvent;
     FOnReady             : TTCPClientNotifyEvent;
-    FOnReadShutdown      : TTCPClientNotifyEvent;
-    FOnShutdown          : TTCPClientNotifyEvent;
-    FOnClose             : TTCPClientNotifyEvent;
-    FOnStopped           : TTCPClientNotifyEvent;
-
     FOnRead              : TTCPClientNotifyEvent;
     FOnWrite             : TTCPClientNotifyEvent;
     FOnReadActivity      : TTCPClientNotifyEvent;
-    FOnWriteActivity     : TTCPClientNotifyEvent;
+    FOnReadShutdown      : TTCPClientNotifyEvent;
+    FOnShutdown          : TTCPClientNotifyEvent;
+    FOnClose             : TTCPClientNotifyEvent;
+    FOnStop              : TTCPClientNotifyEvent;
+    FOnStopped           : TTCPClientNotifyEvent;
+    FOnInactive          : TTCPClientNotifyEvent;
 
     FOnProcessThreadIdle : TTCPClientNotifyEvent;
     FOnMainThreadWait    : TTCPClientNotifyEvent;
@@ -289,14 +301,12 @@ type
     // state
     FLock              : TCriticalSection;
     FActive            : Boolean;
-    //// FStarted
-    //// FReady
-    FIsStopping        : Boolean;
     FState             : TTCPClientState;
+    FIsStopping        : Boolean;
     FErrorMessage      : String;
-    FErrorCode         : Integer;
-    FWaitStartEvent    : TSimpleEvent; ////
-    FWaitStartCount    : Int32;        ////
+    FErrorCode         : NativeInt;
+    FWaitStartEvent    : TAbortableMultiWaitEvent;
+    FWaitReadyEvent    : TAbortableMultiWaitEvent;
     FProcessThread     : TTCPClientProcessThread;
     FActivateOnLoaded  : Boolean;
     FIPAddressFamily   : TIPAddressFamily;
@@ -304,7 +314,6 @@ type
     FLocalAddr         : TSocketAddr;
     FConnectAddr       : TSocketAddr;
     FConnection        : TTCPConnection;
-    FSyncListLog       : TList; //// TList deprecated in Delphi
 
     {$IFDEF TCPCLIENT_TLS}
     FTLSProxy          : TTCPConnectionProxy;
@@ -326,9 +335,6 @@ type
     procedure Lock;
     procedure Unlock;
 
-    procedure Synchronize(const SyncProc: TSyncProc);
-
-    procedure SyncLog;
     procedure Log(const LogType: TTCPClientLogType; const Msg: String; const LogLevel: Integer = 0); overload;
     procedure Log(const LogType: TTCPClientLogType; const Msg: String; const Args: array of const; const LogLevel: Integer = 0); overload;
 
@@ -380,57 +386,41 @@ type
 
     procedure SetUseWorkerThread(const AUseWorkerThread: Boolean);
 
-    procedure SetSynchronisedEvents(const ASynchronisedEvents: Boolean);
     procedure SetWaitForStartup(const AWaitForStartup: Boolean);
 
-    procedure SetActive(const AActive: Boolean);
     procedure Loaded; override;
 
-    procedure SyncTriggerError;
-    procedure SyncTriggerStateChanged;
-    procedure SyncTriggerStart;
-    procedure SyncTriggerStop;
-    procedure SyncTriggerActive;
-    procedure SyncTriggerInactive;
-    procedure SyncTriggerStarted;
-    procedure SyncTriggerConnected;
-    procedure SyncTriggerNegotiating;
-    procedure SyncTriggerConnectFailed;
-    procedure SyncTriggerReady;
-    procedure SyncTriggerReadShutdown;
-    procedure SyncTriggerShutdown;
-    procedure SyncTriggerClose;
-    procedure SyncTriggerStopped;
-    procedure SyncTriggerRead;
-    procedure SyncTriggerWrite;
-    procedure SyncTriggerReadActivity;
-    procedure SyncTriggerWriteActivity;
+    procedure LogTriggerException(const ATriggerName: String; const AException: Exception);
+
+    procedure TriggerProcessThreadIdle; virtual;
 
     procedure TriggerError; virtual;
     procedure TriggerStateChanged; virtual;
-    procedure TriggerStart; virtual;
-    procedure TriggerStop; virtual;
     procedure TriggerActive; virtual;
-    procedure TriggerInactive; virtual;
-    procedure TriggerProcessThreadIdle; virtual;
+    procedure TriggerStart; virtual;
+    procedure TriggerStartFailed; virtual;
     procedure TriggerStarted; virtual;
     procedure TriggerConnected; virtual;
-    procedure TriggerNegotiating; virtual;
     procedure TriggerConnectFailed; virtual;
+    procedure TriggerNegotiating; virtual;
+    procedure TriggerReadyFailed; virtual;
     procedure TriggerReady; virtual;
-    procedure TriggerReadShutdown; virtual;
-    procedure TriggerShutdown; virtual;
-    procedure TriggerClose; virtual;
-    procedure TriggerStopped; virtual;
     procedure TriggerRead; virtual;
     procedure TriggerWrite; virtual;
     procedure TriggerReadActivity; virtual;
-    procedure TriggerWriteActivity; virtual;
+    procedure TriggerReadShutdown; virtual;
+    procedure TriggerShutdown; virtual;
+    procedure TriggerClose; virtual;
+    procedure TriggerStop; virtual;
+    procedure TriggerStopped; virtual;
+    procedure TriggerInactive; virtual;
 
     procedure SetError(const AErrorMsg: String; const AErrorCode: Integer);
+    procedure SetStartFailed;
     procedure SetStarted;
     procedure SetConnected;
     procedure SetNegotiating;
+    procedure SetReadyFailed;
     procedure SetReady;
     procedure SetClosed;
     procedure SetStopped;
@@ -439,7 +429,7 @@ type
 
     procedure ConnectionLog(Sender: TTCPConnection; LogType: TTCPLogType; LogMsg: String; LogLevel: Integer);
 
-    procedure ConnectionStateChange(Sender: TTCPConnection; State: TTCPConnectionState);
+    procedure ConnectionStateChange(Sender: TTCPConnection; AState: TTCPConnectionState);
     procedure ConnectionReadShutdown(Sender: TTCPConnection);
     procedure ConnectionShutdown(Sender: TTCPConnection);
     procedure ConnectionClose(Sender: TTCPConnection);
@@ -447,10 +437,9 @@ type
     procedure ConnectionRead(Sender: TTCPConnection);
     procedure ConnectionWrite(Sender: TTCPConnection);
     procedure ConnectionReadActivity(Sender: TTCPConnection);
-    procedure ConnectionWriteActivity(Sender: TTCPConnection);
 
     procedure ConnectionWorkerExecute(Sender: TTCPConnection;
-              Connection: TTCPBlockingConnection; var CloseOnExit: Boolean);
+              AConnection: TTCPBlockingConnection; var ACloseOnExit: Boolean);
 
     {$IFDEF TCPCLIENT_TLS}
     procedure InstallTLSProxy;
@@ -487,15 +476,24 @@ type
     procedure TerminateProcessThread;
     procedure TerminateWorkerThread;
 
-    procedure ValidateParameters;
+    procedure ClientStop;
 
-    procedure ClientActive;
-    procedure ClientInactive;
-
-    procedure ClientSetActive;
+    procedure ClientDeactivate;
     procedure ClientSetInactive;
 
-    function  WaitStart(const ATimeOutMs: Int32): Boolean; ////
+    procedure ValidateParameters;
+
+    procedure ClientStart;
+
+    procedure ClientInitialiseActive;
+    procedure ClientActivate;
+    procedure ClientSetActive;
+
+    procedure SetActive(const AActive: Boolean);
+
+    procedure ClientWaitStartup(const ATimeout: Int32); ////
+    // procedure ClientWaitReady(const ATimeout: Int32); ////
+    // procedure ClientWaitClose(const ATimeout: Int32); ////
 
     procedure Wait; virtual;
 
@@ -556,51 +554,41 @@ type
     property  WebSocketProtocol: RawByteString read FWebSocketProtocol write SetWebSocketProtocol;
     {$ENDIF}
 
-    // When SynchronisedEvents is set, events handlers are called in the main thread
-    // through the TThread.Synchronise mechanism.
-    // When SynchronisedEvents is not set, events handlers will be called from
-    // an external thread. In this case event handler should handle their own
-    // synchronisation if required.
-    property  SynchronisedEvents: Boolean read FSynchronisedEvents write SetSynchronisedEvents default False;
-
     property  OnLog: TTCPClientLogEvent read FOnLog write FOnLog;
 
-    property  OnError: TTCPClientErrorEvent read FOnError write FOnError;
-    property  OnStart: TTCPClientNotifyEvent read FOnStart write FOnStart;
-    property  OnStop: TTCPClientNotifyEvent read FOnStop write FOnStop;
-    property  OnActive: TTCPClientNotifyEvent read FOnActive write FOnActive;
-    property  OnInactive: TTCPClientNotifyEvent read FOnInactive write FOnInactive;
     property  OnProcessThreadIdle: TTCPClientNotifyEvent read FOnProcessThreadIdle write FOnProcessThreadIdle;
+    property  OnError: TTCPClientErrorEvent read FOnError write FOnError;
     property  OnStateChanged: TTCPClientStateEvent read FOnStateChanged write FOnStateChanged;
+    property  OnActive: TTCPClientNotifyEvent read FOnActive write FOnActive;
+    property  OnStart: TTCPClientNotifyEvent read FOnStart write FOnStart;
+    property  OnStartFailed: TTCPClientNotifyEvent read FOnStartFailed write FOnStartFailed;
     property  OnStarted: TTCPClientNotifyEvent read FOnStarted write FOnStarted;
     property  OnConnected: TTCPClientNotifyEvent read FOnConnected write FOnConnected;
     property  OnConnectFailed: TTCPClientNotifyEvent read FOnConnectFailed write FOnConnectFailed;
     property  OnNegotiating: TTCPClientNotifyEvent read FOnNegotiating write FOnNegotiating;
+    property  OnReadyFailed: TTCPClientNotifyEvent read FOnReadyFailed write FOnReadyFailed;
     property  OnReady: TTCPClientNotifyEvent read FOnReady write FOnReady;
-    property  OnReadShutdown: TTCPClientNotifyEvent read FOnReadShutdown write FOnReadShutdown;
-    property  OnShutdown: TTCPClientNotifyEvent read FOnShutdown write FOnShutdown;
-    property  OnClose: TTCPClientNotifyEvent read FOnClose write FOnClose;
-    property  OnStopped: TTCPClientNotifyEvent read FOnStopped write FOnStopped;
-
     property  OnRead: TTCPClientNotifyEvent read FOnRead write FOnRead;
     property  OnWrite: TTCPClientNotifyEvent read FOnWrite write FOnWrite;
     property  OnReadActivity: TTCPClientNotifyEvent read FOnReadActivity write FOnReadActivity;
-    property  OnWriteActivity: TTCPClientNotifyEvent read FOnWriteActivity write FOnWriteActivity;
+    property  OnReadShutdown: TTCPClientNotifyEvent read FOnReadShutdown write FOnReadShutdown;
+    property  OnShutdown: TTCPClientNotifyEvent read FOnShutdown write FOnShutdown;
+    property  OnClose: TTCPClientNotifyEvent read FOnClose write FOnClose;
+    property  OnStop: TTCPClientNotifyEvent read FOnStop write FOnStop;
+    property  OnStopped: TTCPClientNotifyEvent read FOnStopped write FOnStopped;
+    property  OnInactive: TTCPClientNotifyEvent read FOnInactive write FOnInactive;
 
     // When WaitForStartup is set, the call to Start or Active := True will only return
     // when the thread has started and the Connection property is available.
     // This option is usally only needed in a non-GUI application.
-    // Note:
-    // When this is set to True in a GUI application with SynchronisedEvents True,
-    // the OnMainThreadWait handler must call Application.ProcessMessages otherwise
-    // blocking conditions may occur.
     property  WaitForStartup: Boolean read FWaitForStartup write SetWaitForStartup default False;
 
     // state
     property  State: TTCPClientState read GetState;
     property  StateStr: String read GetStateStr;
+
     property  ErrorMessage: String read FErrorMessage;
-    property  ErrorCode: Integer read FErrorCode;
+    property  ErrorCode: NativeInt read FErrorCode;
 
     function  IsConnecting: Boolean;
     function  IsConnectingOrConnected: Boolean;
@@ -610,7 +598,8 @@ type
     function  IsStopping: Boolean;
 
     property  Active: Boolean read FActive write SetActive default False;
-    procedure Start; //// AWaitConnectionActive
+
+    procedure Start(const AStartupTimeout: Int32 = DefaultTCPClientStartupTimeout);
     procedure Stop;
 
     procedure Shutdown;
@@ -705,15 +694,14 @@ type
     property  WebSocketProtocol;
     {$ENDIF}
 
-    property  SynchronisedEvents;
     property  WaitForStartup;
 
     property  OnLog;
     property  OnError;
-    property  OnStart;
-    property  OnStop;
     property  OnActive;
     property  OnInactive;
+    property  OnStart;
+    property  OnStop;
     property  OnProcessThreadIdle;
     property  OnStateChanged;
     property  OnStarted;
@@ -742,15 +730,6 @@ type
 
 implementation
 
-uses
-  { Utils }
-
-  flcStdTypes,
-
-  { TCP }
-
-  flcTCPUtils;
-
 
 
 {                                                                              }
@@ -771,6 +750,7 @@ const
   SClientState : array[TTCPClientState] of String = (
       'Initialise',
       'Starting',
+      'Start failed',
       'Started',
       'Connect retry',
       'Resolving local',
@@ -781,6 +761,7 @@ const
       'Connecting',
       'Connected',
       'Negotiating proxy',
+      'Ready failed',
       'Ready',
       'Closed',
       'Stopped');
@@ -834,6 +815,8 @@ const
 
   TCPClientStates_Closed = [
       csInit,
+      csStartFailed,
+      csReadyFailed,
       csClosed,
       csStopped
   ];
@@ -1205,19 +1188,6 @@ end;
 
 
 {                                                                              }
-{ TTCPClientSyncLogData                                                        }
-{                                                                              }
-type
-  TTCPClientSyncLogData = record
-    LogType  : TTCPClientLogType;
-    LogMsg   : String;
-    LogLevel : Integer;
-  end;
-  PTCPClientSyncLogData = ^TTCPClientSyncLogData;
-
-
-
-{                                                                              }
 { TTCPClient                                                                   }
 {                                                                              }
 constructor TF5TCPClient.Create(AOwner: TComponent);
@@ -1232,6 +1202,8 @@ begin
   FState := csInit;
   FActivateOnLoaded := False;
   FLock := TCriticalSection.Create;
+  FWaitStartEvent := TAbortableMultiWaitEvent.Create;
+  FWaitReadyEvent := TAbortableMultiWaitEvent.Create;
 
   InitDefaults;
 end;
@@ -1265,28 +1237,13 @@ begin
   FWebSocketURI     := '/';
   {$ENDIF}
 
-  FSynchronisedEvents := False;
   FWaitForStartup := False;
   FTrackLastActivityTime := True;
   FUseWorkerThread := False;
 end;
 
 destructor TF5TCPClient.Destroy;
-var
-  I : Integer;
 begin
-  if Assigned(FLock) then
-    FLock.Acquire;
-  if Assigned(FWaitStartEvent) and (FWaitStartCount > 0) then
-    FWaitStartEvent.SetEvent;
-  if Assigned(FLock) then
-    FLock.Release;
-
-  if Assigned(FSyncListLog) then
-    for I := FSyncListLog.Count - 1 downto 0 do
-      Dispose(PTCPClientSyncLogData(FSyncListLog.Items[I]));
-  FreeAndNil(FSyncListLog);
-
   if Assigned(FProcessThread) then
     try
       if not FProcessThread.Terminated then
@@ -1299,7 +1256,8 @@ begin
   FreeAndNil(FConnection);
   FreeAndNil(FSocket);
 
-  //FreeAndNil(FWaitStartEvent);
+  FreeAndNil(FWaitReadyEvent);
+  FreeAndNil(FWaitStartEvent);
   FreeAndNil(FLock);
 
   inherited Destroy;
@@ -1310,6 +1268,8 @@ begin
   if Assigned(FConnection) then
     FConnection.Finalise;
 end;
+
+
 
 { Lock }
 
@@ -1325,68 +1285,17 @@ begin
   FLock.Release;
 end;
 
-{ Synchronize }
 
-procedure TF5TCPClient.Synchronize(const SyncProc: TSyncProc);
-begin
-  {$IFDEF DELPHI6_DOWN}
-  {$IFDEF OS_MSWIN}
-  if GetCurrentThreadID = MainThreadID then
-    SyncProc
-  else
-  {$ENDIF}
-  if Assigned(FProcessThread) then
-    FProcessThread.Synchronize(SyncProc);
-  {$ELSE}
-  TThread.Synchronize(nil, SyncProc);
-  {$ENDIF}
-end;
 
 { Log }
 
-procedure TF5TCPClient.SyncLog;
-var
-  SyncRec : PTCPClientSyncLogData;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  Lock;
-  try
-    Assert(Assigned(FSyncListLog));
-    Assert(FSyncListLog.Count > 0);
-    SyncRec := FSyncListLog.Items[0];
-    FSyncListLog.Delete(0);
-  finally
-    Unlock;
-  end;
-  if Assigned(FOnLog) then
-    FOnLog(self, SyncRec.LogType, SyncRec.LogMsg, SyncRec.LogLevel);
-  Dispose(SyncRec);
-end;
-
 procedure TF5TCPClient.Log(const LogType: TTCPClientLogType; const Msg: String; const LogLevel: Integer);
-var
-  SyncRec : PTCPClientSyncLogData;
 begin
   if Assigned(FOnLog) then
-    if FSynchronisedEvents {$IFDEF OS_MSWIN}and (GetCurrentThreadID <> MainThreadID){$ENDIF} then
-      begin
-        New(SyncRec);
-        SyncRec.LogType := LogType;
-        SyncRec.LogMsg := Msg;
-        SyncRec.LogLevel := LogLevel;
-        Lock;
-        try
-          if not Assigned(FSyncListLog) then
-            FSyncListLog := TList.Create;
-          FSyncListLog.Add(SyncRec);
-        finally
-          Unlock;
-        end;
-        Synchronize(SyncLog);
-      end
-    else
+    try
       FOnLog(Self, LogType, Msg, LogLevel);
+    except
+    end;
 end;
 
 procedure TF5TCPClient.Log(const LogType: TTCPClientLogType; const Msg: String;
@@ -1394,6 +1303,8 @@ procedure TF5TCPClient.Log(const LogType: TTCPClientLogType; const Msg: String;
 begin
   Log(LogType, Format(Msg, Args), LogLevel);
 end;
+
+
 
 { State }
 
@@ -1408,8 +1319,18 @@ begin
 end;
 
 function TF5TCPClient.GetStateStr: String;
+var
+  S : String;
 begin
-  Result := SClientState[GetState];
+  Lock;
+  try
+    S := SClientState[FState];
+  finally
+    Unlock;
+  end;
+  if FErrorMessage <> '' then
+    S := S + ': ' + FErrorMessage;
+  Result := S;
 end;
 
 procedure TF5TCPClient.SetState(const AState: TTCPClientState);
@@ -1436,6 +1357,8 @@ begin
   if not FActive then
     raise ETCPClient.Create(SError_NotAllowedWhileInactive);
 end;
+
+
 
 { Property setters }
 
@@ -1691,33 +1614,12 @@ begin
   FUseWorkerThread := AUseWorkerThread;
 end;
 
-procedure TF5TCPClient.SetSynchronisedEvents(const ASynchronisedEvents: Boolean);
-begin
-  if ASynchronisedEvents = FSynchronisedEvents then
-    exit;
-  CheckNotActive;
-  FSynchronisedEvents := ASynchronisedEvents;
-end;
-
 procedure TF5TCPClient.SetWaitForStartup(const AWaitForStartup: Boolean);
 begin
   if AWaitForStartup = FWaitForStartup then
     exit;
   CheckNotActive;
   FWaitForStartup := AWaitForStartup;
-end;
-
-procedure TF5TCPClient.SetActive(const AActive: Boolean);
-begin
-  if csDesigning in ComponentState then
-    FActive := AActive else
-  if csLoading in ComponentState then
-    FActivateOnLoaded := AActive
-  else
-    if AActive then
-      ClientSetActive
-    else
-      ClientSetInactive;
 end;
 
 procedure TF5TCPClient.Loaded;
@@ -1728,265 +1630,13 @@ begin
     ClientSetActive;
 end;
 
-{ SyncTrigger }
 
-procedure TF5TCPClient.SyncTriggerError;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnError) then
-    FOnError(self, FErrorMessage, FErrorCode);
-end;
-
-procedure TF5TCPClient.SyncTriggerStateChanged;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStateChanged) then
-    FOnStateChanged(self, FState);
-end;
-
-procedure TF5TCPClient.SyncTriggerStart;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStart) then
-    FOnStart(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerStop;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStop) then
-    FOnStop(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerActive;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnActive) then
-    FOnActive(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerInactive;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnInactive) then
-    FOnInactive(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerStarted;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStarted) then
-    FOnStarted(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerConnected;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnConnected) then
-    FOnConnected(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerNegotiating;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnNegotiating) then
-    FOnNegotiating(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerConnectFailed;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnConnectFailed) then
-    FOnConnectFailed(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerReady;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnReady) then
-    FOnReady(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerReadShutdown;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnReadShutdown) then
-    FOnReadShutdown(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerShutdown;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnShutdown) then
-    FOnShutdown(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerClose;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnClose) then
-    FOnClose(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerStopped;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnStopped) then
-    FOnStopped(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerRead;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnRead) then
-    FOnRead(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerWrite;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnWrite) then
-    FOnWrite(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerReadActivity;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnReadActivity) then
-    FOnReadActivity(self);
-end;
-
-procedure TF5TCPClient.SyncTriggerWriteActivity;
-begin
-  if csDestroying in ComponentState then
-    exit;
-  if Assigned(FOnWriteActivity) then
-    FOnWriteActivity(self);
-end;
 
 { Trigger }
 
-procedure TF5TCPClient.TriggerError;
+procedure TF5TCPClient.LogTriggerException(const ATriggerName: String; const AException: Exception);
 begin
-  Log(cltError, 'Error:%d:%s', [FErrorCode, FErrorMessage]);
-  if Assigned(FOnError) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerError)
-      else
-        FOnError(self, FErrorMessage, FErrorCode);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerError.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerStateChanged;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'State:%s', [GetStateStr]);
-  {$ENDIF}
-
-  if Assigned(FOnStateChanged) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerStateChanged)
-      else
-        FOnStateChanged(self, FState);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerStateChanged.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerStart;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Start');
-  {$ENDIF}
-
-  if Assigned(FOnStart) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerStart)
-      else
-        FOnStart(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerStart.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerStop;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Stop');
-  {$ENDIF}
-
-  if Assigned(FOnStop) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerStop)
-      else
-        FOnStop(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerStop.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerActive;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Active');
-  {$ENDIF}
-
-  if Assigned(FOnActive) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerActive)
-      else
-        FOnActive(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerActive.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerInactive;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Inactive');
-  {$ENDIF}
-
-  if Assigned(FOnInactive) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerInactive)
-      else
-        FOnInactive(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerInactive.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
+  Log(cltError, 'Trigger%s.Error:Error=%s:%s', [AException.ClassName, AException.Message]);
 end;
 
 procedure TF5TCPClient.TriggerProcessThreadIdle;
@@ -1996,160 +1646,152 @@ begin
   Sleep(1);
 end;
 
+procedure TF5TCPClient.TriggerError;
+begin
+  Log(cltError, 'Error:%d:%s', [FErrorCode, FErrorMessage]);
+
+  if Assigned(FOnError) then
+    try
+      FOnError(self, FErrorMessage, FErrorCode);
+    except
+      on E : Exception do
+        LogTriggerException('Error', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerStateChanged;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'State:%s', [GetStateStr]);
+  {$ENDIF}
+
+  if Assigned(FOnStateChanged) then
+    try
+      FOnStateChanged(self, FState);
+    except
+      on E : Exception do LogTriggerException('StateChanged', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerActive;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Active');
+  {$ENDIF}
+
+  if Assigned(FOnActive) then
+    try
+      FOnActive(self);
+    except
+      on E : Exception do LogTriggerException('Active', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerStart;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Start');
+  {$ENDIF}
+
+  if Assigned(FOnStart) then
+    try
+      FOnStart(self);
+    except
+      on E : Exception do LogTriggerException('Start', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerStartFailed;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Start');
+  {$ENDIF}
+
+  if Assigned(FOnStartFailed) then
+    try
+      FOnStartFailed(self);
+    except
+      on E : Exception do LogTriggerException('StartFailed', E);
+    end;
+end;
+
 procedure TF5TCPClient.TriggerStarted;
 begin
-  {$IFDEF TCP_DEBUG}
+  {$IFDEF TCP_LOG_DEBUG}
   Log(cltDebug, 'Started');
   {$ENDIF}
 
   if Assigned(FOnStarted) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerStarted)
-      else
-        FOnStarted(self);
+      FOnStarted(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerStarted.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('Started', E);
     end;
 end;
 
 procedure TF5TCPClient.TriggerConnected;
 begin
-  {$IFDEF TCP_DEBUG}
+  {$IFDEF TCP_LOG_DEBUG}
   Log(cltDebug, 'Connected');
   {$ENDIF}
 
   if Assigned(FOnConnected) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerConnected)
-      else
-        FOnConnected(self);
+      FOnConnected(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerConnected.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('Connected', E);
     end;
 end;
 
 procedure TF5TCPClient.TriggerNegotiating;
 begin
-  {$IFDEF TCP_DEBUG}
+  {$IFDEF TCP_LOG_DEBUG}
   Log(cltDebug, 'Negotiating');
   {$ENDIF}
 
   if Assigned(FOnNegotiating) then
-    if FSynchronisedEvents then
-      Synchronize(SyncTriggerNegotiating)
-    else
-      FOnNegotiating(self);
+    FOnNegotiating(self);
 end;
 
 procedure TF5TCPClient.TriggerConnectFailed;
 begin
-  {$IFDEF TCP_DEBUG}
+  {$IFDEF TCP_LOG_DEBUG}
   Log(cltDebug, 'ConnectFailed');
   {$ENDIF}
 
   if Assigned(FOnConnectFailed) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerConnectFailed)
-      else
-        FOnConnectFailed(self);
+      FOnConnectFailed(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerConnectFailed.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('ConnectFailed', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerReadyFailed;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'ReadyFailed');
+  {$ENDIF}
+
+  if Assigned(FOnReadyFailed) then
+    try
+      FOnReadyFailed(self);
+    except
+      on E : Exception do LogTriggerException('ReadyFailed', E);
     end;
 end;
 
 procedure TF5TCPClient.TriggerReady;
 begin
-  {$IFDEF TCP_DEBUG}
+  {$IFDEF TCP_LOG_DEBUG}
   Log(cltDebug, 'Ready');
   {$ENDIF}
 
   if Assigned(FOnReady) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerReady)
-      else
-        FOnReady(self);
+      FOnReady(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerReady.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerShutdown;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Shutdown');
-  {$ENDIF}
-
-  if Assigned(FOnShutdown) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerShutdown)
-      else
-        FOnShutdown(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerShutdown.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerReadShutdown;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'ReadShutdown');
-  {$ENDIF}
-
-  if Assigned(FOnReadShutdown) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerReadShutdown)
-      else
-        FOnReadShutdown(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerReadShutdown.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerClose;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Close');
-  {$ENDIF}
-
-  if Assigned(FOnClose) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerClose)
-      else
-        FOnClose(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerClose.Error:Error=%s[%s]', [E.ClassName, E.Message]);
-    end;
-end;
-
-procedure TF5TCPClient.TriggerStopped;
-begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Stopped');
-  {$ENDIF}
-
-  if Assigned(FOnStopped) then
-    try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerStopped)
-      else
-        FOnStopped(self);
-    except
-      on E : Exception do
-        Log(cltError, 'TriggerStopped.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('Ready', E);
     end;
 end;
 
@@ -2161,13 +1803,9 @@ begin
 
   if Assigned(FOnRead) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerRead)
-      else
-        FOnRead(self);
+      FOnRead(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerRead.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('Read', E);
     end;
 end;
 
@@ -2179,13 +1817,9 @@ begin
 
   if Assigned(FOnWrite) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerWrite)
-      else
-        FOnWrite(self);
+      FOnWrite(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerWrite.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('Write', E);
     end;
 end;
 
@@ -2197,45 +1831,115 @@ begin
 
   if Assigned(FOnReadActivity) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerReadActivity)
-      else
-        FOnReadActivity(self);
+      FOnReadActivity(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerReadActivity.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('ReadActivity', E);
     end;
 end;
 
-procedure TF5TCPClient.TriggerWriteActivity;
+procedure TF5TCPClient.TriggerReadShutdown;
 begin
-  {$IFDEF TCP_DEBUG_DATA}
-  Log(cltDebug, 'Activity');
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'ReadShutdown');
   {$ENDIF}
 
-  if Assigned(FOnWriteActivity) then
+  if Assigned(FOnReadShutdown) then
     try
-      if FSynchronisedEvents then
-        Synchronize(SyncTriggerWriteActivity)
-      else
-        FOnWriteActivity(self);
+      FOnReadShutdown(self);
     except
-      on E : Exception do
-        Log(cltError, 'TriggerWriteActivity.Error:Error=%s[%s]', [E.ClassName, E.Message]);
+      on E : Exception do LogTriggerException('ReadShutdown', E);
     end;
 end;
+
+procedure TF5TCPClient.TriggerShutdown;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Shutdown');
+  {$ENDIF}
+
+  if Assigned(FOnShutdown) then
+    try
+      FOnShutdown(self);
+    except
+      on E : Exception do LogTriggerException('Shutdown', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerClose;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Close');
+  {$ENDIF}
+
+  if Assigned(FOnClose) then
+    try
+      FOnClose(self);
+    except
+      on E : Exception do LogTriggerException('Close', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerStop;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Stop');
+  {$ENDIF}
+
+  if Assigned(FOnStop) then
+    try
+      FOnStop(self);
+    except
+      on E : Exception do LogTriggerException('Stop', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerStopped;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Stopped');
+  {$ENDIF}
+
+  if Assigned(FOnStopped) then
+    try
+      FOnStopped(self);
+    except
+      on E : Exception do LogTriggerException('Stopped', E);
+    end;
+end;
+
+procedure TF5TCPClient.TriggerInactive;
+begin
+  {$IFDEF TCP_LOG_DEBUG}
+  Log(cltDebug, 'Inactive');
+  {$ENDIF}
+
+  if Assigned(FOnInactive) then
+    try
+      FOnInactive(self);
+    except
+      on E : Exception do LogTriggerException('Inactive', E);
+    end;
+end;
+
+
 
 { SetStates }
 
 procedure TF5TCPClient.SetError(const AErrorMsg: String; const AErrorCode: Integer);
 begin
-  {$IFDEF TCP_DEBUG}
-  Log(cltDebug, 'Error:%d:%s', [ErrorCode, ErrorMsg]);
-  {$ENDIF}
+  {.IFDEF TCP_DEBUG}
+  Log(cltError, 'Error:%d:%s', [AErrorCode, AErrorMsg]);
+  {.ENDIF}
 
   FErrorMessage := AErrorMsg;
   FErrorCode := AErrorCode;
   TriggerError;
+end;
+
+procedure TF5TCPClient.SetStartFailed;
+begin
+  SetState(csStartFailed);
+  TriggerStartFailed;
 end;
 
 procedure TF5TCPClient.SetStarted;
@@ -2257,17 +1961,24 @@ begin
   TriggerNegotiating;
 end;
 
+procedure TF5TCPClient.SetReadyFailed;
+begin
+  SetState(csReadyFailed);
+  TriggerReadyFailed;
+end;
+
 procedure TF5TCPClient.SetReady;
 begin
   SetState(csReady);
   TriggerReady;
+  FWaitReadyEvent.SetEvent;
 end;
 
 procedure TF5TCPClient.SetClosed;
 begin
   Lock;
   try
-    if FState in [csInit, csClosed, csStopped] then
+    if FState in [csInit, csStartFailed, csReadyFailed, csClosed, csStopped] then
       exit;
     FState := csClosed;
   finally
@@ -2304,13 +2015,13 @@ begin
   {$ENDIF}
 end;
 
-procedure TF5TCPClient.ConnectionStateChange(Sender: TTCPConnection; State: TTCPConnectionState);
+procedure TF5TCPClient.ConnectionStateChange(Sender: TTCPConnection; AState: TTCPConnectionState);
 begin
   {$IFDEF TCP_DEBUG_CONNECTION}
   Log(cltDebug, 'Connection_StateChange:%s', [Sender.StateStr]);
   {$ENDIF}
 
-  case State of
+  case AState of
     cnsProxyNegotiation : SetNegotiating;
     cnsConnected        : SetReady;
   end;
@@ -2370,22 +2081,13 @@ begin
   TriggerReadActivity;
 end;
 
-procedure TF5TCPClient.ConnectionWriteActivity(Sender: TTCPConnection);
-begin
-  {$IFDEF TCP_DEBUG_DATA}
-  Log(cltDebug, 'Connection_WriteActivity');
-  {$ENDIF}
-
-  TriggerWriteActivity;
-end;
-
 procedure TF5TCPClient.ConnectionWorkerExecute(
           Sender: TTCPConnection;
-          Connection: TTCPBlockingConnection;
-          var CloseOnExit: Boolean);
+          AConnection: TTCPBlockingConnection;
+          var ACloseOnExit: Boolean);
 begin
   if Assigned(FOnWorkerExecute) then
-    FOnWorkerExecute(self, Connection, CloseOnExit);
+    FOnWorkerExecute(self, AConnection, ACloseOnExit);
 end;
 
 { Proxies }
@@ -2482,8 +2184,6 @@ begin
       FConnection.OnWrite := ConnectionWrite;
     if Assigned(FOnReadActivity) then
       FConnection.OnReadActivity := ConnectionReadActivity;
-    if Assigned(FOnWriteActivity) then
-      FConnection.OnWriteActivity := ConnectionWriteActivity;
 
     FConnection.UseWorkerThread       := FUseWorkerThread;
     FConnection.TrackLastActivityTime := FTrackLastActivityTime;
@@ -2718,50 +2418,49 @@ var
   {$ENDIF}
 
 begin
-  Assert(Assigned(AThread));
-  {$IFDEF TCP_DEBUG_THREAD}
-  Log(cltDebug, 'ThreadExecute');
-  {$ENDIF}
-
-  // startup
   try
+    Assert(Assigned(AThread));
+    {$IFDEF TCP_DEBUG_THREAD}
+    Log(cltDebug, 'ThreadExecute');
+    {$ENDIF}
+
+    // startup
     try
-      if IsTerminated then
-        exit;
-      // connection setup
-      CreateConnection;
-      if IsTerminated then
-        exit;
-      SetStarted;
-      {$IFDEF TCPCLIENT_SOCKS}
-      if FSocksEnabled then
-        InstallSocksProxy;
-      {$ENDIF}
-      {$IFDEF TCPCLIENT_TLS}
-      if FTLSEnabled then
-        InstallTLSProxy;
-      {$ENDIF}
-      {$IFDEF TCPCLIENT_WEBSOCKET}
-      if FWebSocketEnabled then
-        InstallWebSocketProxy;
-      {$ENDIF}
-    except
-      on E : Exception do
-        begin
-          if not IsTerminated then
-            begin
-              SetErrorFromException(E);
-              TriggerConnectFailed;
-            end;
+      try
+        if IsTerminated then
           exit;
-        end;
-    end;
-    Lock;
-    try
-      if Assigned(FWaitStartEvent) then
-        FWaitStartEvent.SetEvent;
+        // connection setup
+        CreateConnection;
+        if IsTerminated then
+          exit;
+        SetStarted;
+        {$IFDEF TCPCLIENT_SOCKS}
+        if FSocksEnabled then
+          InstallSocksProxy;
+        {$ENDIF}
+        {$IFDEF TCPCLIENT_TLS}
+        if FTLSEnabled then
+          InstallTLSProxy;
+        {$ENDIF}
+        {$IFDEF TCPCLIENT_WEBSOCKET}
+        if FWebSocketEnabled then
+          InstallWebSocketProxy;
+        {$ENDIF}
+      except
+        on E : Exception do
+          begin
+            if not IsTerminated then
+              begin
+                SetErrorFromException(E);
+                SetStartFailed;
+                TriggerConnectFailed;
+                TriggerReadyFailed;
+              end;
+            exit;
+          end;
+      end;
     finally
-      Unlock;
+      FWaitStartEvent.SetEvent;
     end;
 
     Reconnect := False;
@@ -2791,6 +2490,7 @@ begin
               begin
                 SetErrorFromException(E);
                 TriggerConnectFailed;
+                SetReadyFailed;
               end;
             {$IFDEF TCP_DEBUG_THREAD}
             Log(cltDebug, 'ThreadExit:Local bind failed:%s', [E.Message]);
@@ -2836,6 +2536,7 @@ begin
                     begin
                       SetErrorFromException(E);
                       TriggerConnectFailed;
+                      SetReadyFailed;
                     end;
                   {$IFDEF TCP_DEBUG_THREAD}
                   Log(cltDebug, 'ThreadExit:Connection failed:%s', [E.Message]);
@@ -2863,6 +2564,7 @@ begin
           begin
             // wait for socket activity
             try
+              FConnection.ProcessPendingEvents;
               {$IFDEF OS_WIN32}
               // under Win32, WinSock blocks Socket.Write() if Socket.Select() is active
               for SelCnt := 1 to 10 do
@@ -2870,7 +2572,7 @@ begin
                   RS := True;
                   WS := True;
                   ES := False;
-                  FConnection.GetEventsToPoll(WS);
+                  FConnection.GetEventsToPoll(RS, WS);
                   FConnection.Socket.Select(50000, RS, WS, ES); // 50,000 microseconds / 50 milliseconds
                   if RS or WS or ES or IsTerminated then
                     break;
@@ -2879,7 +2581,7 @@ begin
               RS := True;
               WS := True;
               ES := False;
-              FConnection.GetEventsToPoll(WS);
+              FConnection.GetEventsToPoll(RS, WS);
               FConnection.Socket.Select(100000, RS, WS, ES); // 100,000 microseconds / 100 milliseconds
               {$ENDIF}
               IsIdle := False;
@@ -2899,6 +2601,9 @@ begin
               end
             else
               begin
+                if FConnection.ProcessPendingEvents then
+                  IsIdle := False
+                else
                 if not ConIdle then
                   IsIdle := False;
                 {$IFDEF OS_MSWIN}
@@ -2953,119 +2658,41 @@ end;
 
 { Start / Stop }
 
-procedure TF5TCPClient.ValidateParameters;
+procedure TF5TCPClient.ClientStop;
 begin
-  if FHost = '' then
-    raise ETCPClient.Create(SError_HostNotSpecified);
-  if FPort = '' then
-    raise ETCPClient.Create(SError_PortNotSpecified);
+  TriggerStop;
+  // terminate threads and close socket before waiting for threads to terminate
+  TerminateWorkerThread;
+  TerminateProcessThread;
+  FWaitStartEvent.SetEvent;
+  FWaitReadyEvent.SetEvent;
+  DoClose;
+  StopProcessThread;
+  FConnection.WaitForWorkerThread;
+  SetStopped;
 end;
 
-const
-  // milliseconds to wait for thread to startup,
-  // this usually happens within 1 ms but could pause for a few seconds if the
-  // system is busy
-  ThreadStartupTimeOut = 30000; // 30 seconds
-
-procedure TF5TCPClient.ClientActive;
+procedure TF5TCPClient.ClientDeactivate;
 begin
+  FActive := False;
+  TriggerInactive;
 end;
-
-procedure TF5TCPClient.ClientInactive;
-begin
-end;
-
-procedure TF5TCPClient.ClientSetActive;
-var
-  IsAlreadyStarting : Boolean;
-  WaitForStart : Boolean;
-begin
-  // ensure only one thread is doing DoSetActive
-  Lock;
-  try
-    if FActive then
-      exit;
-    ValidateParameters;
-    // check if already starting
-    IsAlreadyStarting := FState = csStarting;
-    if not IsAlreadyStarting then
-      SetState(csStarting);
-    WaitForStart := FWaitForStartup;
-  finally
-    Unlock;
-  end;
-  if IsAlreadyStarting then
-    begin
-      // this thread is not doing startup,
-      // wait for other thread to complete startup
-      if WaitForStart then
-        if WaitForState(TCPClientStates_All - [csStarting], ThreadStartupTimeOut) = csStarting then
-          raise ETCPClient.Create(SError_StartupFailed); // timed out waiting for startup
-      exit;
-    end;
-  // start
-  Assert(not FActive);
-  // notify start
-  TriggerStart;
-  // initialise active state
-  Lock;
-  try
-    InitSocketAddrNone(FLocalAddr);
-    InitSocketAddrNone(FConnectAddr);
-    FErrorMessage := '';
-    FErrorCode := 0;
-    FActive := True;
-  finally
-    Unlock;
-  end;
-  // start thread
-  StartProcessThread;
-  // wait for thread to complete startup
-  if WaitForStart then
-    if WaitForState(TCPClientStates_All - [csStarting], ThreadStartupTimeOut) = csStarting then
-      raise ETCPClient.Create(SError_StartupFailed); // timed out waiting for thread
-    // connection object initialised
-  // started
-  TriggerActive;
-end;
-
-const
-  ClientStopTimeOut = 30000; // 30 seconds
 
 procedure TF5TCPClient.ClientSetInactive;
-var
-  IsAlreadyStopping : Boolean;
 begin
-  // ensure only one thread is doing DoStop
   Lock;
   try
     if not FActive then
       exit;
-    IsAlreadyStopping := FIsStopping;
-    if not IsAlreadyStopping then
-      FIsStopping := True;
+    if FIsStopping then
+      exit;
+    FIsStopping := True;
   finally
     Unlock;
   end;
-  if IsAlreadyStopping then
-    begin
-      // this thread is not doing stop,
-      // wait for other thread to complete stop
-      WaitForState([csStopped], ClientStopTimeOut);
-      exit;
-    end;
-  // stop
   try
-    TriggerStop;
-    // terminate threads and close socket before waiting for threads to terminate
-    TerminateWorkerThread;
-    TerminateProcessThread;
-    DoClose;
-    StopProcessThread;
-    FConnection.WaitForWorkerThread;
-    FActive := False;
-    TriggerInactive;
-    SetStopped;
+    ClientStop;
+    ClientDeactivate;
     FreeConnection;
   finally
     Lock;
@@ -3075,65 +2702,148 @@ begin
       Unlock;
     end;
   end;
-  // stopped
 end;
 
-function TF5TCPClient.WaitStart(const ATimeOutMs: Int32): Boolean; ////
-var
-  DoWait : Boolean;
-  WaitEv : TSimpleEvent;
-begin
-  DoWait := False;
-  WaitEv := nil;
+const
+  // milliseconds to wait for thread to startup,
+  // this usually happens within 1 ms but could pause for a few seconds if the
+  // system is busy
+  ThreadStartupTimeOut = 30000; // 30 seconds
 
+procedure TF5TCPClient.ValidateParameters;
+begin
+  if FHost = '' then
+    raise ETCPClient.Create(SError_HostNotSpecified);
+  if FPort = '' then
+    raise ETCPClient.Create(SError_PortNotSpecified);
+end;
+
+procedure TF5TCPClient.ClientStart;
+begin
+  SetState(csStarting);
+  TriggerStart;
+  StartProcessThread;
+end;
+
+procedure TF5TCPClient.ClientInitialiseActive;
+begin
   Lock;
   try
-    if not FActive then
-      Result := False
-    else
-    if FState in [csStopped] then
-      Result := False
-    else
-    if FState in [csInit, csStarting] then
-      begin
-        WaitEv := FWaitStartEvent;
-        if not Assigned(WaitEv) then
-          begin
-            WaitEv := TSimpleEvent.Create;
-            FWaitStartEvent := WaitEv;
-          end;
-        Inc(FWaitStartCount);
-        DoWait := True;
-        Result := False;
-      end
-    else
-      Result := True;
+    FState := csInit;
+    InitSocketAddrNone(FLocalAddr);
+    InitSocketAddrNone(FConnectAddr);
+    FErrorMessage := '';
+    FErrorCode := 0;
+    FWaitStartEvent.ResetEvent;
+    FWaitReadyEvent.ResetEvent;
   finally
     Unlock;
   end;
+end;
 
-  if DoWait then
+procedure TF5TCPClient.ClientActivate;
+begin
+  ClientInitialiseActive;
+  TriggerActive;
+  ClientStart;
+end;
+
+procedure TF5TCPClient.ClientSetActive;
+var
+  WaitForStart : Boolean;
+begin
+  Lock;
+  try
+    if FActive then
+      exit;
+    ValidateParameters;
+    FActive := True;
+    WaitForStart := FWaitForStartup;
+  finally
+    Unlock;
+  end;
+  ClientActivate;
+  if WaitForStart then
     begin
-      Result := WaitEv.WaitFor(ATimeOutMs) = wrSignaled;
-      Lock;
-      try
-        Dec(FWaitStartCount);
-        if FWaitStartCount = 0 then
-          begin
-            FWaitStartEvent := nil;
-            WaitEv.Free;
-          end;
-
-        Result := Result and
-          FActive and
-          not (FState in [csInit, csStarting, csStopped]);
-      finally
-        Unlock;
+      FWaitStartEvent.WaitEvent(ThreadStartupTimeOut);
+      case GetState of
+        csInit,
+        csStarting : raise ETCPClient.Create('Startup timeout');
+        csStartFailed,
+        csReadyFailed,
+        csClosed,
+        csStopped  : raise ETCPClient.CreateFmt('Started failed: %s', [GetStateStr]);
       end;
     end;
 end;
 
-procedure TF5TCPClient.Start;
+procedure TF5TCPClient.SetActive(const AActive: Boolean);
+begin
+  if csDesigning in ComponentState then
+    FActive := AActive else
+  if csLoading in ComponentState then
+    FActivateOnLoaded := AActive
+  else
+    if AActive then
+      ClientSetActive
+    else
+      ClientSetInactive;
+end;
+
+////
+procedure TF5TCPClient.ClientWaitStartup(const ATimeout: Int32);
+var
+  T, W : Int32;
+begin
+  T := ATimeout;
+  repeat
+    if T < 0 then
+      W := 200
+    else
+      begin
+        W := T;
+        if W > 200 then
+          W := 200;
+      end;
+    // TAbortableMultiWaitEvent
+    case FWaitStartEvent.WaitEvent(W) of
+      wrSignaled  : ;
+      wrTimeout   : ;
+      wrAbandoned : ;
+      wrError     : ;
+    end;
+    if T >= 0 then
+      Dec(T, W);
+    case GetState of
+      csStarted,
+      csConnectRetry,
+      csResolvingLocal,
+      csResolvedLocal,
+      csBound,
+      csResolving,
+      csResolved,
+      csConnecting,
+      csConnected,
+      csNegotiating,
+      csReady         : exit;
+      csStartFailed,
+      csReadyFailed,
+      csClosed,
+      csStopped       : break;
+    end;
+  until T = 0;
+  case GetState of
+    csInit,
+    csStarting     : raise ETCPClient.Create('Startup timeout');
+    csStartFailed,
+    csReadyFailed,
+    csClosed,
+    csStopped      : raise ETCPClient.CreateFmt('Startup failed: %s', [GetStateStr]);
+  end;
+end;
+////
+
+procedure TF5TCPClient.Start(const AStartupTimeout: Int32);
 begin
   ClientSetActive;
 end;
@@ -3149,7 +2859,7 @@ begin
   try
     if not FActive or FIsStopping then
       exit;
-    if FState in [csInit, csClosed, csStopped] then
+    if FState in [csInit, csStartFailed, csReadyFailed, csClosed, csStopped] then
       exit;
   finally
     Unlock;
@@ -3163,7 +2873,7 @@ begin
   try
     if not FActive or FIsStopping then
       exit;
-    if FState in [csInit, csClosed, csStopped] then
+    if FState in [csInit, csStartFailed, csReadyFailed, csClosed, csStopped] then
       exit;
   finally
     Unlock;
@@ -3271,13 +2981,13 @@ end;
 // Wait until connected (ready), closed or time out
 function TF5TCPClient.WaitForConnect(const ATimeOutMs: Integer): Boolean;
 begin
-  Result := WaitForState([csReady, csClosed, csStopped], ATimeOutMs) = csReady;
+  Result := WaitForState([csReady, csStartFailed, csReadyFailed, csReadyFailed, csClosed, csStopped], ATimeOutMs) = csReady;
 end;
 
 // Wait until socket is closed or time out
 function TF5TCPClient.WaitForClose(const ATimeOutMs: Integer): Boolean;
 begin
-  Result := WaitForState([csClosed, csStopped], ATimeOutMs) = csClosed;
+  Result := WaitForState([csStartFailed, csReadyFailed, csClosed, csStopped], ATimeOutMs) = csClosed;
 end;
 
 
