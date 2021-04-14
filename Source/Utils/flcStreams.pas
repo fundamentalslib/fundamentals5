@@ -1417,7 +1417,7 @@ begin
     if CaseSensitive then
       R := EqualMem(Buffer, B^, Result)
     else
-      R := CompareMemNoAsciiCase(Buffer, B^, Result) = 0;
+      R := CompareMemNoAsciiCaseB(Buffer, B^, Result) = 0;
     if not R then
       Result := -1;
   finally
@@ -1589,7 +1589,7 @@ begin
         if CaseSensitive then
           R := EqualMem(Buffer, B^, Size)
         else
-          R := CompareMemNoAsciiCase(Buffer, B^, Size) = 0;
+          R := CompareMemNoAsciiCaseB(Buffer, B^, Size) = 0;
         if R then
           begin
             SetPosition(P);
@@ -1806,6 +1806,12 @@ begin
   until Fin;
 end;
 
+{$IFDEF DELPHI}
+{$IFNDEF DELPHI2009_UP}
+  {$DEFINE BadWarn_SkipLine}
+{$ENDIF}
+{$ENDIF}
+
 function AReaderEx.SkipLine(const MaxLineLength: Integer;
     const EOLTypes: TReaderEOLTypes): Boolean;
 var NewLineChars : PByteCharSet;
@@ -1825,7 +1831,7 @@ begin
       exit;
     end;
   FirstNewLineCharsFromEOLTypes(EOLTypes, NewLineChars);
-  {$IFDEF DELPHI7}
+  {$IFDEF BadWarn_SkipLine}
   Fin := False; // Supress incorrect warning
   {$ENDIF}
   repeat
@@ -2011,7 +2017,7 @@ begin
   if CaseSensitive then
     R := EqualMem(Buffer, P^, L)
   else
-    R := CompareMemNoAsciiCase(Buffer, P^, L) = 0;
+    R := CompareMemNoAsciiCaseB(Buffer, P^, L) = 0;
   if R then
     Result := L else
     Result := -1;
