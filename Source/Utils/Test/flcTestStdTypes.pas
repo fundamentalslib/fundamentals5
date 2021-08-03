@@ -1,7 +1,7 @@
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
-unit flcTest_StdTypes;
+unit flcTestStdTypes;
 
 interface
 

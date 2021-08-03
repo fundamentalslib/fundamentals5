@@ -1,5 +1,5 @@
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
 unit flcUtilsTest;
 
@@ -13,21 +13,21 @@ procedure Test;
 implementation
 
 uses
-  flcTest_StdTypes,
-  flcTest_Utils,
-  flcTest_HashGeneral,
-  flcTest_DataStructArrays,
-  flcTest_DataStructMaps;
+  flcTestStdTypes,
+  flcTestUtils,
+  flcTestHashGeneral,
+  flcTestDataStructArrays,
+  flcTestDataStructMaps;
 
 
 
 procedure Test;
 begin
-  flcTest_StdTypes.Test;
-  flcTest_Utils.Test;
-  flcTest_HashGeneral.Test;
-  flcTest_DataStructArrays.Test;
-  flcTest_DataStructMaps.Test;
+  flcTestStdTypes.Test;
+  flcTestUtils.Test;
+  flcTestHashGeneral.Test;
+  flcTestDataStructArrays.Test;
+  flcTestDataStructMaps.Test;
 end;
 
 

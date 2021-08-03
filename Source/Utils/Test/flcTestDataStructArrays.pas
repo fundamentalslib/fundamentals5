@@ -2,9 +2,9 @@
 { 2020/07/07  0.02  Tests for String and Object arrays. }
 
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
-unit flcTest_DataStructArrays;
+unit flcTestDataStructArrays;
 
 interface
 

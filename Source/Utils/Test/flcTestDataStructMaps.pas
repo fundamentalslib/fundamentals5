@@ -1,9 +1,9 @@
 { 2020/07/07  0.01  Basic tests for TStrObjMap and TIntObjMap. }
 
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
-unit flcTest_DataStructMaps;
+unit flcTestDataStructMaps;
 
 interface
 

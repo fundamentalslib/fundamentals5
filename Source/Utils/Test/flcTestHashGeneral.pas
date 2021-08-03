@@ -2,9 +2,9 @@
 { 2020/07/25  0.02  Tests for fclHash1, fclHash2, fclHash3. }
 
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
-unit flcTest_HashGeneral;
+unit flcTestHashGeneral;
 
 interface
 

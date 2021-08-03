@@ -1,7 +1,7 @@
 {$INCLUDE ../../flcInclude.inc}
-{$INCLUDE flcTest_Include.inc}
+{$INCLUDE flcTestInclude.inc}
 
-unit flcTest_Utils;
+unit flcTestUtils;
 
 interface
 
@@ -20,7 +20,7 @@ uses
 
 
 {                                                                              }
-{ Test cases                                                                   }
+{ Tests                                                                        }
 {                                                                              }
 procedure Test_Misc;
 var A, B : Byte;
@@ -1276,3 +1276,4 @@ end;
 
 
 end.
+
