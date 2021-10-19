@@ -2,7 +2,7 @@
 {                                                                              }
 {   Library:          Fundamentals 5.00                                        }
 {   File name:        flcDateTimeZone.pas                                      }
-{   File version:     5.08                                                     }
+{   File version:     5.09                                                     }
 {   Description:      Date/Time Zone functions                                 }
 {                                                                              }
 {   Copyright:        Copyright (c) 2000-2021, David J Butler                  }
@@ -17,6 +17,7 @@
 {   2010/06/27  4.06  Compilable with FreePascal 2.4.0 OSX x86-64              }
 {   2018/08/13  5.07  String type changes.                                     }
 {   2020/10/27  5.08  Move Time zone function into unit.                       }
+{   2021/10/19  5.09  Add conditional defines for tests.                       }
 {                                                                              }
 { Supported compilers:                                                         }
 {                                                                              }
@@ -26,6 +27,10 @@
 {******************************************************************************}
 
 {$INCLUDE ..\flcInclude.inc}
+
+{$IFDEF TEST}
+{$DEFINE DATETIME_TEST}
+{$ENDIF}
 
 unit flcDateTimeZone;
 
@@ -60,7 +65,9 @@ function  NowUT: TDateTime;
 {                                                                              }
 { Test                                                                         }
 {                                                                              }
+{$IFDEF DATETIME_TEST}
 procedure Test;
+{$ENDIF}
 
 
 
@@ -193,6 +200,7 @@ end;
 {                                                                              }
 { Test                                                                         }
 {                                                                              }
+{$IFDEF DATETIME_TEST}
 procedure Test;
 const
   MiDa = 12 * 60;
@@ -210,9 +218,9 @@ begin
   E := LocalDateTimeToUT(D);
   Assert(UTToLocalDateTime(E) = D);
 end;
+{$ENDIF}
 
 
 
 end.
-
 
